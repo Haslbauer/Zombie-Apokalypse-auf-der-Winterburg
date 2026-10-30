@@ -33,6 +33,8 @@ describe('Wellenaufbau', () => {
     run(sim, Math.ceil(cfg.spawnInterval * 20 * waveSize(1, cfg)) + 1);
     expect(sim.state.wave.queue).toHaveLength(0);
     expect(sim.state.zombies.length + sim.state.kills).toBe(waveSize(1, cfg));
+    // Ziele nur Herz oder Bienenstock.
+    for (const z of sim.state.zombies) expect(['heart', 'hive']).toContain(z.objectiveId);
 
     // Alle Zombies entfernen: Die Welle gilt als geschafft.
     sim.state.zombies = [];

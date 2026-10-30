@@ -29,6 +29,12 @@ Dann http://localhost:5173 öffnen. Weitere Befehle: `npm test` (Simulationstest
 
 Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bogen beim Nahkampf, einen Pfeil beim Fernkampf.
 
+## Karte
+
+Die Winterburg nach der Skizze in `assets/reference/karte-skizze.jpg`: U-förmiges Haus mit dem **Herz** im Innenhof (nur über einen schmalen Durchgang erreichbar), **Bienenstock** als zweites Ziel, Zombies aus dem **Bunker**, durch die **Heckenlücke Süd** und den **Hang Ost** hinauf. Fällt das Herz, ist das Spiel verloren.
+
+Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben.
+
 ## Aufbau
 
 - `src/sim/` – Spiellogik, tickbasiert (20 Ticks/s), ohne Browser-Abhängigkeit. Läuft im Singleplayer im Browser, ab M6 auch auf dem Server.
@@ -39,7 +45,7 @@ Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bog
 ## Meilensteine
 
 1. M1: Offline-Prototyp (Arena, ein Held, Zombiewellen, Nah- und Fernkampf) ✅
-2. M2: Karte Winterburg mit Haus-Lebensbalken und drei Zugängen
+2. M2: Karte Winterburg mit Herz, Bienenstock und drei Zugängen ✅
 3. M3: Level, XP, Skillpunkte, 5 Helden mit Q/W/E/R
 4. M4: Gold, Shop, Waffen und Items, Elite-Zombies
 5. M5: Bots (Singleplayer mit 3 Bots)

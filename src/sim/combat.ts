@@ -1,5 +1,5 @@
 import type { SimContext } from './context';
-import { distanceToObstacle } from './grid';
+import { shotBlocked } from './grid';
 import { DT, type Hero, type Zombie } from './types';
 import { dist, type Vec2 } from './vec';
 
@@ -20,12 +20,11 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
   target.hp = 0;
   state.events.push({ type: 'death', id: target.id, pos: { ...target.pos } });
   if ('alive' in target) {
+    // Gefallene Helden kommen nach einem Timer im Innenhof zurück (kein Game Over).
+    const { respawn } = ctx.data.arena;
     target.alive = false;
     target.input = { move: { x: 0, y: 0 }, aim: target.input.aim, attack: false };
-    if (!state.gameOver && state.heroes.every((h) => !h.alive)) {
-      state.gameOver = true;
-      state.events.push({ type: 'gameOver', wave: state.wave.number });
-    }
+    target.respawnAt = state.time + respawn.base + respawn.perWave * (state.wave.number - 1);
   } else {
     state.kills++;
   }
@@ -80,7 +79,7 @@ export function inArc(h: Hero, z: Zombie, facing: number, arc: number, range: nu
 
 /** Projektile fliegen geradeaus, treffen den ersten Zombie auf ihrer Bahn oder enden an Hindernissen. */
 export function updateProjectiles(ctx: SimContext): void {
-  const { state, data } = ctx;
+  const { state } = ctx;
   state.projectiles = state.projectiles.filter((p) => {
     const step = Math.min(p.speed * DT, p.remaining);
     const from = p.pos;
@@ -102,9 +101,7 @@ export function updateProjectiles(ctx: SimContext): void {
     for (let i = 1; i <= samples; i++) {
       const t = (step * i) / samples;
       if (t >= hitT) break;
-      const q = { x: from.x + p.dir.x * t, y: from.y + p.dir.y * t };
-      const outside = q.x < 0 || q.y < 0 || q.x > data.arena.width || q.y > data.arena.height;
-      if (outside || data.arena.obstacles.some((o) => distanceToObstacle(q, o) < 0)) return false;
+      if (shotBlocked({ x: from.x + p.dir.x * t, y: from.y + p.dir.y * t }, ctx.arena)) return false;
     }
 
     if (hit) {

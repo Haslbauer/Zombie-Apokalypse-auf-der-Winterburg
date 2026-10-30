@@ -1,4 +1,4 @@
-import arena from '../data/arena.json';
+import arena from '../data/map.json';
 import heroes from '../data/heroes.json';
 import waves from '../data/waves.json';
 import zombies from '../data/zombies.json';

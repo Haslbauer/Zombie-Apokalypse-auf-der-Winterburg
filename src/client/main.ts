@@ -12,6 +12,8 @@ const effects = new Effects(renderer.scene);
 const bindings = new Keybindings();
 const hud = new Hud(document.getElementById('hud')!, gameData, bindings);
 const input = new Input(renderer, bindings);
+/** Entwicklermodus: ?overview zeigt die ganze Karte von oben. */
+const overview = new URLSearchParams(location.search).has('overview');
 
 let sim: Simulation | null = null;
 let heroId = 0;
@@ -33,6 +35,10 @@ function startGame(defId: string): void {
   effects.clear();
   hud.startGame(defId);
   renderer.cam.lookAt(hero.pos.x, hero.pos.y);
+  if (overview) {
+    renderer.scene.fog = null;
+    renderer.cam.overview(gameData.arena.width / 2, gameData.arena.height / 2 + 6, 95);
+  }
   hud.message('Mach dich bereit!');
 }
 
@@ -65,6 +71,27 @@ function handleEvents(state: GameState): void {
       case 'hit':
         renderer.flash(e.targetId);
         break;
+      case 'objectiveHit':
+        renderer.flashObjective(e.objectiveId);
+        break;
+      case 'sting': {
+        const obj = state.objectives.find((o) => o.id === e.objectiveId);
+        const to = renderer.unitPosition(e.targetId);
+        if (obj && to) effects.sting(obj.pos, to, state.time < obj.aggroUntil);
+        break;
+      }
+      case 'breach':
+        hud.message('Durchbruch!');
+        break;
+      case 'beesAngry':
+        hud.message('Die Bienen sind wütend!');
+        break;
+      case 'objectiveDestroyed':
+        if (!state.gameOver) hud.message(`${gameData.arena.objectives.find((o) => o.id === e.objectiveId)?.name} zerstört`);
+        break;
+      case 'respawn':
+        if (e.id === heroId) hud.message('Zurück im Kampf!');
+        break;
       case 'swing': {
         const h = state.heroes.find((x) => x.id === e.id);
         if (h) effects.swing(h.pos, e.facing, h.radius + e.range, e.arc);
@@ -72,6 +99,7 @@ function handleEvents(state: GameState): void {
       }
       case 'death':
         if (e.id !== heroId) effects.deathPuff(e.pos);
+        else hud.message('Gefallen!');
         break;
       case 'waveStart':
         hud.message(`Welle ${e.number}!`);
@@ -80,7 +108,7 @@ function handleEvents(state: GameState): void {
         hud.message(`Welle ${e.number} geschafft`);
         break;
       case 'gameOver':
-        hud.showGameOver(state, () => startGame(heroDefId));
+        hud.showGameOver(state, e.reason, () => startGame(heroDefId));
         break;
     }
   }

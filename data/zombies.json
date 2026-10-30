@@ -8,7 +8,8 @@
     "radius": 0.45,
     "damage": 7,
     "attackRange": 0.4,
-    "attackCooldown": 1.2
+    "attackCooldown": 1.2,
+    "aggroRange": 6
   },
   {
     "id": "runner",
@@ -19,7 +20,8 @@
     "radius": 0.38,
     "damage": 5,
     "attackRange": 0.4,
-    "attackCooldown": 0.9
+    "attackCooldown": 0.9,
+    "aggroRange": 8
   },
   {
     "id": "brute",
@@ -30,6 +32,7 @@
     "radius": 0.7,
     "damage": 20,
     "attackRange": 0.5,
-    "attackCooldown": 1.6
+    "attackCooldown": 1.6,
+    "aggroRange": 5
   }
 ]

@@ -2,14 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { distanceToObstacle, Grid } from '../../src/sim/grid';
 import type { ArenaDef } from '../../src/sim/types';
 import { dist } from '../../src/sim/vec';
-import { input, makeSim, noWaves, testData } from './helpers';
+import { arenaData, input, makeSim, noWaves } from './helpers';
 
 const wallArena: ArenaDef = {
   width: 20,
   height: 20,
   cellSize: 0.5,
   heroStart: { x: 5, y: 10 },
-  spawnPoints: [{ x: 1, y: 1 }],
+  spawnPoints: [{ id: 's', x: 1, y: 1, weight: 1 }],
+  slowZones: [],
+  objectives: [],
+  respawn: { base: 5, perWave: 1 },
   // Wand quer durch die Mitte, nur oben ein Durchgang.
   obstacles: [{ kind: 'rect', x: 10, y: 12, w: 1, h: 16 }],
 };
@@ -38,7 +41,7 @@ describe('Pfadsuche', () => {
   });
 
   it('Held läuft mit WASD gegen ein Hindernis und steckt nie darin fest', () => {
-    const data = testData(noWaves);
+    const data = arenaData(noWaves);
     const sim = makeSim('nahkampf', 1, data);
     const h = sim.state.heroes[0];
     // Nach Norden laufen: Dort steht eine Hecke (x 20, y 15).
@@ -55,7 +58,7 @@ describe('Pfadsuche', () => {
   });
 
   it('schräg laufen ist nicht schneller als gerade, Blick folgt der Maus', () => {
-    const sim = makeSim('nahkampf', 1, testData(noWaves));
+    const sim = makeSim('nahkampf', 1, arenaData(noWaves));
     const h = sim.state.heroes[0];
     const start = { ...h.pos };
     sim.step([input(sim, { x: 1, y: 1 }, { x: start.x - 10, y: start.y })]);

@@ -1,7 +1,7 @@
 import type { SimContext } from './context';
 import { resolveObstacles } from './grid';
-import { nextRandom, randomInt, shuffle } from './rng';
-import { DT, type WaveConfig, type ZombieDef } from './types';
+import { nextRandom, shuffle } from './rng';
+import { DT, type SpawnPoint, type WaveConfig, type ZombieDef } from './types';
 
 /** Anzahl der Zombies in Welle n. */
 export function waveSize(n: number, cfg: WaveConfig): number {
@@ -57,6 +57,7 @@ export function updateWaves(ctx: SimContext): void {
       w.phase = 'wave';
       w.timer = 0;
       w.spawnTimer = 0;
+      w.breached = false;
       const comp = waveComposition(w.number, cfg);
       w.queue = shuffle(state, Object.entries(comp).flatMap(([id, count]) => Array<string>(count).fill(id)));
       state.events.push({ type: 'waveStart', number: w.number });
@@ -79,13 +80,16 @@ export function updateWaves(ctx: SimContext): void {
 
 function spawnZombie(ctx: SimContext, def: ZombieDef): void {
   const { state, data } = ctx;
-  const points = data.arena.spawnPoints;
-  const base = points[randomInt(state, points.length)];
+  const base = pickWeighted(state, data.arena.spawnPoints, (p: SpawnPoint) => p.weight);
   const pos = {
-    x: base.x + (nextRandom(state) - 0.5) * 3,
-    y: base.y + (nextRandom(state) - 0.5) * 3,
+    x: base.x + (nextRandom(state) - 0.5) * 2,
+    y: base.y + (nextRandom(state) - 0.5) * 2,
   };
-  resolveObstacles(pos, def.radius, data.arena);
+  resolveObstacles(pos, def.radius, ctx.arena);
+  // Ziel nach targetWeights wählen, nur unter noch stehenden Zielen.
+  const alive = state.objectives.filter((o) => !o.destroyed && (data.waves.targetWeights[o.id] ?? 0) > 0);
+  const objectiveId =
+    alive.length > 0 ? pickWeighted(state, alive, (o) => data.waves.targetWeights[o.id]).id : 'heart';
   const scale = waveScaling(state.wave.number, data.waves);
   const hp = Math.round(def.hp * scale.hp);
   state.zombies.push({
@@ -100,5 +104,17 @@ function spawnZombie(ctx: SimContext, def: ZombieDef): void {
     attackTimer: 0,
     damage: def.damage * scale.damage,
     targetId: null,
+    objectiveId,
   });
+}
+
+/** Zufällige Auswahl nach Gewichten. */
+export function pickWeighted<T>(state: { rng: number }, items: T[], weight: (item: T) => number): T {
+  const total = items.reduce((s, i) => s + weight(i), 0);
+  let r = nextRandom(state) * total;
+  for (const item of items) {
+    r -= weight(item);
+    if (r < 0) return item;
+  }
+  return items[items.length - 1];
 }

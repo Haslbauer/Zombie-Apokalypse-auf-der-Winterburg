@@ -170,18 +170,39 @@ export class Grid {
   /**
    * Distanzfeld (Dijkstra) von einem oder mehreren Zielpunkten aus. Einheiten laufen zur
    * Nachbarzelle mit kleinstem Wert, so kommen viele Zombies mit einer
-   * einzigen Berechnung ans Ziel.
+   * einzigen Berechnung ans Ziel. Mit seedRadius gelten alle freien Zellen in
+   * diesem Umkreis als Ziel (z. B. rund um ein Objekt, das selbst blockiert).
    */
-  distanceField(targets: Vec2[]): Float32Array {
+  distanceField(targets: Vec2[], seedRadius = 0): Float32Array {
     const { cols, rows, blocked } = this;
     const n = blocked.length;
     const dist = new Float32Array(n).fill(Infinity);
     const open = this.fieldHeap;
     open.clear();
     for (const t of targets) {
-      const start = this.nearestFree(t);
-      dist[start] = 0;
-      open.push(start, 0);
+      let seeded = false;
+      if (seedRadius > 0) {
+        const c0 = Math.max(0, Math.floor((t.x - seedRadius) / this.cell));
+        const c1 = Math.min(cols - 1, Math.floor((t.x + seedRadius) / this.cell));
+        const r0 = Math.max(0, Math.floor((t.y - seedRadius) / this.cell));
+        const r1 = Math.min(rows - 1, Math.floor((t.y + seedRadius) / this.cell));
+        for (let r = r0; r <= r1; r++) {
+          for (let c = c0; c <= c1; c++) {
+            const idx = r * cols + c;
+            const p = this.center(c, r);
+            if (!blocked[idx] && Math.hypot(p.x - t.x, p.y - t.y) <= seedRadius) {
+              dist[idx] = 0;
+              open.push(idx, 0);
+              seeded = true;
+            }
+          }
+        }
+      }
+      if (!seeded) {
+        const start = this.nearestFree(t);
+        dist[start] = 0;
+        open.push(start, 0);
+      }
     }
     while (open.size > 0) {
       const d = open.peekPrio();
@@ -234,6 +255,12 @@ export function distanceToObstacle(p: Vec2, o: Obstacle): number {
   const dy = Math.abs(p.y - o.y) - o.h / 2;
   const outside = Math.hypot(Math.max(dx, 0), Math.max(dy, 0));
   return outside + Math.min(Math.max(dx, dy), 0);
+}
+
+/** Hält ein Hindernis an diesem Punkt Schüsse auf? Niedrige Hindernisse (blocksShots: false) nicht. */
+export function shotBlocked(p: Vec2, arena: ArenaDef): boolean {
+  if (p.x < 0 || p.y < 0 || p.x > arena.width || p.y > arena.height) return true;
+  return arena.obstacles.some((o) => o.blocksShots !== false && distanceToObstacle(p, o) < 0);
 }
 
 /**

@@ -6,7 +6,8 @@ const DISTANCE = 34;
 
 export class GameCamera {
   readonly camera: THREE.PerspectiveCamera;
-  private readonly offset: THREE.Vector3;
+  private offset: THREE.Vector3;
+  private following = true;
   private readonly focus = new THREE.Vector3();
 
   constructor(aspect: number) {
@@ -24,8 +25,18 @@ export class GameCamera {
     this.camera.lookAt(this.focus);
   }
 
+  /** Übersicht über die ganze Karte (Entwicklermodus ?overview): weit weg, folgt nicht. */
+  overview(x: number, y: number, distance: number): void {
+    this.offset.setLength(distance);
+    this.camera.far = distance * 3;
+    this.camera.updateProjectionMatrix();
+    this.following = false;
+    this.lookAt(x, y);
+  }
+
   /** Weich zum Ziel nachführen. */
   follow(x: number, y: number, dt: number): void {
+    if (!this.following) return;
     const k = 1 - Math.exp(-8 * dt);
     this.lookAt(this.focus.x + (x - this.focus.x) * k, this.focus.z + (y - this.focus.z) * k);
   }

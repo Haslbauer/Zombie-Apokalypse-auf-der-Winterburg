@@ -3,13 +3,16 @@ import type { SimContext } from './context';
 import { Grid, resolveObstacles } from './grid';
 import { applyInputs, updateHero } from './heroes';
 import { pushApart } from './movement';
+import { updateObjectives } from './objectives';
 import { SpatialHash } from './spatial';
-import { DT, type Command, type GameData, type GameState, type Hero, type Zombie } from './types';
+import { type ArenaDef, DT, type Command, type GameData, type GameState, type Hero, type Zombie } from './types';
 import { updateWaves } from './waves';
 import { updateZombies } from './zombies';
 
-/** Das Distanzfeld der Zombies wird alle so viele Ticks neu berechnet. */
+/** Das Distanzfeld zu den Helden wird alle so viele Ticks neu berechnet. */
 const FIELD_TICKS = 5;
+/** Zombies, die in diesem Abstand um ein Ziel stehen, können es angreifen (Saatradius der Felder). */
+const OBJECTIVE_SEED = 0.9;
 
 export interface SimulationOptions {
   seed: number;
@@ -23,6 +26,8 @@ export interface SimulationOptions {
  */
 export class Simulation implements SimContext {
   readonly grid: Grid;
+  readonly arena: ArenaDef;
+  readonly objectiveFields = new Map<string, Float32Array>();
   readonly heroDefs: Map<string, GameData['heroes'][number]>;
   readonly zombieDefs: Map<string, GameData['zombies'][number]>;
   state: GameState;
@@ -31,7 +36,18 @@ export class Simulation implements SimContext {
   private readonly neighbors: Zombie[] = [];
 
   constructor(readonly data: GameData, options: SimulationOptions) {
-    this.grid = new Grid(data.arena);
+    // Ziele (Herz, Bienenstock) sind feste Hindernisse für Laufen und Schüsse.
+    this.arena = {
+      ...data.arena,
+      obstacles: [
+        ...data.arena.obstacles,
+        ...data.arena.objectives.map((o) => ({ kind: 'circle' as const, x: o.x, y: o.y, r: o.radius, look: 'objective' as const })),
+      ],
+    };
+    this.grid = new Grid(this.arena);
+    for (const o of data.arena.objectives) {
+      this.objectiveFields.set(o.id, this.grid.distanceField([o], o.radius + OBJECTIVE_SEED));
+    }
     this.heroDefs = new Map(data.heroes.map((h) => [h.id, h]));
     this.zombieDefs = new Map(data.zombies.map((z) => [z.id, z]));
 
@@ -43,7 +59,24 @@ export class Simulation implements SimContext {
       heroes: [],
       zombies: [],
       projectiles: [],
-      wave: { number: 1, phase: 'pause', timer: data.waves.firstPauseDuration, queue: [], spawnTimer: 0 },
+      objectives: data.arena.objectives.map((o) => ({
+        id: o.id,
+        pos: { x: o.x, y: o.y },
+        radius: o.radius,
+        hp: o.hp,
+        maxHp: o.hp,
+        destroyed: false,
+        aggroUntil: 0,
+        stingTimer: 0,
+      })),
+      wave: {
+        number: 1,
+        phase: 'pause',
+        timer: data.waves.firstPauseDuration,
+        queue: [],
+        spawnTimer: 0,
+        breached: false,
+      },
       kills: 0,
       gameOver: false,
       events: [],
@@ -65,6 +98,8 @@ export class Simulation implements SimContext {
         attackTimer: 0,
         input: { move: { x: 0, y: 0 }, aim: { x: start.x + slot * 1.5, y: start.y - 5 }, attack: false },
         alive: true,
+        respawnAt: 0,
+        slot,
       });
     });
   }
@@ -78,7 +113,10 @@ export class Simulation implements SimContext {
     state.time += DT;
 
     applyInputs(this, commands);
-    for (const h of state.heroes) updateHero(this, h);
+    for (const h of state.heroes) {
+      if (!h.alive && state.time >= h.respawnAt) this.respawn(h);
+      updateHero(this, h);
+    }
 
     if (state.tick % FIELD_TICKS === 1 || !this.field) {
       const targets = state.heroes.filter((h) => h.alive).map((h) => h.pos);
@@ -86,9 +124,21 @@ export class Simulation implements SimContext {
     }
     updateZombies(this, this.field);
     updateProjectiles(this);
+    updateObjectives(this);
     state.zombies = state.zombies.filter((z) => z.hp > 0);
     this.resolveCollisions();
     updateWaves(this);
+  }
+
+  /** Gefallenen Helden im Innenhof wiederbeleben. */
+  private respawn(h: Hero): void {
+    const start = this.data.arena.heroStart;
+    h.alive = true;
+    h.hp = h.maxHp;
+    h.attackTimer = 0;
+    h.pos = { x: start.x + h.slot * 1.5, y: start.y };
+    resolveObstacles(h.pos, h.radius, this.arena);
+    this.state.events.push({ type: 'respawn', id: h.id });
   }
 
   hero(id: number): Hero | undefined {
@@ -98,7 +148,7 @@ export class Simulation implements SimContext {
   /** Zombies weichen einander und den Helden aus, niemand steckt in Hindernissen. */
   private resolveCollisions(): void {
     const { zombies, heroes } = this.state;
-    const arena = this.data.arena;
+    const arena = this.arena;
     this.hash.rebuild(zombies);
     for (const z of zombies) {
       for (const other of this.hash.query(z.pos, z.radius * 2 + 0.5, this.neighbors)) {
@@ -110,6 +160,6 @@ export class Simulation implements SimContext {
       for (const z of this.hash.query(h.pos, h.radius + 1, this.neighbors)) pushApart(h, z, 0);
     }
     for (const z of zombies) resolveObstacles(z.pos, z.radius, arena);
-    for (const h of heroes) resolveObstacles(h.pos, h.radius, arena);
+    for (const h of heroes) if (h.alive) resolveObstacles(h.pos, h.radius, arena);
   }
 }

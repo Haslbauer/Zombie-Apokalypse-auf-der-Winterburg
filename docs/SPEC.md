@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v0.3)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v0.4)
 
 Stand: 30.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v0.4: Karte nach der Skizze (echte Maße, U-Haus mit Innenhof als Herz der Base, Bunker als Zombie-Spawn, Heckenlücke Süd, Hang Ost, Bienenstock als zweites Ziel). Helden-Spawn im Innenhof, tote Helden respawnen.
 Änderungen v0.3: Steuerung wie in Supervive (WASD laufen, Maus zielt, Angriff Richtung Mauszeiger, kein Auto-Attack, keine Zielauswahl). Fähigkeiten auf 1–4, Items auf R und T, alle Tasten frei belegbar. Nahkampf-Reichweite 2,5 m im 120°-Bogen.
 Änderungen v0.2: Veraltete Verweise auf Sanitäter und Brecher ersetzt.
 Mit "Vorschlag" markierte Punkte sind noch nicht entschieden, alles andere ist festgelegt.
@@ -155,10 +156,11 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 
 ## 8. Niederlage
 
-- Das Haus hat einen gut sichtbaren Lebensbalken. Fällt er auf 0, ist das Spiel verloren.
-- Ein Durchbruch ist keine sofortige Niederlage. Die Zombies brauchen Zeit, das Haus zu beschädigen, und die Helden können sie wegkämpfen. Ohne Gegenwehr führt der Durchbruch aber zur Niederlage.
-- Nach LoL-Vorbild (Nexus): Das Haus regeneriert langsam von selbst, in den Pausenphasen schneller. Keine Reparatur im Shop.
-- Gefallene Helden respawnen nach Timer, der mit der Welle wächst, am Spieler-Spawn hinter dem Haus und müssen von dort nach vorne laufen.
+- Das **Herz** im Innenhof hat einen gut sichtbaren Lebensbalken. Fällt er auf 0, ist das Spiel verloren.
+- Ein Durchbruch (Zombie erreicht das Herz) ist keine sofortige Niederlage. Die Zombies brauchen Zeit, das Herz zu beschädigen, und die Helden können sie wegkämpfen. Ohne Gegenwehr führt der Durchbruch aber zur Niederlage.
+- Nach LoL-Vorbild (Nexus): Das Herz regeneriert langsam von selbst, in den Pausenphasen schneller. Keine Reparatur im Shop.
+- Der **Bienenstock** ist ein zweites Ziel: Ein Teil der Zombies läuft ihn an. Normalerweise stechen die Bienen nur Zombies in der Nähe. Sobald der Stock Schaden bekommt, werden sie für einige Sekunden wütend und stechen alle in der Nähe, auch Helden. Ein zerstörter Stock ist keine Niederlage, die Bienen sind dann aber weg.
+- Gefallene Helden respawnen nach einem Timer, der mit der Welle wächst (5 s + 1 s pro Welle), im Innenhof und müssen von dort durch den Durchgang nach draußen.
 
 ## 9. Gold, Shop und Items
 
@@ -184,18 +186,21 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 
 ## 11. Karte
 
-- Winterburg mit Vorgärten, nachgebaut anhand des Satellitenbilds (Haus markiert). 1 Spieleinheit = 1 Meter.
-- Das Haus ist 15 x 15 m groß und ein geschlossener Block, gekämpft wird nur draußen.
-- Das Haus steht im westlichen Teil des Grundstücks. Die Rückseite zeigt nach Westen und hat nur einen schmalen Streifen (ca. 5 m). Die Vorderseite zeigt nach Osten, dort liegt der große Vorgarten.
-- Spieler-Spawn: hinter dem Haus (Westen). Von dort laufen die Helden außen ums Haus nach vorne zu den Zugängen.
-- Grundstücksgröße: noch offen. Die Skizze (Grundstück ca. 42 x 48 m) ist nur eine Schätzung.
-- Zombie-Zugänge: drei Richtungen laut Satellitenbild (Norden, Osten, Süden). Vorschlag: Der Westen ist durch Hecke und Bäume geschlossen.
-- Jeder Zugang ist eine Engstelle zwischen Hecken und Bäumen, also ein Verteidigungspunkt. Die Zombies laufen von dort zum Haus.
-- Garten rund ums Haus: Hochbeete und Bäume (Hindernisse), Blumenrabatten (passierbar, Dekoration), Hecken und Zaun (Wände), Kieswege
-- Die Hochbeete liegen seitlich vom Haus (Nord- und Südseite, Richtung Vorderseite), nicht auf der Rückseite
-- Weitere Hindernisse wie Auto und Mülltonnen dienen als Deckung und Wegsperren
-- Karte als Tilemap/JSON (z. B. mit Tiled) mit Ebenen für Boden, Kollision, Deckung, Spawnpunkte und Haustür
-- Grafikstil offen (Low-Poly, Pixel-Art, realistisch). Referenzbilder folgen.
+Grundlage ist die Skizze auf dem Lageplan (`assets/reference/karte-skizze.jpg`). Umgesetzt in `data/map.json`, 1 Spieleinheit = 1 Meter, Norden oben.
+
+- Karte ca. 66 x 75 m (echte Maße aus dem Lageplan)
+- Haus in U-Form (ca. 21 x 24 m) mit Westflügel, Ostflügel und Südblock. Das Haus selbst ist nicht begehbar.
+- **Innenhof = Herz der Base.** Dort steht das Herz. Der Hof ist nur über einen schmalen Durchgang (ca. 2,7 m) von Süden zwischen Westflügel und Südblock erreichbar: die wichtigste Engstelle.
+- Helden starten im Innenhof und erscheinen dort nach dem Tod wieder.
+- **Bienenstock** nordwestlich vom Haus: zweites Ziel der Zombies (siehe Abschnitt 8)
+- Hochbeete westlich vom Haus (blockieren das Laufen, nicht aber Schüsse)
+- Zombie-Zugänge:
+  1. **Bunker** unten links im Garten: Zombies kommen aus der Bunkertür (Ostseite)
+  2. **Heckenlücke Süd** in der Mitte der Südhecke
+  3. **Zuwegung Ost:** Die Zombies laufen den Hang hinauf und sind dort langsamer (halbes Tempo), oben auf der Ebene wieder normal schnell
+- Hecken im Norden, Osten und Süden, Zäune an der Zuwegung und zum Nachbargrundstück (nordöstlich, nicht begehbar), Bäume als Hindernisse
+- Spawnpunkte haben Gewichte (wie oft dort Zombies erscheinen), alles in `data/map.json`
+- Grafikstil: stilisiert, Low-Poly (siehe Abschnitt 3)
 
 ## 12. Meilensteine
 
@@ -210,7 +215,6 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 ## 13. Offene Fragen
 
 - Namen und Optik der Helden (Entwürfe in Abschnitt 6b) und die letzten 2 Heldenslots
-- Grundstücksmaße (Haus steht fest: 15 x 15 m)
 
 Nach LoL-Vorbild bereits entschieden: Haus-Regeneration wie beim Nexus, Spielziel Welle 30, Grafikstil, Hosting erst bei Meilenstein 6. Lebenspunkte des Hauses, Zombieschaden und alle anderen Zahlen sind Platzhalter in den JSON-Dateien und werden beim Spielen balanciert.
 

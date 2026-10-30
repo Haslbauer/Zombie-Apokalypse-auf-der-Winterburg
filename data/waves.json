@@ -7,8 +7,30 @@
   "firstPauseDuration": 5,
   "pauseDuration": 10,
   "mix": [
-    { "fromWave": 1, "weights": { "walker": 1 } },
-    { "fromWave": 2, "weights": { "walker": 4, "runner": 1 } },
-    { "fromWave": 4, "weights": { "walker": 4, "runner": 2, "brute": 1 } }
-  ]
+    {
+      "fromWave": 1,
+      "weights": {
+        "walker": 1
+      }
+    },
+    {
+      "fromWave": 2,
+      "weights": {
+        "walker": 4,
+        "runner": 1
+      }
+    },
+    {
+      "fromWave": 4,
+      "weights": {
+        "walker": 4,
+        "runner": 2,
+        "brute": 1
+      }
+    }
+  ],
+  "targetWeights": {
+    "heart": 0.7,
+    "hive": 0.3
+  }
 }

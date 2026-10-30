@@ -1,4 +1,5 @@
 import { gameData } from '../../src/gameData';
+import testArena from '../fixtures/test-arena.json';
 import { Simulation } from '../../src/sim/game';
 import type { Command, GameData } from '../../src/sim/types';
 import type { Vec2 } from '../../src/sim/vec';
@@ -8,6 +9,14 @@ export function testData(patch?: (d: GameData) => void): GameData {
   const d: GameData = structuredClone(gameData);
   patch?.(d);
   return d;
+}
+
+/** Spieldaten mit der kleinen M1-Testarena (40 × 40 m, keine Ziele) statt der Winterburg. */
+export function arenaData(patch?: (d: GameData) => void): GameData {
+  return testData((d) => {
+    d.arena = structuredClone(testArena) as GameData['arena'];
+    patch?.(d);
+  });
 }
 
 export function makeSim(heroId = 'nahkampf', seed = 1, data = testData()): Simulation {
@@ -33,6 +42,7 @@ export function placeZombie(sim: Simulation, defId: string, x: number, y: number
     attackTimer: 0,
     damage: def.damage,
     targetId: null,
+    objectiveId: 'heart',
   };
   sim.state.zombies.push(z);
   return z;

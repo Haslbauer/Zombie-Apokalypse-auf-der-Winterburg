@@ -51,7 +51,7 @@ export function parseGameData(raw: {
     str(z, 'id', p);
     str(z, 'name', p);
     str(z, 'color', p);
-    for (const k of ['hp', 'speed', 'radius', 'damage', 'attackRange', 'attackCooldown']) num(z, k, p);
+    for (const k of ['hp', 'speed', 'radius', 'damage', 'attackRange', 'attackCooldown', 'aggroRange']) num(z, k, p);
     zombieIds.add(z?.id);
   });
 
@@ -75,9 +75,34 @@ export function parseGameData(raw: {
   for (const k of ['width', 'height']) num(a, k, 'arena', 1);
   num(a, 'cellSize', 'arena', 0.1);
   list(a?.spawnPoints, 'arena.spawnPoints').forEach((s, i) => {
-    num(s, 'x', `arena.spawnPoints[${i}]`);
-    num(s, 'y', `arena.spawnPoints[${i}]`);
+    const p = `arena.spawnPoints[${i}]`;
+    str(s, 'id', p);
+    for (const k of ['x', 'y', 'weight']) num(s, k, p);
   });
+  if (!Array.isArray(a?.slowZones)) errors.push('arena.slowZones: Liste erwartet');
+  (Array.isArray(a?.slowZones) ? a.slowZones : []).forEach((z: any, i: number) => {
+    for (const k of ['x', 'y', 'w', 'h', 'factor']) num(z, k, `arena.slowZones[${i}]`);
+  });
+  num(a?.respawn, 'base', 'arena.respawn');
+  num(a?.respawn, 'perWave', 'arena.respawn');
+  if (!Array.isArray(a?.objectives)) errors.push('arena.objectives: Liste erwartet');
+  const objectiveIds = new Set<string>();
+  (Array.isArray(a?.objectives) ? a.objectives : []).forEach((o: any, i: number) => {
+    const p = `arena.objectives[${i}]`;
+    str(o, 'id', p);
+    str(o, 'name', p);
+    for (const k of ['x', 'y', 'radius', 'regen', 'pauseRegen']) num(o, k, p);
+    num(o, 'hp', p, 1);
+    if (typeof o?.loseOnDestroy !== 'boolean') errors.push(`${p}.loseOnDestroy: true oder false erwartet`);
+    if (o?.bees !== undefined) {
+      for (const k of ['damage', 'range', 'aggroDuration']) num(o.bees, k, `${p}.bees`);
+      num(o.bees, 'interval', `${p}.bees`, 0.05);
+    }
+    objectiveIds.add(o?.id);
+  });
+  for (const id of Object.keys(w?.targetWeights ?? {})) {
+    if (objectiveIds.size > 0 && !objectiveIds.has(id)) errors.push(`waves.targetWeights.${id}: unbekanntes Ziel`);
+  }
   num(a?.heroStart, 'x', 'arena.heroStart');
   num(a?.heroStart, 'y', 'arena.heroStart');
   (Array.isArray(a?.obstacles) ? a.obstacles : []).forEach((o: any, i: number) => {
@@ -89,6 +114,7 @@ export function parseGameData(raw: {
       num(o, 'w', p);
       num(o, 'h', p);
     } else errors.push(`${p}.kind: "circle" oder "rect" erwartet`);
+    if (o?.blocksShots !== undefined && typeof o.blocksShots !== 'boolean') errors.push(`${p}.blocksShots: true oder false erwartet`);
   });
 
   if (errors.length > 0) throw new Error(`Ungültige Spieldaten:\n- ${errors.join('\n- ')}`);

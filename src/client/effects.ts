@@ -29,6 +29,15 @@ export class Effects {
     });
   }
 
+  /** Eine Biene fliegt vom Stock zum gestochenen Ziel. */
+  sting(from: Vec2, to: Vec2, angry: boolean): void {
+    const material = new THREE.MeshBasicMaterial({ color: angry ? 0xff3b30 : 0xffd23f });
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 4), material);
+    this.add(mesh, 0.25, (t) => {
+      mesh.position.set(from.x + (to.x - from.x) * t, 1.5 - t * 0.5 + Math.sin(t * Math.PI) * 0.6, from.y + (to.y - from.y) * t);
+    });
+  }
+
   /** Grüne Wolke, wenn ein Zombie fällt. */
   deathPuff(p: Vec2): void {
     const material = new THREE.MeshLambertMaterial({ color: 0x9fd36a, transparent: true });

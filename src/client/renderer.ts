@@ -1,7 +1,9 @@
 import * as THREE from 'three';
-import type { ArenaDef, AttackDef, GameData, GameState, Hero, Unit, Zombie } from '../sim/types';
+import type { AttackDef, GameData, GameState, Hero, Unit, Zombie } from '../sim/types';
 import type { Vec2 } from '../sim/vec';
 import { GameCamera } from './camera';
+import { buildMap } from './map';
+import { ObjectiveView } from './objectives';
 
 /** Position und Blickrichtung eines Objekts im vorherigen Tick (für Interpolation). */
 export interface Snapshot {
@@ -99,6 +101,7 @@ export class GameRenderer {
   private readonly raycaster = new THREE.Raycaster();
   private readonly groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   private aimIndicator: THREE.Mesh | null = null;
+  private readonly objectives = new Map<string, ObjectiveView>();
 
   constructor(container: HTMLElement, private readonly data: GameData) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -123,7 +126,12 @@ export class GameRenderer {
     Object.assign(sun.shadow.camera, { left: -s, right: s, top: s, bottom: -s, near: 1, far: 100 });
     this.scene.add(sun, sun.target);
 
-    this.buildArena(data.arena);
+    buildMap(this.scene, data.arena);
+    for (const def of data.arena.objectives) {
+      const view = new ObjectiveView(def);
+      this.objectives.set(def.id, view);
+      this.scene.add(view.group);
+    }
 
     window.addEventListener('resize', () => {
       this.renderer.setSize(container.clientWidth, container.clientHeight);
@@ -133,67 +141,6 @@ export class GameRenderer {
 
   get canvas(): HTMLCanvasElement {
     return this.renderer.domElement;
-  }
-
-  private buildArena(arena: ArenaDef): void {
-    const { width, height } = arena;
-    // Umgebung außerhalb der Arena, etwas dunkler.
-    const outside = new THREE.Mesh(
-      new THREE.PlaneGeometry(width * 4, height * 4).rotateX(-Math.PI / 2),
-      new THREE.MeshLambertMaterial({ color: 0x4f7f3a }),
-    );
-    outside.position.set(width / 2, -0.02, height / 2);
-    outside.receiveShadow = true;
-    this.scene.add(outside);
-
-    const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(width, height).rotateX(-Math.PI / 2),
-      new THREE.MeshLambertMaterial({ color: 0x74b350 }),
-    );
-    ground.position.set(width / 2, 0, height / 2);
-    ground.receiveShadow = true;
-    this.scene.add(ground);
-
-    // Niedriger Zaun als Arenagrenze.
-    const fenceMat = new THREE.MeshLambertMaterial({ color: 0x8a6a45 });
-    const fence = (w: number, d: number, x: number, z: number) => {
-      const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.5, d), fenceMat);
-      m.position.set(x, 0.25, z);
-      m.castShadow = m.receiveShadow = true;
-      this.scene.add(m);
-    };
-    fence(width, 0.2, width / 2, -0.1);
-    fence(width, 0.2, width / 2, height + 0.1);
-    fence(0.2, height, -0.1, height / 2);
-    fence(0.2, height, width + 0.1, height / 2);
-
-    // Spawnpunkte als dunkle Erdflecken.
-    const dirt = new THREE.MeshLambertMaterial({ color: 0x5b4632 });
-    for (const sp of arena.spawnPoints) {
-      const m = new THREE.Mesh(new THREE.CircleGeometry(2, 24).rotateX(-Math.PI / 2), dirt);
-      m.position.set(sp.x, 0.01, sp.y);
-      m.receiveShadow = true;
-      this.scene.add(m);
-    }
-
-    const hedge = new THREE.MeshLambertMaterial({ color: 0x2f6b2a });
-    const trunk = new THREE.MeshLambertMaterial({ color: 0x6b4a2b });
-    const crown = new THREE.MeshLambertMaterial({ color: 0x3e8f3a });
-    for (const o of arena.obstacles) {
-      if (o.kind === 'rect') {
-        const m = new THREE.Mesh(new THREE.BoxGeometry(o.w, 1.3, o.h), hedge);
-        m.position.set(o.x, 0.65, o.y);
-        m.castShadow = m.receiveShadow = true;
-        this.scene.add(m);
-      } else {
-        const t = new THREE.Mesh(new THREE.CylinderGeometry(o.r * 0.25, o.r * 0.3, 1.6, 8), trunk);
-        t.position.set(o.x, 0.8, o.y);
-        const c = new THREE.Mesh(new THREE.IcosahedronGeometry(o.r * 1.15, 0), crown);
-        c.position.set(o.x, 1.6 + o.r * 0.8, o.y);
-        t.castShadow = c.castShadow = true;
-        this.scene.add(t, c);
-      }
-    }
   }
 
   /** Alle Einheiten entfernen (neues Spiel). */
@@ -248,6 +195,10 @@ export class GameRenderer {
         view.dispose();
         this.units.delete(id);
       }
+    }
+
+    for (const obj of state.objectives) {
+      this.objectives.get(obj.id)?.update(obj, state.time, state.time < obj.aggroUntil, camera, dt);
     }
 
     const seenP = new Set<number>();
@@ -325,6 +276,11 @@ export class GameRenderer {
   /** Treffer-Aufblitzen einer Einheit. */
   flash(id: number): void {
     this.units.get(id)?.hit();
+  }
+
+  /** Treffer-Aufblitzen eines Ziels. */
+  flashObjective(id: string): void {
+    this.objectives.get(id)?.hit();
   }
 
   /** Gerenderte Position einer Einheit (interpoliert). */

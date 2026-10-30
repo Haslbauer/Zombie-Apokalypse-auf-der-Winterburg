@@ -192,3 +192,50 @@ html, body {
   justify-content: center;
   flex-wrap: wrap;
 }
+.hud-objective {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.hud-objective-bar {
+  width: 90px;
+  height: 10px;
+  background: #2a1c1c;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.hud-objective-fill {
+  height: 100%;
+}
+.hud-objective-fill.heart {
+  background: #ff5c8a;
+}
+.hud-objective-fill.hive {
+  background: #ffc93c;
+}
+.hud-objective.angry span {
+  color: #ff6b5e;
+}
+.hud-objective.destroyed {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+.hud-respawn {
+  position: absolute;
+  top: 40%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+@media (max-width: 900px) {
+  .hud-top {
+    flex-wrap: wrap;
+    justify-content: center;
+    white-space: normal;
+    width: calc(100% - 56px);
+  }
+}

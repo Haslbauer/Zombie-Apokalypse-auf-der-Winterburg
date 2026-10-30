@@ -14,6 +14,8 @@ export class Hud {
   private readonly waveLabel = el('div', 'hud-wave');
   private readonly waveInfo = el('div', 'hud-wave-info');
   private readonly kills = el('div', 'hud-kills');
+  private readonly objectiveBars = new Map<string, { fill: HTMLElement; box: HTMLElement }>();
+  private readonly respawn = el('div', 'hud-respawn');
   private readonly bottom = el('div', 'hud-bottom');
   private readonly heroName = el('div', 'hud-hero-name');
   private readonly hpFill = el('div', 'hud-hp-fill');
@@ -29,16 +31,26 @@ export class Hud {
     private readonly bindings: Keybindings,
   ) {
     this.top.append(this.waveLabel, this.waveInfo, this.kills);
+    for (const o of data.arena.objectives) {
+      const box = el('div', 'hud-objective');
+      const bar = el('div', 'hud-objective-bar');
+      const fill = el('div', `hud-objective-fill ${o.bees ? 'hive' : 'heart'}`);
+      bar.append(fill);
+      box.append(el('span', '', o.name), bar);
+      this.top.append(box);
+      this.objectiveBars.set(o.id, { fill, box });
+    }
     const hp = el('div', 'hud-hp');
     hp.append(this.hpFill, this.hpText);
     this.bottom.append(this.heroName, hp);
     this.updateHelp();
-    root.append(this.top, this.bottom, this.banner, this.help, this.overlay);
+    root.append(this.top, this.bottom, this.banner, this.respawn, this.help, this.overlay);
     this.showInGame(false);
   }
 
   private showInGame(visible: boolean): void {
     for (const e of [this.top, this.bottom, this.help]) e.style.display = visible ? '' : 'none';
+    if (!visible) this.respawn.style.display = 'none';
   }
 
   /** Startbildschirm mit Heldenwahl. */
@@ -64,7 +76,7 @@ export class Hud {
     this.overlay.style.display = '';
   }
 
-  showGameOver(state: GameState, onRestart: () => void): void {
+  showGameOver(state: GameState, reason: string, onRestart: () => void): void {
     delete this.overlay.dataset.menu;
     this.overlay.replaceChildren();
     const box = el('div', 'hud-box');
@@ -72,6 +84,7 @@ export class Hud {
     btn.addEventListener('click', onRestart);
     box.append(
       el('h1', '', 'Game Over'),
+      el('h2', '', reason),
       el('p', '', `Erreicht: Welle ${state.wave.number} · ${state.kills} Zombies erledigt · ${formatTime(state.time)}`),
       btn,
     );
@@ -164,6 +177,16 @@ export class Hud {
     if (h) {
       this.hpFill.style.width = `${(100 * h.hp) / h.maxHp}%`;
       this.hpText.textContent = `${Math.ceil(h.hp)} / ${h.maxHp}`;
+      const dead = !h.alive && !state.gameOver;
+      this.respawn.style.display = dead ? '' : 'none';
+      if (dead) this.respawn.textContent = `Wiederbelebung in ${Math.ceil(h.respawnAt - state.time)} s`;
+    }
+    for (const o of state.objectives) {
+      const bar = this.objectiveBars.get(o.id);
+      if (!bar) continue;
+      bar.fill.style.width = `${(100 * o.hp) / o.maxHp}%`;
+      bar.box.classList.toggle('destroyed', o.destroyed);
+      bar.box.classList.toggle('angry', state.time < o.aggroUntil);
     }
 
     if (this.bannerTimer > 0) {

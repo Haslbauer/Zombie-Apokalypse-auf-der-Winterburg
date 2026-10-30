@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { applyDamage } from '../../src/sim/combat';
-import { input, makeSim, noWaves, placeZombie, run, testData } from './helpers';
+import { arenaData, input, makeSim, noWaves, placeZombie, run } from './helpers';
 
 const still = { x: 0, y: 0 };
 
 /** Simulation mit einem Helden ohne Wellen; Zombies stehen still. */
 function setup(heroId: 'nahkampf' | 'fernkampf') {
-  const sim = makeSim(heroId, 1, testData(noWaves));
+  const sim = makeSim(heroId, 1, arenaData(noWaves));
   const h = sim.state.heroes[0];
   const zombie = (dx: number, dy: number, defId = 'brute') => {
     const z = placeZombie(sim, defId, h.pos.x + dx, h.pos.y + dy, 1000);
@@ -20,7 +20,7 @@ function setup(heroId: 'nahkampf' | 'fernkampf') {
 
 describe('Kampf', () => {
   it('Schaden zieht Leben ab, Tod zählt einen Kill und entfernt den Zombie', () => {
-    const sim = makeSim('nahkampf', 1, testData(noWaves));
+    const sim = makeSim('nahkampf', 1, arenaData(noWaves));
     const z = placeZombie(sim, 'walker', 5, 5, 50);
     expect(applyDamage(sim, z, 20)).toBe(false);
     expect(z.hp).toBe(30);
@@ -109,21 +109,24 @@ describe('Kampf', () => {
     expect(sim.state.projectiles).toHaveLength(0);
   });
 
-  it('Zombies greifen den Helden an, bei 0 Leben ist das Spiel vorbei', () => {
-    const sim = makeSim('nahkampf', 1, testData(noWaves));
+  it('Zombies greifen den Helden an; ein gefallener Held kommt nach dem Timer zurück', () => {
+    const data = arenaData(noWaves);
+    const sim = makeSim('nahkampf', 1, data);
     const h = sim.state.heroes[0];
     h.hp = 20;
     placeZombie(sim, 'brute', h.pos.x + 1.25, h.pos.y, 1e6);
-    let over = false;
-    for (let t = 0; t < 100 && !over; t++) {
-      sim.step();
-      over = sim.state.gameOver;
-    }
-    expect(over).toBe(true);
+    let t = 0;
+    while (h.alive && t++ < 100) sim.step();
     expect(h.alive).toBe(false);
     expect(h.hp).toBe(0);
-    const tick = sim.state.tick;
-    sim.step();
-    expect(sim.state.tick).toBe(tick);
+    expect(sim.state.gameOver).toBe(false);
+    const wait = data.arena.respawn.base;
+    expect(h.respawnAt).toBeCloseTo(sim.state.time + wait, 5);
+
+    sim.state.zombies = [];
+    run(sim, wait * 20 + 1);
+    expect(h.alive).toBe(true);
+    expect(h.hp).toBe(h.maxHp);
+    expect(h.pos).toEqual(data.arena.heroStart);
   });
 });
