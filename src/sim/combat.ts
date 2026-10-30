@@ -1,6 +1,8 @@
 import type { SimContext } from './context';
 import { shotBlocked } from './grid';
 import { kitOf } from './heroes/index';
+import { awardGold } from './economy';
+import { itemStats } from './items';
 import { awardXp, heroDamage } from './progression';
 import { absorbWithShield, buffSum } from './status';
 import { DT, type Hero, type Projectile, type Zombie } from './types';
@@ -27,7 +29,10 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
 
   if ('alive' in target) {
     target.lastCombatAt = state.time;
-    const reduction = Math.min(0.8, buffSum(target, 'damageReduction') + (kitOf(target.defId).damageReduction?.(ctx, target) ?? 0));
+    const reduction = Math.min(
+      0.8,
+      buffSum(target, 'damageReduction') + itemStats(ctx, target).damageReduction + (kitOf(target.defId).damageReduction?.(ctx, target) ?? 0),
+    );
     amount = absorbWithShield(target, amount * (1 - reduction));
     if (amount <= 0) return 0;
   } else if (state.time < target.st.sleepUntil) {
@@ -54,6 +59,7 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
   } else {
     state.kills++;
     awardXp(ctx, target);
+    awardGold(ctx, target);
   }
   return dealt;
 }
@@ -71,12 +77,13 @@ export function heroAttack(ctx: SimContext, h: Hero, cooldown: number): void {
   const attack = ctx.heroDefs.get(h.defId)!.attack;
   h.attackTimer = cooldown;
   const dir = { x: Math.cos(h.facing), y: Math.sin(h.facing) };
+  const range = attack.range * (1 + itemStats(ctx, h).range);
 
   if (attack.type === 'melee') {
     const arc = ((attack.arc ?? 90) * Math.PI) / 180;
-    ctx.state.events.push({ type: 'swing', id: h.id, facing: h.facing, range: attack.range, arc });
+    ctx.state.events.push({ type: 'swing', id: h.id, facing: h.facing, range, arc });
     for (const z of ctx.state.zombies) {
-      if (z.hp > 0 && inArc(h, z, h.facing, arc, attack.range)) {
+      if (z.hp > 0 && inArc(h, z, h.facing, arc, range)) {
         const dealt = heroHit(ctx, h, z, attack.damage);
         kitOf(h.defId).onBasicHit?.(ctx, h, z, dealt);
       }
@@ -89,7 +96,7 @@ export function heroAttack(ctx: SimContext, h: Hero, cooldown: number): void {
     speed: attack.projectileSpeed!,
     damage: attack.damage,
     radius: attack.projectileRadius ?? 0.2,
-    range: attack.range,
+    range,
     tag: 'basic',
     look: attack.look,
   });

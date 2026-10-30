@@ -1,0 +1,9 @@
+{
+  "startGold": 350,
+  "waveBonusBase": 50,
+  "waveBonusPerWave": 10,
+  "goldShareRange": 15,
+  "shopRange": 6,
+  "sellFactor": 0.7,
+  "inventorySlots": 6
+}

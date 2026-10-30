@@ -102,6 +102,55 @@ export interface ZombieDef {
   xp: number;
   /** Elite schlafen kürzer, Bosse sind immun gegen Schlaf (ab M4/M7). */
   rank?: 'normal' | 'elite' | 'boss';
+  /** Gold für den Kill. */
+  gold: number;
+  /** Aussehen (z. B. "walker", "rat", "crawler"). */
+  figure: string;
+  /** Treffer hält den Helden so viele Sekunden fest (Kriecher). */
+  rootOnHit?: number;
+  /** Elite-Fähigkeit mit ihren Werten. */
+  special?: { kind: 'summon' | 'charge'; interval: number; [key: string]: number | string };
+}
+
+export type ItemCategory = 'meleeWeapon' | 'rangedWeapon' | 'armor' | 'stat' | 'consumable';
+
+/** Werte eines Items, alle relativ (0.15 = +15 %) außer regen und hp. */
+export interface ItemStats {
+  damage?: number;
+  attackSpeed?: number;
+  range?: number;
+  damageReduction?: number;
+  moveSpeed?: number;
+  /** Leben pro Sekunde. */
+  regen?: number;
+  /** Zusätzliches maximales Leben. */
+  hp?: number;
+  cooldownReduction?: number;
+}
+
+export interface ItemDef {
+  id: string;
+  name: string;
+  description: string;
+  category: ItemCategory;
+  price: number;
+  stats?: ItemStats;
+  /** Verbrauchsgüter: so viele passen auf einen Platz. */
+  maxStack?: number;
+  /** Verbrauchsgüter: Wirkung beim Benutzen. */
+  use?: { duration: number; heal?: number; haste?: number; attackSpeed?: number };
+}
+
+export interface EconomyDef {
+  startGold: number;
+  waveBonusBase: number;
+  waveBonusPerWave: number;
+  /** Helden in diesem Umkreis um einen getöteten Zombie bekommen das volle Kill-Gold. */
+  goldShareRange: number;
+  /** Einkaufen nur in diesem Umkreis um das Herz. */
+  shopRange: number;
+  sellFactor: number;
+  inventorySlots: number;
 }
 
 export interface WaveMixEntry {
@@ -201,6 +250,8 @@ export interface GameData {
   waves: WaveConfig;
   arena: ArenaDef;
   progression: ProgressionDef;
+  items: ItemDef[];
+  economy: EconomyDef;
 }
 
 // ---------- Befehle (Eingabe; im Mehrspieler das Netzwerkformat) ----------
@@ -220,7 +271,12 @@ export type Command =
   /** Fähigkeit (slot 0–3) Richtung aim auslösen. */
   | { heroId: number; type: 'cast'; slot: number; aim: Vec2 }
   /** Skillpunkt in eine Fähigkeit stecken. */
-  | { heroId: number; type: 'levelUp'; slot: number };
+  | { heroId: number; type: 'levelUp'; slot: number }
+  /** Im Shop kaufen bzw. verkaufen (nur in der Pause im Innenhof). */
+  | { heroId: number; type: 'buy'; itemId: string }
+  | { heroId: number; type: 'sell'; slot: number; consumable?: boolean }
+  /** Verbrauchsgut auf R (0) oder T (1) benutzen. */
+  | { heroId: number; type: 'use'; slot: number };
 
 // ---------- Spielzustand ----------
 
@@ -238,7 +294,19 @@ export interface Unit {
   attackTimer: number;
 }
 
-export type BuffKind = 'haste' | 'attackSpeed' | 'damageReduction' | 'damageMult' | 'unstoppable' | 'invisible' | 'shield' | 'heal';
+export type BuffKind =
+  | 'haste'
+  | 'attackSpeed'
+  | 'damageReduction'
+  | 'damageMult'
+  | 'unstoppable'
+  | 'invisible'
+  | 'shield'
+  | 'heal'
+  /** Kann nicht laufen (Kriecher). */
+  | 'rooted'
+  /** Kann nicht laufen, angreifen oder Fähigkeiten nutzen (Schlächter). */
+  | 'stunned';
 
 /** Zeitlich begrenzte Wirkung auf einem Helden. value: Faktor, Schildpunkte oder Heilung pro Sekunde. */
 export interface Buff {
@@ -295,6 +363,11 @@ export interface Hero extends Unit {
   /** Zähler für Passive (z. B. Treffer bis zum nächsten Effekt). */
   counters: Record<string, number>;
   ball?: Ball;
+  gold: number;
+  /** Waffen und Items (Item-Ids), null = frei. */
+  inventory: (string | null)[];
+  /** Verbrauchsgüter auf R und T. */
+  consumables: ({ itemId: string; count: number } | null)[];
 }
 
 /** Zustände eines Zombies; alle Zeiten sind Spielzeiten, 0 = nicht aktiv. */
@@ -324,6 +397,10 @@ export interface Zombie extends Unit {
   st: ZombieStatus;
   /** Richtung beim Torkeln (geblendet). */
   wander: number;
+  /** Elite: Restzeit bis zur nächsten Spezialfähigkeit. */
+  specialTimer?: number;
+  /** Schlächter: laufender Anlauf. */
+  charge?: { dir: Vec2; remaining: number; hitIds: number[] } | null;
 }
 
 /** Fläche mit Wirkung über Zeit (Dornen, Rauch, Hecke, Block). */
@@ -423,6 +500,12 @@ export type GameEvent =
   | { type: 'beesAngry'; objectiveId: string }
   | { type: 'sting'; objectiveId: string; targetId: number }
   | { type: 'respawn'; id: number }
+  | { type: 'gold'; heroId: number; amount: number; pos?: Vec2 }
+  | { type: 'shop'; heroId: number; action: 'buy' | 'sell' | 'use'; itemId: string }
+  | { type: 'shopDenied'; heroId: number; reason: string }
+  | { type: 'elite'; zombieId: number; defId: string }
+  | { type: 'charge'; zombieId: number; from: Vec2; to: Vec2 }
+  | { type: 'heroStatus'; heroId: number; status: 'rooted' | 'stunned' }
   | { type: 'cast'; heroId: number; slot: number; pos: Vec2 }
   | { type: 'levelUp'; heroId: number; level: number }
   | { type: 'xp'; heroId: number; amount: number }

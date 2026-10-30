@@ -1,0 +1,159 @@
+[
+  {
+    "id": "baseballschlaeger",
+    "name": "Baseballschläger",
+    "description": "+15 % Schaden (Nahkampfwaffe)",
+    "category": "meleeWeapon",
+    "price": 300,
+    "stats": {
+      "damage": 0.15
+    }
+  },
+  {
+    "id": "axt",
+    "name": "Axt",
+    "description": "+30 % Schaden (Nahkampfwaffe)",
+    "category": "meleeWeapon",
+    "price": 750,
+    "stats": {
+      "damage": 0.3
+    }
+  },
+  {
+    "id": "kettensaege",
+    "name": "Kettensäge",
+    "description": "+45 % Angriffstempo, +15 % Schaden (Nahkampfwaffe)",
+    "category": "meleeWeapon",
+    "price": 1100,
+    "stats": {
+      "attackSpeed": 0.45,
+      "damage": 0.15
+    }
+  },
+  {
+    "id": "pistole",
+    "name": "Pistole",
+    "description": "+15 % Schaden (Fernkampfwaffe)",
+    "category": "rangedWeapon",
+    "price": 300,
+    "stats": {
+      "damage": 0.15
+    }
+  },
+  {
+    "id": "schrotflinte",
+    "name": "Schrotflinte",
+    "description": "+35 % Schaden (Fernkampfwaffe)",
+    "category": "rangedWeapon",
+    "price": 800,
+    "stats": {
+      "damage": 0.35
+    }
+  },
+  {
+    "id": "gewehr",
+    "name": "Gewehr",
+    "description": "+20 % Schaden, +25 % Reichweite (Fernkampfwaffe)",
+    "category": "rangedWeapon",
+    "price": 1000,
+    "stats": {
+      "damage": 0.2,
+      "range": 0.25
+    }
+  },
+  {
+    "id": "armbrust",
+    "name": "Armbrust",
+    "description": "+40 % Angriffstempo (Fernkampfwaffe)",
+    "category": "rangedWeapon",
+    "price": 900,
+    "stats": {
+      "attackSpeed": 0.4
+    }
+  },
+  {
+    "id": "lederjacke",
+    "name": "Lederjacke",
+    "description": "10 % weniger Schaden",
+    "category": "armor",
+    "price": 400,
+    "stats": {
+      "damageReduction": 0.1
+    }
+  },
+  {
+    "id": "kettenhemd",
+    "name": "Kettenhemd",
+    "description": "20 % weniger Schaden",
+    "category": "armor",
+    "price": 950,
+    "stats": {
+      "damageReduction": 0.2
+    }
+  },
+  {
+    "id": "laufschuhe",
+    "name": "Laufschuhe",
+    "description": "+12 % Lauftempo",
+    "category": "stat",
+    "price": 350,
+    "stats": {
+      "moveSpeed": 0.12
+    }
+  },
+  {
+    "id": "kraeuterbeutel",
+    "name": "Kräuterbeutel",
+    "description": "+5 Leben pro Sekunde",
+    "category": "stat",
+    "price": 400,
+    "stats": {
+      "regen": 5
+    }
+  },
+  {
+    "id": "lebensamulett",
+    "name": "Lebensamulett",
+    "description": "+200 maximales Leben",
+    "category": "stat",
+    "price": 450,
+    "stats": {
+      "hp": 200
+    }
+  },
+  {
+    "id": "taschenuhr",
+    "name": "Taschenuhr",
+    "description": "−15 % Abklingzeit der Fähigkeiten",
+    "category": "stat",
+    "price": 800,
+    "stats": {
+      "cooldownReduction": 0.15
+    }
+  },
+  {
+    "id": "heiltrank",
+    "name": "Heiltrank",
+    "description": "Heilt 150 Leben über 5 s. Bis zu 5 Stück auf einem Platz.",
+    "category": "consumable",
+    "price": 50,
+    "maxStack": 5,
+    "use": {
+      "duration": 5,
+      "heal": 150
+    }
+  },
+  {
+    "id": "energiedrink",
+    "name": "Energiedrink",
+    "description": "6 s lang +30 % Lauftempo und Angriffstempo. Bis zu 3 Stück.",
+    "category": "consumable",
+    "price": 75,
+    "maxStack": 3,
+    "use": {
+      "duration": 6,
+      "haste": 0.3,
+      "attackSpeed": 0.3
+    }
+  }
+]

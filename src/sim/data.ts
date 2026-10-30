@@ -10,6 +10,8 @@ export function parseGameData(raw: {
   waves: unknown;
   arena: unknown;
   progression: unknown;
+  items: unknown;
+  economy: unknown;
 }): GameData {
   const errors: string[] = [];
   const num = (o: any, key: string, path: string, min = 0): void => {
@@ -145,7 +147,27 @@ export function parseGameData(raw: {
   if (!Array.isArray(pr?.ultLevels) || pr.ultLevels.length !== pr?.ultMaxRank) {
     errors.push('progression.ultLevels: ein Level pro Ultimate-Rang erwartet');
   }
-  zombies.forEach((z, i) => num(z, 'xp', `zombies[${i}]`));
+  zombies.forEach((z, i) => {
+    num(z, 'xp', `zombies[${i}]`);
+    num(z, 'gold', `zombies[${i}]`);
+    str(z, 'figure', `zombies[${i}]`);
+  });
+
+  const categories = ['meleeWeapon', 'rangedWeapon', 'armor', 'stat', 'consumable'];
+  list(raw.items, 'items').forEach((it, i) => {
+    const p = `items[${i}]`;
+    for (const k of ['id', 'name', 'description']) str(it, k, p);
+    if (!categories.includes(it?.category)) errors.push(`${p}.category: eine von ${categories.join(', ')} erwartet`);
+    num(it, 'price', p);
+    for (const [k, v] of Object.entries(it?.stats ?? {})) if (typeof v !== 'number') errors.push(`${p}.stats.${k}: Zahl erwartet`);
+    if (it?.category === 'consumable') {
+      num(it, 'maxStack', p, 1);
+      num(it?.use, 'duration', `${p}.use`, 0.05);
+    }
+  });
+  const eco: any = raw.economy;
+  for (const k of ['startGold', 'waveBonusBase', 'waveBonusPerWave', 'goldShareRange', 'shopRange', 'sellFactor']) num(eco, k, 'economy');
+  num(eco, 'inventorySlots', 'economy', 1);
 
   if (errors.length > 0) throw new Error(`Ungültige Spieldaten:\n- ${errors.join('\n- ')}`);
   return raw as GameData;

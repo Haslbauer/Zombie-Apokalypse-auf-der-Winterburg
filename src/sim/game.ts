@@ -117,6 +117,9 @@ export class Simulation implements SimContext {
         channel: null,
         lastCombatAt: -100,
         counters: {},
+        gold: data.economy.startGold,
+        inventory: Array<string | null>(data.economy.inventorySlots).fill(null),
+        consumables: [null, null],
       };
       this.state.heroes.push(hero);
       kitOf(defId).init?.(this, hero);

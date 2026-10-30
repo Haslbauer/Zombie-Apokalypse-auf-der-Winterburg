@@ -2,6 +2,7 @@ import type { SimContext } from './context';
 import { resolveObstacles } from './grid';
 import { nextRandom, shuffle } from './rng';
 import { emptyStatus } from './status';
+import { awardWaveBonus } from './economy';
 import { DT, type SpawnPoint, type WaveConfig, type ZombieDef } from './types';
 
 /** Anzahl der Zombies in Welle n. */
@@ -73,6 +74,7 @@ export function updateWaves(ctx: SimContext): void {
   }
   if (w.queue.length === 0 && state.zombies.length === 0) {
     state.events.push({ type: 'waveCleared', number: w.number });
+    awardWaveBonus(ctx, w.number);
     w.number++;
     w.phase = 'pause';
     w.timer = cfg.pauseDuration;

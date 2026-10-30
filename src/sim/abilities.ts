@@ -1,6 +1,8 @@
 import { edgeDistance } from './combat';
 import type { SimContext } from './context';
 import { kitOf } from './heroes/index';
+import { itemStats } from './items';
+import { hasBuff } from './status';
 import { DT, type Hero, type RankValue, type Zombie } from './types';
 import { dist, type Vec2 } from './vec';
 
@@ -23,7 +25,7 @@ export function abilityDef(ctx: SimContext, h: Hero, slot: number) {
 
 /** Fähigkeit auslösen, wenn gelernt, bereit und der Held handlungsfähig ist. */
 export function tryCast(ctx: SimContext, h: Hero, slot: number, aim: Vec2): boolean {
-  if (!h.alive || h.dash || h.channel || slot < 0 || slot > 3) return false;
+  if (!h.alive || h.dash || h.channel || slot < 0 || slot > 3 || hasBuff(h, 'stunned')) return false;
   if (h.ranks[slot] <= 0 || h.cooldowns[slot] > 0) return false;
   const ability = abilityDef(ctx, h, slot);
   // Zielpunkt auf die Reichweite begrenzen.
@@ -34,7 +36,7 @@ export function tryCast(ctx: SimContext, h: Hero, slot: number, aim: Vec2): bool
       : { ...aim };
   if (d > 1e-6) h.facing = Math.atan2(aim.y - h.pos.y, aim.x - h.pos.x);
   if (!kitOf(h.defId).cast(ctx, h, slot, target, aim)) return false;
-  h.cooldowns[slot] = rankValue(ability.cooldown, h.ranks[slot]);
+  h.cooldowns[slot] = rankValue(ability.cooldown, h.ranks[slot]) * (1 - Math.min(0.5, itemStats(ctx, h).cooldownReduction));
   ctx.state.events.push({ type: 'cast', heroId: h.id, slot, pos: target });
   return true;
 }

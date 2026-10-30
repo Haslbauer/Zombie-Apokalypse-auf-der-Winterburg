@@ -1,4 +1,5 @@
 import type { SimContext } from './context';
+import { itemStats, refreshMaxHp } from './items';
 import type { Hero, HeroDef, Zombie } from './types';
 import { dist } from './vec';
 
@@ -38,13 +39,9 @@ export function addXp(ctx: SimContext, h: Hero, amount: number): void {
 
 /** Ein Level aufsteigen: Werte wachsen, ein Skillpunkt kommt dazu. */
 export function levelUp(ctx: SimContext, h: Hero): void {
-  const def = ctx.heroDefs.get(h.defId)!;
-  const before = levelStats(def, h.level).maxHp;
   h.level++;
   h.skillPoints++;
-  const after = levelStats(def, h.level).maxHp;
-  h.maxHp = after;
-  if (h.alive) h.hp += after - before;
+  refreshMaxHp(ctx, h);
   ctx.state.events.push({ type: 'levelUp', heroId: h.id, level: h.level });
 }
 
@@ -64,10 +61,10 @@ export function rankUp(ctx: SimContext, h: Hero, slot: number): boolean {
   return true;
 }
 
-/** Schaden eines Helden: Grundwert × Level-Wachstum × Buffs (z. B. Amok). */
+/** Schaden eines Helden: Grundwert × Level-Wachstum × Items × Buffs (z. B. Amok). */
 export function heroDamage(ctx: SimContext, h: Hero, base: number): number {
   const def = ctx.heroDefs.get(h.defId)!;
   let mult = 1;
   for (const b of h.buffs) if (b.kind === 'damageMult') mult *= b.value;
-  return base * levelStats(def, h.level).damageFactor * mult;
+  return base * levelStats(def, h.level).damageFactor * (1 + itemStats(ctx, h).damage) * mult;
 }
