@@ -1,16 +1,23 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v0.1)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v0.2)
 
 Stand: 30.10.2026. Arbeitsgrundlage für Claude Code.
+
+Änderungen v0.2: Steuerung wie in LoL (Klick zum Laufen statt WASD, Q/W/E/R für Fähigkeiten). Veraltete Verweise auf Sanitäter und Brecher ersetzt.
 Mit "Vorschlag" markierte Punkte sind noch nicht entschieden, alles andere ist festgelegt.
 
 ## 1. Vision
 
-Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Haus und Vorgärten, als Karte nachgebaut) gegen Zombiewellen. Perspektive von oben mit LoL-artiger Kamera, Steuerung wie Twin-Stick. Das Haus hat Lebenspunkte: Zombies, die es erreichen, greifen es an. Fällt der Lebensbalken auf 0, ist das Spiel verloren.
+Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Haus und Vorgärten, als Karte nachgebaut) gegen Zombiewellen. Perspektive von oben mit LoL-artiger Kamera und Steuerung wie in League of Legends. Das Haus hat Lebenspunkte: Zombies, die es erreichen, greifen es an. Fällt der Lebensbalken auf 0, ist das Spiel verloren.
 
 ## 2. Festgelegte Entscheidungen
 
 - Browser-Spiel mit 3D-Grafik und fester Schrägkamera von oben, wie in League of Legends und Dota
-- Steuerung: WASD laufen, Maus zielen. Nahkampf und Fernkampf. Vorschlag: Linksklick = Standardangriff, Q/W/E/R = Fähigkeiten
+- Steuerung wie in LoL:
+  - Rechtsklick auf den Boden = dorthin laufen (mit Pfadsuche um Hindernisse)
+  - Rechtsklick auf einen Zombie = hinlaufen und Standardangriff (Auto-Attack, wiederholt)
+  - A + Linksklick = Attack-Move (zum Punkt laufen, unterwegs den nächsten Zombie angreifen), S = Stopp
+  - Q/W/E/R = Fähigkeiten, gezielt mit der Maus
+  - Ob der Standardangriff Nah- oder Fernkampf ist, hängt vom Helden ab (wie in LoL)
 - Levelsystem nach League-of-Legends-Vorbild (XP, Level, Skillpunkte)
 - Gold sammeln und davon Waffen und Items kaufen
 - Zombies kommen in Wellen, werden zahlreicher und stärker, immer wieder stärkere Elite-Zombies
@@ -27,6 +34,7 @@ Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Ha
 - Simulation strikt vom Rendering trennen. Die Spiellogik (Bewegung, Kampf, Zombies, Bots, Wellen) läuft tickbasiert in einem eigenen Modul ohne Browser-Abhängigkeit.
   - Singleplayer: Simulation läuft lokal im Browser, dazu 3 Bots
   - Mehrspieler: dieselbe Simulation läuft auf dem Server
+- Eingaben sind Befehle (laufen zu, angreifen, Attack-Move, Stopp, Fähigkeit), keine Tastenzustände. Genau diese Befehle gehen im Mehrspieler übers Netz.
 - Client-seitige Vorhersage für die eigene Bewegung, damit sich die Steuerung bei Latenz direkt anfühlt
 - Spieldaten (Helden, Items, Zombietypen, Wellen) in JSON-Dateien, damit Balancing ohne Codeänderung geht
 - Hosting: erst bei Meilenstein 6 entscheiden (z. B. Render, Fly.io, oder eigener Rechner zu Hause mit Cloudflare Tunnel). Bis dahin läuft alles lokal.
@@ -147,7 +155,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - Das Haus hat einen gut sichtbaren Lebensbalken. Fällt er auf 0, ist das Spiel verloren.
 - Ein Durchbruch ist keine sofortige Niederlage. Die Zombies brauchen Zeit, das Haus zu beschädigen, und die Helden können sie wegkämpfen. Ohne Gegenwehr führt der Durchbruch aber zur Niederlage.
 - Nach LoL-Vorbild (Nexus): Das Haus regeneriert langsam von selbst, in den Pausenphasen schneller. Keine Reparatur im Shop.
-- Gefallene Helden respawnen nach Timer, der mit der Welle wächst, am Spieler-Spawn hinter dem Haus und müssen von dort nach vorne laufen. Der Sanitäter kann per R sofort wiederbeleben.
+- Gefallene Helden respawnen nach Timer, der mit der Welle wächst, am Spieler-Spawn hinter dem Haus und müssen von dort nach vorne laufen.
 
 ## 9. Gold, Shop und Items
 
@@ -165,7 +173,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - Bot-KI ist klassische Spiel-KI (State Machine oder Behavior Tree), kein Sprachmodell:
   - bleibt in der Nähe von Haus und Team
   - zielt auf nächste oder gefährlichste Zombies
-  - setzt Fähigkeiten nach Abklingzeit und Situation ein (Sanitäter heilt und belebt wieder, Brecher geht nach vorn)
+  - setzt Fähigkeiten nach Abklingzeit und Situation ein (Libero schützt Mitspieler, Taucher geht nach vorn)
   - zieht sich bei wenig Leben zurück
   - kauft im Shop nach Prioritätenliste ein
 - Bots laufen auf dem Server (Mehrspieler) bzw. lokal (Singleplayer)
@@ -187,7 +195,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 
 ## 12. Meilensteine
 
-1. M1: Offline-Prototyp. Eine Arena, ein Held, WASD und Maus, Zombies in Wellen, Nahkampf und Schuss.
+1. M1: Offline-Prototyp. Eine Arena, ein Held (zwei Testhelden: Nah- und Fernkampf), Klicksteuerung wie in LoL, Zombies in Wellen, Nahkampf und Schuss.
 2. M2: Karte Winterburg mit Haus (Lebensbalken), Garten, Hindernissen und den drei Zugängen
 3. M3: Level, XP, Skillpunkte, 5 Helden mit Q/W/E/R
 4. M4: Gold, Shop, Waffen und Items, Elite-Zombies

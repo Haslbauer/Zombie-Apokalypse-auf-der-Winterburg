@@ -1,0 +1,9 @@
+{
+  "//": "Die Simulation muss ohne Browser laufen (später auch auf dem Server): keine DOM-Typen, keine globalen Typpakete.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": []
+  },
+  "include": ["src/sim"]
+}
