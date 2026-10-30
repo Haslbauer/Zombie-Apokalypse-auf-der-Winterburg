@@ -26,6 +26,8 @@ export class GameRenderer {
   private readonly raycaster = new THREE.Raycaster();
   private readonly groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   private aimIndicator: THREE.Mesh | null = null;
+  /** Held des Spielers (grüner Ring); Bots bekommen einen blauen Ring. null = nur Bots. */
+  playerId: number | null = null;
   private readonly objectives = new Map<string, ObjectiveView>();
 
   constructor(container: HTMLElement, private readonly data: GameData) {
@@ -105,7 +107,7 @@ export class GameRenderer {
       if (!h.alive) continue;
       const def = this.data.heroes.find((d) => d.id === h.defId)!;
       const lift = h.dash ? Math.sin((h.dash.elapsed / h.dash.duration) * Math.PI) * h.dash.height : 0;
-      const view = upsert(h, () => heroView(h, def), lift);
+      const view = upsert(h, () => heroView(h, def, h.id === this.playerId), lift);
       view.showHero(h, shieldAmount(h), hasBuff(h, 'invisible'));
     }
     for (const z of state.zombies) {

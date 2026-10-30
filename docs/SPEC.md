@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v0.7)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v0.8)
 
 Stand: 30.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v0.8: M5 umgesetzt. Bots in drei Stärken, ausgewogenes Team, Wellen für 4 Helden neu abgestimmt, Pausen 25 s (erste 20 s) mit „Welle starten“ (N).
 Änderungen v0.7: M4 umgesetzt. Gold, Shop (Pause + Innenhof), Waffen als Werte-Items, Inventar und Verbrauchsgüter auf R/T. Neue Gegner Kriecher und Ratten, Elites Rattenkönig und Schlächter.
 Änderungen v0.6: M3 umgesetzt. Level- und Skillregeln konkret, sechs Helden im Spiel (Chupa, Gärtnerin, Pirat, Libero, Rotschopf, Schläferin), Linksklick-Angriff je Held, Passive für Pirat, Libero und Schläferin (Mondlicht). Fähigkeiten steigern mit Shift + Taste. Gegnerbilder in assets/reference/gegner/, Ratte als Minion-Vorlage.
 Änderungen v0.5: Optik der Helden nach den Referenzbildern in assets/reference/helden/ (Libero ist ein Mann mit Runen-Volleyball, die Schläferin eine Magierin mit Kristallstab).
@@ -51,7 +52,7 @@ Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Ha
 ## 4. Spielablauf
 
 - Wellenphase: Zombies spawnen an den Kartenrändern und laufen zum Haus
-- Pausenphase (Vorschlag: 30 s): Shop öffnen, Skillpunkte verteilen, Wiederbeleben
+- Pausenphase 25 s (vor Welle 1: 20 s): Shop öffnen, Skillpunkte verteilen, Wiederbeleben. Wer fertig ist, startet die nächste Welle sofort mit N bzw. dem Knopf „Jetzt starten“ (im Mehrspieler später erst, wenn alle Menschen bereit sind).
 - Welle n hat mehr und stärkere Zombies als Welle n-1
 - Elite-Zombie alle 5 Wellen, Boss alle 10 Wellen (Vorschlag)
 - Ziel (nach LoL-Vorbild): Welle 30 überstehen, das dauert ca. 30 bis 40 Minuten wie ein LoL-Spiel. Danach optionaler Endlos-Modus mit Highscore.
@@ -209,13 +210,17 @@ Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
 - Raum mit 4 Slots. Der Host erstellt den Raum, Freunde joinen per Link. Leere Slots füllen Bots.
 - Join in laufender Partie: Der Mensch übernimmt den Bot-Slot samt Level, Gold und Items. Heldenwechsel nur in der Pausenphase (Vorschlag).
 - Schwierigkeit ist fest und hängt nicht von der Zahl der Menschen ab.
-- Bot-KI ist klassische Spiel-KI (State Machine oder Behavior Tree), kein Sprachmodell:
-  - bleibt in der Nähe von Haus und Team
-  - zielt auf nächste oder gefährlichste Zombies
-  - setzt Fähigkeiten nach Abklingzeit und Situation ein (Libero schützt Mitspieler, Taucher geht nach vorn)
-  - zieht sich bei wenig Leben zurück
-  - kauft im Shop nach Prioritätenliste ein
+- Bot-KI ist klassische Spiel-KI, kein Sprachmodell. Umgesetzt in M5 (`src/sim/bots/`, Werte in `data/bots.json`):
+  - **Team:** Der Spieler wählt seinen Helden, die drei Bots bekommen automatisch je einen Nahkämpfer, Fernkämpfer und eine Kontrolle. Auf dem Startbildschirm lassen sie sich per Klick tauschen.
+  - **Stärke** wählbar: leicht, mittel (Standard), schwer. Sie bestimmt Reaktionszeit (0,9 / 0,3 / 0,1 s), Zielfehler (2,2 / 0,6 / 0,1 m), wie oft Fähigkeitsgelegenheiten genutzt werden (20 / 75 / 100 %) und wann sie sich zurückziehen.
+  - **Posten:** Jeder Bot verteidigt einen Posten (Ausgang des Durchgangs, Bienenstock, Ost-Hang) und greift Zombies im Umkreis von 14 m an.
+  - **Ziele nach Bedrohung:** Zombies am Herz und am Bienenstock zuerst, dann Zombies an Mitspielern, Elites bevorzugt
+  - Fernkämpfer halten Abstand. Fähigkeiten nach Einsatzhinweisen je Held (z. B. Flächen bei genug Zombies, Heilung bei wenig Leben, Hetzjagd auf Elites, Zuspiel an verletzte Mitspieler).
+  - **Rückzug** bei wenig Leben in den Innenhof, Heiltrank trinken
+  - **Einkauf** in der Pause nach Einkaufsliste je Held. Skillpunkte nach Reihenfolge, die Ultimate sobald möglich.
+  - Bots schicken dieselben Befehle wie Menschen. Übernimmt in M6 ein Mensch einen Bot-Slot, wird nur die Bot-Steuerung entfernt.
 - Bots laufen auf dem Server (Mehrspieler) bzw. lokal (Singleplayer)
+- **Balancing für 4 Helden** (Wellen in `data/waves.json`, `npm run balance` lässt vier Bots über mehrere Seeds spielen). Stand M5: Vier Bots allein schaffen im Schnitt Welle 13,0 (leicht), 14,8 (mittel) und 17,8 (schwer), mit großer Streuung (etwa ±5 Wellen). Mit einem guten menschlichen Spieler kommt das Team weiter. Ziel bleibt Welle 30 für sehr gute Teams.
 
 ## 11. Karte
 
@@ -241,7 +246,7 @@ Grundlage ist die Skizze auf dem Lageplan (`assets/reference/karte-skizze.jpg`).
 2. M2: Karte Winterburg mit Haus (Lebensbalken), Garten, Hindernissen und den drei Zugängen
 3. M3: Level, XP, Skillpunkte, 6 Helden (Chupa, Gärtnerin, Pirat, Libero, Rotschopf, Schläferin) mit Fähigkeiten auf 1–4
 4. M4: Gold, Shop, Waffen und Items, Elite-Zombies, Ratten und Kriecher
-5. M5: Bots (Singleplayer mit 3 Bots)
+5. M5: Bots (Singleplayer mit 3 Bots), Balancing für 4 Helden
 6. M6: Server und Mehrspieler (Raum, Join per Link, Bot-Ersatz)
 7. M7: Weitere Helden (Taucher, Imker, zwei freie Slots), Boss, Balancing, Feinschliff
 

@@ -27,6 +27,7 @@ Dann http://localhost:5173 öffnen. Weitere Befehle: `npm test` (Simulationstest
 | Shift + 1–4 | Skillpunkt setzen (oder „+“ in der Fähigkeitenleiste) |
 | R T | Verbrauchsgüter benutzen (Heiltrank, Energiedrink) |
 | B | Shop (nur in der Pause im Innenhof) |
+| N | Welle sofort starten (in der Pause) |
 | Esc | Pause und Tastenbelegung (alle Tasten frei belegbar) |
 
 Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bogen beim Nahkampf, einen Pfeil beim Fernkampf.
@@ -35,7 +36,13 @@ Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bog
 
 Die Winterburg nach der Skizze in `assets/reference/karte-skizze.jpg`: U-förmiges Haus mit dem **Herz** im Innenhof (nur über einen schmalen Durchgang erreichbar), **Bienenstock** als zweites Ziel, Zombies aus dem **Bunker**, durch die **Heckenlücke Süd** und den **Hang Ost** hinauf. Fällt das Herz, ist das Spiel verloren.
 
-Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben, `?level=6` startet auf Level 6, `?wave=5` mit Welle 5 (kombinierbar: `?wave=5&level=8`).
+Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben, `?level=6` startet auf Level 6, `?wave=5` mit Welle 5 (kombinierbar: `?wave=5&level=8`), `?bots=4` lässt vier Bots allein spielen (Zuschauen, optional `&difficulty=schwer`).
+
+## Team und Bots
+
+Du wählst deinen Helden, drei Bots spielen mit (je ein Nahkämpfer, Fernkämpfer und eine Kontrolle; per Klick tauschbar). Die Bot-Stärke (leicht, mittel, schwer) stellst du auf dem Startbildschirm ein. Links zeigt die Teamleiste Level und Leben aller vier Helden; Bots haben einen blauen Ring.
+
+`npm run balance` lässt vier Bots ohne Spieler über mehrere Seeds spielen und gibt die erreichte Welle aus (Optionen: `BALANCE_SEEDS=5`, `BALANCE_DIFF=mittel`).
 
 ## Gegner
 
@@ -71,6 +78,6 @@ Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.
 2. M2: Karte Winterburg mit Herz, Bienenstock und drei Zugängen ✅
 3. M3: Level, XP, Skillpunkte, 6 Helden mit Fähigkeiten ✅
 4. M4: Gold, Shop, Waffen und Items, Elite-Zombies ✅
-5. M5: Bots (Singleplayer mit 3 Bots)
+5. M5: Bots (Singleplayer mit 3 Bots) ✅
 6. M6: Server und Mehrspieler
 7. M7: Weitere Helden, Boss, Balancing, Feinschliff

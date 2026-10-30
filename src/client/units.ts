@@ -312,10 +312,11 @@ export class UnitView {
   }
 }
 
-export function heroView(h: Hero, def: HeroDef): UnitView {
-  const view = new UnitView(h.radius, def.color, 0x4cd964, def.figure === 'dog' ? 1.1 : UNIT_HEIGHT, def.figure);
+/** Held mit Ring: grün für den eigenen Helden, blau für Bots. */
+export function heroView(h: Hero, def: HeroDef, isPlayer = true): UnitView {
+  const view = new UnitView(h.radius, def.color, isPlayer ? 0x4cd964 : 0x5aa9ff, def.figure === 'dog' ? 1.1 : UNIT_HEIGHT, def.figure);
   view.bar.visible = true;
-  (view.ring.material as THREE.MeshBasicMaterial).color.set(0x4cd964);
+  (view.ring.material as THREE.MeshBasicMaterial).color.set(isPlayer ? 0x4cd964 : 0x5aa9ff);
   view.ring.visible = true;
   return view;
 }

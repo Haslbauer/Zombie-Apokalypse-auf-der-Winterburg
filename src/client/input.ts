@@ -23,6 +23,7 @@ export class Input {
   /** Item-Taste R (0) bzw. T (1) gedrückt. */
   onUse: (slot: number) => void = () => {};
   onShop: () => void = () => {};
+  onStartWave: () => void = () => {};
   /** Esc zuerst hier anbieten (z. B. Shop schließen); true = erledigt. */
   onEscape: () => boolean = () => false;
 
@@ -59,6 +60,7 @@ export class Input {
         if (e.code === this.bindings.get('item1')) this.onUse(0);
         if (e.code === this.bindings.get('item2')) this.onUse(1);
         if (e.code === this.bindings.get('shop')) this.onShop();
+        if (e.code === this.bindings.get('startWave')) this.onStartWave();
       }
       const slot = this.abilitySlot(e.code);
       if (slot !== null && !e.repeat) {

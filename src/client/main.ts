@@ -1,8 +1,9 @@
 import { gameData } from '../gameData';
 import { Simulation } from '../sim/game';
 import { shopClosedReason } from '../sim/economy';
+import { defaultTeam } from '../sim/bots/team';
 import { canRankUp } from '../sim/progression';
-import { type Command, DT, type GameEvent, type GameState } from '../sim/types';
+import { type BotDifficulty, type Command, DT, type GameEvent, type GameState } from '../sim/types';
 import { Effects } from './effects';
 import { Hud } from './hud';
 import { Input } from './input';
@@ -23,10 +24,15 @@ const overview = params.has('overview');
 const startLevel = Math.max(1, Math.min(18, Number(params.get('level')) || 1));
 /** Entwicklermodus: ?wave=5 beginnt mit Welle 5. */
 const startWave = Math.max(1, Number(params.get('wave')) || 1);
+/** Entwicklermodus: ?bots=4 – vier Bots spielen allein (Zuschauen, Kamera von oben). */
+const spectate = params.get('bots') === '4';
+const spectateDifficulty = (params.get('difficulty') ?? 'mittel') as BotDifficulty;
 
 let sim: Simulation | null = null;
 let heroId = 0;
 let heroDefId = '';
+let team: string[] = [];
+let difficulty: BotDifficulty = 'mittel';
 let accumulator = 0;
 let paused = false;
 /** Einmalige Befehle (Fähigkeiten, Skillpunkte) bis zum nächsten Tick. */
@@ -63,23 +69,42 @@ input.onEscape = () => {
   return true;
 };
 
-function startGame(defId: string): void {
-  heroDefId = defId;
-  sim = new Simulation(gameData, { seed: (Math.random() * 2 ** 31) | 0, heroes: [defId], startLevel });
+/** Heldenwahl, dann Team-Ansicht, dann Spielstart. */
+function pickHero(defId: string): void {
+  hud.showTeam(defId, (bots, diff) => startGame(defId, bots, diff), () => hud.showStart(pickHero));
+}
+
+/**
+ * Partie starten: Slot 0 ist der Spieler, die übrigen drei spielen Bots.
+ * defId null: nur Bots (Zuschauen).
+ */
+function startGame(defId: string | null, bots: string[], diff: BotDifficulty): void {
+  team = bots;
+  difficulty = diff;
+  const heroes = defId ? [defId, ...bots] : bots;
+  sim = new Simulation(gameData, {
+    seed: (Math.random() * 2 ** 31) | 0,
+    heroes,
+    startLevel,
+    bots: heroes.map((_, i) => (defId && i === 0 ? null : diff)),
+  });
   sim.state.wave.number = startWave;
   const hero = sim.state.heroes[0];
+  heroDefId = hero.defId;
   heroId = hero.id;
+  renderer.playerId = defId ? hero.id : null;
   shop.hide();
   accumulator = 0;
   paused = false;
   pending = [];
   prev.clear();
   renderer.reset();
-  renderer.setAimIndicator(gameData.heroes.find((h) => h.id === defId)!.attack, hero.radius);
+  renderer.setAimIndicator(gameData.heroes.find((h) => h.id === heroDefId)!.attack, hero.radius);
   effects.clear();
-  hud.startGame(defId);
+  hud.startGame(heroDefId);
+  hud.buildTeam(sim.state, defId ? heroId : -1, diff);
   renderer.cam.lookAt(hero.pos.x, hero.pos.y);
-  if (overview) {
+  if (overview || !defId) {
     renderer.scene.fog = null;
     renderer.cam.overview(gameData.arena.width / 2, gameData.arena.height / 2 + 6, 95);
   }
@@ -227,7 +252,7 @@ function handleEvents(state: GameState): void {
         hud.message(`Welle ${e.number} geschafft`);
         break;
       case 'gameOver':
-        hud.showGameOver(state, e.reason, () => startGame(heroDefId));
+        hud.showGameOver(state, e.reason, () => startGame(spectate ? null : heroDefId, team, difficulty));
         break;
     }
   }
@@ -243,10 +268,11 @@ renderer.renderer.setAnimationLoop((now) => {
     if (!paused) {
       accumulator += dt;
       // Eine Eingabe pro Frame; sie gilt für alle Ticks dieses Frames.
-      const cmd: Command = { heroId, type: 'input', ...input.read() };
+      // Zuschauen: keine eigenen Befehle, alle Helden sind Bots.
+      const own: Command[] = spectate ? [] : [{ heroId, type: 'input', ...input.read() }];
       while (accumulator >= DT) {
         snapshot(sim.state);
-        sim.step([cmd, ...pending]);
+        sim.step(spectate ? pending.filter((c) => c.type === 'startWave') : [...own, ...pending]);
         pending = [];
         handleEvents(sim.state);
         accumulator -= DT;
@@ -258,7 +284,7 @@ renderer.renderer.setAnimationLoop((now) => {
     const hero = sim.hero(heroId)!;
     renderer.sync(state, prev, state.gameOver || paused ? 1 : accumulator / DT, dt, time);
     const focus = renderer.unitPosition(heroId) ?? hero.pos;
-    renderer.updateAimIndicator(hero.alive ? focus : null, hero.facing, hero.attackTimer <= 0);
+    renderer.updateAimIndicator(hero.alive && !spectate ? focus : null, hero.facing, hero.attackTimer <= 0);
     const slot = input.previewSlot;
     const def = gameData.heroes.find((h) => h.id === heroDefId)!;
     renderer.showPreview(slot !== null && hero.alive && hero.ranks[slot] > 0 ? def.abilities[slot] : null, hero, input.aimPoint);
@@ -277,4 +303,8 @@ renderer.renderer.setAnimationLoop((now) => {
   renderer.render();
 });
 
-hud.showStart(startGame);
+input.onStartWave = () => pending.push({ heroId, type: 'startWave' });
+hud.startWaveBtn.addEventListener('click', input.onStartWave);
+
+if (spectate) startGame(null, defaultTeam(gameData.bots, null), spectateDifficulty);
+else hud.showStart(pickHero);

@@ -1,5 +1,6 @@
 import { rankValue } from '../sim/abilities';
-import type { GameData, GameState, Hero, HeroDef } from '../sim/types';
+import { defaultTeam } from '../sim/bots/team';
+import type { BotDifficulty, GameData, GameState, Hero, HeroDef } from '../sim/types';
 import { type Action, ACTIONS, type Keybindings, keyName } from './keybindings';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text = ''): HTMLElementTagNameMap[K] => {
@@ -14,6 +15,9 @@ export class Hud {
   private readonly top = el('div', 'hud-top');
   private readonly waveLabel = el('div', 'hud-wave');
   private readonly waveInfo = el('div', 'hud-wave-info');
+  readonly startWaveBtn = el('button', 'hud-start-wave');
+  private readonly team = el('div', 'hud-team');
+  private teamRows = new Map<number, { row: HTMLElement; hp: HTMLElement; level: HTMLElement; status: HTMLElement }>();
   private readonly kills = el('div', 'hud-kills');
   private readonly objectiveBars = new Map<string, { fill: HTMLElement; box: HTMLElement }>();
   private readonly respawn = el('div', 'hud-respawn');
@@ -49,7 +53,7 @@ export class Hud {
     private readonly data: GameData,
     private readonly bindings: Keybindings,
   ) {
-    this.top.append(this.waveLabel, this.waveInfo, this.kills);
+    this.top.append(this.waveLabel, this.waveInfo, this.startWaveBtn, this.kills);
     for (const o of data.arena.objectives) {
       const box = el('div', 'hud-objective');
       const bar = el('div', 'hud-objective-bar');
@@ -74,15 +78,103 @@ export class Hud {
     this.buildInventory();
     this.bottom.append(head, this.abilityRow, this.inventoryRow, this.skillHint);
     this.shopHint.style.display = 'none';
-    root.append(this.shopHint);
+    root.append(this.shopHint, this.team);
     this.updateHelp();
     root.append(this.top, this.bottom, this.banner, this.respawn, this.help, this.overlay, this.tooltip);
     this.showInGame(false);
   }
 
   private showInGame(visible: boolean): void {
-    for (const e of [this.top, this.bottom, this.help]) e.style.display = visible ? '' : 'none';
+    for (const e of [this.top, this.bottom, this.help, this.team]) e.style.display = visible ? '' : 'none';
     if (!visible) this.respawn.style.display = 'none';
+  }
+
+  /**
+   * Zweiter Schritt: Team mit drei Bots (Klick tauscht reihum durch die freien
+   * Helden) und Bot-Stärke wählen, dann „Los!“.
+   */
+  showTeam(playerId: string, onStart: (bots: string[], difficulty: BotDifficulty) => void, onBack: () => void): void {
+    this.overlay.replaceChildren();
+    const team = defaultTeam(this.data.bots, playerId);
+    let difficulty: BotDifficulty = 'mittel';
+    const box = el('div', 'hud-box hud-start');
+    box.append(el('h1', '', 'Dein Team'), el('p', '', 'Drei Bots spielen mit. Klick auf eine Bot-Karte tauscht den Helden.'));
+    const row = el('div', 'hud-heroes');
+    const card = (id: string, label: string) => {
+      const def = this.data.heroes.find((h) => h.id === id)!;
+      const btn = el('button', 'hud-hero-btn');
+      const img = el('img', 'hud-hero-portrait');
+      img.src = `portraits/${def.id}.jpg`;
+      btn.append(img, el('strong', '', def.name), el('small', 'hud-role', def.role), el('span', 'hud-hero-desc', label));
+      return btn;
+    };
+    const render = () => {
+      row.replaceChildren();
+      const me = card(playerId, 'Du');
+      me.classList.add('me');
+      row.append(me);
+      team.forEach((id, i) => {
+        const btn = card(id, 'Bot – klicken zum Tauschen');
+        btn.dataset.bot = String(i);
+        btn.addEventListener('click', () => {
+          // nächster Held, der weder Spieler noch anderer Bot ist
+          const all = this.data.heroes.map((h) => h.id);
+          let k = all.indexOf(id);
+          do k = (k + 1) % all.length;
+          while (all[k] === playerId || (team.includes(all[k]) && all[k] !== id));
+          team[i] = all[k];
+          render();
+        });
+        row.append(btn);
+      });
+    };
+    render();
+    const diffRow = el('div', 'hud-difficulty');
+    diffRow.append(el('span', '', 'Bot-Stärke:'));
+    for (const d of ['leicht', 'mittel', 'schwer'] as BotDifficulty[]) {
+      const b = el('button', 'hud-diff', d);
+      b.dataset.difficulty = d;
+      b.classList.toggle('active', d === difficulty);
+      b.addEventListener('click', () => {
+        difficulty = d;
+        diffRow.querySelectorAll('.hud-diff').forEach((x) => x.classList.toggle('active', (x as HTMLElement).dataset.difficulty === d));
+      });
+      diffRow.append(b);
+    }
+    const buttons = el('div', 'hud-buttons');
+    const back = el('button', 'hud-restart', 'Zurück');
+    back.addEventListener('click', onBack);
+    const go = el('button', 'hud-restart hud-go', 'Los!');
+    go.addEventListener('click', () => onStart([...team], difficulty));
+    buttons.append(back, go);
+    box.append(row, diffRow, buttons);
+    this.overlay.append(box);
+    this.overlay.style.display = '';
+  }
+
+  /** Teamleiste links: Porträt, Name, Mensch/Bot, Level, Leben, Respawn. */
+  buildTeam(state: GameState, playerId: number, difficulty: BotDifficulty): void {
+    this.team.replaceChildren();
+    this.teamRows.clear();
+    for (const h of state.heroes) {
+      const def = this.data.heroes.find((d) => d.id === h.defId)!;
+      const row = el('div', 'hud-team-row');
+      if (h.id === playerId) row.classList.add('me');
+      const img = el('img', 'hud-team-portrait');
+      img.src = `portraits/${def.id}.jpg`;
+      const level = el('span', 'hud-team-level');
+      const info = el('div', 'hud-team-info');
+      const name = el('div', 'hud-team-name');
+      name.append(el('span', '', def.name), level);
+      const status = el('div', 'hud-team-status', h.bot ? `Bot (${difficulty})` : 'Du');
+      const bar = el('div', 'hud-team-bar');
+      const hp = el('div', 'hud-team-hp');
+      bar.append(hp);
+      info.append(name, status, bar);
+      row.append(img, info);
+      this.team.append(row);
+      this.teamRows.set(h.id, { row, hp, level, status });
+    }
   }
 
   /** Startbildschirm mit Heldenwahl. */
@@ -334,6 +426,17 @@ export class Hud {
       w.phase === 'pause'
         ? `Nächste Welle in ${Math.ceil(w.timer)} s`
         : `Zombies übrig: ${w.queue.length + state.zombies.length}`;
+    this.startWaveBtn.textContent = `Jetzt starten (${keyName(this.bindings.get('startWave'))})`;
+    this.startWaveBtn.style.display = w.phase === 'pause' && !state.gameOver ? '' : 'none';
+    for (const t of state.heroes) {
+      const r = this.teamRows.get(t.id);
+      if (!r) continue;
+      r.hp.style.width = `${(100 * t.hp) / t.maxHp}%`;
+      r.level.textContent = `Lv ${t.level}`;
+      r.row.classList.toggle('dead', !t.alive);
+      if (!t.alive && !state.gameOver) r.status.dataset.respawn = `† ${Math.ceil(t.respawnAt - state.time)} s`;
+      else delete r.status.dataset.respawn;
+    }
     this.kills.textContent = `Kills: ${state.kills}`;
 
     const h = state.heroes.find((x) => x.id === heroId);
