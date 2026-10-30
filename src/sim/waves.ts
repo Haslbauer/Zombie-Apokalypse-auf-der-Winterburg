@@ -3,7 +3,8 @@ import { resolveObstacles } from './grid';
 import { nextRandom, shuffle } from './rng';
 import { emptyStatus } from './status';
 import { awardWaveBonus } from './economy';
-import { DT, type SpawnPoint, type WaveConfig, type ZombieDef } from './types';
+import { DT, type SpawnPoint, type WaveConfig, type Zombie, type ZombieDef } from './types';
+import type { Vec2 } from './vec';
 
 /** Anzahl der Zombies in Welle n. */
 export function waveSize(n: number, cfg: WaveConfig): number {
@@ -47,6 +48,34 @@ export function waveScaling(n: number, cfg: WaveConfig): { hp: number; damage: n
   };
 }
 
+/** Zahl der Rattenrudel in Welle n. */
+export function ratPackCount(n: number, cfg: WaveConfig): number {
+  const r = cfg.ratPacks;
+  return r && n >= r.fromWave ? Math.floor(1 + (n - r.fromWave) * r.packsPerWave) : 0;
+}
+
+/** Elite-Typen in Welle n (alle `every` Wellen ⌊n/every⌋ Stück, abwechselnd). */
+export function waveElites(n: number, cfg: WaveConfig): string[] {
+  const e = cfg.elites;
+  if (!e || e.types.length === 0 || n % e.every !== 0) return [];
+  const count = Math.floor(n / e.every);
+  return Array.from({ length: count }, (_, i) => e.types[(n / e.every - 1 + i) % e.types.length]);
+}
+
+/**
+ * Warteschlange einer Welle: einzelne Zombies, "pack:<typ>" für ein Rattenrudel
+ * und "elite:<typ>" für Elites (die kommen in der Mitte der Welle).
+ */
+export function waveQueue(state: { rng: number }, n: number, cfg: WaveConfig): string[] {
+  const comp = waveComposition(n, cfg);
+  const queue = Object.entries(comp).flatMap(([id, count]) => Array<string>(count).fill(id));
+  if (cfg.ratPacks) for (let i = 0; i < ratPackCount(n, cfg); i++) queue.push(`pack:${cfg.ratPacks.type}`);
+  shuffle(state, queue);
+  const elites = waveElites(n, cfg).map((t) => `elite:${t}`);
+  queue.splice(Math.floor(queue.length / 2), 0, ...elites);
+  return queue;
+}
+
 /** Ablauf Pause → Welle → Pause und das Spawnen der Zombies. */
 export function updateWaves(ctx: SimContext): void {
   const { state, data } = ctx;
@@ -60,8 +89,7 @@ export function updateWaves(ctx: SimContext): void {
       w.timer = 0;
       w.spawnTimer = 0;
       w.breached = false;
-      const comp = waveComposition(w.number, cfg);
-      w.queue = shuffle(state, Object.entries(comp).flatMap(([id, count]) => Array<string>(count).fill(id)));
+      w.queue = waveQueue(state, w.number, cfg);
       state.events.push({ type: 'waveStart', number: w.number });
     }
     return;
@@ -69,7 +97,7 @@ export function updateWaves(ctx: SimContext): void {
 
   w.spawnTimer -= DT;
   while (w.spawnTimer <= 0 && w.queue.length > 0) {
-    spawnZombie(ctx, ctx.zombieDefs.get(w.queue.shift()!)!);
+    spawnEntry(ctx, w.queue.shift()!);
     w.spawnTimer += cfg.spawnInterval;
   }
   if (w.queue.length === 0 && state.zombies.length === 0) {
@@ -81,21 +109,40 @@ export function updateWaves(ctx: SimContext): void {
   }
 }
 
-function spawnZombie(ctx: SimContext, def: ZombieDef): void {
+/** Einen Eintrag der Warteschlange an einem zufälligen Spawnpunkt erscheinen lassen. */
+function spawnEntry(ctx: SimContext, entry: string): void {
   const { state, data } = ctx;
+  const [kind, id] = entry.includes(':') ? entry.split(':') : ['single', entry];
+  const def = ctx.zombieDefs.get(id);
+  if (!def) return;
   const base = pickWeighted(state, data.arena.spawnPoints, (p: SpawnPoint) => p.weight);
-  const pos = {
-    x: base.x + (nextRandom(state) - 0.5) * 2,
-    y: base.y + (nextRandom(state) - 0.5) * 2,
-  };
-  resolveObstacles(pos, def.radius, ctx.arena);
-  // Ziel nach targetWeights wählen, nur unter noch stehenden Zielen.
-  const alive = state.objectives.filter((o) => !o.destroyed && (data.waves.targetWeights[o.id] ?? 0) > 0);
-  const objectiveId =
-    alive.length > 0 ? pickWeighted(state, alive, (o) => data.waves.targetWeights[o.id]).id : 'heart';
+  const count =
+    kind === 'pack' && data.waves.ratPacks
+      ? data.waves.ratPacks.minSize + Math.floor(nextRandom(state) * (data.waves.ratPacks.maxSize - data.waves.ratPacks.minSize + 1))
+      : 1;
+  for (let i = 0; i < count; i++) {
+    const spread = kind === 'pack' ? 3 : 2;
+    const pos = {
+      x: base.x + (nextRandom(state) - 0.5) * spread,
+      y: base.y + (nextRandom(state) - 0.5) * spread,
+    };
+    resolveObstacles(pos, def.radius, ctx.arena);
+    const z = spawnZombieAt(ctx, def, pos);
+    if (kind === 'elite') state.events.push({ type: 'elite', zombieId: z.id, defId: def.id });
+  }
+}
+
+/** Zombie an einer Stelle erscheinen lassen, Leben und Schaden nach der aktuellen Welle. */
+export function spawnZombieAt(ctx: SimContext, def: ZombieDef, pos: Vec2, objectiveId?: string): Zombie {
+  const { state, data } = ctx;
+  if (!objectiveId) {
+    // Ziel nach targetWeights wählen, nur unter noch stehenden Zielen.
+    const alive = state.objectives.filter((o) => !o.destroyed && (data.waves.targetWeights[o.id] ?? 0) > 0);
+    objectiveId = alive.length > 0 ? pickWeighted(state, alive, (o) => data.waves.targetWeights[o.id]).id : 'heart';
+  }
   const scale = waveScaling(state.wave.number, data.waves);
   const hp = Math.round(def.hp * scale.hp);
-  state.zombies.push({
+  const z: Zombie = {
     id: state.nextId++,
     defId: def.id,
     pos,
@@ -110,7 +157,9 @@ function spawnZombie(ctx: SimContext, def: ZombieDef): void {
     objectiveId,
     st: emptyStatus(),
     wander: 0,
-  });
+  };
+  state.zombies.push(z);
+  return z;
 }
 
 /** Zufällige Auswahl nach Gewichten. */

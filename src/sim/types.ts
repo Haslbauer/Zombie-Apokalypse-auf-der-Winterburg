@@ -172,6 +172,10 @@ export interface WaveConfig {
   mix: WaveMixEntry[];
   /** Wahrscheinlichkeit, mit der ein Zombie welches Ziel (Objective-Id) anläuft. */
   targetWeights: Record<string, number>;
+  /** Rattenrudel: ab fromWave, Anzahl 1 + (Welle − fromWave) × packsPerWave (abgerundet). */
+  ratPacks?: { fromWave: number; packsPerWave: number; minSize: number; maxSize: number; type: string };
+  /** Elites: alle `every` Wellen ⌊Welle/every⌋ Stück, Typen abwechselnd. */
+  elites?: { every: number; types: string[] };
 }
 
 /** Aussehen eines Hindernisses (nur für die Darstellung). */
@@ -400,7 +404,7 @@ export interface Zombie extends Unit {
   /** Elite: Restzeit bis zur nächsten Spezialfähigkeit. */
   specialTimer?: number;
   /** Schlächter: laufender Anlauf. */
-  charge?: { dir: Vec2; remaining: number; hitIds: number[] } | null;
+  charge?: { dir: Vec2; remaining: number; hitIds: number[]; windup: number } | null;
 }
 
 /** Fläche mit Wirkung über Zeit (Dornen, Rauch, Hecke, Block). */

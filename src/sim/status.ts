@@ -24,7 +24,9 @@ export function emptyStatus(): ZombieStatus {
 /** Schläft, ist betäubt oder fürchtet sich: Der Zombie greift nicht an. */
 export function isDisabled(ctx: SimContext, z: Zombie): boolean {
   const t = ctx.state.time;
-  return t < z.st.stunUntil || t < z.st.sleepUntil;
+  const off = t < z.st.stunUntil || t < z.st.sleepUntil;
+  if (off) z.charge = null; // Betäubung und Schlaf brechen einen Anlauf ab
+  return off;
 }
 
 export const isSleeping = (ctx: SimContext, z: Zombie) => ctx.state.time < z.st.sleepUntil;
@@ -103,6 +105,29 @@ export function knockback(z: Zombie, from: Vec2, distance: number): void {
 }
 
 // ---------- Helden ----------
+
+/**
+ * Kontrolle auf einem Helden (festgehalten, betäubt), optional mit Rückstoß.
+ * Unaufhaltsam (Amok) macht immun.
+ */
+export function heroCC(
+  ctx: SimContext,
+  h: Hero,
+  kind: 'rooted' | 'stunned',
+  duration: number,
+  push?: { from: Vec2; distance: number },
+): void {
+  if (!h.alive || hasBuff(h, 'unstoppable')) return;
+  addBuff(ctx, h, kind, 1, duration, `cc-${kind}`);
+  if (push) {
+    const dx = h.pos.x - push.from.x;
+    const dy = h.pos.y - push.from.y;
+    const d = Math.hypot(dx, dy) || 1;
+    h.pos.x += (dx / d) * push.distance;
+    h.pos.y += (dy / d) * push.distance;
+  }
+  ctx.state.events.push({ type: 'heroStatus', heroId: h.id, status: kind });
+}
 
 /** Buff setzen; ein Buff gleicher Herkunft und Art wird ersetzt. */
 export function addBuff(ctx: SimContext, h: Hero, kind: BuffKind, value: number, duration: number, source: string): void {

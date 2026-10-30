@@ -21,16 +21,39 @@
       }
     },
     {
+      "fromWave": 3,
+      "weights": {
+        "walker": 4,
+        "runner": 1.5,
+        "kriecher": 1
+      }
+    },
+    {
       "fromWave": 4,
       "weights": {
         "walker": 4,
         "runner": 2,
-        "brute": 1
+        "brute": 1,
+        "kriecher": 1
       }
     }
   ],
   "targetWeights": {
     "heart": 0.7,
     "hive": 0.3
+  },
+  "ratPacks": {
+    "fromWave": 2,
+    "packsPerWave": 0.34,
+    "minSize": 5,
+    "maxSize": 8,
+    "type": "ratte"
+  },
+  "elites": {
+    "every": 5,
+    "types": [
+      "rattenkoenig",
+      "schlaechter"
+    ]
   }
 }

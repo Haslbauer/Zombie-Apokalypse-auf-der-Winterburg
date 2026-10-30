@@ -21,8 +21,8 @@ describe('Wellenaufbau', () => {
     expect(waveComposition(1, cfg)).toEqual({ walker: 6 });
     // Welle 2: 9 Zombies im Verhältnis 4:1
     expect(waveComposition(2, cfg)).toEqual({ walker: 7, runner: 2 });
-    // Ab Welle 4 kommen Brutes dazu (15 Zombies, 4:2:1)
-    expect(waveComposition(4, cfg)).toEqual({ walker: 9, runner: 4, brute: 2 });
+    // Ab Welle 3 kommen Kriecher, ab Welle 4 Brutes dazu (15 Zombies, 4:2:1:1)
+    expect(waveComposition(4, cfg)).toEqual({ walker: 7, runner: 4, brute: 2, kriecher: 2 });
   });
 
   it('Ablauf: Pause, Welle spawnt komplett, nach dem Leeren folgt die nächste Pause', () => {

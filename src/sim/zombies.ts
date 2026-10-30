@@ -3,7 +3,8 @@ import type { SimContext } from './context';
 import { face, stepToward } from './movement';
 import { damageObjective } from './objectives';
 import { nextRandom } from './rng';
-import { hasBuff, isBlind, isDisabled, isFeared, isRooted, statusSpeedFactor } from './status';
+import { updateElite } from './elites';
+import { hasBuff, heroCC, isBlind, isDisabled, isFeared, isRooted, statusSpeedFactor } from './status';
 import { DT, type Hero, type Objective, type Zombie } from './types';
 import { dist, type Vec2 } from './vec';
 
@@ -36,9 +37,11 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null): 
     const speed = z.speed * slowFactor(ctx, z.pos) * statusSpeedFactor(ctx, z) * (blind ? BLIND_SPEED : 1);
 
     if (isFeared(ctx, z)) {
+      z.charge = null;
       if (!rooted) flee(z, z.st.fearFrom, speed * DT);
       continue;
     }
+    if (def.special && updateElite(ctx, z, def, heroes)) continue;
 
     const hero = chaseTarget(ctx, z, heroes, blind ? BLIND_SIGHT : def.aggroRange);
     if (hero) {
@@ -47,7 +50,10 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null): 
         if (z.attackTimer <= 0) {
           z.attackTimer = def.attackCooldown;
           state.events.push({ type: 'attack', id: z.id, targetId: hero.id });
-          if (!blind || nextRandom(state) >= BLIND_MISS) applyDamage(ctx, hero, z.damage);
+          if (!blind || nextRandom(state) >= BLIND_MISS) {
+            applyDamage(ctx, hero, z.damage);
+            if (def.rootOnHit) heroCC(ctx, hero, 'rooted', def.rootOnHit);
+          }
         }
       } else if (!rooted) {
         if (blind) stagger(ctx, z, hero.pos, speed * DT);
