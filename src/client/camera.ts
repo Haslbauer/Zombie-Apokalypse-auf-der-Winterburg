@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 /** Neigung der festen Schrägkamera gegen den Boden (LoL-artig, kein Drehen). */
 const TILT_DEG = 55;
-const DISTANCE = 30;
+const DISTANCE = 34;
 
 export class GameCamera {
   readonly camera: THREE.PerspectiveCamera;

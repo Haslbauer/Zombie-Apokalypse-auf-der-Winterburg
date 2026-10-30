@@ -5,9 +5,37 @@ Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die Winterburg (Haus
 - Spezifikation: [docs/SPEC.md](docs/SPEC.md)
 - Referenzbilder (z. B. `hund.jpg` für Chupa, Satellitenbild der Karte): `assets/reference/`
 
+## Starten
+
+Voraussetzung: Node.js 22 oder neuer.
+
+```bash
+npm install
+npm run dev
+```
+
+Dann http://localhost:5173 öffnen. Weitere Befehle: `npm test` (Simulationstests), `npm run typecheck`, `npm run build`.
+
+## Steuerung (wie in LoL)
+
+| Eingabe | Wirkung |
+|---|---|
+| Rechtsklick auf den Boden | dorthin laufen (gedrückt halten: Ziel nachführen) |
+| Rechtsklick auf einen Zombie | hinlaufen und angreifen |
+| A, dann Linksklick | Attack-Move: hinlaufen, unterwegs Zombies angreifen |
+| S | Stopp |
+| Q/W/E/R | Fähigkeiten (ab M3) |
+
+## Aufbau
+
+- `src/sim/` – Spiellogik, tickbasiert (20 Ticks/s), ohne Browser-Abhängigkeit. Läuft im Singleplayer im Browser, ab M6 auch auf dem Server.
+- `src/client/` – Rendering (Three.js), Eingabe, HUD
+- `data/` – Helden, Zombies, Wellen und Arena als JSON (Balancing ohne Codeänderung)
+- `tests/sim/` – Tests für die Simulation (Vitest)
+
 ## Meilensteine
 
-1. M1: Offline-Prototyp (Arena, ein Held, Zombiewellen, Nah- und Fernkampf)
+1. M1: Offline-Prototyp (Arena, ein Held, Zombiewellen, Nah- und Fernkampf) ✅
 2. M2: Karte Winterburg mit Haus-Lebensbalken und drei Zugängen
 3. M3: Level, XP, Skillpunkte, 5 Helden mit Q/W/E/R
 4. M4: Gold, Shop, Waffen und Items, Elite-Zombies

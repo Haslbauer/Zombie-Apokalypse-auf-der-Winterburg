@@ -17,3 +17,147 @@ html, body {
   inset: 0;
   pointer-events: none;
 }
+.hud-top {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 18px;
+  align-items: baseline;
+  padding: 8px 18px;
+  background: rgba(15, 22, 17, 0.72);
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.hud-wave {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffd166;
+}
+.hud-bottom {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(360px, calc(100% - 32px));
+  padding: 10px 14px;
+  background: rgba(15, 22, 17, 0.72);
+  border-radius: 10px;
+}
+.hud-hero-name {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.hud-hp {
+  position: relative;
+  height: 18px;
+  background: #2a1c1c;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.hud-hp-fill {
+  height: 100%;
+  background: linear-gradient(#5ee07a, #2fa84a);
+  transition: width 0.1s linear;
+}
+.hud-hp-text {
+  position: absolute;
+  inset: 0;
+  text-align: center;
+  font-size: 13px;
+  line-height: 18px;
+  text-shadow: 0 1px 2px #000;
+}
+.hud-help {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  font-size: 12px;
+  opacity: 0.75;
+  text-shadow: 0 1px 2px #000;
+}
+.hud-banner {
+  position: absolute;
+  top: 22%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 44px;
+  font-weight: 800;
+  color: #ffd166;
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.hud-banner.visible {
+  opacity: 1;
+}
+.hud-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 16, 12, 0.6);
+  pointer-events: auto;
+}
+.hud-box {
+  text-align: center;
+  padding: 28px 32px;
+  margin: 16px;
+  background: rgba(20, 30, 23, 0.92);
+  border: 2px solid #3e5a43;
+  border-radius: 14px;
+  max-width: 560px;
+}
+.hud-box h1 {
+  margin: 0;
+  font-size: 38px;
+  color: #ffd166;
+}
+.hud-box h2 {
+  margin: 4px 0 18px;
+  font-weight: 500;
+  font-size: 20px;
+  color: #cfe3c9;
+}
+.hud-heroes {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 14px 0;
+}
+.hud-hero-btn,
+.hud-restart {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: #2c4231;
+  border: 2px solid #4f7a57;
+  border-radius: 10px;
+  padding: 12px 18px;
+}
+.hud-hero-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 150px;
+}
+.hud-hero-btn:hover,
+.hud-restart:hover {
+  background: #3a5a41;
+  border-color: #ffd166;
+}
+.hud-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #fff3;
+}
+.hud-small {
+  font-size: 13px;
+  opacity: 0.75;
+}
