@@ -1,11 +1,11 @@
 {
-  "baseCount": 6,
-  "countPerWave": 3,
-  "hpScalePerWave": 0.08,
-  "damageScalePerWave": 0.05,
-  "spawnInterval": 0.6,
-  "firstPauseDuration": 5,
-  "pauseDuration": 10,
+  "baseCount": 16,
+  "countPerWave": 7,
+  "hpScalePerWave": 0.4,
+  "damageScalePerWave": 0.25,
+  "spawnInterval": 0.35,
+  "firstPauseDuration": 20,
+  "pauseDuration": 25,
   "mix": [
     {
       "fromWave": 1,
@@ -44,7 +44,7 @@
   },
   "ratPacks": {
     "fromWave": 2,
-    "packsPerWave": 0.34,
+    "packsPerWave": 0.5,
     "minSize": 5,
     "maxSize": 8,
     "type": "ratte"

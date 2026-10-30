@@ -10,8 +10,8 @@
     "attackRange": 0.4,
     "attackCooldown": 1.2,
     "aggroRange": 6,
-    "xp": 20,
-    "gold": 8,
+    "xp": 11,
+    "gold": 4,
     "figure": "walker"
   },
   {
@@ -25,8 +25,8 @@
     "attackRange": 0.4,
     "attackCooldown": 0.9,
     "aggroRange": 8,
-    "xp": 18,
-    "gold": 7,
+    "xp": 10,
+    "gold": 4,
     "figure": "runner"
   },
   {
@@ -40,8 +40,8 @@
     "attackRange": 0.5,
     "attackCooldown": 1.6,
     "aggroRange": 5,
-    "xp": 50,
-    "gold": 20,
+    "xp": 28,
+    "gold": 10,
     "figure": "brute"
   },
   {
@@ -55,8 +55,8 @@
     "attackRange": 0.4,
     "attackCooldown": 1.4,
     "aggroRange": 5,
-    "xp": 30,
-    "gold": 12,
+    "xp": 16,
+    "gold": 6,
     "figure": "crawler",
     "rootOnHit": 1.0
   },
@@ -71,8 +71,8 @@
     "attackRange": 0.3,
     "attackCooldown": 0.8,
     "aggroRange": 7,
-    "xp": 4,
-    "gold": 2,
+    "xp": 2,
+    "gold": 1,
     "figure": "rat"
   },
   {
@@ -86,8 +86,8 @@
     "attackRange": 0.5,
     "attackCooldown": 1.4,
     "aggroRange": 7,
-    "xp": 200,
-    "gold": 100,
+    "xp": 110,
+    "gold": 50,
     "figure": "ratking",
     "rank": "elite",
     "special": {
@@ -108,8 +108,8 @@
     "attackRange": 0.6,
     "attackCooldown": 1.6,
     "aggroRange": 9,
-    "xp": 250,
-    "gold": 120,
+    "xp": 138,
+    "gold": 60,
     "figure": "butcher",
     "rank": "elite",
     "special": {
