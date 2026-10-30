@@ -26,6 +26,14 @@ export class Hud {
   private readonly hpText = el('div', 'hud-hp-text');
   private readonly abilityRow = el('div', 'hud-abilities');
   private readonly skillHint = el('div', 'hud-skill-hint');
+  private readonly goldLabel = el('span', 'hud-gold');
+  private readonly inventoryRow = el('div', 'hud-inventory');
+  private invSlots: HTMLElement[] = [];
+  private consumableSlots: { box: HTMLElement; key: HTMLElement; count: HTMLElement }[] = [];
+  readonly shopHint = el('button', 'hud-shop-hint');
+  /** Rechtsklick auf ein Inventarfeld (Verkaufen). */
+  onSell: (slot: number, consumable: boolean) => void = () => {};
+  onUse: (slot: number) => void = () => {};
   private readonly tooltip = el('div', 'hud-tooltip');
   private slots: { box: HTMLElement; key: HTMLElement; cd: HTMLElement; pips: HTMLElement; plus: HTMLElement }[] = [];
   private heroDef: HeroDef | null = null;
@@ -56,12 +64,17 @@ export class Hud {
     const xp = el('div', 'hud-xp');
     xp.append(this.xpFill);
     const info = el('div', 'hud-hero-info');
-    info.append(this.heroName, hp, xp);
+    const nameRow = el('div', 'hud-name-row');
+    nameRow.append(this.heroName, this.goldLabel);
+    info.append(nameRow, hp, xp);
     const portraitBox = el('div', 'hud-portrait-box');
     portraitBox.append(this.portrait, this.levelBadge);
     const head = el('div', 'hud-hero-head');
     head.append(portraitBox, info);
-    this.bottom.append(head, this.abilityRow, this.skillHint);
+    this.buildInventory();
+    this.bottom.append(head, this.abilityRow, this.inventoryRow, this.skillHint);
+    this.shopHint.style.display = 'none';
+    root.append(this.shopHint);
     this.updateHelp();
     root.append(this.top, this.bottom, this.banner, this.respawn, this.help, this.overlay, this.tooltip);
     this.showInGame(false);
@@ -183,6 +196,46 @@ export class Hud {
     this.showInGame(true);
   }
 
+  /** 6 Inventarplätze plus R/T für Verbrauchsgüter. */
+  private buildInventory(): void {
+    this.invSlots = [];
+    for (let i = 0; i < this.data.economy.inventorySlots; i++) {
+      const slot = el('div', 'hud-inv');
+      slot.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        this.onSell(i, false);
+      });
+      this.tip(slot, () => {
+        const id = this.currentHero?.inventory[i];
+        const item = id ? this.data.items.find((x) => x.id === id) : undefined;
+        return item ? `<b>${item.name}</b><br>${item.description}<br><small>Verkauf (im Shop): Rechtsklick</small>` : 'Freier Platz';
+      });
+      this.invSlots.push(slot);
+      this.inventoryRow.append(slot);
+    }
+    const actions: Action[] = ['item1', 'item2'];
+    this.consumableSlots = actions.map((action, i) => {
+      const box = el('div', 'hud-inv consumable');
+      const key = el('span', 'hud-inv-key');
+      const count = el('span', 'hud-inv-count');
+      box.append(key, count);
+      box.addEventListener('click', () => this.onUse(i));
+      box.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        this.onSell(i, true);
+      });
+      this.tip(box, () => {
+        const c = this.currentHero?.consumables[i];
+        const item = c ? this.data.items.find((x) => x.id === c.itemId) : undefined;
+        return item
+          ? `<b>${item.name}</b> ×${c!.count}<br>${item.description}<br><small>Benutzen: ${keyName(this.bindings.get(action))} oder Klick</small>`
+          : `Item-Taste ${keyName(this.bindings.get(action))}: leer`;
+      });
+      this.inventoryRow.append(box);
+      return { box, key, count };
+    });
+  }
+
   /** Fähigkeitenleiste: Passiv plus vier Felder mit Taste, Abklingzeit, Rang und „+“. */
   private buildAbilities(def: HeroDef): void {
     this.abilityRow.replaceChildren();
@@ -249,8 +302,29 @@ export class Hud {
       s.box.classList.toggle('cooling', cd > 0);
       s.plus.style.visibility = canRankUp(i) ? 'visible' : 'hidden';
     });
+    this.goldLabel.textContent = `${h.gold} Gold`;
+    this.invSlots.forEach((slot, i) => {
+      const id = h.inventory[i];
+      const item = id ? this.data.items.find((x) => x.id === id) : undefined;
+      slot.textContent = item?.name ?? '';
+      slot.classList.toggle('filled', !!item);
+    });
+    const itemKeys: Action[] = ['item1', 'item2'];
+    this.consumableSlots.forEach((s, i) => {
+      const c = h.consumables[i];
+      const item = c ? this.data.items.find((x) => x.id === c.itemId) : undefined;
+      s.key.textContent = `${keyName(this.bindings.get(itemKeys[i]))}${item ? ` ${item.name}` : ''}`;
+      s.count.textContent = c ? `×${c.count}` : '';
+      s.box.classList.toggle('filled', !!c);
+    });
     this.skillHint.textContent =
       h.skillPoints > 0 ? `${h.skillPoints} Skillpunkt${h.skillPoints > 1 ? 'e' : ''} frei – Shift + Taste oder „+“` : '';
+  }
+
+  /** Hinweis „Shop öffnen“, wenn im Innenhof Pause ist. */
+  setShopHint(visible: boolean): void {
+    this.shopHint.textContent = `${keyName(this.bindings.get('shop'))}: Shop öffnen`;
+    this.shopHint.style.display = visible ? '' : 'none';
   }
 
   update(state: GameState, heroId: number, dt: number, canRankUp: (slot: number) => boolean = () => false): void {

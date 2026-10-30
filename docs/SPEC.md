@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v0.6)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v0.7)
 
 Stand: 30.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v0.7: M4 umgesetzt. Gold, Shop (Pause + Innenhof), Waffen als Werte-Items, Inventar und Verbrauchsgüter auf R/T. Neue Gegner Kriecher und Ratten, Elites Rattenkönig und Schlächter.
 Änderungen v0.6: M3 umgesetzt. Level- und Skillregeln konkret, sechs Helden im Spiel (Chupa, Gärtnerin, Pirat, Libero, Rotschopf, Schläferin), Linksklick-Angriff je Held, Passive für Pirat, Libero und Schläferin (Mondlicht). Fähigkeiten steigern mit Shift + Taste. Gegnerbilder in assets/reference/gegner/, Ratte als Minion-Vorlage.
 Änderungen v0.5: Optik der Helden nach den Referenzbildern in assets/reference/helden/ (Libero ist ein Mann mit Runen-Volleyball, die Schläferin eine Magierin mit Kristallstab).
 Änderungen v0.4: Karte nach der Skizze (echte Maße, U-Haus mit Innenhof als Herz der Base, Bunker als Zombie-Spawn, Heckenlücke Süd, Hang Ost, Bienenstock als zweites Ziel). Helden-Spawn im Innenhof, tote Helden respawnen.
@@ -167,9 +168,17 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 
 ## 7. Gegner
 
-- Walker (langsam, Masse), Runner (schnell, wenig Leben), Brute (Tank), Spitter (Fernkampf), Elite (Mini-Boss mit Spezialfähigkeit), Boss
-- Minions: Zombie-Ratten als kleine, schnelle Gegner in Massen (Vorlage `assets/reference/gegner/ratte.jpg`)
-- Referenzbilder für Zombies in `assets/reference/gegner/` (Zombie mit Bart, einarmiger Zombie, Kriecher)
+Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `data/waves.json`.
+
+- **Walker** (langsam, Masse; Optik: Zombie mit Bart und langen Haaren), **Runner** (schnell, wenig Leben; Optik: hagerer, einarmiger Zombie), **Brute** (Tank)
+- **Kriecher** (ab Welle 3): kriecht am Boden, sehr langsam, viel Leben. Sein Treffer hält den Helden 1 s fest.
+- **Ratten (Minions):** klein, sehr schnell, wenig Leben und Schaden. Ab Welle 2 kommen Rudel von 5–8 Ratten gemeinsam an einem Spawnpunkt, mit jeder Welle mehr Rudel.
+- **Elites** alle 5 Wellen (⌊Welle/5⌋ Stück, abwechselnd), mit immer sichtbarem Lebensbalken und Ankündigung:
+  - **Rattenkönig:** große Ratte mit Krone, ruft alle 8 s vier Ratten herbei
+  - **Schlächter:** großer Zombie mit Schürze und Beil. Holt alle 8 s aus (rote Warnlinie) und stürmt auf einen Helden in bis zu 8 m. Wer getroffen wird, nimmt Schaden, wird zurückgestoßen und 0,75 s betäubt.
+  - Elites schlafen nur halb so lang. Chupas Hetzjagd bevorzugt sie.
+- Kontrolle auf Helden (festgehalten, betäubt) wirkt nicht, solange der Held unaufhaltsam ist (Rotschopf: Amok)
+- Später: Spitter (Fernkampf), Boss
 - Verhalten: Zombies greifen Helden an, die in Reichweite sind. Sonst laufen sie zum Haus. Pfadfindung um Hindernisse.
 - Durchbruch: Erreicht ein Zombie das Haus, bleibt er stehen und greift es an (Schaden pro Sekunde, Elite und Boss mehr). Wird er getötet, endet der Schaden.
 
@@ -183,12 +192,17 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 
 ## 9. Gold, Shop und Items
 
-- Gold pro Kill, Bonus pro überstandener Welle
-- Shop in den Pausenphasen
-- Waffen: Baseballschläger, Axt, Kettensäge, Pistole, Schrotflinte, Gewehr, Armbrust
-- Items: Rüstung, Lauftempo, Lebensregeneration, Verbrauchsgüter (Heiltrank)
-- Benutzbare Items wie der Heiltrank liegen auf den Item-Tasten R und T
-- Vorschlag: keine Munition, stattdessen Nachladezeiten (einfacher, weniger Frust)
+Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
+
+- **Gold:** Startgold 350. Kill-Gold je Zombie-Typ bekommt jeder Held im Umkreis von 15 m in voller Höhe (Koop, kein Last-Hit). Bonus pro überstandener Welle: 50 + 10 × Welle für alle.
+- **Shop:** nur in der Pause **und** nur im Innenhof (6 m um das Herz). Taste B oder Klick auf den Hinweis „B: Shop öffnen“. Das Spiel läuft beim Einkaufen weiter, die Pause tickt also. Beginnt die Welle oder verlässt man den Hof, schließt der Shop.
+- **Waffen sind Werte-Items** (wie in LoL): Der Standardangriff des Helden bleibt, die Waffe macht ihn stärker. Nahkampfwaffen wirken bei Nahkämpfern voll, Fernkampfwaffen bei Fernkämpfern, sonst halb.
+  - Nahkampf: Baseballschläger (+15 % Schaden), Axt (+30 %), Kettensäge (+45 % Angriffstempo, +15 % Schaden)
+  - Fernkampf: Pistole (+15 % Schaden), Schrotflinte (+35 %), Gewehr (+20 % Schaden, +25 % Reichweite), Armbrust (+40 % Angriffstempo)
+- **Items:** Lederjacke und Kettenhemd (10 % bzw. 20 % weniger Schaden), Laufschuhe (+12 % Tempo), Kräuterbeutel (+5 Leben/s), Lebensamulett (+200 Leben), Taschenuhr (−15 % Abklingzeit)
+- **Inventar:** 6 Plätze für Waffen und Items. Verkaufen (Rechtsklick im offenen Shop) bringt 70 % des Preises.
+- **Verbrauchsgüter** auf den Item-Tasten R und T, stapelbar: Heiltrank (150 Leben über 5 s, bis 5 Stück), Energiedrink (6 s lang +30 % Tempo und Angriffstempo, bis 3 Stück). Benutzbar jederzeit, außer wenn betäubt.
+- Keine Munition.
 
 ## 10. Mehrspieler und Bots
 
@@ -226,7 +240,7 @@ Grundlage ist die Skizze auf dem Lageplan (`assets/reference/karte-skizze.jpg`).
 1. M1: Offline-Prototyp. Eine Arena, ein Held (zwei Testhelden: Nah- und Fernkampf), Steuerung wie in Supervive, Zombies in Wellen, Nahkampf und Schuss.
 2. M2: Karte Winterburg mit Haus (Lebensbalken), Garten, Hindernissen und den drei Zugängen
 3. M3: Level, XP, Skillpunkte, 6 Helden (Chupa, Gärtnerin, Pirat, Libero, Rotschopf, Schläferin) mit Fähigkeiten auf 1–4
-4. M4: Gold, Shop, Waffen und Items, Elite-Zombies
+4. M4: Gold, Shop, Waffen und Items, Elite-Zombies, Ratten und Kriecher
 5. M5: Bots (Singleplayer mit 3 Bots)
 6. M6: Server und Mehrspieler (Raum, Join per Link, Bot-Ersatz)
 7. M7: Weitere Helden (Taucher, Imker, zwei freie Slots), Boss, Balancing, Feinschliff

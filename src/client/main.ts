@@ -1,5 +1,6 @@
 import { gameData } from '../gameData';
 import { Simulation } from '../sim/game';
+import { shopClosedReason } from '../sim/economy';
 import { canRankUp } from '../sim/progression';
 import { type Command, DT, type GameEvent, type GameState } from '../sim/types';
 import { Effects } from './effects';
@@ -7,16 +8,21 @@ import { Hud } from './hud';
 import { Input } from './input';
 import { Keybindings } from './keybindings';
 import { GameRenderer, type Snapshot } from './renderer';
+import { ShopView } from './shop';
 
 const renderer = new GameRenderer(document.getElementById('game')!, gameData);
 const effects = new Effects(renderer.scene);
 const bindings = new Keybindings();
-const hud = new Hud(document.getElementById('hud')!, gameData, bindings);
+const hudRoot = document.getElementById('hud')!;
+const hud = new Hud(hudRoot, gameData, bindings);
+const shop = new ShopView(hudRoot, gameData);
 const input = new Input(renderer, bindings);
 const params = new URLSearchParams(location.search);
 /** Entwicklermodus: ?overview zeigt die ganze Karte von oben, ?level=6 setzt das Startlevel. */
 const overview = params.has('overview');
 const startLevel = Math.max(1, Math.min(18, Number(params.get('level')) || 1));
+/** Entwicklermodus: ?wave=5 beginnt mit Welle 5. */
+const startWave = Math.max(1, Number(params.get('wave')) || 1);
 
 let sim: Simulation | null = null;
 let heroId = 0;
@@ -30,12 +36,40 @@ const prev = new Map<number, Snapshot>();
 input.onCast = (slot) => pending.push({ heroId, type: 'cast', slot, aim: input.aimPoint });
 input.onLevelUp = (slot) => pending.push({ heroId, type: 'levelUp', slot });
 hud.onLevelUp = input.onLevelUp;
+input.onUse = (slot) => pending.push({ heroId, type: 'use', slot });
+hud.onUse = input.onUse;
+shop.onBuy = (itemId) => pending.push({ heroId, type: 'buy', itemId });
+shop.onClose = () => shop.hide();
+hud.onSell = (slot, consumable) => {
+  if (shop.open) pending.push({ heroId, type: 'sell', slot, consumable });
+  else hud.message('Verkaufen nur im offenen Shop');
+};
+/** Shop öffnen bzw. schließen; nur in der Pause im Innenhof. */
+function toggleShop(): void {
+  if (!sim) return;
+  if (shop.open) {
+    shop.hide();
+    return;
+  }
+  const reason = shopClosedReason(sim, sim.hero(heroId)!);
+  if (reason) hud.message(reason);
+  else shop.show();
+}
+input.onShop = toggleShop;
+hud.shopHint.addEventListener('click', toggleShop);
+input.onEscape = () => {
+  if (!shop.open) return false;
+  shop.hide();
+  return true;
+};
 
 function startGame(defId: string): void {
   heroDefId = defId;
   sim = new Simulation(gameData, { seed: (Math.random() * 2 ** 31) | 0, heroes: [defId], startLevel });
+  sim.state.wave.number = startWave;
   const hero = sim.state.heroes[0];
   heroId = hero.id;
+  shop.hide();
   accumulator = 0;
   paused = false;
   pending = [];
@@ -145,6 +179,24 @@ function handleEvents(state: GameState): void {
       case 'land':
         effects.ring(e.pos, 1.5, 0xd8c8a8, 0.35);
         break;
+      case 'gold':
+        if (e.heroId === heroId) {
+          // Wellenbonus ohne Ort: über dem eigenen Helden anzeigen
+          const at = e.pos ?? state.heroes.find((h) => h.id === heroId)?.pos;
+          if (at) effects.floatingText(at, `+${e.amount}`, '#ffd166', e.pos ? 1.8 : 2.6);
+        }
+        break;
+      case 'shopDenied':
+        if (e.heroId === heroId) hud.message(e.reason);
+        break;
+      case 'elite':
+        hud.message(`Elite: ${gameData.zombies.find((z) => z.id === e.defId)?.name}!`);
+        break;
+      case 'charge': {
+        const def = gameData.zombies.find((z) => state.zombies.some((x) => x.id === e.zombieId && x.defId === z.id));
+        effects.line(e.from, e.to, 1.6, 0xff3b30, Number(def?.special?.windup ?? 0.6));
+        break;
+      }
       case 'levelUp':
         if (e.heroId === heroId) {
           const h = state.heroes.find((x) => x.id === heroId);
@@ -212,6 +264,13 @@ renderer.renderer.setAnimationLoop((now) => {
     renderer.showPreview(slot !== null && hero.alive && hero.ranks[slot] > 0 ? def.abilities[slot] : null, hero, input.aimPoint);
     renderer.cam.follow(focus.x, focus.y, dt);
     hud.update(state, heroId, dt, (s) => canRankUp(sim!, hero, s));
+    const shopReason = state.gameOver ? 'Spiel vorbei' : shopClosedReason(sim, hero);
+    if (shop.open && shopReason) {
+      shop.hide();
+      hud.message(shopReason);
+    }
+    hud.setShopHint(!shopReason && !shop.open && !paused);
+    shop.update(hero, def.attack.type);
   }
 
   effects.update(dt);

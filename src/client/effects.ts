@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import type { Vec2 } from '../sim/vec';
+import { textSprite } from './units';
 
 interface Effect {
-  mesh: THREE.Mesh;
+  mesh: THREE.Mesh | THREE.Sprite;
   age: number;
   life: number;
   update: (t: number) => void;
@@ -72,6 +73,30 @@ export class Effects {
     });
   }
 
+  /** Warnlinie (Anlauf des Schlächters) bis zum Losstürmen. */
+  line(from: Vec2, to: Vec2, width: number, color: number, life: number): void {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const len = Math.hypot(dx, dy);
+    const material = new THREE.MeshBasicMaterial({ color, transparent: true, depthWrite: false });
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(len, width).translate(len / 2, 0, 0).rotateX(-Math.PI / 2), material);
+    mesh.position.set(from.x, 0.09, from.y);
+    mesh.rotation.y = -Math.atan2(dy, dx);
+    this.add(mesh, life, (t) => {
+      material.opacity = 0.25 + 0.45 * t;
+    });
+  }
+
+  /** Aufsteigende Zahl, z. B. „+8“ Gold. */
+  floatingText(p: Vec2, text: string, color: string, height = 1.8): void {
+    const sprite = textSprite(text, color);
+    sprite.scale.set(0.8, 0.8, 1);
+    this.add(sprite, 0.9, (t) => {
+      sprite.position.set(p.x, height + t * 1.2, p.y);
+      sprite.material.opacity = 1 - t * t;
+    });
+  }
+
   /** Eine Biene fliegt vom Stock zum gestochenen Ziel. */
   sting(from: Vec2, to: Vec2, angry: boolean): void {
     const material = new THREE.MeshBasicMaterial({ color: angry ? 0xff3b30 : 0xffd23f });
@@ -93,7 +118,7 @@ export class Effects {
     });
   }
 
-  private add(mesh: THREE.Mesh, life: number, update: (t: number) => void): void {
+  private add(mesh: THREE.Mesh | THREE.Sprite, life: number, update: (t: number) => void): void {
     this.scene.add(mesh);
     this.effects.push({ mesh, age: 0, life, update });
     update(0);
@@ -105,7 +130,7 @@ export class Effects {
       e.age += dt;
       if (e.age >= e.life) {
         this.scene.remove(e.mesh);
-        e.mesh.geometry.dispose();
+        if (e.mesh instanceof THREE.Mesh) e.mesh.geometry.dispose();
         (e.mesh.material as THREE.Material).dispose();
         this.effects.splice(i, 1);
       } else {

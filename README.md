@@ -25,7 +25,8 @@ Dann http://localhost:5173 öffnen. Weitere Befehle: `npm test` (Simulationstest
 | Linksklick | Angriff Richtung Mauszeiger (halten = Dauerangriff) |
 | 1 2 3 4 | Fähigkeiten (4 = Ultimate). Halten zeigt die Vorschau, Loslassen löst aus |
 | Shift + 1–4 | Skillpunkt setzen (oder „+“ in der Fähigkeitenleiste) |
-| R T | Items, z. B. Heiltrank (ab M4) |
+| R T | Verbrauchsgüter benutzen (Heiltrank, Energiedrink) |
+| B | Shop (nur in der Pause im Innenhof) |
 | Esc | Pause und Tastenbelegung (alle Tasten frei belegbar) |
 
 Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bogen beim Nahkampf, einen Pfeil beim Fernkampf.
@@ -34,7 +35,15 @@ Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bog
 
 Die Winterburg nach der Skizze in `assets/reference/karte-skizze.jpg`: U-förmiges Haus mit dem **Herz** im Innenhof (nur über einen schmalen Durchgang erreichbar), **Bienenstock** als zweites Ziel, Zombies aus dem **Bunker**, durch die **Heckenlücke Süd** und den **Hang Ost** hinauf. Fällt das Herz, ist das Spiel verloren.
 
-Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben, `?level=6` startet auf Level 6.
+Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben, `?level=6` startet auf Level 6, `?wave=5` mit Welle 5 (kombinierbar: `?wave=5&level=8`).
+
+## Gegner
+
+Walker, Runner, Brute, Kriecher (hält fest), Ratten in Rudeln und alle 5 Wellen Elites: Rattenkönig (ruft Ratten) und Schlächter (Anlauf, betäubt). Details in `docs/SPEC.md` (Abschnitt 7).
+
+## Shop
+
+Gold gibt es für Kills und jede überstandene Welle. In der Pause im Innenhof öffnet **B** den Shop: Waffen (wirken als Werte-Items), Rüstung, Werte-Items und Verbrauchsgüter für R/T. Rechtsklick auf ein Item im Inventar verkauft es (70 %).
 
 ## Helden
 
@@ -61,7 +70,7 @@ Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.
 1. M1: Offline-Prototyp (Arena, ein Held, Zombiewellen, Nah- und Fernkampf) ✅
 2. M2: Karte Winterburg mit Herz, Bienenstock und drei Zugängen ✅
 3. M3: Level, XP, Skillpunkte, 6 Helden mit Fähigkeiten ✅
-4. M4: Gold, Shop, Waffen und Items, Elite-Zombies
+4. M4: Gold, Shop, Waffen und Items, Elite-Zombies ✅
 5. M5: Bots (Singleplayer mit 3 Bots)
 6. M6: Server und Mehrspieler
 7. M7: Weitere Helden, Boss, Balancing, Feinschliff

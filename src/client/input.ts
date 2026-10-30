@@ -20,6 +20,11 @@ export class Input {
   /** Fähigkeit auslösen (Taste losgelassen) bzw. steigern (Shift + Taste). */
   onCast: (slot: number) => void = () => {};
   onLevelUp: (slot: number) => void = () => {};
+  /** Item-Taste R (0) bzw. T (1) gedrückt. */
+  onUse: (slot: number) => void = () => {};
+  onShop: () => void = () => {};
+  /** Esc zuerst hier anbieten (z. B. Shop schließen); true = erledigt. */
+  onEscape: () => boolean = () => false;
 
   constructor(
     private readonly renderer: GameRenderer,
@@ -41,7 +46,7 @@ export class Input {
       if (e.code === MENU_KEY) {
         if (this.capture) this.finishCapture(null);
         else if (this.previewSlot !== null) this.previewSlot = null;
-        else this.onMenu();
+        else if (!this.onEscape()) this.onMenu();
         return;
       }
       if (this.capture) {
@@ -50,6 +55,11 @@ export class Input {
         return;
       }
       if (e.code === 'Tab') e.preventDefault();
+      if (!e.repeat) {
+        if (e.code === this.bindings.get('item1')) this.onUse(0);
+        if (e.code === this.bindings.get('item2')) this.onUse(1);
+        if (e.code === this.bindings.get('shop')) this.onShop();
+      }
       const slot = this.abilitySlot(e.code);
       if (slot !== null && !e.repeat) {
         e.preventDefault();

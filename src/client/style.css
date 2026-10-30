@@ -405,3 +405,150 @@ html, body {
   pointer-events: none;
   z-index: 5;
 }
+/* ---------- M4: Gold, Inventar, Shop ---------- */
+.hud-name-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.hud-gold {
+  color: #ffd166;
+  font-weight: 700;
+  font-size: 14px;
+}
+.hud-inventory {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+.hud-inv {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  padding: 2px 4px;
+  box-sizing: border-box;
+  font-size: 10px;
+  line-height: 1.2;
+  background: #1f2a22;
+  border: 1px dashed #3e5a43;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+.hud-inv.filled {
+  background: #2c4231;
+  border-style: solid;
+  border-color: #4f7a57;
+}
+.hud-inv.consumable {
+  cursor: pointer;
+  border-color: #6c5f8f;
+}
+.hud-inv-key {
+  color: #ffd166;
+}
+.hud-inv-count {
+  position: absolute;
+  right: 4px;
+  bottom: 2px;
+  font-weight: 700;
+}
+.hud-shop-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 200px;
+  transform: translateX(-50%);
+  font: inherit;
+  font-weight: 700;
+  color: #1b2a1f;
+  background: #ffd166;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.shop {
+  position: absolute;
+  top: 70px;
+  right: 12px;
+  bottom: 12px;
+  width: min(420px, calc(100% - 24px));
+  overflow-y: auto;
+  padding: 12px;
+  box-sizing: border-box;
+  background: rgba(15, 22, 17, 0.94);
+  border: 2px solid #4f7a57;
+  border-radius: 12px;
+  pointer-events: auto;
+  z-index: 4;
+}
+.shop-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 18px;
+}
+.shop-gold {
+  color: #ffd166;
+  font-weight: 700;
+  margin-left: auto;
+}
+.shop-close {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+.shop-cat {
+  margin: 12px 0 6px;
+  font-size: 13px;
+  color: #cfe3c9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.shop-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.shop-card {
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  background: #2c4231;
+  border: 1px solid #4f7a57;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.shop-card:hover {
+  border-color: #ffd166;
+}
+.shop-card.blocked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.shop-price {
+  color: #ffd166;
+  font-size: 12px;
+}
+.shop-desc {
+  font-size: 11px;
+  opacity: 0.85;
+}
+.shop-note {
+  font-size: 11px;
+  color: #ff9f7a;
+  min-height: 0;
+}
+.shop-foot {
+  margin-top: 12px;
+  font-size: 11px;
+  opacity: 0.7;
+}

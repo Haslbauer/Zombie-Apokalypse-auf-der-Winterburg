@@ -110,7 +110,7 @@ export class GameRenderer {
     }
     for (const z of state.zombies) {
       const def = this.data.zombies.find((d) => d.id === z.defId)!;
-      const view = upsert(z, () => zombieView(z, def.color));
+      const view = upsert(z, () => zombieView(z, def));
       view.showStatus(z, state.time, z.hp / z.maxHp < revealBelow);
     }
     for (const [id, view] of this.units) {

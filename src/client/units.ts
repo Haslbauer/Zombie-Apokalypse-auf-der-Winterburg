@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { Hero, HeroDef, Unit, Zombie } from '../sim/types';
+import type { Hero, HeroDef, Unit, Zombie, ZombieDef } from '../sim/types';
 import type { Snapshot } from './renderer';
 
 const UNIT_HEIGHT = 1.6;
@@ -33,7 +33,29 @@ const ICONS = {
   stun: ['✦', '#ffd23f'],
   blind: ['≋', '#d0d0d0'],
   fear: ['!', '#c77dff'],
+  rooted: ['⊗', '#d9a066'],
 } as const;
+
+/** Text-Sprite (z. B. „+8“ Gold), aus dem gleichen Cache wie die Symbole. */
+export function textSprite(text: string, color: string): THREE.Sprite {
+  const s = new THREE.Sprite(iconMaterial(text, color).clone());
+  s.renderOrder = 11;
+  return s;
+}
+
+/** Höhe der Zombiefigur (für Lebensbalken und Symbole). */
+function zombieHeight(figure: string, radius: number): number {
+  switch (figure) {
+    case 'rat':
+      return 0.45;
+    case 'ratking':
+      return 1.2;
+    case 'crawler':
+      return 0.6;
+    default:
+      return UNIT_HEIGHT * (0.7 + radius * 0.6);
+  }
+}
 
 /** Darstellung einer Einheit: Figur, Blickrichtung, Lebensbalken, Ring, Zustandssymbol. */
 export class UnitView {
@@ -54,6 +76,7 @@ export class UnitView {
     this.height = height;
     this.group.add(this.body);
     if (figure === 'dog') this.buildDog(color);
+    else if (figure?.startsWith('z:')) this.buildZombie(figure.slice(2), radius, color, height);
     else this.buildPerson(radius, color, height, figure);
 
     const w = Math.max(1, radius * 2.4);
@@ -132,6 +155,73 @@ export class UnitView {
     }
   }
 
+  /** Zombies und Ratten nach den Referenzbildern in assets/reference/gegner/. */
+  private buildZombie(figure: string, radius: number, color: string, height: number): void {
+    const skin = 0x9aa58f;
+    const eyeGlow = (x: number, y: number, z: number, c = 0xff2a2a) => {
+      const eye = this.mesh(new THREE.SphereGeometry(0.045, 6, 4), c, x, y, z);
+      (eye.material as THREE.MeshLambertMaterial).emissive.set(c);
+    };
+    switch (figure) {
+      case 'rat':
+      case 'ratking': {
+        const s = figure === 'ratking' ? 2.6 : 1;
+        const body = this.mesh(new THREE.CapsuleGeometry(0.16 * s, 0.3 * s, 4, 8), color, 0, 0.2 * s);
+        body.rotation.z = Math.PI / 2;
+        const head = this.mesh(new THREE.ConeGeometry(0.12 * s, 0.3 * s, 8), color, 0.36 * s, 0.24 * s);
+        head.rotation.z = -Math.PI / 2;
+        for (const side of [-1, 1]) {
+          this.mesh(new THREE.SphereGeometry(0.06 * s, 6, 4), 0xd9a0a0, 0.28 * s, 0.38 * s, side * 0.08 * s);
+          eyeGlow(0.38 * s, 0.29 * s, side * 0.05 * s);
+        }
+        const tail = this.mesh(new THREE.CylinderGeometry(0.015 * s, 0.03 * s, 0.5 * s, 5), 0xc9a0a0, -0.42 * s, 0.15 * s);
+        tail.rotation.z = Math.PI / 2.4;
+        if (figure === 'ratking') {
+          this.mesh(new THREE.CylinderGeometry(0.18, 0.2, 0.15, 8, 1, true), 0xffc93c, 0.45, 0.95);
+          for (let i = 0; i < 5; i++) {
+            const a = (i / 5) * Math.PI * 2;
+            this.mesh(new THREE.ConeGeometry(0.04, 0.12, 4), 0xffc93c, 0.45 + Math.cos(a) * 0.18, 1.08, Math.sin(a) * 0.18);
+          }
+        }
+        return;
+      }
+      case 'crawler': {
+        // Kriecher: flach am Boden, Arme nach vorn
+        const torso = this.mesh(new THREE.CapsuleGeometry(0.22, 0.6, 4, 8), color, -0.1, 0.25);
+        torso.rotation.z = Math.PI / 2;
+        this.mesh(new THREE.SphereGeometry(0.18, 10, 8), skin, 0.45, 0.38);
+        for (const side of [-1, 1]) {
+          const arm = this.mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6, 6), skin, 0.45, 0.12, side * 0.28);
+          arm.rotation.z = Math.PI / 2;
+          eyeGlow(0.6, 0.42, side * 0.06, 0xf0f0d0);
+        }
+        return;
+      }
+    }
+    // Aufrechte Zombies: Walker (Bart, lange Haare), Runner (hager, einarmig), Brute, Schlächter
+    const thin = figure === 'runner' ? 0.8 : 1;
+    const bodyH = height - 0.35;
+    this.mesh(new THREE.CapsuleGeometry(radius * thin, Math.max(0.1, bodyH - 2 * radius * thin), 4, 10), color, 0, bodyH / 2);
+    const headY = bodyH + 0.12;
+    this.mesh(new THREE.SphereGeometry(0.2, 10, 8), skin, 0.05, headY);
+    const arms = figure === 'runner' ? [1] : [-1, 1];
+    for (const side of arms) {
+      const arm = this.mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.75, 6), skin, 0.35, bodyH * 0.72, side * (radius * thin + 0.05));
+      arm.rotation.z = Math.PI / 2.3; // nach vorn gestreckt
+    }
+    if (figure === 'runner') this.mesh(new THREE.SphereGeometry(0.08, 6, 4), 0x8b1a1a, 0, bodyH * 0.75, -(radius * thin + 0.02));
+    if (figure === 'walker') {
+      this.mesh(new THREE.ConeGeometry(0.1, 0.22, 6), 0x6b5a3a, 0.17, headY - 0.17).rotation.z = Math.PI;
+      this.mesh(new THREE.BoxGeometry(0.12, 0.35, 0.36), 0x7a6a45, -0.12, headY - 0.05);
+    }
+    if (figure === 'butcher') {
+      this.mesh(new THREE.BoxGeometry(0.1, bodyH * 0.6, radius * 1.6), 0xd8d0c0, radius * 0.85, bodyH * 0.45); // Schürze
+      this.mesh(new THREE.BoxGeometry(0.5, 0.3, 0.06), 0xb0b0b0, 0.7, bodyH * 0.75, radius + 0.15); // Beil
+    }
+    if (figure === 'butcher' || figure === 'brute') for (const side of [-1, 1]) eyeGlow(0.22, headY + 0.03, side * 0.07);
+    else for (const side of [-1, 1]) eyeGlow(0.22, headY + 0.03, side * 0.07, 0xf0f0d0);
+  }
+
   /** Chupa: kleiner, flauschiger weißer Hund mit hellbraunen Ohren und buschiger Rute. */
   private buildDog(color: string): void {
     const fur = new THREE.Color(color);
@@ -186,8 +276,13 @@ export class UnitView {
     if (tint !== null) this.materials.forEach((m) => m.color.lerp(new THREE.Color(tint), 0.35));
   }
 
-  /** Held: Schildblase und Unsichtbarkeit. */
+  /** Held: Schildblase, Unsichtbarkeit, festgehalten oder betäubt. */
   showHero(h: Hero, shield: number, invisible: boolean): void {
+    const stunned = h.buffs.some((b) => b.kind === 'stunned');
+    const rooted = h.buffs.some((b) => b.kind === 'rooted');
+    this.icon.visible = stunned || rooted;
+    if (stunned) this.icon.material = iconMaterial(ICONS.stun[0], ICONS.stun[1]);
+    else if (rooted) this.icon.material = iconMaterial(ICONS.rooted[0], ICONS.rooted[1]);
     if (shield > 0 && !this.shield) {
       this.shield = new THREE.Mesh(
         new THREE.SphereGeometry(Math.max(0.9, h.radius * 2), 16, 12),
@@ -225,8 +320,10 @@ export function heroView(h: Hero, def: HeroDef): UnitView {
   return view;
 }
 
-export function zombieView(z: Zombie, color: string): UnitView {
-  const view = new UnitView(z.radius, color, 0xff453a, UNIT_HEIGHT * (0.7 + z.radius * 0.6));
-  view.bar.visible = false;
+export function zombieView(z: Zombie, def: ZombieDef): UnitView {
+  const elite = def.rank === 'elite' || def.rank === 'boss';
+  const view = new UnitView(z.radius, def.color, elite ? 0xff9f1c : 0xff453a, zombieHeight(def.figure, z.radius), `z:${def.figure}`);
+  view.bar.visible = elite;
+  if (elite) view.bar.scale.set(1.6, 1.4, 1);
   return view;
 }
