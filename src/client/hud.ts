@@ -1,4 +1,5 @@
 import type { GameData, GameState } from '../sim/types';
+import { ACTIONS, type Keybindings, keyName } from './keybindings';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -22,13 +23,16 @@ export class Hud {
   private readonly overlay = el('div', 'hud-overlay');
   private bannerTimer = 0;
 
-  constructor(root: HTMLElement, private readonly data: GameData) {
+  constructor(
+    root: HTMLElement,
+    private readonly data: GameData,
+    private readonly bindings: Keybindings,
+  ) {
     this.top.append(this.waveLabel, this.waveInfo, this.kills);
     const hp = el('div', 'hud-hp');
     hp.append(this.hpFill, this.hpText);
     this.bottom.append(this.heroName, hp);
-    this.help.innerHTML =
-      '<b>Rechtsklick</b> laufen / angreifen · <b>A</b> + Linksklick Attack-Move · <b>S</b> Stopp';
+    this.updateHelp();
     root.append(this.top, this.bottom, this.banner, this.help, this.overlay);
     this.showInGame(false);
   }
@@ -39,6 +43,7 @@ export class Hud {
 
   /** Startbildschirm mit Heldenwahl. */
   showStart(onPick: (heroId: string) => void): void {
+    delete this.overlay.dataset.menu;
     this.showInGame(false);
     this.overlay.replaceChildren();
     const box = el('div', 'hud-box');
@@ -52,12 +57,15 @@ export class Hud {
       btn.addEventListener('click', () => onPick(h.id));
       row.append(btn);
     }
-    box.append(row, el('p', 'hud-small', 'Rechtsklick laufen / angreifen · A + Linksklick Attack-Move · S Stopp'));
+    const help = el('p', 'hud-small');
+    help.innerHTML = this.controlsText();
+    box.append(row, help);
     this.overlay.append(box);
     this.overlay.style.display = '';
   }
 
   showGameOver(state: GameState, onRestart: () => void): void {
+    delete this.overlay.dataset.menu;
     this.overlay.replaceChildren();
     const box = el('div', 'hud-box');
     const btn = el('button', 'hud-restart', 'Nochmal');
@@ -69,6 +77,66 @@ export class Hud {
     );
     this.overlay.append(box);
     this.overlay.style.display = '';
+  }
+
+  /** Kurzbeschreibung der Steuerung mit der aktuellen Belegung. */
+  private controlsText(): string {
+    const k = (a: Parameters<Keybindings['get']>[0]) => `<b>${keyName(this.bindings.get(a))}</b>`;
+    return `${k('up')}${k('left')}${k('down')}${k('right')} laufen · <b>Maus</b> zielen · ${k('attack')} angreifen · <b>Esc</b> Tastenbelegung`;
+  }
+
+  private updateHelp(): void {
+    this.help.innerHTML = this.controlsText();
+  }
+
+  get menuOpen(): boolean {
+    return this.overlay.dataset.menu === 'settings' && this.overlay.style.display !== 'none';
+  }
+
+  /**
+   * Menü „Tastenbelegung“: Klick auf eine Taste, dann die neue Taste oder
+   * Maustaste drücken. startCapture wartet auf diese Eingabe.
+   */
+  showSettings(startCapture: (done: (code: string | null) => void) => void, onClose: () => void): void {
+    this.overlay.dataset.menu = 'settings';
+    const render = () => {
+      this.overlay.replaceChildren();
+      const box = el('div', 'hud-box');
+      box.append(el('h1', '', 'Pause'), el('h2', '', 'Tastenbelegung'));
+      const table = el('div', 'hud-binds');
+      for (const { id, label } of ACTIONS) {
+        const btn = el('button', 'hud-key', keyName(this.bindings.get(id)));
+        btn.dataset.rebind = id;
+        btn.addEventListener('click', () => {
+          btn.textContent = 'Taste drücken …';
+          btn.classList.add('waiting');
+          startCapture((code) => {
+            if (code) this.bindings.set(id, code);
+            render();
+          });
+        });
+        table.append(el('span', '', label), btn);
+      }
+      const reset = el('button', 'hud-restart', 'Standard wiederherstellen');
+      reset.addEventListener('click', () => {
+        this.bindings.reset();
+        render();
+      });
+      const resume = el('button', 'hud-restart', 'Weiter');
+      resume.addEventListener('click', onClose);
+      const buttons = el('div', 'hud-buttons');
+      buttons.append(reset, resume);
+      box.append(table, el('p', 'hud-small', 'Fähigkeiten folgen mit Meilenstein 3. Esc: weiter spielen.'), buttons);
+      this.overlay.append(box);
+    };
+    render();
+    this.overlay.style.display = '';
+  }
+
+  hideSettings(): void {
+    delete this.overlay.dataset.menu;
+    this.overlay.style.display = 'none';
+    this.updateHelp();
   }
 
   startGame(heroDefId: string): void {

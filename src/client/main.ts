@@ -1,44 +1,56 @@
 import { gameData } from '../gameData';
 import { Simulation } from '../sim/game';
-import { DT, type Command, type GameState } from '../sim/types';
+import { DT, type GameState } from '../sim/types';
 import { Effects } from './effects';
 import { Hud } from './hud';
 import { Input } from './input';
+import { Keybindings } from './keybindings';
 import { GameRenderer, type Snapshot } from './renderer';
 
 const renderer = new GameRenderer(document.getElementById('game')!, gameData);
 const effects = new Effects(renderer.scene);
-const hud = new Hud(document.getElementById('hud')!, gameData);
+const bindings = new Keybindings();
+const hud = new Hud(document.getElementById('hud')!, gameData, bindings);
+const input = new Input(renderer, bindings);
 
 let sim: Simulation | null = null;
 let heroId = 0;
 let heroDefId = '';
-let pending: Command[] = [];
 let accumulator = 0;
-let targetId: number | null = null;
+let paused = false;
 const prev = new Map<number, Snapshot>();
-
-new Input(
-  renderer,
-  () => (sim && !sim.state.gameOver ? { state: sim.state, heroId } : null),
-  (cmd) => pending.push(cmd),
-  (p, attack) => effects.clickMarker(p, attack),
-);
 
 function startGame(defId: string): void {
   heroDefId = defId;
   sim = new Simulation(gameData, { seed: (Math.random() * 2 ** 31) | 0, heroes: [defId] });
-  heroId = sim.state.heroes[0].id;
-  pending = [];
+  const hero = sim.state.heroes[0];
+  heroId = hero.id;
   accumulator = 0;
+  paused = false;
   prev.clear();
   renderer.reset();
+  renderer.setAimIndicator(gameData.heroes.find((h) => h.id === defId)!.attack, hero.radius);
   effects.clear();
   hud.startGame(defId);
-  const start = sim.state.heroes[0].pos;
-  renderer.cam.lookAt(start.x, start.y);
+  renderer.cam.lookAt(hero.pos.x, hero.pos.y);
   hud.message('Mach dich bereit!');
 }
+
+/** Esc: Pause mit Tastenbelegung öffnen bzw. schließen (nur während einer Partie). */
+input.onMenu = () => {
+  if (!sim || sim.state.gameOver) return;
+  if (hud.menuOpen) {
+    hud.hideSettings();
+    paused = false;
+  } else {
+    paused = true;
+    input.releaseAll();
+    hud.showSettings(
+      (done) => (input.capture = done),
+      () => input.onMenu(),
+    );
+  }
+};
 
 /** Positionen vor dem Tick merken, damit zwischen zwei Ticks interpoliert werden kann. */
 function snapshot(state: GameState): void {
@@ -53,6 +65,11 @@ function handleEvents(state: GameState): void {
       case 'hit':
         renderer.flash(e.targetId);
         break;
+      case 'swing': {
+        const h = state.heroes.find((x) => x.id === e.id);
+        if (h) effects.swing(h.pos, e.facing, h.radius + e.range, e.arc);
+        break;
+      }
       case 'death':
         if (e.id !== heroId) effects.deathPuff(e.pos);
         break;
@@ -75,19 +92,22 @@ renderer.renderer.setAnimationLoop((now) => {
   last = now;
 
   if (sim) {
-    accumulator += dt;
-    while (accumulator >= DT) {
-      snapshot(sim.state);
-      sim.step(pending);
-      pending = [];
-      handleEvents(sim.state);
-      accumulator -= DT;
+    if (!paused) {
+      accumulator += dt;
+      // Eine Eingabe pro Frame; sie gilt für alle Ticks dieses Frames.
+      const cmd = { heroId, type: 'input' as const, ...input.read() };
+      while (accumulator >= DT) {
+        snapshot(sim.state);
+        sim.step([cmd]);
+        handleEvents(sim.state);
+        accumulator -= DT;
+      }
     }
     const state = sim.state;
     const hero = sim.hero(heroId)!;
-    targetId = hero.order.type === 'attack' ? hero.order.targetId : null;
-    renderer.sync(state, prev, state.gameOver ? 1 : accumulator / DT, dt, targetId);
+    renderer.sync(state, prev, state.gameOver || paused ? 1 : accumulator / DT, dt);
     const focus = renderer.unitPosition(heroId) ?? hero.pos;
+    renderer.updateAimIndicator(hero.alive ? focus : null, hero.facing, hero.attackTimer <= 0);
     renderer.cam.follow(focus.x, focus.y, dt);
     hud.update(state, heroId, dt);
   }

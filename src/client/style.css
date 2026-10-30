@@ -161,3 +161,34 @@ html, body {
   font-size: 13px;
   opacity: 0.75;
 }
+.hud-binds {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 18px;
+  align-items: center;
+  text-align: left;
+  margin: 8px 0 4px;
+}
+.hud-key {
+  font: inherit;
+  color: inherit;
+  min-width: 130px;
+  padding: 5px 10px;
+  cursor: pointer;
+  background: #2c4231;
+  border: 1px solid #4f7a57;
+  border-radius: 6px;
+}
+.hud-key:hover {
+  border-color: #ffd166;
+}
+.hud-key.waiting {
+  border-color: #ffd166;
+  color: #ffd166;
+}
+.hud-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}

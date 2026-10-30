@@ -1,23 +1,26 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v0.2)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v0.3)
 
 Stand: 30.10.2026. Arbeitsgrundlage für Claude Code.
 
-Änderungen v0.2: Steuerung wie in LoL (Klick zum Laufen statt WASD, Q/W/E/R für Fähigkeiten). Veraltete Verweise auf Sanitäter und Brecher ersetzt.
+Änderungen v0.3: Steuerung wie in Supervive (WASD laufen, Maus zielt, Angriff Richtung Mauszeiger, kein Auto-Attack, keine Zielauswahl). Fähigkeiten auf 1–4, R, T, alle Tasten frei belegbar. Nahkampf-Reichweite 2,5 m im 120°-Bogen.
+Änderungen v0.2: Veraltete Verweise auf Sanitäter und Brecher ersetzt.
 Mit "Vorschlag" markierte Punkte sind noch nicht entschieden, alles andere ist festgelegt.
 
 ## 1. Vision
 
-Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Haus und Vorgärten, als Karte nachgebaut) gegen Zombiewellen. Perspektive von oben mit LoL-artiger Kamera und Steuerung wie in League of Legends. Das Haus hat Lebenspunkte: Zombies, die es erreichen, greifen es an. Fällt der Lebensbalken auf 0, ist das Spiel verloren.
+Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Haus und Vorgärten, als Karte nachgebaut) gegen Zombiewellen. Perspektive von oben mit LoL-artiger Kamera und Steuerung wie in Supervive (WASD und Maus). Das Haus hat Lebenspunkte: Zombies, die es erreichen, greifen es an. Fällt der Lebensbalken auf 0, ist das Spiel verloren.
 
 ## 2. Festgelegte Entscheidungen
 
 - Browser-Spiel mit 3D-Grafik und fester Schrägkamera von oben, wie in League of Legends und Dota
-- Steuerung wie in LoL:
-  - Rechtsklick auf den Boden = dorthin laufen (mit Pfadsuche um Hindernisse)
-  - Rechtsklick auf einen Zombie = hinlaufen und Standardangriff (Auto-Attack, wiederholt)
-  - A + Linksklick = Attack-Move (zum Punkt laufen, unterwegs den nächsten Zombie angreifen), S = Stopp
-  - Q/W/E/R = Fähigkeiten, gezielt mit der Maus
-  - Ob der Standardangriff Nah- oder Fernkampf ist, hängt vom Helden ab (wie in LoL)
+- Steuerung wie in Supervive:
+  - WASD = laufen, der Mauszeiger bestimmt die Blickrichtung
+  - Linksklick = Angriff Richtung Mauszeiger (gedrückt halten = Dauerangriff im Takt der Abklingzeit)
+  - Kein Auto-Attack und keine Zielauswahl: Man greift in eine Richtung an. Reichweite und Trefferbereich hängen von der Waffe ab.
+  - Nahkampf trifft alle Zombies im Bogen vor dem Helden (Testheld: 2,5 m, 120°). Fernkampf schießt ein Projektil geradeaus, das den ersten Zombie trifft, danebengehen kann und an Hindernissen endet.
+  - Eine Markierung am Boden (Bogen bzw. Pfeil) zeigt Reichweite und Richtung des Angriffs
+  - Fähigkeiten auf 1, 2, 3, 4, R, T
+  - Alle Tasten sind frei belegbar (Esc öffnet Pause und Tastenbelegung)
 - Levelsystem nach League-of-Legends-Vorbild (XP, Level, Skillpunkte)
 - Gold sammeln und davon Waffen und Items kaufen
 - Zombies kommen in Wellen, werden zahlreicher und stärker, immer wieder stärkere Elite-Zombies
@@ -34,7 +37,7 @@ Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Ha
 - Simulation strikt vom Rendering trennen. Die Spiellogik (Bewegung, Kampf, Zombies, Bots, Wellen) läuft tickbasiert in einem eigenen Modul ohne Browser-Abhängigkeit.
   - Singleplayer: Simulation läuft lokal im Browser, dazu 3 Bots
   - Mehrspieler: dieselbe Simulation läuft auf dem Server
-- Eingaben sind Befehle (laufen zu, angreifen, Attack-Move, Stopp, Fähigkeit), keine Tastenzustände. Genau diese Befehle gehen im Mehrspieler übers Netz.
+- Eingaben sind ein kompakter Zustand pro Tick (Laufrichtung, Zielpunkt der Maus, Angriff gedrückt, später Fähigkeiten). Genau dieser Zustand geht im Mehrspieler übers Netz.
 - Client-seitige Vorhersage für die eigene Bewegung, damit sich die Steuerung bei Latenz direkt anfühlt
 - Spieldaten (Helden, Items, Zombietypen, Wellen) in JSON-Dateien, damit Balancing ohne Codeänderung geht
 - Hosting: erst bei Meilenstein 6 entscheiden (z. B. Render, Fly.io, oder eigener Rechner zu Hause mit Cloudflare Tunnel). Bis dahin läuft alles lokal.
@@ -195,7 +198,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 
 ## 12. Meilensteine
 
-1. M1: Offline-Prototyp. Eine Arena, ein Held (zwei Testhelden: Nah- und Fernkampf), Klicksteuerung wie in LoL, Zombies in Wellen, Nahkampf und Schuss.
+1. M1: Offline-Prototyp. Eine Arena, ein Held (zwei Testhelden: Nah- und Fernkampf), Steuerung wie in Supervive, Zombies in Wellen, Nahkampf und Schuss.
 2. M2: Karte Winterburg mit Haus (Lebensbalken), Garten, Hindernissen und den drei Zugängen
 3. M3: Level, XP, Skillpunkte, 5 Helden mit Q/W/E/R
 4. M4: Gold, Shop, Waffen und Items, Elite-Zombies

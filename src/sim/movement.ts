@@ -1,4 +1,4 @@
-import type { Hero, Unit } from './types';
+import type { Unit } from './types';
 import type { Vec2 } from './vec';
 
 /**
@@ -18,16 +18,6 @@ export function stepToward(u: Unit, target: Vec2, maxDist: number): number {
   u.pos.x += (dx / d) * maxDist;
   u.pos.y += (dy / d) * maxDist;
   return 0;
-}
-
-/** Folgt den Wegpunkten des Helden. true, wenn der Pfad zu Ende ist. */
-export function followPath(h: Hero, maxDist: number): boolean {
-  let remaining = maxDist;
-  while (h.path.length > 0 && remaining > 0) {
-    remaining = stepToward(h, h.path[0], remaining);
-    if (h.pos.x === h.path[0].x && h.pos.y === h.path[0].y) h.path.shift();
-  }
-  return h.path.length === 0;
 }
 
 /** Dreht eine Einheit zu einem Punkt, ohne sie zu bewegen. */

@@ -1,8 +1,7 @@
 import { updateProjectiles } from './combat';
-import { applyCommands } from './commands';
 import type { SimContext } from './context';
 import { Grid, resolveObstacles } from './grid';
-import { updateHero } from './heroes';
+import { applyInputs, updateHero } from './heroes';
 import { pushApart } from './movement';
 import { SpatialHash } from './spatial';
 import { DT, type Command, type GameData, type GameState, type Hero, type Zombie } from './types';
@@ -64,9 +63,7 @@ export class Simulation implements SimContext {
         speed: def.speed,
         facing: -Math.PI / 2,
         attackTimer: 0,
-        order: { type: 'idle' },
-        path: [],
-        repathAt: 0,
+        input: { move: { x: 0, y: 0 }, aim: { x: start.x + slot * 1.5, y: start.y - 5 }, attack: false },
         alive: true,
       });
     });
@@ -80,7 +77,7 @@ export class Simulation implements SimContext {
     state.tick++;
     state.time += DT;
 
-    applyCommands(this, commands);
+    applyInputs(this, commands);
     for (const h of state.heroes) updateHero(this, h);
 
     if (state.tick % FIELD_TICKS === 1 || !this.field) {

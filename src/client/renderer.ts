@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { ArenaDef, GameData, GameState, Hero, Unit, Zombie } from '../sim/types';
+import type { ArenaDef, AttackDef, GameData, GameState, Hero, Unit, Zombie } from '../sim/types';
 import type { Vec2 } from '../sim/vec';
 import { GameCamera } from './camera';
 
@@ -98,6 +98,7 @@ export class GameRenderer {
   private readonly projectileMaterial = new THREE.MeshBasicMaterial({ color: 0xffe066 });
   private readonly raycaster = new THREE.Raycaster();
   private readonly groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  private aimIndicator: THREE.Mesh | null = null;
 
   constructor(container: HTMLElement, private readonly data: GameData) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -207,7 +208,7 @@ export class GameRenderer {
   }
 
   /** Szene an den Spielzustand angleichen, zwischen den Ticks interpoliert. */
-  sync(state: GameState, prev: Map<number, Snapshot>, alpha: number, dt: number, targetId: number | null): void {
+  sync(state: GameState, prev: Map<number, Snapshot>, alpha: number, dt: number): void {
     const camera = this.cam.camera;
     const seen = new Set<number>();
     const upsert = (unit: Hero | Zombie, make: () => UnitView) => {
@@ -215,8 +216,6 @@ export class GameRenderer {
       let view = this.units.get(unit.id);
       if (!view) {
         view = make();
-        view.group.userData.id = unit.id;
-        view.body.userData.id = unit.id;
         this.units.set(unit.id, view);
         this.scene.add(view.group);
       }
@@ -227,23 +226,21 @@ export class GameRenderer {
     for (const h of state.heroes) {
       if (!h.alive) continue;
       const def = this.data.heroes.find((d) => d.id === h.defId)!;
-      const v = upsert(h, () => {
+      upsert(h, () => {
         const view = new UnitView(h.radius, def.color, 0x4cd964);
         view.bar.visible = true;
         (view.ring.material as THREE.MeshBasicMaterial).color.set(0x4cd964);
         view.ring.visible = true;
         return view;
       });
-      v.ring.visible = true;
     }
     for (const z of state.zombies) {
       const def = this.data.zombies.find((d) => d.id === z.defId)!;
-      const v = upsert(z, () => {
+      upsert(z, () => {
         const view = new UnitView(z.radius, def.color, 0xff453a, UNIT_HEIGHT * (0.7 + z.radius * 0.6));
         view.bar.visible = false;
         return view;
       });
-      v.ring.visible = z.id === targetId;
     }
     for (const [id, view] of this.units) {
       if (!seen.has(id)) {
@@ -275,6 +272,56 @@ export class GameRenderer {
     }
   }
 
+  /**
+   * Zielmarkierung am Boden für die Waffe des Helden: Kreissektor beim
+   * Nahkampf, Pfeil beim Fernkampf. Zeigt Reichweite und Trefferbereich.
+   */
+  setAimIndicator(attack: AttackDef, heroRadius: number): void {
+    if (this.aimIndicator) {
+      this.scene.remove(this.aimIndicator);
+      this.aimIndicator.geometry.dispose();
+    }
+    let geometry: THREE.BufferGeometry;
+    if (attack.type === 'melee') {
+      const arc = ((attack.arc ?? 90) * Math.PI) / 180;
+      geometry = new THREE.RingGeometry(heroRadius + 0.15, heroRadius + attack.range, 40, 1, -arc / 2, arc);
+    } else {
+      // Pfeil entlang +x: Schaft vom Heldenrand bis kurz vor die Reichweite, dann die Spitze.
+      const w = Math.max(0.12, (attack.projectileRadius ?? 0.2) * 1.2);
+      const end = heroRadius + attack.range;
+      const head = Math.min(0.9, attack.range * 0.15);
+      const shape = new THREE.Shape();
+      shape.moveTo(heroRadius + 0.15, -w / 2);
+      shape.lineTo(end - head, -w / 2);
+      shape.lineTo(end - head, -w * 2);
+      shape.lineTo(end, 0);
+      shape.lineTo(end - head, w * 2);
+      shape.lineTo(end - head, w / 2);
+      shape.lineTo(heroRadius + 0.15, w / 2);
+      shape.closePath();
+      geometry = new THREE.ShapeGeometry(shape);
+    }
+    geometry.rotateX(-Math.PI / 2);
+    this.aimIndicator = new THREE.Mesh(
+      geometry,
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, depthWrite: false }),
+    );
+    this.aimIndicator.position.y = 0.04;
+    this.aimIndicator.renderOrder = 1;
+    this.scene.add(this.aimIndicator);
+  }
+
+  /** Markierung unter den Helden legen und zur Maus drehen; kräftiger, wenn der Angriff bereit ist. */
+  updateAimIndicator(pos: Vec2 | null, facing: number, ready: boolean): void {
+    if (!this.aimIndicator) return;
+    this.aimIndicator.visible = pos !== null;
+    if (!pos) return;
+    this.aimIndicator.position.x = pos.x;
+    this.aimIndicator.position.z = pos.y;
+    this.aimIndicator.rotation.y = -facing;
+    (this.aimIndicator.material as THREE.MeshBasicMaterial).opacity = ready ? 0.42 : 0.18;
+  }
+
   /** Treffer-Aufblitzen einer Einheit. */
   flash(id: number): void {
     this.units.get(id)?.hit();
@@ -300,15 +347,6 @@ export class GameRenderer {
     this.setRay(clientX, clientY);
     const hit = this.raycaster.ray.intersectPlane(this.groundPlane, new THREE.Vector3());
     return hit ? { x: hit.x, y: hit.z } : null;
-  }
-
-  /** Id der Einheit unter dem Mauszeiger, nur unter den erlaubten Ids. */
-  pickUnit(clientX: number, clientY: number, allowed: Set<number>): number | null {
-    this.setRay(clientX, clientY);
-    const bodies: THREE.Object3D[] = [];
-    for (const [id, v] of this.units) if (allowed.has(id)) bodies.push(v.body);
-    const hit = this.raycaster.intersectObjects(bodies, false)[0];
-    return hit ? (hit.object.userData.id as number) : null;
   }
 
   render(): void {

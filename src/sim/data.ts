@@ -37,7 +37,11 @@ export function parseGameData(raw: {
     const a = h?.attack;
     if (a?.type !== 'melee' && a?.type !== 'ranged') errors.push(`${p}.attack.type: "melee" oder "ranged" erwartet`);
     for (const k of ['damage', 'range', 'cooldown']) num(a, k, `${p}.attack`);
-    if (a?.type === 'ranged') num(a, 'projectileSpeed', `${p}.attack`, 1);
+    if (a?.type === 'melee') num(a, 'arc', `${p}.attack`, 1);
+    if (a?.type === 'ranged') {
+      num(a, 'projectileSpeed', `${p}.attack`, 1);
+      num(a, 'projectileRadius', `${p}.attack`);
+    }
   });
 
   const zombies = list(raw.zombies, 'zombies');

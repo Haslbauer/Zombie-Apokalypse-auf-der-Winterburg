@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { distanceToObstacle, Grid } from '../../src/sim/grid';
 import type { ArenaDef } from '../../src/sim/types';
 import { dist } from '../../src/sim/vec';
-import { makeSim, noWaves, testData } from './helpers';
+import { input, makeSim, noWaves, testData } from './helpers';
 
 const wallArena: ArenaDef = {
   width: 20,
@@ -37,19 +37,31 @@ describe('Pfadsuche', () => {
     expect(dist(end, { x: 10, y: 12 })).toBeLessThan(1.5);
   });
 
-  it('Held läuft per Klick ans Ziel und steckt nie in einem Hindernis', () => {
+  it('Held läuft mit WASD gegen ein Hindernis und steckt nie darin fest', () => {
     const data = testData(noWaves);
     const sim = makeSim('nahkampf', 1, data);
     const h = sim.state.heroes[0];
-    // Ziel liegt hinter dem Hindernis nördlich vom Start.
-    sim.step([{ heroId: h.id, type: 'moveTo', target: { x: 20, y: 8 } }]);
-    for (let t = 0; t < 200; t++) {
+    // Nach Norden laufen: Dort steht eine Hecke (x 20, y 15).
+    sim.step([input(sim, { x: 0, y: -1 }, { x: 20, y: 0 })]);
+    for (let t = 0; t < 100; t++) {
       sim.step();
       for (const o of data.arena.obstacles) {
         expect(distanceToObstacle(h.pos, o)).toBeGreaterThanOrEqual(h.radius - 1e-6);
       }
     }
-    expect(dist(h.pos, { x: 20, y: 8 })).toBeLessThan(0.01);
-    expect(h.order.type).toBe('idle');
+    // Steht jetzt direkt südlich der Hecke.
+    expect(h.pos.y).toBeCloseTo(15 + 0.6 + h.radius, 5);
+    expect(h.facing).toBeCloseTo(-Math.PI / 2, 5);
+  });
+
+  it('schräg laufen ist nicht schneller als gerade, Blick folgt der Maus', () => {
+    const sim = makeSim('nahkampf', 1, testData(noWaves));
+    const h = sim.state.heroes[0];
+    const start = { ...h.pos };
+    sim.step([input(sim, { x: 1, y: 1 }, { x: start.x - 10, y: start.y })]);
+    const moved = dist(start, h.pos);
+    expect(moved).toBeCloseTo(h.speed / 20, 6);
+    // Läuft nach Südosten, schaut aber nach Westen zur Maus.
+    expect(Math.abs(h.facing)).toBeCloseTo(Math.PI, 1);
   });
 });

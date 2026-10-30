@@ -16,15 +16,17 @@ npm run dev
 
 Dann http://localhost:5173 öffnen. Weitere Befehle: `npm test` (Simulationstests), `npm run typecheck`, `npm run build`.
 
-## Steuerung (wie in LoL)
+## Steuerung (wie in Supervive)
 
 | Eingabe | Wirkung |
 |---|---|
-| Rechtsklick auf den Boden | dorthin laufen (gedrückt halten: Ziel nachführen) |
-| Rechtsklick auf einen Zombie | hinlaufen und angreifen |
-| A, dann Linksklick | Attack-Move: hinlaufen, unterwegs Zombies angreifen |
-| S | Stopp |
-| Q/W/E/R | Fähigkeiten (ab M3) |
+| W A S D | laufen |
+| Maus | Blickrichtung und Zielen |
+| Linksklick | Angriff Richtung Mauszeiger (halten = Dauerangriff) |
+| 1 2 3 4 R T | Fähigkeiten (ab M3) |
+| Esc | Pause und Tastenbelegung (alle Tasten frei belegbar) |
+
+Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bogen beim Nahkampf, einen Pfeil beim Fernkampf.
 
 ## Aufbau
 

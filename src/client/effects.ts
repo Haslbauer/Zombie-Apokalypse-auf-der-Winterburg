@@ -8,20 +8,24 @@ interface Effect {
   update: (t: number) => void;
 }
 
-/** Kurzlebige Effekte: Klickmarker und Todeswolken. */
+/** Kurzlebige Effekte: Schlagbogen und Todeswolken. */
 export class Effects {
   private readonly effects: Effect[] = [];
 
   constructor(private readonly scene: THREE.Scene) {}
 
-  /** Ring am Klickpunkt: grün = laufen, rot = Attack-Move. */
-  clickMarker(p: Vec2, attack: boolean): void {
-    const material = new THREE.MeshBasicMaterial({ color: attack ? 0xff453a : 0x4cd964, transparent: true });
-    const mesh = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.5, 24).rotateX(-Math.PI / 2), material);
-    mesh.position.set(p.x, 0.05, p.y);
-    this.add(mesh, 0.45, (t) => {
-      mesh.scale.setScalar(1.4 - t * 0.9);
-      material.opacity = 1 - t;
+  /** Aufblitzender Bogen beim Nahkampfschlag. */
+  swing(p: Vec2, facing: number, radius: number, arc: number): void {
+    const material = new THREE.MeshBasicMaterial({ color: 0xffd166, transparent: true, depthWrite: false });
+    const mesh = new THREE.Mesh(
+      new THREE.RingGeometry(radius * 0.35, radius, 32, 1, -arc / 2, arc).rotateX(-Math.PI / 2),
+      material,
+    );
+    mesh.position.set(p.x, 0.06, p.y);
+    mesh.rotation.y = -facing;
+    this.add(mesh, 0.2, (t) => {
+      material.opacity = 0.7 * (1 - t);
+      mesh.scale.setScalar(0.9 + t * 0.15);
     });
   }
 

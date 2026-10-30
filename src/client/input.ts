@@ -1,96 +1,84 @@
-import type { Command, GameState } from '../sim/types';
+import type { HeroInput } from '../sim/types';
 import type { Vec2 } from '../sim/vec';
+import { type Action, type Keybindings, MENU_KEY } from './keybindings';
 import type { GameRenderer } from './renderer';
 
-/** Bei gehaltener rechter Maustaste wird das Laufziel so oft nachgeführt (ms). */
-const DRAG_INTERVAL = 120;
-
 /**
- * Maus und Tastatur → Befehle, Steuerung wie in LoL:
- * Rechtsklick laufen/angreifen, A + Linksklick Attack-Move, S Stopp.
+ * Tastatur und Maus, Steuerung wie in Supervive: WASD laufen, Maus zielt,
+ * Angriff in Richtung Mauszeiger. Alle Tasten kommen aus den Keybindings.
  */
 export class Input {
-  /** A gedrückt: Der nächste Linksklick ist ein Attack-Move. */
-  attackMoveArmed = false;
-  private rightDown = false;
-  private lastDrag = 0;
+  private readonly pressed = new Set<string>();
+  private mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  private aim: Vec2 = { x: 0, y: 0 };
+  /** Gesetzt, während im Menü auf eine neue Taste gewartet wird. */
+  capture: ((code: string | null) => void) | null = null;
+  /** Wird bei Esc aufgerufen. */
+  onMenu: () => void = () => {};
 
   constructor(
     private readonly renderer: GameRenderer,
-    private readonly getContext: () => { state: GameState; heroId: number } | null,
-    private readonly send: (cmd: Command) => void,
-    private readonly onMarker: (p: Vec2, attack: boolean) => void,
+    private readonly bindings: Keybindings,
   ) {
     const canvas = renderer.canvas;
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-    canvas.addEventListener('pointerdown', (e) => this.pointerDown(e));
-    canvas.addEventListener('pointermove', (e) => this.pointerMove(e));
-    window.addEventListener('pointerup', (e) => {
-      if (e.button === 2) this.rightDown = false;
+    canvas.addEventListener('pointerdown', (e) => {
+      if (!this.capture) this.pressed.add(`Mouse${e.button}`);
     });
-    window.addEventListener('keydown', (e) => this.keyDown(e));
-  }
-
-  private pointerDown(e: PointerEvent): void {
-    const ctx = this.getContext();
-    if (!ctx) return;
-    if (e.button === 2) {
-      this.rightDown = true;
-      this.lastDrag = performance.now();
-      this.attackMoveArmed = false;
-      const zombieIds = new Set(ctx.state.zombies.map((z) => z.id));
-      const target = this.renderer.pickUnit(e.clientX, e.clientY, zombieIds);
-      if (target !== null) {
-        this.send({ heroId: ctx.heroId, type: 'attack', targetId: target });
+    window.addEventListener('pointerdown', (e) => {
+      if (this.capture && (e.target as HTMLElement).dataset.rebind === undefined) this.finishCapture(`Mouse${e.button}`);
+    });
+    window.addEventListener('pointerup', (e) => this.pressed.delete(`Mouse${e.button}`));
+    window.addEventListener('pointermove', (e) => {
+      this.mouse = { x: e.clientX, y: e.clientY };
+    });
+    window.addEventListener('keydown', (e) => {
+      if (e.code === MENU_KEY) {
+        if (this.capture) this.finishCapture(null);
+        else this.onMenu();
         return;
       }
-      const p = this.renderer.pickGround(e.clientX, e.clientY);
-      if (p) {
-        this.send({ heroId: ctx.heroId, type: 'moveTo', target: p });
-        this.onMarker(p, false);
-      }
-    } else if (e.button === 0 && this.attackMoveArmed) {
-      this.attackMoveArmed = false;
-      const p = this.renderer.pickGround(e.clientX, e.clientY);
-      if (p) {
-        this.send({ heroId: ctx.heroId, type: 'attackMove', target: p });
-        this.onMarker(p, true);
-      }
-    }
-    this.updateCursor();
-  }
-
-  private pointerMove(e: PointerEvent): void {
-    if (!this.rightDown) return;
-    const now = performance.now();
-    if (now - this.lastDrag < DRAG_INTERVAL) return;
-    this.lastDrag = now;
-    const ctx = this.getContext();
-    const p = this.renderer.pickGround(e.clientX, e.clientY);
-    if (ctx && p) this.send({ heroId: ctx.heroId, type: 'moveTo', target: p });
-  }
-
-  private keyDown(e: KeyboardEvent): void {
-    const ctx = this.getContext();
-    if (!ctx || e.repeat) return;
-    switch (e.key.toLowerCase()) {
-      case 'a':
-        this.attackMoveArmed = true;
-        break;
-      case 's':
-        this.attackMoveArmed = false;
-        this.send({ heroId: ctx.heroId, type: 'stop' });
-        break;
-      case 'escape':
-        this.attackMoveArmed = false;
-        break;
-      default:
+      if (this.capture) {
+        e.preventDefault();
+        this.finishCapture(e.code);
         return;
-    }
-    this.updateCursor();
+      }
+      if (e.code === 'Tab') e.preventDefault();
+      this.pressed.add(e.code);
+    });
+    window.addEventListener('keyup', (e) => this.pressed.delete(e.code));
+    // Fenster verlassen: alles loslassen, sonst läuft der Held weiter.
+    window.addEventListener('blur', () => this.pressed.clear());
   }
 
-  private updateCursor(): void {
-    this.renderer.canvas.style.cursor = this.attackMoveArmed ? 'crosshair' : 'default';
+  /** code null: abgebrochen (Esc). */
+  private finishCapture(code: string | null): void {
+    const done = this.capture!;
+    this.capture = null;
+    done(code);
+  }
+
+  isDown(action: Action): boolean {
+    return this.pressed.has(this.bindings.get(action));
+  }
+
+  releaseAll(): void {
+    this.pressed.clear();
+  }
+
+  /** Aktueller Eingabezustand. W ist Norden (−y), passend zur festen Kamera. */
+  read(): HeroInput {
+    const move = {
+      x: (this.isDown('right') ? 1 : 0) - (this.isDown('left') ? 1 : 0),
+      y: (this.isDown('down') ? 1 : 0) - (this.isDown('up') ? 1 : 0),
+    };
+    const len = Math.hypot(move.x, move.y);
+    if (len > 0) {
+      move.x /= len;
+      move.y /= len;
+    }
+    // Jedes Mal neu berechnen: Die Kamera läuft mit, auch wenn die Maus stillsteht.
+    this.aim = this.renderer.pickGround(this.mouse.x, this.mouse.y) ?? this.aim;
+    return { move, aim: { ...this.aim }, attack: this.isDown('attack') };
   }
 }

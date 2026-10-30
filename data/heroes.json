@@ -10,7 +10,8 @@
     "attack": {
       "type": "melee",
       "damage": 42,
-      "range": 1.2,
+      "range": 2.5,
+      "arc": 120,
       "cooldown": 0.75
     }
   },
@@ -25,9 +26,10 @@
     "attack": {
       "type": "ranged",
       "damage": 28,
-      "range": 7,
-      "cooldown": 0.7,
-      "projectileSpeed": 24
+      "range": 9,
+      "cooldown": 0.55,
+      "projectileSpeed": 24,
+      "projectileRadius": 0.2
     }
   }
 ]

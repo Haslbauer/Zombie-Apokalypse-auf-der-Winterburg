@@ -11,8 +11,12 @@ export interface AttackDef {
   range: number;
   /** Sekunden zwischen zwei Angriffen. */
   cooldown: number;
+  /** Nur Nahkampf: Öffnungswinkel des Schlags in Grad. */
+  arc?: number;
   /** Nur Fernkampf: Meter pro Sekunde. */
   projectileSpeed?: number;
+  /** Nur Fernkampf: Radius des Projektils in Metern. */
+  projectileRadius?: number;
 }
 
 export interface HeroDef {
@@ -82,19 +86,19 @@ export interface GameData {
 
 // ---------- Befehle (Eingabe; im Mehrspieler das Netzwerkformat) ----------
 
-export type Command =
-  | { heroId: number; type: 'moveTo'; target: Vec2 }
-  | { heroId: number; type: 'attack'; targetId: number }
-  | { heroId: number; type: 'attackMove'; target: Vec2 }
-  | { heroId: number; type: 'stop' };
+/** Eingabezustand eines Spielers (Steuerung wie in Supervive). */
+export interface HeroInput {
+  /** Laufrichtung aus WASD, Länge höchstens 1. */
+  move: Vec2;
+  /** Bodenpunkt unter dem Mauszeiger, bestimmt die Blickrichtung. */
+  aim: Vec2;
+  /** Angriffstaste gedrückt. */
+  attack: boolean;
+}
+
+export type Command = { heroId: number; type: 'input' } & HeroInput;
 
 // ---------- Spielzustand ----------
-
-export type Order =
-  | { type: 'idle' }
-  | { type: 'move'; target: Vec2 }
-  | { type: 'attack'; targetId: number }
-  | { type: 'attackMove'; target: Vec2 };
 
 export interface Unit {
   id: number;
@@ -111,11 +115,8 @@ export interface Unit {
 }
 
 export interface Hero extends Unit {
-  order: Order;
-  /** Wegpunkte zum aktuellen Ziel. */
-  path: Vec2[];
-  /** Tick, ab dem der Pfad neu berechnet wird (beim Verfolgen). */
-  repathAt: number;
+  /** Letzte Eingabe; gilt, bis eine neue kommt. */
+  input: HeroInput;
   alive: boolean;
 }
 
@@ -124,13 +125,18 @@ export interface Zombie extends Unit {
   targetId: number | null;
 }
 
+/** Geschoss, das geradeaus fliegt und den ersten berührten Zombie trifft. */
 export interface Projectile {
   id: number;
   ownerId: number;
-  targetId: number;
   pos: Vec2;
+  /** Flugrichtung (Einheitsvektor). */
+  dir: Vec2;
   speed: number;
   damage: number;
+  radius: number;
+  /** Restliche Flugstrecke in Metern. */
+  remaining: number;
 }
 
 export type WavePhase = 'pause' | 'wave';
@@ -150,6 +156,8 @@ export type GameEvent =
   | { type: 'hit'; targetId: number; amount: number; pos: Vec2 }
   | { type: 'death'; id: number; pos: Vec2 }
   | { type: 'attack'; id: number; targetId: number }
+  | { type: 'swing'; id: number; facing: number; range: number; arc: number }
+  | { type: 'shot'; id: number }
   | { type: 'waveStart'; number: number }
   | { type: 'waveCleared'; number: number }
   | { type: 'gameOver'; wave: number };

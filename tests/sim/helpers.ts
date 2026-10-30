@@ -1,6 +1,7 @@
 import { gameData } from '../../src/gameData';
 import { Simulation } from '../../src/sim/game';
-import type { GameData } from '../../src/sim/types';
+import type { Command, GameData } from '../../src/sim/types';
+import type { Vec2 } from '../../src/sim/vec';
 
 /** Tiefe Kopie der echten Spieldaten, damit Tests sie gefahrlos anpassen können. */
 export function testData(patch?: (d: GameData) => void): GameData {
@@ -40,4 +41,9 @@ export function placeZombie(sim: Simulation, defId: string, x: number, y: number
 /** Wellen anhalten, damit ein Test nur seine eigenen Zombies sieht. */
 export function noWaves(d: GameData): void {
   d.waves.firstPauseDuration = 1e9;
+}
+
+/** Eingabe-Befehl für den ersten Helden. */
+export function input(sim: Simulation, move: Vec2, aim: Vec2, attack = false): Command {
+  return { heroId: sim.state.heroes[0].id, type: 'input', move, aim, attack };
 }
