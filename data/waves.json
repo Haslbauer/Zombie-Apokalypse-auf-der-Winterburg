@@ -38,22 +38,28 @@
       }
     }
   ],
-  "targetWeights": {
-    "heart": 0.7,
-    "hive": 0.3
-  },
-  "ratPacks": {
-    "fromWave": 2,
-    "packsPerWave": 0.5,
-    "minSize": 5,
-    "maxSize": 8,
-    "type": "ratte"
-  },
   "elites": {
     "every": 5,
     "types": [
       "rattenkoenig",
       "schlaechter"
-    ]
-  }
+    ],
+    "countEvery": 10
+  },
+  "packs": [
+    {
+      "type": "ratte",
+      "fromWave": 2,
+      "packsPerWave": 0.5,
+      "minSize": 5,
+      "maxSize": 8
+    },
+    {
+      "type": "hornisse",
+      "fromWave": 3,
+      "packsPerWave": 0.35,
+      "minSize": 4,
+      "maxSize": 6
+    }
+  ]
 }

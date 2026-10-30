@@ -12,7 +12,10 @@
     "aggroRange": 6,
     "xp": 11,
     "gold": 4,
-    "figure": "walker"
+    "figure": "walker",
+    "targets": {
+      "heart": 1
+    }
   },
   {
     "id": "runner",
@@ -27,7 +30,10 @@
     "aggroRange": 8,
     "xp": 10,
     "gold": 4,
-    "figure": "runner"
+    "figure": "runner",
+    "targets": {
+      "heart": 1
+    }
   },
   {
     "id": "brute",
@@ -42,7 +48,10 @@
     "aggroRange": 5,
     "xp": 28,
     "gold": 10,
-    "figure": "brute"
+    "figure": "brute",
+    "targets": {
+      "heart": 1
+    }
   },
   {
     "id": "kriecher",
@@ -58,7 +67,10 @@
     "xp": 16,
     "gold": 6,
     "figure": "crawler",
-    "rootOnHit": 1.0
+    "rootOnHit": 1.0,
+    "targets": {
+      "heart": 1
+    }
   },
   {
     "id": "ratte",
@@ -70,10 +82,15 @@
     "damage": 3,
     "attackRange": 0.3,
     "attackCooldown": 0.8,
-    "aggroRange": 7,
+    "aggroRange": 2,
     "xp": 2,
     "gold": 1,
-    "figure": "rat"
+    "figure": "rat",
+    "targets": {
+      "bed": 0.75,
+      "hive": 0.25
+    },
+    "provokeOnly": true
   },
   {
     "id": "rattenkoenig",
@@ -95,6 +112,9 @@
       "interval": 8,
       "count": 4,
       "summon": "ratte"
+    },
+    "targets": {
+      "heart": 1
     }
   },
   {
@@ -122,6 +142,33 @@
       "stun": 0.75,
       "knockback": 3,
       "damage": 30
+    },
+    "targets": {
+      "heart": 1
     }
+  },
+  {
+    "id": "hornisse",
+    "name": "Hornisse",
+    "color": "#e0a81c",
+    "hp": 30,
+    "speed": 4.5,
+    "radius": 0.25,
+    "damage": 6,
+    "attackRange": 0.3,
+    "attackCooldown": 0.7,
+    "aggroRange": 2,
+    "xp": 2,
+    "gold": 1,
+    "figure": "hornet",
+    "targets": {
+      "hive": 1
+    },
+    "spawnAt": {
+      "nordwest": 0.85,
+      "*": 0.15
+    },
+    "provokeOnly": true,
+    "flying": true
   }
 ]

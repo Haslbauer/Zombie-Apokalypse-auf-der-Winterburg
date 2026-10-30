@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v0.8)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v0.9)
 
 Stand: 30.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v0.9: Herz wird Lebensmittelvorrat (kein Selbstheilen, Ernte der Hochbeete füllt ihn auf). Zombies gehen auf Helden und Vorrat, Ratten auf Hochbeete und Bienenstock, neue Hornissen auf den Bienenstock. Neuer Spawnpunkt Nordwest. Elites langsamer mehr, Wellen neu abgestimmt.
 Änderungen v0.8: M5 umgesetzt. Bots in drei Stärken, ausgewogenes Team, Wellen für 4 Helden neu abgestimmt, Pausen 25 s (erste 20 s) mit „Welle starten“ (N).
 Änderungen v0.7: M4 umgesetzt. Gold, Shop (Pause + Innenhof), Waffen als Werte-Items, Inventar und Verbrauchsgüter auf R/T. Neue Gegner Kriecher und Ratten, Elites Rattenkönig und Schlächter.
 Änderungen v0.6: M3 umgesetzt. Level- und Skillregeln konkret, sechs Helden im Spiel (Chupa, Gärtnerin, Pirat, Libero, Rotschopf, Schläferin), Linksklick-Angriff je Held, Passive für Pirat, Libero und Schläferin (Mondlicht). Fähigkeiten steigern mit Shift + Taste. Gegnerbilder in assets/reference/gegner/, Ratte als Minion-Vorlage.
@@ -13,7 +14,7 @@ Mit "Vorschlag" markierte Punkte sind noch nicht entschieden, alles andere ist f
 
 ## 1. Vision
 
-Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Haus und Vorgärten, als Karte nachgebaut) gegen Zombiewellen. Perspektive von oben mit LoL-artiger Kamera und Steuerung wie in Supervive (WASD und Maus). Das Haus hat Lebenspunkte: Zombies, die es erreichen, greifen es an. Fällt der Lebensbalken auf 0, ist das Spiel verloren.
+Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Haus und Vorgärten, als Karte nachgebaut) gegen Zombiewellen. Perspektive von oben mit LoL-artiger Kamera und Steuerung wie in Supervive (WASD und Maus). Im Innenhof liegt der **Lebensmittelvorrat** der Winterburg: Zombies, die ihn erreichen, plündern ihn. Fällt er auf 0, ist das Spiel verloren. Die Hochbeete versorgen den Vorrat, Bienen verteidigen ihren Stock.
 
 ## 2. Festgelegte Entscheidungen
 
@@ -173,7 +174,9 @@ Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `
 
 - **Walker** (langsam, Masse; Optik: Zombie mit Bart und langen Haaren), **Runner** (schnell, wenig Leben; Optik: hagerer, einarmiger Zombie), **Brute** (Tank)
 - **Kriecher** (ab Welle 3): kriecht am Boden, sehr langsam, viel Leben. Sein Treffer hält den Helden 1 s fest.
-- **Ratten (Minions):** klein, sehr schnell, wenig Leben und Schaden. Ab Welle 2 kommen Rudel von 5–8 Ratten gemeinsam an einem Spawnpunkt, mit jeder Welle mehr Rudel.
+- **Wer greift was an:** Zombies (Walker, Runner, Brute, Kriecher, Elites) jagen Helden in der Nähe und laufen sonst zum Lebensmittelvorrat. Den Bienenstock und die Beete lassen sie in Ruhe.
+- **Ratten (Minions):** klein, sehr schnell, wenig Leben und Schaden. Ab Welle 2 kommen Rudel von 5–8 Ratten gemeinsam an einem Spawnpunkt, mit jeder Welle mehr Rudel. Sie fressen die **Hochbeete** an (75 %, jeweils das nächste intakte Beet) oder gehen an den **Bienenstock** (25 %). Helden beißen sie nur, wenn sie gestört werden: Ein Held steht näher als 2 m oder hat sie in den letzten 4 s getroffen.
+- **Hornissen** (ab Welle 3, Schwärme von 4–6): gelb-schwarz, schnell, wenig Leben. Sie fliegen über Hecken, Zäune und das Haus und greifen die Honigkästen des Bienenstocks an. Sie kommen zu 85 % aus dem Spawnpunkt Nordwest. Helden greifen sie wie Ratten nur an, wenn sie gestört werden. Ihr Angriff macht die Bienen wütend.
 - **Elites** alle 5 Wellen (⌊Welle/5⌋ Stück, abwechselnd), mit immer sichtbarem Lebensbalken und Ankündigung:
   - **Rattenkönig:** große Ratte mit Krone, ruft alle 8 s vier Ratten herbei
   - **Schlächter:** großer Zombie mit Schürze und Beil. Holt alle 8 s aus (rote Warnlinie) und stürmt auf einen Helden in bis zu 8 m. Wer getroffen wird, nimmt Schaden, wird zurückgestoßen und 0,75 s betäubt.
@@ -185,10 +188,11 @@ Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `
 
 ## 8. Niederlage
 
-- Das **Herz** im Innenhof hat einen gut sichtbaren Lebensbalken. Fällt er auf 0, ist das Spiel verloren.
-- Ein Durchbruch (Zombie erreicht das Herz) ist keine sofortige Niederlage. Die Zombies brauchen Zeit, das Herz zu beschädigen, und die Helden können sie wegkämpfen. Ohne Gegenwehr führt der Durchbruch aber zur Niederlage.
-- Nach LoL-Vorbild (Nexus): Das Herz regeneriert langsam von selbst, in den Pausenphasen schneller. Keine Reparatur im Shop.
-- Der **Bienenstock** ist ein zweites Ziel: Ein Teil der Zombies läuft ihn an. Normalerweise stechen die Bienen nur Zombies in der Nähe. Sobald der Stock Schaden bekommt, werden sie für einige Sekunden wütend und stechen alle in der Nähe, auch Helden. Ein zerstörter Stock ist keine Niederlage, die Bienen sind dann aber weg.
+- Der **Lebensmittelvorrat** (früher „Herz“) im Innenhof hat einen gut sichtbaren Lebensbalken (5500). Fällt er auf 0, ist das Spiel verloren: „Der Lebensmittelvorrat ist geplündert“.
+- Ein Durchbruch (Zombie erreicht den Vorrat) ist keine sofortige Niederlage. Die Zombies brauchen Zeit zum Plündern, und die Helden können sie wegkämpfen. Ohne Gegenwehr führt der Durchbruch aber zur Niederlage.
+- Der Vorrat regeneriert **nicht** von selbst. Keine Reparatur im Shop.
+- **Ernte:** Nach jeder überstandenen Welle ernten die sechs Hochbeete und füllen den Vorrat auf, jedes Beet 80 bei vollem Leben, angefressene anteilig weniger. Ein zerstörtes Beet bringt nichts und wächst nach 2 Wellen mit vollem Leben nach. Zerstörte Beete sind keine Niederlage.
+- Der **Bienenstock** (1000 Leben) wird von Hornissen und einem Teil der Ratten angegriffen. Normalerweise stechen die Bienen nur Gegner in der Nähe. Sobald der Stock Schaden bekommt, werden sie für einige Sekunden wütend und stechen alle in der Nähe, auch Helden. Ein zerstörter Stock ist keine Niederlage, die Bienen sind dann aber weg.
 - Gefallene Helden respawnen nach einem Timer, der mit der Welle wächst (5 s + 1 s pro Welle), im Innenhof und müssen von dort durch den Durchgang nach draußen.
 
 ## 9. Gold, Shop und Items
@@ -220,7 +224,7 @@ Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
   - **Einkauf** in der Pause nach Einkaufsliste je Held. Skillpunkte nach Reihenfolge, die Ultimate sobald möglich.
   - Bots schicken dieselben Befehle wie Menschen. Übernimmt in M6 ein Mensch einen Bot-Slot, wird nur die Bot-Steuerung entfernt.
 - Bots laufen auf dem Server (Mehrspieler) bzw. lokal (Singleplayer)
-- **Balancing für 4 Helden** (Wellen in `data/waves.json`, `npm run balance` lässt vier Bots über mehrere Seeds spielen). Stand M5: Vier Bots allein schaffen im Schnitt Welle 13,0 (leicht), 14,8 (mittel) und 17,8 (schwer), mit großer Streuung (etwa ±5 Wellen). Mit einem guten menschlichen Spieler kommt das Team weiter. Ziel bleibt Welle 30 für sehr gute Teams.
+- **Balancing für 4 Helden** (Wellen in `data/waves.json`, `npm run balance` lässt vier Bots über mehrere Seeds spielen). Stand v0.9 (Vorrat, Beete, Hornissen; Elites: eine in Welle 5 und 10, zwei ab Welle 15): Vier Bots allein schaffen im Schnitt Welle 11,3 (leicht), 14,5 (mittel) und 14,3 (schwer). „Schwer“ ist damit nicht stärker als „mittel“: Seit dem Umbau entscheidet vor allem der Druck auf den Vorrat, nicht die Feinsteuerung. Das ist ein Punkt für M7. Mit einem guten menschlichen Spieler kommt das Team weiter. Ziel bleibt Welle 30 für sehr gute Teams.
 
 ## 11. Karte
 
@@ -228,14 +232,15 @@ Grundlage ist die Skizze auf dem Lageplan (`assets/reference/karte-skizze.jpg`).
 
 - Karte ca. 66 x 75 m (echte Maße aus dem Lageplan)
 - Haus in U-Form (ca. 21 x 24 m) mit Westflügel, Ostflügel und Südblock. Das Haus selbst ist nicht begehbar.
-- **Innenhof = Herz der Base.** Dort steht das Herz. Der Hof ist nur über einen schmalen Durchgang (ca. 2,7 m) von Süden zwischen Westflügel und Südblock erreichbar: die wichtigste Engstelle.
+- **Innenhof = Lebensmittelvorrat der Winterburg.** Dort stehen Kisten, Fässer und Säcke. Der Hof ist nur über einen schmalen Durchgang (ca. 2,7 m) von Süden zwischen Westflügel und Südblock erreichbar: die wichtigste Engstelle.
 - Helden starten im Innenhof und erscheinen dort nach dem Tod wieder.
-- **Bienenstock** nordwestlich vom Haus: zweites Ziel der Zombies (siehe Abschnitt 8)
-- Hochbeete westlich vom Haus (blockieren das Laufen, nicht aber Schüsse)
+- **Bienenstock** nordwestlich vom Haus: Ziel der Hornissen und eines Teils der Ratten (siehe Abschnitt 8)
+- Sechs **Hochbeete** westlich vom Haus: Ziel der Ratten, versorgen den Vorrat mit ihrer Ernte. Sie blockieren das Laufen, nicht aber Schüsse.
 - Zombie-Zugänge:
   1. **Bunker** unten links im Garten: Zombies kommen aus der Bunkertür (Ostseite)
   2. **Heckenlücke Süd** in der Mitte der Südhecke
   3. **Zuwegung Ost:** Die Zombies laufen den Hang hinauf und sind dort langsamer (halbes Tempo), oben auf der Ebene wieder normal schnell
+  4. **Nordwest** (beim Studentenwohnheim): vor allem Hornissen, selten Zombies und Ratten. Liegt nah an Bienenstock und Hochbeeten.
 - Hecken im Norden, Osten und Süden, Zäune an der Zuwegung und zum Nachbargrundstück (nordöstlich, nicht begehbar), Bäume als Hindernisse
 - Spawnpunkte haben Gewichte (wie oft dort Zombies erscheinen), alles in `data/map.json`
 - Grafikstil: stilisiert, Low-Poly (siehe Abschnitt 3)

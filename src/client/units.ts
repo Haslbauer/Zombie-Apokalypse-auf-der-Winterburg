@@ -52,6 +52,8 @@ function zombieHeight(figure: string, radius: number): number {
       return 1.2;
     case 'crawler':
       return 0.6;
+    case 'hornet':
+      return 1.5;
     default:
       return UNIT_HEIGHT * (0.7 + radius * 0.6);
   }
@@ -185,6 +187,27 @@ export class UnitView {
         }
         return;
       }
+      case 'hornet': {
+        // Hornisse: gelb-schwarz gestreift, durchsichtige Flügel, schwebt
+        const hover = 1.25;
+        for (let i = 0; i < 3; i++) {
+          const seg = this.mesh(new THREE.SphereGeometry(0.11, 8, 6), i % 2 ? 0x1b1b1b : 0xe0a81c, -0.1 - i * 0.13, hover - i * 0.03);
+          seg.scale.set(1.2, 1, 1);
+        }
+        this.mesh(new THREE.SphereGeometry(0.1, 8, 6), 0x2b2b2b, 0.12, hover + 0.02);
+        this.mesh(new THREE.ConeGeometry(0.03, 0.12, 4), 0x1b1b1b, -0.48, hover - 0.08).rotation.z = Math.PI / 2;
+        const wingMat = new THREE.MeshBasicMaterial({ color: 0xdff3ff, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false });
+        for (const side of [-1, 1]) {
+          const wing = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.14), wingMat);
+          wing.position.set(-0.05, hover + 0.12, side * 0.14);
+          wing.rotation.x = -Math.PI / 2 + side * 0.4;
+          wing.name = 'wing';
+          this.body.add(wing);
+        }
+        eyeGlow(0.2, hover + 0.05, 0.05, 0x1b1b1b);
+        eyeGlow(0.2, hover + 0.05, -0.05, 0x1b1b1b);
+        return;
+      }
       case 'crawler': {
         // Kriecher: flach am Boden, Arme nach vorn
         const torso = this.mesh(new THREE.CapsuleGeometry(0.22, 0.6, 4, 8), color, -0.1, 0.25);
@@ -252,6 +275,10 @@ export class UnitView {
     if (unit.hp < unit.maxHp) this.bar.visible = true;
     this.flash = Math.max(0, this.flash - dt * 6);
     this.materials.forEach((m, i) => m.color.copy(this.baseColors[i]).lerp(WHITE, this.flash));
+    // Flügelschlag und Schweben (Hornissen)
+    const t = performance.now() / 1000;
+    for (const c of this.body.children) if (c.name === 'wing') c.rotation.z = Math.sin(t * 60 + unit.id) * 0.5;
+    if (this.body.children.some((c) => c.name === 'wing')) this.body.position.y = Math.sin(t * 6 + unit.id) * 0.08;
   }
 
   /** Zustand eines Zombies anzeigen (Symbol, Färbung, Ring für markiert/Wittern). */

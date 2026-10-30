@@ -4,7 +4,7 @@ import { Grid, resolveObstacles } from './grid';
 import { botCommands, createBot } from './bots/brain';
 import { applyInputs, updateHero } from './hero';
 import { pushApart } from './movement';
-import { updateObjectives } from './objectives';
+import { objectiveShape, updateObjectives } from './objectives';
 import { levelStats, levelUp } from './progression';
 import { kitOf } from './heroes/index';
 import { updateDelayed, updateZones } from './zones';
@@ -49,13 +49,11 @@ export class Simulation implements SimContext {
       ...data.arena,
       obstacles: [
         ...data.arena.obstacles,
-        ...data.arena.objectives.map((o) => ({ kind: 'circle' as const, x: o.x, y: o.y, r: o.radius, look: 'objective' as const })),
+        // Niedrige Ziele (Hochbeete) lassen Schüsse durch.
+        ...data.arena.objectives.map((o) => ({ ...objectiveShape(o), blocksShots: o.kind !== 'bed' })),
       ],
     };
     this.grid = new Grid(this.arena);
-    for (const o of data.arena.objectives) {
-      this.objectiveFields.set(o.id, this.grid.distanceField([o], o.radius + OBJECTIVE_SEED));
-    }
     this.heroDefs = new Map(data.heroes.map((h) => [h.id, h]));
     this.zombieDefs = new Map(data.zombies.map((z) => [z.id, z]));
 
@@ -71,8 +69,12 @@ export class Simulation implements SimContext {
       delayed: [],
       objectives: data.arena.objectives.map((o) => ({
         id: o.id,
+        kind: o.kind,
         pos: { x: o.x, y: o.y },
         radius: o.radius,
+        w: o.w,
+        h: o.h,
+        regrowIn: 0,
         hp: o.hp,
         maxHp: o.hp,
         destroyed: false,
@@ -91,6 +93,8 @@ export class Simulation implements SimContext {
       gameOver: false,
       events: [],
     };
+
+    this.refreshObjectiveFields();
 
     options.heroes.forEach((defId, slot) => {
       const def = this.heroDefs.get(defId);
@@ -131,6 +135,20 @@ export class Simulation implements SimContext {
       for (let l = 1; l < (options.startLevel ?? 1); l++) levelUp(this, hero);
     });
     this.state.events = [];
+  }
+
+  /** Distanzfelder zu jedem Ziel und zu jeder Zielgruppe (nur intakte Mitglieder). */
+  refreshObjectiveFields(kind?: string): void {
+    for (const o of this.data.arena.objectives) {
+      if (!kind && !this.objectiveFields.has(o.id)) {
+        this.objectiveFields.set(o.id, this.grid.distanceFieldToShapes([objectiveShape(o)], OBJECTIVE_SEED));
+      }
+    }
+    const kinds = kind ? [kind] : [...new Set(this.data.arena.objectives.map((o) => o.kind))];
+    for (const k of kinds) {
+      const alive = this.data.arena.objectives.filter((o) => o.kind === k && !this.state.objectives.find((s) => s.id === o.id)?.destroyed);
+      if (alive.length > 0) this.objectiveFields.set(k, this.grid.distanceFieldToShapes(alive.map(objectiveShape), OBJECTIVE_SEED));
+    }
   }
 
   /** Ein Tick (1/20 s). */
@@ -195,7 +213,13 @@ export class Simulation implements SimContext {
       if (!h.alive) continue;
       for (const z of this.hash.query(h.pos, h.radius + 1, this.neighbors)) pushApart(h, z, 0);
     }
-    for (const z of zombies) resolveObstacles(z.pos, z.radius, arena);
+    for (const z of zombies) {
+      if (this.zombieDefs.get(z.defId)?.flying) {
+        // Fliegende Gegner: nur am Kartenrand halten
+        z.pos.x = Math.max(z.radius, Math.min(arena.width - z.radius, z.pos.x));
+        z.pos.y = Math.max(z.radius, Math.min(arena.height - z.radius, z.pos.y));
+      } else resolveObstacles(z.pos, z.radius, arena);
+    }
     for (const h of heroes) if (h.alive) resolveObstacles(h.pos, h.radius, arena);
   }
 }

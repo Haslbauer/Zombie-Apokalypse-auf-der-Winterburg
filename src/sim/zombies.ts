@@ -1,7 +1,7 @@
 import { applyDamage, edgeDistance } from './combat';
 import type { SimContext } from './context';
 import { face, stepToward } from './movement';
-import { damageObjective } from './objectives';
+import { damageObjective, objDistance, objectivesFor } from './objectives';
 import { nextRandom } from './rng';
 import { updateElite } from './elites';
 import { hasBuff, heroCC, isBlind, isDisabled, isFeared, isRooted, statusSpeedFactor } from './status';
@@ -43,7 +43,7 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null): 
     }
     if (def.special && updateElite(ctx, z, def, heroes)) continue;
 
-    const hero = chaseTarget(ctx, z, heroes, blind ? BLIND_SIGHT : def.aggroRange);
+    const hero = chaseTarget(ctx, z, heroes, blind ? BLIND_SIGHT : def.aggroRange, def.provokeOnly ?? false);
     if (hero) {
       if (edgeDistance(z, hero) <= def.attackRange) {
         face(z, hero.pos);
@@ -57,16 +57,18 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null): 
         }
       } else if (!rooted) {
         if (blind) stagger(ctx, z, hero.pos, speed * DT);
+        else if (def.flying) stepToward(z, hero.pos, speed * DT);
         else moveTo(ctx, z, hero.pos, heroField, speed * DT);
       }
       continue;
     }
 
-    const obj = currentObjective(ctx, z);
-    if (!obj) continue;
-    if (edgeDistance(z, obj) <= def.attackRange) {
+    const found = currentObjective(ctx, z);
+    if (!found) continue;
+    const obj = found.obj;
+    if (objDistance(z, obj) <= def.attackRange) {
       face(z, obj.pos);
-      if (obj.id === 'heart' && !state.wave.breached) {
+      if (obj.kind === 'food' && !state.wave.breached) {
         state.wave.breached = true;
         state.events.push({ type: 'breach', objectiveId: obj.id });
       }
@@ -76,7 +78,8 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null): 
       }
     } else if (!rooted) {
       if (blind) stagger(ctx, z, obj.pos, speed * DT);
-      else moveTo(ctx, z, obj.pos, ctx.objectiveFields.get(obj.id) ?? null, speed * DT);
+      else if (def.flying) stepToward(z, obj.pos, speed * DT);
+      else moveTo(ctx, z, obj.pos, ctx.objectiveFields.get(found.key) ?? null, speed * DT);
     }
   }
 }
@@ -97,11 +100,25 @@ function stagger(ctx: SimContext, z: Zombie, target: Vec2, step: number): void {
   stepToward(z, { x: z.pos.x + Math.cos(a) * 5, y: z.pos.y + Math.sin(a) * 5 }, step);
 }
 
-/** Held, den der Zombie verfolgt: der bisherige, solange er nah genug ist, sonst der nächste in Aggro-Reichweite. */
-function chaseTarget(ctx: SimContext, z: Zombie, heroes: Hero[], aggroRange: number): Hero | null {
+/** So weit verfolgt ein gereiztes Tier den Helden, der es getroffen hat. */
+const PROVOKE_RANGE = 12;
+
+/**
+ * Held, den der Zombie verfolgt: der bisherige, solange er nah genug ist, sonst
+ * der nächste in Aggro-Reichweite. Ratten und Hornissen (provokeOnly) jagen
+ * außerdem den Helden, der sie zuletzt getroffen hat.
+ */
+function chaseTarget(ctx: SimContext, z: Zombie, heroes: Hero[], aggroRange: number, provokeOnly: boolean): Hero | null {
+  if (provokeOnly && ctx.state.time < z.st.provokedUntil) {
+    const h = heroes.find((x) => x.id === z.st.provokedBy);
+    if (h && edgeDistance(z, h) <= PROVOKE_RANGE) {
+      z.targetId = h.id;
+      return h;
+    }
+  }
   if (z.targetId !== null) {
     const h = heroes.find((x) => x.id === z.targetId);
-    if (h && edgeDistance(z, h) <= aggroRange + LEASH) return h;
+    if (h && edgeDistance(z, h) <= aggroRange + (provokeOnly ? 1 : LEASH)) return h;
     z.targetId = null;
   }
   let best: Hero | null = null;
@@ -117,15 +134,28 @@ function chaseTarget(ctx: SimContext, z: Zombie, heroes: Hero[], aggroRange: num
   return best;
 }
 
-/** Das Ziel des Zombies; ist es zerstört, wird auf das nächste noch stehende Ziel umgeschaltet. */
-function currentObjective(ctx: SimContext, z: Zombie): Objective | null {
-  const objectives = ctx.state.objectives;
-  let obj = objectives.find((o) => o.id === z.objectiveId && !o.destroyed);
-  if (!obj) {
-    obj = objectives.find((o) => o.id === 'heart' && !o.destroyed) ?? objectives.find((o) => !o.destroyed);
-    if (obj) z.objectiveId = obj.id;
+/**
+ * Ziel des Zombies: objectiveId ist eine Ziel-Id oder eine Gruppe (z. B. "bed").
+ * Bei einer Gruppe zählt das nächste intakte Mitglied. Ist nichts mehr da,
+ * geht es zum Lebensmittelvorrat. key ist das passende Distanzfeld.
+ */
+function currentObjective(ctx: SimContext, z: Zombie): { obj: Objective; key: string } | null {
+  let candidates = objectivesFor(ctx, z.objectiveId);
+  if (candidates.length === 0) {
+    z.objectiveId = 'heart';
+    candidates = objectivesFor(ctx, 'heart');
+    if (candidates.length === 0) candidates = ctx.state.objectives.filter((o) => !o.destroyed);
   }
-  return obj ?? null;
+  let best: Objective | null = null;
+  let bestD = Infinity;
+  for (const o of candidates) {
+    const d = objDistance(z, o);
+    if (d < bestD) {
+      bestD = d;
+      best = o;
+    }
+  }
+  return best ? { obj: best, key: z.objectiveId } : null;
 }
 
 function moveTo(ctx: SimContext, z: Zombie, target: Vec2, field: Float32Array | null, step: number): void {

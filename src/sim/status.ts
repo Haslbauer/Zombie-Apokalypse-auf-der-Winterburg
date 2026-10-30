@@ -18,6 +18,8 @@ export function emptyStatus(): ZombieStatus {
     drowsy: 0,
     drowsyUntil: 0,
     heldBy: null,
+    provokedBy: null,
+    provokedUntil: 0,
   };
 }
 

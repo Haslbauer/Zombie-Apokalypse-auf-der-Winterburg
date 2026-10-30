@@ -108,6 +108,14 @@ export interface ZombieDef {
   figure: string;
   /** Treffer hält den Helden so viele Sekunden fest (Kriecher). */
   rootOnHit?: number;
+  /** Ziele mit Gewicht: Objective-Id oder Gruppe (z. B. { "bed": 0.75, "hive": 0.25 }). */
+  targets: Record<string, number>;
+  /** Bevorzugte Spawnpunkte (Id → Anteil); "*" verteilt den Rest auf die übrigen nach ihrem Gewicht. */
+  spawnAt?: Record<string, number>;
+  /** Greift Helden nur an, wenn sie sehr nah sind oder ihn getroffen haben (Ratten, Hornissen). */
+  provokeOnly?: boolean;
+  /** Fliegt über Hindernisse (Hornissen). */
+  flying?: boolean;
   /** Elite-Fähigkeit mit ihren Werten. */
   special?: { kind: 'summon' | 'charge'; interval: number; [key: string]: number | string };
 }
@@ -170,12 +178,10 @@ export interface WaveConfig {
   firstPauseDuration: number;
   pauseDuration: number;
   mix: WaveMixEntry[];
-  /** Wahrscheinlichkeit, mit der ein Zombie welches Ziel (Objective-Id) anläuft. */
-  targetWeights: Record<string, number>;
-  /** Rattenrudel: ab fromWave, Anzahl 1 + (Welle − fromWave) × packsPerWave (abgerundet). */
-  ratPacks?: { fromWave: number; packsPerWave: number; minSize: number; maxSize: number; type: string };
-  /** Elites: alle `every` Wellen ⌊Welle/every⌋ Stück, Typen abwechselnd. */
-  elites?: { every: number; types: string[] };
+  /** Rudel und Schwärme: ab fromWave, Anzahl 1 + (Welle − fromWave) × packsPerWave (abgerundet), je minSize–maxSize Tiere. */
+  packs?: { type: string; fromWave: number; packsPerWave: number; minSize: number; maxSize: number }[];
+  /** Elites: alle `every` Wellen, Anzahl ⌈Welle/countEvery⌉ (Standard: ⌊Welle/every⌋), Typen abwechselnd. */
+  elites?: { every: number; countEvery?: number; types: string[] };
 }
 
 /** Aussehen eines Hindernisses (nur für die Darstellung). */
@@ -218,13 +224,23 @@ export interface BeesDef {
   aggroDuration: number;
 }
 
-/** Ziel, das die Zombies angreifen (Herz der Base, Bienenstock). */
+/** Ziel, das die Gegner angreifen (Lebensmittelvorrat, Bienenstock, Hochbeete). */
 export interface ObjectiveDef {
   id: string;
   name: string;
+  /** Gruppe/Art: "food", "hive", "bed". Gegner können eine Gruppe als Ziel haben. */
+  kind: string;
   x: number;
   y: number;
+  /** Kreis mit radius, oder Rechteck (Mittelpunkt x/y) mit w und h. */
   radius: number;
+  w?: number;
+  h?: number;
+  /** Hochbeete: Ernte für den Vorrat pro Pause (bei vollem Leben) und Wellen bis zum Nachwachsen. */
+  harvest?: number;
+  regrowWaves?: number;
+  /** Text bei Niederlage. */
+  lostText?: string;
   hp: number;
   /** Regeneration pro Sekunde während einer Welle bzw. in der Pause. */
   regen: number;
@@ -429,6 +445,9 @@ export interface ZombieStatus {
   drowsyUntil: number;
   /** Festgehalten von diesem Helden (Hetzjagd), solange rootUntil läuft. */
   heldBy: number | null;
+  /** Von diesem Helden getroffen (gereizt) bis provokedUntil – für Ratten und Hornissen. */
+  provokedBy: number | null;
+  provokedUntil: number;
 }
 
 export interface Zombie extends Unit {
@@ -482,8 +501,13 @@ export interface Delayed {
 
 export interface Objective {
   id: string;
+  kind: string;
   pos: Vec2;
   radius: number;
+  w?: number;
+  h?: number;
+  /** Zerstörte Beete: Wellen bis zum Nachwachsen. */
+  regrowIn: number;
   hp: number;
   maxHp: number;
   destroyed: boolean;
@@ -543,6 +567,8 @@ export type GameEvent =
   | { type: 'beesAngry'; objectiveId: string }
   | { type: 'sting'; objectiveId: string; targetId: number }
   | { type: 'respawn'; id: number }
+  | { type: 'harvest'; amount: number }
+  | { type: 'regrow'; objectiveId: string }
   | { type: 'gold'; heroId: number; amount: number; pos?: Vec2 }
   | { type: 'shop'; heroId: number; action: 'buy' | 'sell' | 'use'; itemId: string }
   | { type: 'shopDenied'; heroId: number; reason: string }

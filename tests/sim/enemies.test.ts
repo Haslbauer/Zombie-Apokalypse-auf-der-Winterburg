@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { isSleeping, sleep } from '../../src/sim/status';
-import { ratPackCount, waveElites, waveQueue } from '../../src/sim/waves';
+import { packCount, waveElites, waveQueue } from '../../src/sim/waves';
 import { dist } from '../../src/sim/vec';
 import { arenaData, makeSim, noWaves, placeZombie, run, testData } from './helpers';
 
@@ -32,16 +32,20 @@ describe('Neue Gegner und Elites', () => {
     expect(b.h.buffs.some((x) => x.kind === 'rooted')).toBe(false);
   });
 
-  it('Rattenrudel ab Welle 2, Elites in Welle 5 und 10', () => {
-    expect(ratPackCount(1, cfg)).toBe(0);
-    expect(ratPackCount(2, cfg)).toBe(1);
-    expect(ratPackCount(8, cfg)).toBeGreaterThan(2);
+  it('Rattenrudel ab Welle 2, Elites in Welle 5, 10 und zwei ab 15', () => {
+    expect(packCount(1, cfg, 'ratte')).toBe(0);
+    expect(packCount(2, cfg, 'ratte')).toBe(1);
+    expect(packCount(8, cfg, 'ratte')).toBeGreaterThan(2);
+    expect(packCount(2, cfg, 'hornisse')).toBe(0);
+    expect(packCount(3, cfg, 'hornisse')).toBe(1);
     expect(waveElites(4, cfg)).toEqual([]);
     expect(waveElites(5, cfg)).toEqual(['rattenkoenig']);
-    expect(waveElites(10, cfg)).toEqual(['schlaechter', 'rattenkoenig']);
+    expect(waveElites(10, cfg)).toEqual(['schlaechter']);
+    expect(waveElites(15, cfg)).toEqual(['rattenkoenig', 'schlaechter']);
     const q = waveQueue({ rng: 1 }, 5, cfg);
     expect(q.filter((e) => e.startsWith('elite:'))).toEqual(['elite:rattenkoenig']);
-    expect(q.filter((e) => e.startsWith('pack:')).length).toBe(ratPackCount(5, cfg));
+    expect(q.filter((e) => e.startsWith('pack:ratte')).length).toBe(packCount(5, cfg, 'ratte'));
+    expect(q.filter((e) => e.startsWith('pack:hornisse')).length).toBe(packCount(5, cfg, 'hornisse'));
   });
 
   it('ein Rattenrudel erscheint gemeinsam an einem Spawnpunkt', () => {
@@ -53,8 +57,9 @@ describe('Neue Gegner und Elites', () => {
     sim.state.wave.spawnTimer = 0;
     sim.step();
     const rats = sim.state.zombies.filter((z) => z.defId === 'ratte');
-    expect(rats.length).toBeGreaterThanOrEqual(cfg.ratPacks!.minSize);
-    expect(rats.length).toBeLessThanOrEqual(cfg.ratPacks!.maxSize);
+    const pack = cfg.packs!.find((p) => p.type === 'ratte')!;
+    expect(rats.length).toBeGreaterThanOrEqual(pack.minSize);
+    expect(rats.length).toBeLessThanOrEqual(pack.maxSize);
     for (const r of rats) expect(dist(r.pos, rats[0].pos)).toBeLessThan(5);
   });
 
@@ -97,5 +102,60 @@ describe('Neue Gegner und Elites', () => {
     run(sim, 2 * 20 + 2);
     expect(isSleeping(sim, walker)).toBe(true);
     expect(isSleeping(sim, king)).toBe(false);
+  });
+
+  it('Ratten ignorieren Helden ab 2 m, beißen aber zurück, wenn sie getroffen werden', () => {
+    const sim = makeSim('gaertnerin', 1, testData(noWaves));
+    const h = sim.state.heroes[0];
+    h.pos = { x: 30, y: 50 };
+    h.maxHp = h.hp = 1e9;
+    const rat = placeZombie(sim, 'ratte', 34, 50, 1e6);
+    rat.objectiveId = 'bed';
+    rat.speed = 0; // nur die Zielwahl prüfen
+    sim.step();
+    expect(rat.targetId).toBeNull();
+    // Getroffen: verfolgt den Helden
+    sim.step([{ heroId: h.id, type: 'input', move: { x: 0, y: 0 }, aim: rat.pos, attack: true }]);
+    run(sim, 10);
+    expect(rat.targetId).toBe(h.id);
+  });
+
+  it('Ratten laufen zu einem Hochbeet und fressen es an', () => {
+    const sim = makeSim('rotschopf', 1, testData(noWaves));
+    sim.state.heroes[0].pos = { x: 50, y: 8 };
+    const rat = placeZombie(sim, 'ratte', 22.8, 53.5, 1e6);
+    rat.objectiveId = 'bed';
+    const beds = sim.state.objectives.filter((o) => o.kind === 'bed');
+    run(sim, 20 * 20);
+    expect(beds.some((b) => b.hp < b.maxHp)).toBe(true);
+  });
+
+  it('Hornissen kommen meist aus dem Nordwesten, fliegen geradlinig über Hecken und greifen den Stock an', () => {
+    const sim = makeSim('rotschopf', 2, testData(noWaves));
+    sim.state.heroes[0].pos = { x: 50, y: 8 };
+    const nw = sim.data.arena.spawnPoints.find((s) => s.id === 'nordwest')!;
+    // Spawnpunkt-Verteilung
+    let fromNw = 0;
+    for (let i = 0; i < 100; i++) {
+      sim.state.wave.queue = ['pack:hornisse'];
+      sim.state.wave.phase = 'wave';
+      sim.state.wave.spawnTimer = 0;
+      sim.step();
+      const h = sim.state.zombies.filter((z) => z.defId === 'hornisse');
+      if (h.length > 0 && dist(h[0].pos, nw) < 4) fromNw++;
+      sim.state.zombies = [];
+    }
+    expect(fromNw).toBeGreaterThan(70);
+    // Geradeaus über die Nordhecke (x 29–51, y 2,5–4,5) zum Stock
+    const hornet = placeZombie(sim, 'hornisse', 40, 1, 1e6);
+    hornet.objectiveId = 'hive';
+    const hive = sim.state.objectives.find((o) => o.id === 'hive')!;
+    let angry = false;
+    for (let i = 0; i < 20 * 10 && !angry; i++) {
+      sim.step();
+      angry = sim.state.events.some((e) => e.type === 'beesAngry');
+    }
+    expect(hive.hp).toBeLessThan(hive.maxHp);
+    expect(angry).toBe(true);
   });
 });

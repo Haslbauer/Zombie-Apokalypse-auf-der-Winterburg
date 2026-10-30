@@ -34,7 +34,7 @@ Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bog
 
 ## Karte
 
-Die Winterburg nach der Skizze in `assets/reference/karte-skizze.jpg`: U-förmiges Haus mit dem **Herz** im Innenhof (nur über einen schmalen Durchgang erreichbar), **Bienenstock** als zweites Ziel, Zombies aus dem **Bunker**, durch die **Heckenlücke Süd** und den **Hang Ost** hinauf. Fällt das Herz, ist das Spiel verloren.
+Die Winterburg nach der Skizze in `assets/reference/karte-skizze.jpg`: U-förmiges Haus mit dem **Lebensmittelvorrat** im Innenhof (nur über einen schmalen Durchgang erreichbar). Zombies kommen aus dem **Bunker**, durch die **Heckenlücke Süd**, den **Hang Ost** hinauf und aus dem **Nordwesten**. Zombies plündern den Vorrat, **Ratten** fressen die **Hochbeete** (deren Ernte füllt den Vorrat nach jeder Welle auf), **Hornissen** greifen den **Bienenstock** an. Ist der Vorrat leer, ist das Spiel verloren.
 
 Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben, `?level=6` startet auf Level 6, `?wave=5` mit Welle 5 (kombinierbar: `?wave=5&level=8`), `?bots=4` lässt vier Bots allein spielen (Zuschauen, optional `&difficulty=schwer`).
 
@@ -46,7 +46,7 @@ Du wählst deinen Helden, drei Bots spielen mit (je ein Nahkämpfer, Fernkämpfe
 
 ## Gegner
 
-Walker, Runner, Brute, Kriecher (hält fest), Ratten in Rudeln und alle 5 Wellen Elites: Rattenkönig (ruft Ratten) und Schlächter (Anlauf, betäubt). Details in `docs/SPEC.md` (Abschnitt 7).
+Walker, Runner, Brute, Kriecher (hält fest), Ratten in Rudeln (fressen Beete), Hornissen-Schwärme (greifen den Bienenstock an) und alle 5 Wellen Elites: Rattenkönig (ruft Ratten) und Schlächter (Anlauf, betäubt). Details in `docs/SPEC.md` (Abschnitt 7).
 
 ## Shop
 

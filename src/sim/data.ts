@@ -112,6 +112,7 @@ export function parseGameData(raw: {
     const p = `arena.objectives[${i}]`;
     str(o, 'id', p);
     str(o, 'name', p);
+    str(o, 'kind', p);
     for (const k of ['x', 'y', 'radius', 'regen', 'pauseRegen']) num(o, k, p);
     num(o, 'hp', p, 1);
     if (typeof o?.loseOnDestroy !== 'boolean') errors.push(`${p}.loseOnDestroy: true oder false erwartet`);
@@ -121,8 +122,16 @@ export function parseGameData(raw: {
     }
     objectiveIds.add(o?.id);
   });
-  for (const id of Object.keys(w?.targetWeights ?? {})) {
-    if (objectiveIds.size > 0 && !objectiveIds.has(id)) errors.push(`waves.targetWeights.${id}: unbekanntes Ziel`);
+  const objectiveKinds = new Set((Array.isArray(a?.objectives) ? a.objectives : []).map((o: any) => o?.kind));
+  zombies.forEach((z, i) => {
+    if (!z?.targets || typeof z.targets !== 'object') errors.push(`zombies[${i}].targets: Ziele mit Gewicht erwartet`);
+    for (const key of Object.keys(z?.targets ?? {})) {
+      if (objectiveIds.size > 0 && !objectiveIds.has(key) && !objectiveKinds.has(key)) errors.push(`zombies[${i}].targets.${key}: unbekanntes Ziel`);
+    }
+  });
+  for (const [i, p] of (Array.isArray(w?.packs) ? w.packs : []).entries()) {
+    if (!zombieIds.has(p?.type)) errors.push(`waves.packs[${i}].type: unbekannter Zombie-Typ`);
+    for (const k of ['fromWave', 'packsPerWave', 'minSize', 'maxSize']) num(p, k, `waves.packs[${i}]`);
   }
   num(a?.heroStart, 'x', 'arena.heroStart');
   num(a?.heroStart, 'y', 'arena.heroStart');

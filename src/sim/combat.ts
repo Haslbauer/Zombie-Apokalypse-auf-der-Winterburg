@@ -10,6 +10,8 @@ import { dist, type Vec2 } from './vec';
 
 /** Bonus auf den ersten Treffer gegen einen schlafenden Zombie. */
 const SLEEP_BONUS = 1.5;
+/** So lange verfolgt ein gereiztes Tier (Ratte, Hornisse) den Helden, der es getroffen hat. */
+const PROVOKE_TIME = 4;
 
 /** Abstand von Rand zu Rand zweier runder Einheiten. */
 export function edgeDistance(a: { pos: { x: number; y: number }; radius: number }, b: typeof a): number {
@@ -35,10 +37,17 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
     );
     amount = absorbWithShield(target, amount * (1 - reduction));
     if (amount <= 0) return 0;
-  } else if (state.time < target.st.sleepUntil) {
-    amount *= SLEEP_BONUS;
-    target.st.sleepUntil = 0;
-    state.events.push({ type: 'status', zombieId: target.id, status: 'wake' });
+  } else {
+    if (source) {
+      // Gereizt: Ratten und Hornissen beißen zurück
+      target.st.provokedBy = source.id;
+      target.st.provokedUntil = state.time + PROVOKE_TIME;
+    }
+    if (state.time < target.st.sleepUntil) {
+      amount *= SLEEP_BONUS;
+      target.st.sleepUntil = 0;
+      state.events.push({ type: 'status', zombieId: target.id, status: 'wake' });
+    }
   }
 
   const dealt = Math.min(amount, target.hp);

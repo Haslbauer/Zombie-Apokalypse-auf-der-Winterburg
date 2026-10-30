@@ -2,6 +2,7 @@ import { edgeDistance } from '../combat';
 import type { SimContext } from '../context';
 import { shopClosedReason } from '../economy';
 import { itemDef, itemStats } from '../items';
+import { objDistance } from '../objectives';
 import { canRankUp } from '../progression';
 import { nextRandom } from '../rng';
 import { hasBuff } from '../status';
@@ -153,15 +154,16 @@ function nextPurchase(ctx: SimContext, h: Hero): string | null {
 /** Bedrohung bewerten: Zombies an Herz und Bienenstock, an Mitspielern, Elites, am Posten. */
 function pickTarget(ctx: SimContext, h: Hero, bot: BotState): Zombie | null {
   const { state } = ctx;
-  const heart = state.objectives.find((o) => o.id === 'heart' && !o.destroyed);
-  const hive = state.objectives.find((o) => o.id === 'hive' && !o.destroyed);
+  // Bedrohte Ziele: Vorrat vor Bienenstock vor Hochbeeten
+  const guarded = state.objectives
+    .filter((o) => !o.destroyed)
+    .map((o) => ({ o, value: o.kind === 'food' ? 100 : o.kind === 'hive' ? 80 : 40, range: o.kind === 'food' ? 9 : 4 }));
   let best: Zombie | null = null;
   let bestScore = 0;
   for (const z of state.zombies) {
     if (z.hp <= 0) continue;
     let score = 0;
-    if (heart && dist(z.pos, heart.pos) < 9) score += 100;
-    if (hive && dist(z.pos, hive.pos) < 7) score += 80;
+    for (const g of guarded) if (objDistance(z, g.o) < g.range) score = Math.max(score, g.value);
     const victim = z.targetId !== null ? state.heroes.find((x) => x.id === z.targetId) : undefined;
     if (victim && victim.alive && edgeDistance(z, victim) < 2) score += 50;
     if ((ctx.zombieDefs.get(z.defId)?.rank ?? 'normal') !== 'normal') score += 30;

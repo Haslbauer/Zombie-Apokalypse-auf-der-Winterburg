@@ -178,7 +178,14 @@ function abilityEffect(e: Extract<GameEvent, { type: 'effect' }>): void {
   }
 }
 
+/** Einmal pro Welle melden, wenn Hornissen auftauchen. */
+let hornetsAnnounced = false;
+
 function handleEvents(state: GameState): void {
+  if (!hornetsAnnounced && state.zombies.some((z) => gameData.zombies.find((d) => d.id === z.defId)?.flying)) {
+    hornetsAnnounced = true;
+    hud.message('Hornissen greifen den Bienenstock an!');
+  }
   for (const e of state.events) {
     switch (e.type) {
       case 'hit':
@@ -238,6 +245,12 @@ function handleEvents(state: GameState): void {
       case 'objectiveDestroyed':
         if (!state.gameOver) hud.message(`${gameData.arena.objectives.find((o) => o.id === e.objectiveId)?.name} zerstört`);
         break;
+      case 'harvest':
+        hud.message(`Ernte: +${e.amount} Vorrat`);
+        break;
+      case 'regrow':
+        hud.message('Hochbeet nachgewachsen');
+        break;
       case 'respawn':
         if (e.id === heroId) hud.message('Zurück im Kampf!');
         break;
@@ -247,6 +260,7 @@ function handleEvents(state: GameState): void {
         break;
       case 'waveStart':
         hud.message(`Welle ${e.number}!`);
+        hornetsAnnounced = false;
         break;
       case 'waveCleared':
         hud.message(`Welle ${e.number} geschafft`);

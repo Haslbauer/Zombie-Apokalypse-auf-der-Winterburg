@@ -16,7 +16,7 @@
       "think": 0.1,
       "aimError": 0.1,
       "abilityChance": 1,
-      "retreatHp": 0.35
+      "retreatHp": 0.2
     }
   },
   "heroes": {

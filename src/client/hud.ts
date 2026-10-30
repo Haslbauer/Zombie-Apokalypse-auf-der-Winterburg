@@ -17,6 +17,7 @@ export class Hud {
   private readonly waveInfo = el('div', 'hud-wave-info');
   readonly startWaveBtn = el('button', 'hud-start-wave');
   private readonly team = el('div', 'hud-team');
+  private readonly beds = el('div', 'hud-objective');
   private teamRows = new Map<number, { row: HTMLElement; hp: HTMLElement; level: HTMLElement; status: HTMLElement }>();
   private readonly kills = el('div', 'hud-kills');
   private readonly objectiveBars = new Map<string, { fill: HTMLElement; box: HTMLElement }>();
@@ -54,15 +55,17 @@ export class Hud {
     private readonly bindings: Keybindings,
   ) {
     this.top.append(this.waveLabel, this.waveInfo, this.startWaveBtn, this.kills);
-    for (const o of data.arena.objectives) {
+    this.beds.className = 'hud-objective';
+    for (const o of data.arena.objectives.filter((x) => x.kind !== 'bed')) {
       const box = el('div', 'hud-objective');
       const bar = el('div', 'hud-objective-bar');
-      const fill = el('div', `hud-objective-fill ${o.bees ? 'hive' : 'heart'}`);
+      const fill = el('div', `hud-objective-fill ${o.kind === 'hive' ? 'hive' : 'heart'}`);
       bar.append(fill);
-      box.append(el('span', '', o.name), bar);
+      box.append(el('span', '', o.kind === 'food' ? 'Vorrat' : o.name), bar);
       this.top.append(box);
       this.objectiveBars.set(o.id, { fill, box });
     }
+    if (data.arena.objectives.some((o) => o.kind === 'bed')) this.top.append(this.beds);
     const hp = el('div', 'hud-hp');
     hp.append(this.hpFill, this.hpText);
     const xp = el('div', 'hud-xp');
@@ -454,6 +457,12 @@ export class Hud {
       bar.fill.style.width = `${(100 * o.hp) / o.maxHp}%`;
       bar.box.classList.toggle('destroyed', o.destroyed);
       bar.box.classList.toggle('angry', state.time < o.aggroUntil);
+    }
+    const beds = state.objectives.filter((o) => o.kind === 'bed');
+    if (beds.length > 0) {
+      const intact = beds.filter((b) => !b.destroyed).length;
+      this.beds.textContent = `Beete ${intact}/${beds.length}`;
+      this.beds.classList.toggle('angry', beds.some((b) => !b.destroyed && b.hp < b.maxHp));
     }
 
     if (this.bannerTimer > 0) {

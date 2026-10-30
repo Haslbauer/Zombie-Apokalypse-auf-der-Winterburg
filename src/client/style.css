@@ -456,7 +456,7 @@ html, body {
 .hud-shop-hint {
   position: absolute;
   left: 50%;
-  bottom: 200px;
+  bottom: 240px;
   transform: translateX(-50%);
   font: inherit;
   font-weight: 700;

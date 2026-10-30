@@ -8,8 +8,10 @@ export interface SimContext {
   grid: Grid;
   /** Karte inklusive der Ziele als Hindernisse (für Kollision und Schüsse). */
   arena: ArenaDef;
-  /** Statische Distanzfelder zu jedem Ziel (Objective-Id → Feld). */
+  /** Distanzfelder zu jedem Ziel und jeder Zielgruppe (Id bzw. Art → Feld). */
   objectiveFields: Map<string, Float32Array>;
+  /** Felder einer Zielgruppe neu berechnen (z. B. wenn ein Hochbeet zerstört wird oder nachwächst). */
+  refreshObjectiveFields(kind: string): void;
   heroDefs: Map<string, HeroDef>;
   zombieDefs: Map<string, ZombieDef>;
 }

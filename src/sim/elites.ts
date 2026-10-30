@@ -25,7 +25,7 @@ export function updateElite(ctx: SimContext, z: Zombie, def: ZombieDef, heroes: 
       const a = (i / count) * Math.PI * 2;
       const pos = { x: z.pos.x + Math.cos(a) * (z.radius + 0.6), y: z.pos.y + Math.sin(a) * (z.radius + 0.6) };
       resolveObstacles(pos, type.radius, ctx.arena);
-      spawnZombieAt(ctx, type, pos, z.objectiveId);
+      spawnZombieAt(ctx, type, pos);
     }
     ctx.state.events.push({ type: 'effect', kind: 'summon', pos: { ...z.pos }, radius: 2, heroId: undefined });
     return false;

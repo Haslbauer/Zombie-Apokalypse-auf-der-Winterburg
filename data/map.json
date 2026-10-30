@@ -14,14 +14,16 @@
   "objectives": [
     {
       "id": "heart",
-      "name": "Herz",
+      "name": "Lebensmittelvorrat",
       "x": 37.5,
       "y": 19.5,
       "radius": 1.2,
-      "hp": 3000,
-      "regen": 2,
-      "pauseRegen": 10,
-      "loseOnDestroy": true
+      "hp": 5500,
+      "regen": 0,
+      "pauseRegen": 0,
+      "loseOnDestroy": true,
+      "kind": "food",
+      "lostText": "Der Lebensmittelvorrat ist geplündert"
     },
     {
       "id": "hive",
@@ -29,7 +31,7 @@
       "x": 22,
       "y": 8.5,
       "radius": 1.8,
-      "hp": 600,
+      "hp": 1000,
       "regen": 0,
       "pauseRegen": 5,
       "loseOnDestroy": false,
@@ -38,7 +40,104 @@
         "interval": 0.5,
         "range": 6,
         "aggroDuration": 6
-      }
+      },
+      "kind": "hive"
+    },
+    {
+      "id": "bed1",
+      "name": "Hochbeet",
+      "kind": "bed",
+      "x": 12.5,
+      "y": 13.75,
+      "radius": 0.75,
+      "w": 10.0,
+      "h": 1.5,
+      "hp": 200,
+      "regen": 0,
+      "pauseRegen": 0,
+      "loseOnDestroy": false,
+      "harvest": 80,
+      "regrowWaves": 2
+    },
+    {
+      "id": "bed2",
+      "name": "Hochbeet",
+      "kind": "bed",
+      "x": 12.5,
+      "y": 18.75,
+      "radius": 0.75,
+      "w": 10.0,
+      "h": 1.5,
+      "hp": 200,
+      "regen": 0,
+      "pauseRegen": 0,
+      "loseOnDestroy": false,
+      "harvest": 80,
+      "regrowWaves": 2
+    },
+    {
+      "id": "bed3",
+      "name": "Hochbeet",
+      "kind": "bed",
+      "x": 12.5,
+      "y": 23.75,
+      "radius": 0.75,
+      "w": 10.0,
+      "h": 1.5,
+      "hp": 200,
+      "regen": 0,
+      "pauseRegen": 0,
+      "loseOnDestroy": false,
+      "harvest": 80,
+      "regrowWaves": 2
+    },
+    {
+      "id": "bed4",
+      "name": "Hochbeet",
+      "kind": "bed",
+      "x": 12.5,
+      "y": 28.75,
+      "radius": 0.75,
+      "w": 10.0,
+      "h": 1.5,
+      "hp": 200,
+      "regen": 0,
+      "pauseRegen": 0,
+      "loseOnDestroy": false,
+      "harvest": 80,
+      "regrowWaves": 2
+    },
+    {
+      "id": "bed5",
+      "name": "Hochbeet",
+      "kind": "bed",
+      "x": 12.5,
+      "y": 33.75,
+      "radius": 0.75,
+      "w": 10.0,
+      "h": 1.5,
+      "hp": 200,
+      "regen": 0,
+      "pauseRegen": 0,
+      "loseOnDestroy": false,
+      "harvest": 80,
+      "regrowWaves": 2
+    },
+    {
+      "id": "bed6",
+      "name": "Hochbeet",
+      "kind": "bed",
+      "x": 12.5,
+      "y": 38.75,
+      "radius": 0.75,
+      "w": 10.0,
+      "h": 1.5,
+      "hp": 200,
+      "regen": 0,
+      "pauseRegen": 0,
+      "loseOnDestroy": false,
+      "harvest": 80,
+      "regrowWaves": 2
     }
   ],
   "spawnPoints": [
@@ -59,6 +158,12 @@
       "x": 65,
       "y": 33.25,
       "weight": 1
+    },
+    {
+      "id": "nordwest",
+      "x": 2.5,
+      "y": 9,
+      "weight": 0.5
     }
   ],
   "slowZones": [
@@ -192,60 +297,6 @@
       "w": 0.5,
       "h": 7.6,
       "look": "fence",
-      "blocksShots": false
-    },
-    {
-      "kind": "rect",
-      "x": 12.5,
-      "y": 13.75,
-      "w": 10.0,
-      "h": 1.5,
-      "look": "bed",
-      "blocksShots": false
-    },
-    {
-      "kind": "rect",
-      "x": 12.5,
-      "y": 18.75,
-      "w": 10.0,
-      "h": 1.5,
-      "look": "bed",
-      "blocksShots": false
-    },
-    {
-      "kind": "rect",
-      "x": 12.5,
-      "y": 23.75,
-      "w": 10.0,
-      "h": 1.5,
-      "look": "bed",
-      "blocksShots": false
-    },
-    {
-      "kind": "rect",
-      "x": 12.5,
-      "y": 28.75,
-      "w": 10.0,
-      "h": 1.5,
-      "look": "bed",
-      "blocksShots": false
-    },
-    {
-      "kind": "rect",
-      "x": 12.5,
-      "y": 33.75,
-      "w": 10.0,
-      "h": 1.5,
-      "look": "bed",
-      "blocksShots": false
-    },
-    {
-      "kind": "rect",
-      "x": 12.5,
-      "y": 38.75,
-      "w": 10.0,
-      "h": 1.5,
-      "look": "bed",
       "blocksShots": false
     },
     {

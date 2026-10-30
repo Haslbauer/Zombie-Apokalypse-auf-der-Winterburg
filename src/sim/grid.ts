@@ -227,6 +227,52 @@ export class Grid {
     return dist;
   }
 
+  /** Distanzfeld zu Flächen (Kreise oder Rechtecke): Start sind alle freien Zellen höchstens seed vom Rand entfernt. */
+  distanceFieldToShapes(shapes: Obstacle[], seed: number): Float32Array {
+    const { cols, rows, blocked } = this;
+    const dist = new Float32Array(blocked.length).fill(Infinity);
+    const open = this.fieldHeap;
+    open.clear();
+    for (const s of shapes) {
+      const ext = s.kind === 'circle' ? s.r : Math.max(s.w, s.h) / 2;
+      const c0 = Math.max(0, Math.floor((s.x - ext - seed) / this.cell));
+      const c1 = Math.min(cols - 1, Math.floor((s.x + ext + seed) / this.cell));
+      const r0 = Math.max(0, Math.floor((s.y - ext - seed) / this.cell));
+      const r1 = Math.min(rows - 1, Math.floor((s.y + ext + seed) / this.cell));
+      for (let r = r0; r <= r1; r++) {
+        for (let c = c0; c <= c1; c++) {
+          const idx = r * cols + c;
+          if (!blocked[idx] && dist[idx] > 0 && distanceToObstacle(this.center(c, r), s) <= seed) {
+            dist[idx] = 0;
+            open.push(idx, 0);
+          }
+        }
+      }
+    }
+    if (open.size === 0) return this.distanceField(shapes.map((s) => ({ x: s.x, y: s.y })));
+    while (open.size > 0) {
+      const d = open.peekPrio();
+      const cur = open.pop();
+      if (d > dist[cur]) continue;
+      const c = cur % cols;
+      const r = (cur - c) / cols;
+      for (let k = 0; k < 8; k++) {
+        const nc = c + NB_DC[k];
+        const nr = r + NB_DR[k];
+        if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
+        const nb = nr * cols + nc;
+        if (blocked[nb]) continue;
+        if (k >= 4 && (blocked[r * cols + nc] || blocked[nr * cols + c])) continue;
+        const nd = d + NB_COST[k];
+        if (nd < dist[nb]) {
+          dist[nb] = nd;
+          open.push(nb, nd);
+        }
+      }
+    }
+    return dist;
+  }
+
   /** Mittelpunkt der Nachbarzelle, die im Distanzfeld am nächsten am Ziel liegt. */
   downhill(field: Float32Array, p: Vec2): Vec2 | null {
     const idx = this.cellOf(p);

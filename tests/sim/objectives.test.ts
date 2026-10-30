@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { damageObjective } from '../../src/sim/objectives';
+import { damageObjective, harvest } from '../../src/sim/objectives';
+import { spawnZombieAt } from '../../src/sim/waves';
 import { makeSim, noWaves, placeZombie, run, testData } from './helpers';
 
 /** Winterburg ohne Wellen, Held weit weg im Nordosten geparkt und unverwundbar. */
@@ -45,22 +46,52 @@ describe('Ziele: Herz und Bienenstock', () => {
     damageObjective(sim, heart, heart.maxHp);
     expect(heart.destroyed).toBe(true);
     expect(sim.state.gameOver).toBe(true);
-    expect(sim.state.events).toContainEqual(expect.objectContaining({ type: 'gameOver', reason: 'Herz ist gefallen' }));
+    expect(sim.state.events).toContainEqual(expect.objectContaining({ type: 'gameOver', reason: 'Der Lebensmittelvorrat ist geplündert' }));
   });
 
-  it('Herz regeneriert in der Pause schneller als während der Welle', () => {
+  it('Vorrat regeneriert nicht von selbst, die Ernte der Hochbeete füllt ihn auf', () => {
     const { sim, heart } = setup();
     heart.hp = 1000;
-    run(sim, 20);
-    const pauseGain = heart.hp - 1000;
-    sim.state.wave.phase = 'wave';
-    sim.state.wave.queue = ['walker']; // Welle läuft weiter
-    sim.state.wave.spawnTimer = 1e9;
+    run(sim, 40);
+    expect(heart.hp).toBe(1000);
+    const beds = sim.state.objectives.filter((o) => o.kind === 'bed');
+    const def = sim.data.arena.objectives.find((o) => o.kind === 'bed')!;
+    beds[0].hp = beds[0].maxHp / 2; // angefressen: halbe Ernte
+    harvest(sim);
+    expect(heart.hp).toBeCloseTo(1000 + def.harvest! * (beds.length - 0.5), 5);
+    expect(sim.state.events).toContainEqual(expect.objectContaining({ type: 'harvest' }));
+  });
+
+  it('zerstörtes Hochbeet erntet nichts und wächst nach zwei Wellen nach', () => {
+    const { sim, heart } = setup();
+    const beds = sim.state.objectives.filter((o) => o.kind === 'bed');
+    for (const b of beds) damageObjective(sim, b, b.maxHp);
+    expect(sim.state.gameOver).toBe(false);
     heart.hp = 1000;
-    run(sim, 20);
-    const waveGain = heart.hp - 1000;
-    expect(pauseGain).toBeCloseTo(10, 5);
-    expect(waveGain).toBeCloseTo(2, 5);
+    harvest(sim); // 1. Welle danach
+    expect(heart.hp).toBe(1000);
+    expect(beds.every((b) => b.destroyed)).toBe(true);
+    harvest(sim); // 2. Welle: nachgewachsen
+    expect(beds.every((b) => !b.destroyed && b.hp === b.maxHp)).toBe(true);
+    expect(sim.state.events.filter((e) => e.type === 'regrow')).toHaveLength(beds.length);
+  });
+
+  it('Zombies wählen den Vorrat, Ratten Beete oder Stock, Hornissen den Stock', () => {
+    const sim = makeSim('rotschopf', 4, testData());
+    const pick = (type: string) => {
+      const counts: Record<string, number> = {};
+      for (let i = 0; i < 200; i++) {
+        const z = spawnZombieAt(sim, sim.zombieDefs.get(type)!, { x: 30, y: 50 });
+        counts[z.objectiveId] = (counts[z.objectiveId] ?? 0) + 1;
+      }
+      sim.state.zombies = [];
+      return counts;
+    };
+    expect(Object.keys(pick('walker'))).toEqual(['heart']);
+    expect(Object.keys(pick('hornisse'))).toEqual(['hive']);
+    const rats = pick('ratte');
+    expect(rats.bed).toBeGreaterThan(rats.hive);
+    expect(rats.hive).toBeGreaterThan(10);
   });
 
   it('ruhige Bienen stechen Zombies, aber keine Helden', () => {
