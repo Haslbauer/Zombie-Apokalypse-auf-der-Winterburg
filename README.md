@@ -23,7 +23,8 @@ Dann http://localhost:5173 öffnen. Weitere Befehle: `npm test` (Simulationstest
 | W A S D | laufen |
 | Maus | Blickrichtung und Zielen |
 | Linksklick | Angriff Richtung Mauszeiger (halten = Dauerangriff) |
-| 1 2 3 4 R T | Fähigkeiten (ab M3) |
+| 1 2 3 4 | Fähigkeiten (ab M3) |
+| R T | Items, z. B. Heiltrank (ab M4) |
 | Esc | Pause und Tastenbelegung (alle Tasten frei belegbar) |
 
 Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bogen beim Nahkampf, einen Pfeil beim Fernkampf.

@@ -126,7 +126,7 @@ export class Hud {
       resume.addEventListener('click', onClose);
       const buttons = el('div', 'hud-buttons');
       buttons.append(reset, resume);
-      box.append(table, el('p', 'hud-small', 'Fähigkeiten folgen mit Meilenstein 3. Esc: weiter spielen.'), buttons);
+      box.append(table, el('p', 'hud-small', 'Fähigkeiten folgen mit Meilenstein 3, Items mit Meilenstein 4. Esc: weiter spielen.'), buttons);
       this.overlay.append(box);
     };
     render();

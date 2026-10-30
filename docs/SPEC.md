@@ -2,7 +2,7 @@
 
 Stand: 30.10.2026. Arbeitsgrundlage für Claude Code.
 
-Änderungen v0.3: Steuerung wie in Supervive (WASD laufen, Maus zielt, Angriff Richtung Mauszeiger, kein Auto-Attack, keine Zielauswahl). Fähigkeiten auf 1–4, R, T, alle Tasten frei belegbar. Nahkampf-Reichweite 2,5 m im 120°-Bogen.
+Änderungen v0.3: Steuerung wie in Supervive (WASD laufen, Maus zielt, Angriff Richtung Mauszeiger, kein Auto-Attack, keine Zielauswahl). Fähigkeiten auf 1–4, Items auf R und T, alle Tasten frei belegbar. Nahkampf-Reichweite 2,5 m im 120°-Bogen.
 Änderungen v0.2: Veraltete Verweise auf Sanitäter und Brecher ersetzt.
 Mit "Vorschlag" markierte Punkte sind noch nicht entschieden, alles andere ist festgelegt.
 
@@ -19,7 +19,7 @@ Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Ha
   - Kein Auto-Attack und keine Zielauswahl: Man greift in eine Richtung an. Reichweite und Trefferbereich hängen von der Waffe ab.
   - Nahkampf trifft alle Zombies im Bogen vor dem Helden (Testheld: 2,5 m, 120°). Fernkampf schießt ein Projektil geradeaus, das den ersten Zombie trifft, danebengehen kann und an Hindernissen endet.
   - Eine Markierung am Boden (Bogen bzw. Pfeil) zeigt Reichweite und Richtung des Angriffs
-  - Fähigkeiten auf 1, 2, 3, 4, R, T
+  - Fähigkeiten auf 1, 2, 3, 4, Items auf R und T
   - Alle Tasten sind frei belegbar (Esc öffnet Pause und Tastenbelegung)
 - Levelsystem nach League-of-Legends-Vorbild (XP, Level, Skillpunkte)
 - Gold sammeln und davon Waffen und Items kaufen
@@ -166,6 +166,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - Shop in den Pausenphasen
 - Waffen: Baseballschläger, Axt, Kettensäge, Pistole, Schrotflinte, Gewehr, Armbrust
 - Items: Rüstung, Lauftempo, Lebensregeneration, Verbrauchsgüter (Heiltrank)
+- Benutzbare Items wie der Heiltrank liegen auf den Item-Tasten R und T
 - Vorschlag: keine Munition, stattdessen Nachladezeiten (einfacher, weniger Frust)
 
 ## 10. Mehrspieler und Bots

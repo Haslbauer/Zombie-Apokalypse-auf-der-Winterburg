@@ -9,8 +9,8 @@ export const ACTIONS = [
   { id: 'ability2', label: 'Fähigkeit 2' },
   { id: 'ability3', label: 'Fähigkeit 3' },
   { id: 'ability4', label: 'Fähigkeit 4' },
-  { id: 'ability5', label: 'Fähigkeit 5' },
-  { id: 'ability6', label: 'Fähigkeit 6' },
+  { id: 'item1', label: 'Item 1' },
+  { id: 'item2', label: 'Item 2' },
 ] as const;
 
 export type Action = (typeof ACTIONS)[number]['id'];
@@ -29,8 +29,8 @@ const DEFAULTS: Record<Action, string> = {
   ability2: 'Digit2',
   ability3: 'Digit3',
   ability4: 'Digit4',
-  ability5: 'KeyR',
-  ability6: 'KeyT',
+  item1: 'KeyR',
+  item2: 'KeyT',
 };
 
 const STORAGE_KEY = 'winterburg.keybindings';
@@ -44,6 +44,9 @@ export class Keybindings {
   constructor() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+      // Frühere Namen der Item-Tasten übernehmen.
+      saved.item1 ??= saved.ability5;
+      saved.item2 ??= saved.ability6;
       for (const { id } of ACTIONS) if (typeof saved[id] === 'string') this.map[id] = saved[id];
     } catch {
       // Ohne Speicher (privates Fenster o. Ä.) gilt einfach die Standardbelegung.
