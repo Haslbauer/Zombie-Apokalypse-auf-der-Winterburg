@@ -12,6 +12,7 @@ export function parseGameData(raw: {
   progression: unknown;
   items: unknown;
   economy: unknown;
+  bots: unknown;
 }): GameData {
   const errors: string[] = [];
   const num = (o: any, key: string, path: string, min = 0): void => {
@@ -168,6 +169,22 @@ export function parseGameData(raw: {
   const eco: any = raw.economy;
   for (const k of ['startGold', 'waveBonusBase', 'waveBonusPerWave', 'goldShareRange', 'shopRange', 'sellFactor']) num(eco, k, 'economy');
   num(eco, 'inventorySlots', 'economy', 1);
+
+  const bots: any = raw.bots;
+  for (const d of ['leicht', 'mittel', 'schwer']) {
+    for (const k of ['think', 'aimError', 'abilityChance', 'retreatHp']) num(bots?.difficulties?.[d], k, `bots.difficulties.${d}`);
+  }
+  const itemIds = new Set((Array.isArray(raw.items) ? raw.items : []).map((i: any) => i?.id));
+  for (const h of heroes) {
+    const b = bots?.heroes?.[h?.id];
+    if (!b) {
+      errors.push(`bots.heroes.${h?.id}: Bot-Einstellungen fehlen`);
+      continue;
+    }
+    if (!['melee', 'ranged', 'control'].includes(b.role)) errors.push(`bots.heroes.${h.id}.role: melee, ranged oder control erwartet`);
+    if (!Array.isArray(b.abilities) || b.abilities.length !== 4) errors.push(`bots.heroes.${h.id}.abilities: 4 Hinweise erwartet`);
+    for (const id of b.buy ?? []) if (!itemIds.has(id)) errors.push(`bots.heroes.${h.id}.buy: unbekanntes Item ${id}`);
+  }
 
   if (errors.length > 0) throw new Error(`Ungültige Spieldaten:\n- ${errors.join('\n- ')}`);
   return raw as GameData;

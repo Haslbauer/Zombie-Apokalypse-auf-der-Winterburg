@@ -1,0 +1,235 @@
+{
+  "difficulties": {
+    "leicht": {
+      "think": 0.9,
+      "aimError": 2.2,
+      "abilityChance": 0.2,
+      "retreatHp": 0.15
+    },
+    "mittel": {
+      "think": 0.3,
+      "aimError": 0.6,
+      "abilityChance": 0.75,
+      "retreatHp": 0.3
+    },
+    "schwer": {
+      "think": 0.1,
+      "aimError": 0.1,
+      "abilityChance": 1,
+      "retreatHp": 0.35
+    }
+  },
+  "heroes": {
+    "chupa": {
+      "role": "melee",
+      "skillOrder": [
+        0,
+        1,
+        2
+      ],
+      "buy": [
+        "heiltrank",
+        "baseballschlaeger",
+        "lederjacke",
+        "laufschuhe",
+        "axt",
+        "kettenhemd",
+        "kettensaege",
+        "lebensamulett"
+      ],
+      "abilities": [
+        {
+          "use": "engage"
+        },
+        {
+          "use": "buff",
+          "min": 2
+        },
+        {
+          "use": "buff",
+          "min": 3
+        },
+        {
+          "use": "elite"
+        }
+      ]
+    },
+    "rotschopf": {
+      "role": "melee",
+      "skillOrder": [
+        0,
+        2,
+        1
+      ],
+      "buy": [
+        "heiltrank",
+        "baseballschlaeger",
+        "lederjacke",
+        "axt",
+        "kettenhemd",
+        "lebensamulett",
+        "kettensaege",
+        "kraeuterbeutel"
+      ],
+      "abilities": [
+        {
+          "use": "cone",
+          "min": 2
+        },
+        {
+          "use": "buff",
+          "min": 2
+        },
+        {
+          "use": "engage",
+          "min": 2
+        },
+        {
+          "use": "buff",
+          "min": 4
+        }
+      ]
+    },
+    "gaertnerin": {
+      "role": "ranged",
+      "skillOrder": [
+        1,
+        0,
+        2
+      ],
+      "buy": [
+        "heiltrank",
+        "pistole",
+        "lederjacke",
+        "schrotflinte",
+        "taschenuhr",
+        "gewehr",
+        "kettenhemd",
+        "armbrust"
+      ],
+      "abilities": [
+        {
+          "use": "line"
+        },
+        {
+          "use": "aoe",
+          "min": 2
+        },
+        {
+          "use": "heal",
+          "hp": 0.6
+        },
+        {
+          "use": "aoe",
+          "min": 5
+        }
+      ]
+    },
+    "libero": {
+      "role": "ranged",
+      "skillOrder": [
+        0,
+        2,
+        1
+      ],
+      "buy": [
+        "heiltrank",
+        "pistole",
+        "lederjacke",
+        "schrotflinte",
+        "taschenuhr",
+        "gewehr",
+        "kettenhemd",
+        "armbrust"
+      ],
+      "abilities": [
+        {
+          "use": "line"
+        },
+        {
+          "use": "cone",
+          "min": 2
+        },
+        {
+          "use": "pass",
+          "hp": 0.5
+        },
+        {
+          "use": "spike",
+          "min": 3
+        }
+      ]
+    },
+    "pirat": {
+      "role": "control",
+      "skillOrder": [
+        1,
+        0,
+        2
+      ],
+      "buy": [
+        "heiltrank",
+        "pistole",
+        "lederjacke",
+        "taschenuhr",
+        "schrotflinte",
+        "kettenhemd",
+        "gewehr",
+        "lebensamulett"
+      ],
+      "abilities": [
+        {
+          "use": "cone",
+          "min": 2
+        },
+        {
+          "use": "aoe",
+          "min": 3
+        },
+        {
+          "use": "escape",
+          "hp": 0.35
+        },
+        {
+          "use": "aoe",
+          "min": 5
+        }
+      ]
+    },
+    "schlaeferin": {
+      "role": "control",
+      "skillOrder": [
+        1,
+        0,
+        2
+      ],
+      "buy": [
+        "heiltrank",
+        "pistole",
+        "lederjacke",
+        "taschenuhr",
+        "schrotflinte",
+        "kettenhemd",
+        "gewehr",
+        "lebensamulett"
+      ],
+      "abilities": [
+        {
+          "use": "elite"
+        },
+        {
+          "use": "cone",
+          "min": 2
+        },
+        {
+          "use": "channelHeal",
+          "hp": 0.5
+        },
+        {
+          "use": "aoe",
+          "min": 5
+        }
+      ]
+    }
+  }
+}

@@ -18,6 +18,10 @@ export function applyInputs(ctx: SimContext, commands: readonly Command[]): void
       rankUp(ctx, h, cmd.slot);
       continue;
     }
+    if (cmd.type === 'startWave') {
+      if (ctx.state.wave.phase === 'pause') ctx.state.wave.timer = Math.min(ctx.state.wave.timer, DT / 2);
+      continue;
+    }
     if (cmd.type === 'buy') {
       buy(ctx, h, cmd.itemId);
       continue;

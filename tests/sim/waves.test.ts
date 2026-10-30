@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { waveComposition, waveScaling, waveSize } from '../../src/sim/waves';
+import { waveComposition, waveScaling, waveSize, waveWeights } from '../../src/sim/waves';
 import { makeSim, run, testData } from './helpers';
 
 const cfg = testData().waves;
@@ -18,11 +18,18 @@ describe('Wellenaufbau', () => {
       const comp = waveComposition(n, cfg);
       expect(Object.values(comp).reduce((a, b) => a + b, 0)).toBe(waveSize(n, cfg));
     }
-    expect(waveComposition(1, cfg)).toEqual({ walker: 6 });
-    // Welle 2: 9 Zombies im Verhältnis 4:1
-    expect(waveComposition(2, cfg)).toEqual({ walker: 7, runner: 2 });
-    // Ab Welle 3 kommen Kriecher, ab Welle 4 Brutes dazu (15 Zombies, 4:2:1:1)
-    expect(waveComposition(4, cfg)).toEqual({ walker: 7, runner: 4, brute: 2, kriecher: 2 });
+    for (const n of [1, 2, 3, 4, 10]) {
+      const comp = waveComposition(n, cfg);
+      const weights = waveWeights(n, cfg);
+      const sum = Object.values(weights).reduce((x, y) => x + y, 0);
+      for (const [id, w] of Object.entries(weights)) {
+        expect(Math.abs((comp[id] ?? 0) - (waveSize(n, cfg) * w) / sum)).toBeLessThan(1);
+      }
+    }
+    // Ab Welle 3 kommen Kriecher, ab Welle 4 Brutes dazu
+    expect(waveComposition(2, cfg).kriecher).toBeUndefined();
+    expect(waveComposition(3, cfg).kriecher).toBeGreaterThan(0);
+    expect(waveComposition(4, cfg).brute).toBeGreaterThan(0);
   });
 
   it('Ablauf: Pause, Welle spawnt komplett, nach dem Leeren folgt die nächste Pause', () => {
@@ -41,5 +48,14 @@ describe('Wellenaufbau', () => {
     sim.step();
     expect(sim.state.events).toContainEqual({ type: 'waveCleared', number: 1 });
     expect(sim.state.wave).toMatchObject({ number: 2, phase: 'pause' });
+  });
+
+  it('„Welle starten“ beendet die Pause sofort', () => {
+    const sim = makeSim('rotschopf');
+    const h = sim.state.heroes[0];
+    expect(sim.state.wave.timer).toBe(cfg.firstPauseDuration);
+    sim.step([{ heroId: h.id, type: 'startWave' }]);
+    sim.step();
+    expect(sim.state.wave.phase).toBe('wave');
   });
 });

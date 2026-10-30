@@ -246,6 +246,25 @@ export interface ArenaDef {
   heroStart: Vec2;
   /** Wiederbelebung: base Sekunden plus perWave je Welle. */
   respawn: { base: number; perWave: number };
+  /** Posten, die Bots verteidigen (der Reihe nach vergeben). */
+  botPosts?: Vec2[];
+}
+
+export type BotDifficulty = 'leicht' | 'mittel' | 'schwer';
+export type BotRole = 'melee' | 'ranged' | 'control';
+
+/** Wann ein Bot eine Fähigkeit einsetzt (siehe src/sim/bots/abilities.ts). */
+export interface BotAbilityHint {
+  use: 'engage' | 'aoe' | 'cone' | 'line' | 'heal' | 'channelHeal' | 'buff' | 'escape' | 'elite' | 'pass' | 'spike';
+  /** Mindestzahl Zombies im Wirkbereich. */
+  min?: number;
+  /** Lebensanteil, unter dem geheilt bzw. geflohen wird. */
+  hp?: number;
+}
+
+export interface BotsDef {
+  difficulties: Record<BotDifficulty, { think: number; aimError: number; abilityChance: number; retreatHp: number }>;
+  heroes: Record<string, { role: BotRole; skillOrder: number[]; buy: string[]; abilities: BotAbilityHint[] }>;
 }
 
 export interface GameData {
@@ -256,6 +275,7 @@ export interface GameData {
   progression: ProgressionDef;
   items: ItemDef[];
   economy: EconomyDef;
+  bots: BotsDef;
 }
 
 // ---------- Befehle (Eingabe; im Mehrspieler das Netzwerkformat) ----------
@@ -280,7 +300,9 @@ export type Command =
   | { heroId: number; type: 'buy'; itemId: string }
   | { heroId: number; type: 'sell'; slot: number; consumable?: boolean }
   /** Verbrauchsgut auf R (0) oder T (1) benutzen. */
-  | { heroId: number; type: 'use'; slot: number };
+  | { heroId: number; type: 'use'; slot: number }
+  /** Pause beenden und die nächste Welle sofort starten. */
+  | { heroId: number; type: 'startWave' };
 
 // ---------- Spielzustand ----------
 
@@ -372,6 +394,23 @@ export interface Hero extends Unit {
   inventory: (string | null)[];
   /** Verbrauchsgüter auf R und T. */
   consumables: ({ itemId: string; count: number } | null)[];
+  /** Gesetzt, wenn ein Bot diesen Helden steuert (in M6 übernimmt ein Mensch, indem bot entfällt). */
+  bot?: BotState;
+}
+
+export interface BotState {
+  difficulty: BotDifficulty;
+  /** Posten, den der Bot verteidigt. */
+  post: Vec2;
+  mode: 'post' | 'fight' | 'retreat' | 'shop';
+  thinkAt: number;
+  targetId: number | null;
+  /** Wegpunkte zum aktuellen Ziel und wann sie neu berechnet werden. */
+  path: Vec2[];
+  dest: Vec2 | null;
+  pathAt: number;
+  /** Zielfehler, beim Denken neu gewürfelt. */
+  aimOffset: Vec2;
 }
 
 /** Zustände eines Zombies; alle Zeiten sind Spielzeiten, 0 = nicht aktiv. */

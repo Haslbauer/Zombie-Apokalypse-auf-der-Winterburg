@@ -1,6 +1,7 @@
 import { updateProjectiles } from './combat';
 import type { SimContext } from './context';
 import { Grid, resolveObstacles } from './grid';
+import { botCommands, createBot } from './bots/brain';
 import { applyInputs, updateHero } from './hero';
 import { pushApart } from './movement';
 import { updateObjectives } from './objectives';
@@ -8,7 +9,7 @@ import { levelStats, levelUp } from './progression';
 import { kitOf } from './heroes/index';
 import { updateDelayed, updateZones } from './zones';
 import { SpatialHash } from './spatial';
-import { type ArenaDef, DT, type Command, type GameData, type GameState, type Hero, type Zombie } from './types';
+import { type ArenaDef, type BotDifficulty, DT, type Command, type GameData, type GameState, type Hero, type Zombie } from './types';
 import { updateWaves } from './waves';
 import { updateZombies } from './zombies';
 
@@ -23,6 +24,8 @@ export interface SimulationOptions {
   heroes: string[];
   /** Startlevel (Entwicklermodus ?level=…); Standard 1. */
   startLevel?: number;
+  /** Pro Slot: null = Mensch, sonst spielt ein Bot dieser Stärke. */
+  bots?: (BotDifficulty | null)[];
 }
 
 /**
@@ -122,6 +125,8 @@ export class Simulation implements SimContext {
         consumables: [null, null],
       };
       this.state.heroes.push(hero);
+      const difficulty = options.bots?.[slot];
+      if (difficulty) hero.bot = createBot(this, difficulty, this.state.heroes.filter((x) => x.bot).length);
       kitOf(defId).init?.(this, hero);
       for (let l = 1; l < (options.startLevel ?? 1); l++) levelUp(this, hero);
     });
@@ -136,7 +141,8 @@ export class Simulation implements SimContext {
     state.tick++;
     state.time += DT;
 
-    applyInputs(this, commands);
+    const botCmds = state.heroes.filter((h) => h.bot).flatMap((h) => botCommands(this, h));
+    applyInputs(this, botCmds.length > 0 ? [...commands, ...botCmds] : commands);
     for (const h of state.heroes) {
       if (!h.alive && state.time >= h.respawnAt) this.respawn(h);
       updateHero(this, h);
