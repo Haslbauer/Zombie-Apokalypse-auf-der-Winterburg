@@ -1,0 +1,33 @@
+[
+  {
+    "id": "nahkampf",
+    "name": "Testheld Nahkampf",
+    "color": "#d9533b",
+    "hp": 650,
+    "hpRegen": 3,
+    "speed": 5.5,
+    "radius": 0.5,
+    "attack": {
+      "type": "melee",
+      "damage": 42,
+      "range": 1.2,
+      "cooldown": 0.75
+    }
+  },
+  {
+    "id": "fernkampf",
+    "name": "Testheld Fernkampf",
+    "color": "#3b8fd9",
+    "hp": 480,
+    "hpRegen": 2,
+    "speed": 5.5,
+    "radius": 0.5,
+    "attack": {
+      "type": "ranged",
+      "damage": 28,
+      "range": 7,
+      "cooldown": 0.7,
+      "projectileSpeed": 24
+    }
+  }
+]

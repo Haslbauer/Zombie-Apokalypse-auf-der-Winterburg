@@ -1,0 +1,14 @@
+{
+  "baseCount": 6,
+  "countPerWave": 3,
+  "hpScalePerWave": 0.08,
+  "damageScalePerWave": 0.05,
+  "spawnInterval": 0.6,
+  "firstPauseDuration": 5,
+  "pauseDuration": 10,
+  "mix": [
+    { "fromWave": 1, "weights": { "walker": 1 } },
+    { "fromWave": 2, "weights": { "walker": 4, "runner": 1 } },
+    { "fromWave": 4, "weights": { "walker": 4, "runner": 2, "brute": 1 } }
+  ]
+}
