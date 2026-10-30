@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v0.4)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v0.5)
 
 Stand: 30.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v0.5: Optik der Helden nach den Referenzbildern in assets/reference/helden/ (Libero ist ein Mann mit Runen-Volleyball, die Schläferin eine Magierin mit Kristallstab).
 Änderungen v0.4: Karte nach der Skizze (echte Maße, U-Haus mit Innenhof als Herz der Base, Bunker als Zombie-Spawn, Heckenlücke Süd, Hang Ost, Bienenstock als zweites Ziel). Helden-Spawn im Innenhof, tote Helden respawnen.
 Änderungen v0.3: Steuerung wie in Supervive (WASD laufen, Maus zielt, Angriff Richtung Mauszeiger, kein Auto-Attack, keine Zielauswahl). Fähigkeiten auf 1–4, Items auf R und T, alle Tasten frei belegbar. Nahkampf-Reichweite 2,5 m im 120°-Bogen.
 Änderungen v0.2: Veraltete Verweise auf Sanitäter und Brecher ersetzt.
@@ -78,7 +79,7 @@ Geplant sind 8 Helden, 2 Slots bleiben frei. Namen sind Platzhalter. Vorschlag f
 ### Chupa
 
 - Rolle: Nahkampf-Jäger. Stark gegen Elite und Boss, heilt sich durch Beißen.
-- Optik: Chupa ist der Hund des Auftraggebers, ein kleiner, flauschiger weißer Hund nach Referenzfoto (hund.jpg, in assets/reference/ ablegen). Cremeweißes Fell, hellbraune Flecken an den Ohren, rosa Nase, dunkle Augen, buschige Rute über dem Rücken, kleines dunkles Geschirr. Stilisiert. Die Wirkung soll süß und klein sein, im Kampf aber wild (Vorschlag: Fell sträubt sich und die Augen leuchten bei Fähigkeiten).
+- Optik: Chupa ist der Hund des Auftraggebers, ein kleiner, flauschiger weißer Hund nach Referenzfoto (hund.jpg, in assets/reference/ ablegen). Kampfmodus siehe `assets/reference/helden/chupa.jpg`: wild, gesträubtes Fell, gefletschte Zähne, leuchtende Augen. Cremeweißes Fell, hellbraune Flecken an den Ohren, rosa Nase, dunkle Augen, buschige Rute über dem Rücken, kleines dunkles Geschirr. Stilisiert. Die Wirkung soll süß und klein sein, im Kampf aber wild (Vorschlag: Fell sträubt sich und die Augen leuchten bei Fähigkeiten).
 - Fähigkeiten (eigene Namen und Werte, Grundidee: ein Jäger, der verwundete Beute aufspürt und festhält):
   - Passiv Wittern: Zombies unter 50 % Leben sind durch Wände hindurch sichtbar. Der Hund heilt sich beim Beißen stärker, je weniger Leben er selbst hat.
   - Q Sprungbiss: Sprung in Zielrichtung, beißt den ersten getroffenen Zombie und heilt sich um einen Teil des Schadens.
@@ -92,7 +93,7 @@ Geplant sind 8 Helden, 2 Slots bleiben frei. Namen sind Platzhalter. Vorschlag f
 Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren Platzhalter-Archetypen (Brecher, Schütze, Fallensteller, Sanitäter) entfallen, die persönlichen Helden ersetzen sie. Zufall (z. B. beim Rotschopf) wird immer vom Server gewürfelt.
 
 ### Libero (Volleyball)
-- Rolle: Fernkampf, Kontrolle und Support. Optik: sportliche Volleyball-Kleidung. Spielgefühl: eine Heldin mit einem Ball, der liegen bleibt (Orianna in LoL).
+- Rolle: Fernkampf, Kontrolle und Support. Optik (`assets/reference/helden/libero.jpg`): Mann mit braunen Locken und Bart, Ledermütze, ärmelloses Lederhemd mit goldener Palme, Knieschoner, bandagierte Hände, leuchtender Volleyball mit Runen und Funken. Spielgefühl: ein Held mit einem Ball, der liegen bleibt (Orianna in LoL).
 - Der Ball ist ein Objekt auf der Karte. Fähigkeiten gehen vom Ball aus oder bewegen ihn.
 - Q Aufschlag: Ball fliegt als Linienschuss durch Zombies und bleibt am Ende liegen
 - W Block: kurze Sperre vor dem Helden, Zombies werden zurückgedrängt
@@ -107,7 +108,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - E Nebelschritt: Sprung in eine eigene Rauchwolke, dort kurz unsichtbar
 - R Dicke Luft: große Wolke, Zombies sind 3 s betäubt und danach 5 s blind
 ### Gärtnerin
-- Rolle: Fernkampf, ausdauernd. Optik: ältere Frau, Gummistiefel, Gartenhut, Schürze, grummelig. Spielgefühl: Pflanzen als kleine Geschütztürme (Zyra in LoL).
+- Rolle: Fernkampf, ausdauernd. Optik (`assets/reference/helden/gaertnerin.jpg`): ältere, grummelige Frau mit Stoffhut, Karohemd, Latzhose, Gummistiefeln, Arbeitshandschuhen, Werkzeuggürtel und großer Heckenschere. Spielgefühl: Pflanzen als kleine Geschütztürme (Zyra in LoL).
 - Passiv Sturschädel: regeneriert langsam Leben und wird zäher, je länger sie im Kampf bleibt
 - Q Schleuderschuss: Fernschuss mit Steinschleuder
 - W Saat: pflanzt Samen, nach 2 s wachsen Dornenranken, die Zombies verlangsamen und stechen (max. 3 gleichzeitig)
@@ -115,7 +116,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - R Mein Garten!: Dornenhecke wächst als Ring oder Linie (ca. 8 s), hält Zombies zurück und verursacht Schaden. Kann einen Zugang kurz sperren.
 
 ### Rotschopf
-- Rolle: Nahkämpfer, stark und unberechenbar. Optik: rote Haare, kräftig, wild. Spielgefühl: Berserker (Olaf in LoL).
+- Rolle: Nahkämpfer, stark und unberechenbar. Optik (`assets/reference/helden/rotschopf.jpg`): rote Locken und Bart, kräftig, wild, Schutzbrille auf der Stirn, Beinschienen, riesiger Kriegshammer. Spielgefühl: Berserker (Olaf in LoL).
 - Passiv Jähzorn: je mehr Schaden er einsteckt, desto schneller greift er an
 - Q Wuchtschlag: Schlag mit zufälligem Zusatzeffekt (Betäubung, doppelter Schaden oder Rückstoß)
 - W Wutanfall: zufälliger Buff (Tempo, Schild oder Heilung)
@@ -123,7 +124,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - R Amok: kurz unaufhaltsam (immun gegen Betäubung und Rückstoß), doppelter Schaden
 
 ### Schläferin
-- Rolle: Kontrolle und Sprinterin. Optik: sportlich, weiblich, Laufkleidung. Superkraft: sofortiger Schlaf. Spielgefühl: Schlaf-Fähigkeiten (Lillia und Zoe in LoL).
+- Rolle: Kontrolle und Sprinterin. Optik (`assets/reference/helden/schlaeferin.jpg`): Magierin mit braunem Haar, Kristallstab, blau-grünem Sternenmantel mit Mondmotiven, Mondanhänger, Schmetterling, Sternenstaub-Wirbel. Superkraft: sofortiger Schlaf. Spielgefühl: Schlaf-Fähigkeiten (Lillia und Zoe in LoL).
 - Schlaf-Regel: Ein schlafender Zombie ist ausgeschaltet und wacht bei Schaden auf. Der erste Treffer auf einen Schlafenden macht Bonusschaden. Elite schlafen kürzer, Boss sind immun.
 - Passiv Sprinterin: Lauftempo steigt, je länger sie ohne Pause läuft
 - Q Berührung: Antritt zu einem Zombie, er schläft sofort 2 s
