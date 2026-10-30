@@ -1,35 +1,773 @@
 [
   {
-    "id": "nahkampf",
-    "name": "Testheld Nahkampf",
-    "color": "#d9533b",
-    "hp": 650,
+    "id": "chupa",
+    "name": "Chupa",
+    "role": "Nahkampf-Jäger",
+    "description": "Kleiner, flauschiger Hund – im Kampf ein wilder Jäger, der verwundete Beute aufspürt und festhält.",
+    "color": "#f3eee2",
+    "figure": "dog",
+    "hp": 560,
+    "hpRegen": 3,
+    "speed": 6,
+    "radius": 0.4,
+    "hpPerLevel": 55,
+    "regenPerLevel": 0.25,
+    "damagePerLevel": 0.06,
+    "attack": {
+      "type": "melee",
+      "damage": 30,
+      "range": 2,
+      "arc": 90,
+      "cooldown": 0.6,
+      "look": "bite"
+    },
+    "passive": {
+      "name": "Wittern",
+      "description": "Zombies unter 50 % Leben leuchten auf. Bisse heilen Chupa, umso stärker, je weniger Leben Chupa hat.",
+      "values": {
+        "lifesteal": 0.12,
+        "lowHpBonus": 1,
+        "revealBelow": 0.5
+      }
+    },
+    "abilities": [
+      {
+        "id": "sprungbiss",
+        "name": "Sprungbiss",
+        "description": "Sprung in Zielrichtung. Beißt den ersten getroffenen Zombie und heilt sich um einen Teil des Schadens.",
+        "shape": "dash",
+        "range": 6,
+        "cooldown": [
+          9,
+          8,
+          7,
+          6,
+          5
+        ],
+        "values": {
+          "damage": [
+            60,
+            90,
+            120,
+            150,
+            180
+          ],
+          "heal": 0.3
+        }
+      },
+      {
+        "id": "faehrte",
+        "name": "Fährte",
+        "description": "Markiert verwundete Zombies in der Nähe. Zu ihnen hin läuft Chupa schneller und beißt schneller.",
+        "shape": "self",
+        "range": 0,
+        "radius": 10,
+        "cooldown": [
+          16,
+          15,
+          14,
+          13,
+          12
+        ],
+        "values": {
+          "duration": 5,
+          "threshold": 0.5,
+          "haste": 0.3,
+          "attackSpeed": 0.4
+        }
+      },
+      {
+        "id": "heulen",
+        "name": "Heulen",
+        "description": "Kurz weniger Schaden erleiden, danach fliehen Zombies in der Nähe verängstigt.",
+        "shape": "self",
+        "range": 0,
+        "radius": 6,
+        "cooldown": [
+          18,
+          17,
+          16,
+          15,
+          14
+        ],
+        "values": {
+          "duration": 2,
+          "reduction": 0.4,
+          "fear": [
+            1.25,
+            1.5,
+            1.75,
+            2,
+            2.25
+          ]
+        }
+      },
+      {
+        "id": "hetzjagd",
+        "name": "Hetzjagd",
+        "description": "Langer Sprung zu einem Zombie (Elite und Boss bevorzugt). Chupa hält ihn fest, beißt ihn pro Sekunde und heilt sich dabei.",
+        "shape": "target",
+        "range": 10,
+        "cooldown": [
+          80,
+          65,
+          50
+        ],
+        "values": {
+          "duration": [
+            2.5,
+            3,
+            3.5
+          ],
+          "dps": [
+            40,
+            60,
+            80
+          ],
+          "heal": 0.5
+        }
+      }
+    ]
+  },
+  {
+    "id": "gaertnerin",
+    "name": "Gärtnerin",
+    "role": "Fernkampf, ausdauernd",
+    "description": "Grummelige Gärtnerin mit Steinschleuder. Pflanzen werden zu kleinen Geschütztürmen.",
+    "color": "#7a8f4a",
+    "figure": "gardener",
+    "hp": 540,
+    "hpRegen": 2.5,
+    "speed": 5.3,
+    "radius": 0.5,
+    "hpPerLevel": 55,
+    "regenPerLevel": 0.25,
+    "damagePerLevel": 0.06,
+    "attack": {
+      "type": "ranged",
+      "damage": 26,
+      "range": 8,
+      "cooldown": 0.7,
+      "projectileSpeed": 22,
+      "projectileRadius": 0.18,
+      "look": "stone"
+    },
+    "passive": {
+      "name": "Sturschädel",
+      "description": "Im Kampf regeneriert sie zusätzlich Leben und wird mit der Zeit zäher (bis zu 20 % weniger Schaden).",
+      "values": {
+        "regen": 4,
+        "maxReduction": 0.2,
+        "rampTime": 10,
+        "combatWindow": 3
+      }
+    },
+    "abilities": [
+      {
+        "id": "schleuderschuss",
+        "name": "Schleuderschuss",
+        "description": "Starker Fernschuss mit der Steinschleuder, stößt den Zombie leicht zurück.",
+        "shape": "line",
+        "range": 12,
+        "width": 0.6,
+        "cooldown": [
+          7,
+          6.5,
+          6,
+          5.5,
+          5
+        ],
+        "values": {
+          "damage": [
+            80,
+            120,
+            160,
+            200,
+            240
+          ],
+          "knockback": 1.5,
+          "speed": 30
+        }
+      },
+      {
+        "id": "saat",
+        "name": "Saat",
+        "description": "Pflanzt einen Samen. Nach 2 s wachsen Dornenranken, die Zombies verlangsamen und stechen (höchstens 3 gleichzeitig).",
+        "shape": "circle",
+        "range": 8,
+        "radius": 2.5,
+        "cooldown": [
+          5,
+          4.5,
+          4,
+          3.5,
+          3
+        ],
+        "values": {
+          "dps": [
+            15,
+            22,
+            29,
+            36,
+            43
+          ],
+          "slow": 0.6,
+          "growTime": 2,
+          "duration": 6,
+          "maxSeeds": 3
+        }
+      },
+      {
+        "id": "kraeutertee",
+        "name": "Kräutertee",
+        "description": "Heilt sie und Verbündete in der Nähe über 4 s.",
+        "shape": "self",
+        "range": 0,
+        "radius": 6,
+        "cooldown": [
+          18,
+          17,
+          16,
+          15,
+          14
+        ],
+        "values": {
+          "heal": [
+            60,
+            90,
+            120,
+            150,
+            180
+          ],
+          "duration": 4
+        }
+      },
+      {
+        "id": "meingarten",
+        "name": "Mein Garten!",
+        "description": "Eine Dornenhecke wächst als Ring. Zombies an der Hecke werden festgehalten und nehmen Schaden. Sperrt kurz einen Zugang.",
+        "shape": "circle",
+        "range": 10,
+        "radius": 4,
+        "cooldown": [
+          90,
+          75,
+          60
+        ],
+        "values": {
+          "dps": [
+            30,
+            50,
+            70
+          ],
+          "duration": 8,
+          "ringWidth": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "pirat",
+    "name": "Pirat",
+    "role": "Kontrolle",
+    "description": "Rauchiger Pirat mit Enterhaken. Nimmt Zombies mit Qualm die Sicht.",
+    "color": "#4a3a2a",
+    "figure": "pirate",
+    "hp": 580,
     "hpRegen": 3,
     "speed": 5.5,
     "radius": 0.5,
-    "attack": {
-      "type": "melee",
-      "damage": 42,
-      "range": 2.5,
-      "arc": 120,
-      "cooldown": 0.75
-    }
-  },
-  {
-    "id": "fernkampf",
-    "name": "Testheld Fernkampf",
-    "color": "#3b8fd9",
-    "hp": 480,
-    "hpRegen": 2,
-    "speed": 5.5,
-    "radius": 0.5,
+    "hpPerLevel": 60,
+    "regenPerLevel": 0.25,
+    "damagePerLevel": 0.06,
     "attack": {
       "type": "ranged",
-      "damage": 28,
-      "range": 9,
-      "cooldown": 0.55,
-      "projectileSpeed": 24,
-      "projectileRadius": 0.2
-    }
+      "damage": 30,
+      "range": 6,
+      "cooldown": 0.8,
+      "projectileSpeed": 20,
+      "projectileRadius": 0.25,
+      "look": "hook"
+    },
+    "passive": {
+      "name": "Pulverdampf",
+      "description": "Jeder 4. Treffer hüllt den Zombie in Rauch: Er ist kurz geblendet.",
+      "values": {
+        "every": 4,
+        "blind": 1.5
+      }
+    },
+    "abilities": [
+      {
+        "id": "qualmstoss",
+        "name": "Qualmstoß",
+        "description": "Rauchkegel nach vorne. Wenig Schaden, Zombies sind kurz benommen.",
+        "shape": "cone",
+        "range": 6,
+        "arc": 60,
+        "cooldown": [
+          8,
+          7.5,
+          7,
+          6.5,
+          6
+        ],
+        "values": {
+          "damage": [
+            40,
+            60,
+            80,
+            100,
+            120
+          ],
+          "stun": 0.75
+        }
+      },
+      {
+        "id": "rauchwolke",
+        "name": "Rauchwolke",
+        "description": "Rauchgranate. Die Wolke bleibt 5 s, verlangsamt Zombies und blendet sie.",
+        "shape": "circle",
+        "range": 9,
+        "radius": 3,
+        "cooldown": [
+          14,
+          13,
+          12,
+          11,
+          10
+        ],
+        "values": {
+          "duration": 5,
+          "slow": 0.65
+        }
+      },
+      {
+        "id": "nebelschritt",
+        "name": "Nebelschritt",
+        "description": "Sprung in eine eigene Rauchwolke, dort kurz unsichtbar. Ohne Wolke ein kurzer Sprung.",
+        "shape": "dash",
+        "range": 8,
+        "cooldown": [
+          12,
+          11,
+          10,
+          9,
+          8
+        ],
+        "values": {
+          "invisible": [
+            1.5,
+            1.75,
+            2,
+            2.25,
+            2.5
+          ],
+          "fallback": 4
+        }
+      },
+      {
+        "id": "dickeluft",
+        "name": "Dicke Luft",
+        "description": "Riesige Rauchwolke: Zombies darin sind 3 s betäubt und danach 5 s geblendet.",
+        "shape": "circle",
+        "range": 8,
+        "radius": 7,
+        "cooldown": [
+          80,
+          70,
+          60
+        ],
+        "values": {
+          "stun": 3,
+          "blind": 5
+        }
+      }
+    ]
+  },
+  {
+    "id": "libero",
+    "name": "Libero",
+    "role": "Fernkampf, Support",
+    "description": "Volleyballer mit leuchtendem Runenball. Der Ball bleibt auf dem Feld liegen.",
+    "color": "#c0392b",
+    "figure": "ball",
+    "hp": 520,
+    "hpRegen": 3,
+    "speed": 5.6,
+    "radius": 0.5,
+    "hpPerLevel": 55,
+    "regenPerLevel": 0.25,
+    "damagePerLevel": 0.06,
+    "attack": {
+      "type": "ranged",
+      "damage": 25,
+      "range": 7,
+      "cooldown": 0.7,
+      "projectileSpeed": 22,
+      "projectileRadius": 0.2,
+      "look": "volley"
+    },
+    "passive": {
+      "name": "Ballgefühl",
+      "description": "Der Ball kehrt zurück, wenn er mehr als 15 m entfernt ist. Mit Ball in der Hand läuft Libero 10 % schneller.",
+      "values": {
+        "returnRange": 15,
+        "holdHaste": 0.1
+      }
+    },
+    "abilities": [
+      {
+        "id": "aufschlag",
+        "name": "Aufschlag",
+        "description": "Der Ball fliegt als Linienschuss durch die Zombies und bleibt am Ende liegen.",
+        "shape": "line",
+        "range": 10,
+        "width": 1.2,
+        "cooldown": [
+          6,
+          5.5,
+          5,
+          4.5,
+          4
+        ],
+        "values": {
+          "damage": [
+            60,
+            90,
+            120,
+            150,
+            180
+          ],
+          "speed": 18
+        }
+      },
+      {
+        "id": "block",
+        "name": "Block",
+        "description": "Kurze Sperre vor Libero: Zombies werden zurückgedrängt und kurz betäubt.",
+        "shape": "cone",
+        "range": 3,
+        "arc": 100,
+        "radius": 2,
+        "cooldown": [
+          13,
+          12,
+          11,
+          10,
+          9
+        ],
+        "values": {
+          "duration": 1.5,
+          "stun": 0.5,
+          "push": 3
+        }
+      },
+      {
+        "id": "zuspiel",
+        "name": "Zuspiel",
+        "description": "Spielt den Ball einem Mitspieler zu (ohne Mitspieler an sich selbst). Der Empfänger bekommt einen Schild.",
+        "shape": "target",
+        "range": 10,
+        "cooldown": [
+          12,
+          11,
+          10,
+          9,
+          8
+        ],
+        "values": {
+          "shield": [
+            80,
+            110,
+            140,
+            170,
+            200
+          ],
+          "duration": 3
+        }
+      },
+      {
+        "id": "schmetterball",
+        "name": "Schmetterball",
+        "description": "Der Ball springt hoch und schlägt nieder: Flächenschaden mit Betäubung, dort wo der Ball gerade ist.",
+        "shape": "circle",
+        "range": 0,
+        "radius": 4,
+        "cooldown": [
+          80,
+          70,
+          60
+        ],
+        "values": {
+          "damage": [
+            150,
+            250,
+            350
+          ],
+          "stun": 1.5,
+          "delay": 0.5
+        }
+      }
+    ]
+  },
+  {
+    "id": "rotschopf",
+    "name": "Rotschopf",
+    "role": "Nahkampf, Berserker",
+    "description": "Wilder Rotschopf mit riesigem Kriegshammer – stark und unberechenbar.",
+    "color": "#d35400",
+    "figure": "hammer",
+    "hp": 640,
+    "hpRegen": 3.5,
+    "speed": 5.5,
+    "radius": 0.5,
+    "hpPerLevel": 65,
+    "regenPerLevel": 0.3,
+    "damagePerLevel": 0.06,
+    "attack": {
+      "type": "melee",
+      "damage": 46,
+      "range": 2.5,
+      "arc": 120,
+      "cooldown": 1.0,
+      "look": "hammer"
+    },
+    "passive": {
+      "name": "Jähzorn",
+      "description": "Je mehr Schaden er eingesteckt hat, desto schneller schlägt er zu (bis +60 % Angriffstempo).",
+      "values": {
+        "maxAttackSpeed": 0.6
+      }
+    },
+    "abilities": [
+      {
+        "id": "wuchtschlag",
+        "name": "Wuchtschlag",
+        "description": "Hammerschlag mit zufälligem Zusatzeffekt: Betäubung, doppelter Schaden oder Rückstoß.",
+        "shape": "cone",
+        "range": 3,
+        "arc": 140,
+        "cooldown": [
+          8,
+          7.5,
+          7,
+          6.5,
+          6
+        ],
+        "values": {
+          "damage": [
+            70,
+            105,
+            140,
+            175,
+            210
+          ],
+          "stun": 1,
+          "knockback": 4
+        }
+      },
+      {
+        "id": "wutanfall",
+        "name": "Wutanfall",
+        "description": "Zufälliger Buff für 4 s: Tempo, Schild oder Heilung.",
+        "shape": "self",
+        "range": 0,
+        "cooldown": [
+          16,
+          15,
+          14,
+          13,
+          12
+        ],
+        "values": {
+          "duration": 4,
+          "haste": [
+            0.3,
+            0.35,
+            0.4,
+            0.45,
+            0.5
+          ],
+          "shield": [
+            80,
+            120,
+            160,
+            200,
+            240
+          ],
+          "healPct": 0.15
+        }
+      },
+      {
+        "id": "ungezielter-sprung",
+        "name": "Ungezielter Sprung",
+        "description": "Sprung mit kleiner Zufallsabweichung, hoher Flächenschaden bei der Landung.",
+        "shape": "dash",
+        "range": 6,
+        "radius": 2.5,
+        "cooldown": [
+          12,
+          11,
+          10,
+          9,
+          8
+        ],
+        "values": {
+          "damage": [
+            80,
+            120,
+            160,
+            200,
+            240
+          ],
+          "deviation": 1.5
+        }
+      },
+      {
+        "id": "amok",
+        "name": "Amok",
+        "description": "Kurz unaufhaltsam (immun gegen Betäubung und Rückstoß) und doppelter Schaden.",
+        "shape": "self",
+        "range": 0,
+        "cooldown": [
+          90,
+          75,
+          60
+        ],
+        "values": {
+          "duration": [
+            5,
+            6,
+            7
+          ],
+          "damageMult": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "schlaeferin",
+    "name": "Schläferin",
+    "role": "Kontrolle",
+    "description": "Magierin mit Kristallstab. Schickt Zombies mit Sternenstaub in tiefen Schlaf.",
+    "color": "#3b4fa0",
+    "figure": "staff",
+    "hp": 480,
+    "hpRegen": 2.5,
+    "speed": 5.5,
+    "radius": 0.5,
+    "hpPerLevel": 50,
+    "regenPerLevel": 0.2,
+    "damagePerLevel": 0.06,
+    "attack": {
+      "type": "ranged",
+      "damage": 22,
+      "range": 8,
+      "cooldown": 0.7,
+      "projectileSpeed": 20,
+      "projectileRadius": 0.2,
+      "look": "star"
+    },
+    "passive": {
+      "name": "Mondlicht",
+      "description": "Treffer machen Zombies schläfrig (langsamer). Nach 3 Treffern in kurzer Zeit schlafen sie kurz ein. Schaden weckt Schlafende, der erste Treffer macht aber 50 % mehr Schaden.",
+      "values": {
+        "stacks": 3,
+        "window": 4,
+        "sleep": 1.5
+      }
+    },
+    "abilities": [
+      {
+        "id": "beruehrung",
+        "name": "Berührung",
+        "description": "Antritt zum Zombie am Mauszeiger, er schläft sofort ein.",
+        "shape": "target",
+        "range": 6,
+        "cooldown": [
+          11,
+          10,
+          9,
+          8,
+          7
+        ],
+        "values": {
+          "sleep": [
+            1.5,
+            1.75,
+            2,
+            2.25,
+            2.5
+          ]
+        }
+      },
+      {
+        "id": "gaehnen",
+        "name": "Gähnen",
+        "description": "Kegel: Zombies werden langsamer und schlafen nach 1,5 s ein.",
+        "shape": "cone",
+        "range": 7,
+        "arc": 70,
+        "cooldown": [
+          13,
+          12,
+          11,
+          10,
+          9
+        ],
+        "values": {
+          "slow": 0.7,
+          "delay": 1.5,
+          "sleep": 2
+        }
+      },
+      {
+        "id": "powernap",
+        "name": "Powernap",
+        "description": "Kurz stillstehen, danach starke Heilung und mehr Tempo. Bewegen bricht ab.",
+        "shape": "self",
+        "range": 0,
+        "cooldown": [
+          20,
+          19,
+          18,
+          17,
+          16
+        ],
+        "values": {
+          "channel": 1.5,
+          "heal": [
+            100,
+            140,
+            180,
+            220,
+            260
+          ],
+          "haste": 0.4,
+          "hasteDuration": 3
+        }
+      },
+      {
+        "id": "gutenacht",
+        "name": "Gute Nacht",
+        "description": "Großes Gebiet: Alle Zombies darin schlafen ein.",
+        "shape": "circle",
+        "range": 10,
+        "radius": 8,
+        "cooldown": [
+          100,
+          85,
+          70
+        ],
+        "values": {
+          "sleep": [
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    ]
   }
 ]

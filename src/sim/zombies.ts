@@ -2,6 +2,8 @@ import { applyDamage, edgeDistance } from './combat';
 import type { SimContext } from './context';
 import { face, stepToward } from './movement';
 import { damageObjective } from './objectives';
+import { nextRandom } from './rng';
+import { hasBuff, isBlind, isDisabled, isFeared, isRooted, statusSpeedFactor } from './status';
 import { DT, type Hero, type Objective, type Zombie } from './types';
 import { dist, type Vec2 } from './vec';
 
@@ -9,6 +11,10 @@ import { dist, type Vec2 } from './vec';
 const DIRECT_RANGE = 3;
 /** Entfernt sich der verfolgte Held so viel weiter als die Aggro-Reichweite, gibt der Zombie auf. */
 const LEASH = 4;
+/** Geblendete Zombies sehen nur so weit, torkeln mit diesem Tempo-Anteil und verfehlen so oft. */
+const BLIND_SIGHT = 2;
+const BLIND_SPEED = 0.6;
+const BLIND_MISS = 0.5;
 
 /**
  * Zombie-KI: Helden in der Nähe werden gejagt, sonst läuft der Zombie zu
@@ -17,25 +23,35 @@ const LEASH = 4;
  */
 export function updateZombies(ctx: SimContext, heroField: Float32Array | null): void {
   const { state, zombieDefs } = ctx;
-  const heroes = state.heroes.filter((h) => h.alive);
+  // Unsichtbare Helden (Nebelschritt) werden nicht gesehen.
+  const heroes = state.heroes.filter((h) => h.alive && !hasBuff(h, 'invisible'));
 
   for (const z of state.zombies) {
     if (z.hp <= 0) continue;
     z.attackTimer = Math.max(0, z.attackTimer - DT);
+    if (isDisabled(ctx, z)) continue; // schläft oder ist betäubt
     const def = zombieDefs.get(z.defId)!;
-    const speed = z.speed * slowFactor(ctx, z.pos);
+    const blind = isBlind(ctx, z);
+    const rooted = isRooted(ctx, z);
+    const speed = z.speed * slowFactor(ctx, z.pos) * statusSpeedFactor(ctx, z) * (blind ? BLIND_SPEED : 1);
 
-    const hero = chaseTarget(ctx, z, heroes, def.aggroRange);
+    if (isFeared(ctx, z)) {
+      if (!rooted) flee(z, z.st.fearFrom, speed * DT);
+      continue;
+    }
+
+    const hero = chaseTarget(ctx, z, heroes, blind ? BLIND_SIGHT : def.aggroRange);
     if (hero) {
       if (edgeDistance(z, hero) <= def.attackRange) {
         face(z, hero.pos);
         if (z.attackTimer <= 0) {
           z.attackTimer = def.attackCooldown;
           state.events.push({ type: 'attack', id: z.id, targetId: hero.id });
-          applyDamage(ctx, hero, z.damage);
+          if (!blind || nextRandom(state) >= BLIND_MISS) applyDamage(ctx, hero, z.damage);
         }
-      } else {
-        moveTo(ctx, z, hero.pos, heroField, speed * DT);
+      } else if (!rooted) {
+        if (blind) stagger(ctx, z, hero.pos, speed * DT);
+        else moveTo(ctx, z, hero.pos, heroField, speed * DT);
       }
       continue;
     }
@@ -50,12 +66,29 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null): 
       }
       if (z.attackTimer <= 0) {
         z.attackTimer = def.attackCooldown;
-        damageObjective(ctx, obj, z.damage);
+        if (!blind || nextRandom(state) >= BLIND_MISS) damageObjective(ctx, obj, z.damage);
       }
-    } else {
-      moveTo(ctx, z, obj.pos, ctx.objectiveFields.get(obj.id) ?? null, speed * DT);
+    } else if (!rooted) {
+      if (blind) stagger(ctx, z, obj.pos, speed * DT);
+      else moveTo(ctx, z, obj.pos, ctx.objectiveFields.get(obj.id) ?? null, speed * DT);
     }
   }
+}
+
+/** Vom Auslöser der Angst weglaufen. */
+function flee(z: Zombie, from: Vec2, step: number): void {
+  const dx = z.pos.x - from.x;
+  const dy = z.pos.y - from.y;
+  const d = Math.hypot(dx, dy) || 1;
+  stepToward(z, { x: z.pos.x + (dx / d) * 5, y: z.pos.y + (dy / d) * 5 }, step);
+}
+
+/** Geblendet: torkelt grob Richtung Ziel, mit zufälligem Schlingern. */
+function stagger(ctx: SimContext, z: Zombie, target: Vec2, step: number): void {
+  z.wander += (nextRandom(ctx.state) - 0.5) * 1.2;
+  z.wander = Math.max(-1.4, Math.min(1.4, z.wander));
+  const a = Math.atan2(target.y - z.pos.y, target.x - z.pos.x) + z.wander;
+  stepToward(z, { x: z.pos.x + Math.cos(a) * 5, y: z.pos.y + Math.sin(a) * 5 }, step);
 }
 
 /** Held, den der Zombie verfolgt: der bisherige, solange er nah genug ist, sonst der nächste in Aggro-Reichweite. */

@@ -1,6 +1,7 @@
 import type { SimContext } from './context';
 import { resolveObstacles } from './grid';
 import { nextRandom, shuffle } from './rng';
+import { emptyStatus } from './status';
 import { DT, type SpawnPoint, type WaveConfig, type ZombieDef } from './types';
 
 /** Anzahl der Zombies in Welle n. */
@@ -105,6 +106,8 @@ function spawnZombie(ctx: SimContext, def: ZombieDef): void {
     damage: def.damage * scale.damage,
     targetId: null,
     objectiveId,
+    st: emptyStatus(),
+    wander: 0,
   });
 }
 

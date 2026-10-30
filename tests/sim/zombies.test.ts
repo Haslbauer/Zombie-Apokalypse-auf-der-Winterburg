@@ -3,7 +3,7 @@ import { dist } from '../../src/sim/vec';
 import { makeSim, noWaves, placeZombie, testData } from './helpers';
 
 function setup() {
-  const sim = makeSim('nahkampf', 1, testData(noWaves));
+  const sim = makeSim('rotschopf', 1, testData(noWaves));
   const h = sim.state.heroes[0];
   h.maxHp = h.hp = 1e9;
   return { sim, h };

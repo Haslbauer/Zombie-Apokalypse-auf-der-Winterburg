@@ -9,7 +9,8 @@
     "damage": 7,
     "attackRange": 0.4,
     "attackCooldown": 1.2,
-    "aggroRange": 6
+    "aggroRange": 6,
+    "xp": 20
   },
   {
     "id": "runner",
@@ -21,7 +22,8 @@
     "damage": 5,
     "attackRange": 0.4,
     "attackCooldown": 0.9,
-    "aggroRange": 8
+    "aggroRange": 8,
+    "xp": 18
   },
   {
     "id": "brute",
@@ -33,6 +35,7 @@
     "damage": 20,
     "attackRange": 0.5,
     "attackCooldown": 1.6,
-    "aggroRange": 5
+    "aggroRange": 5,
+    "xp": 50
   }
 ]

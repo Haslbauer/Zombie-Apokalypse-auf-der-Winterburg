@@ -6,10 +6,12 @@ import { describe, expect, it } from 'vitest';
 describe('Trennung Simulation / Rendering', () => {
   it('src/sim importiert weder three noch Client-Code', () => {
     const dir = fileURLToPath(new URL('../../src/sim', import.meta.url));
-    for (const file of readdirSync(dir)) {
-      const src = readFileSync(join(dir, file), 'utf8');
-      expect(src, file).not.toMatch(/from ['"]three['"]/);
-      expect(src, file).not.toMatch(/from ['"]\.\.\/client/);
+    const files = readdirSync(dir, { recursive: true, withFileTypes: true }).filter((f) => f.isFile());
+    expect(files.length).toBeGreaterThan(10);
+    for (const f of files) {
+      const src = readFileSync(join(f.parentPath, f.name), 'utf8');
+      expect(src, f.name).not.toMatch(/from ['"]three['"]/);
+      expect(src, f.name).not.toMatch(/from ['"](\.\.\/)+client/);
     }
   });
 });

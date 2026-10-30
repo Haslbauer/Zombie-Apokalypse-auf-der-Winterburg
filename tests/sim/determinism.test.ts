@@ -3,7 +3,7 @@ import type { Command } from '../../src/sim/types';
 import { input, makeSim } from './helpers';
 
 function playScript(seed: number) {
-  const sim = makeSim('fernkampf', seed);
+  const sim = makeSim('gaertnerin', seed);
   const script: Record<number, Command> = {
     10: input(sim, { x: -1, y: 0 }, { x: 0, y: 20 }),
     80: input(sim, { x: 1, y: 1 }, { x: 20, y: 0 }, true),

@@ -42,7 +42,7 @@ describe('Pfadsuche', () => {
 
   it('Held läuft mit WASD gegen ein Hindernis und steckt nie darin fest', () => {
     const data = arenaData(noWaves);
-    const sim = makeSim('nahkampf', 1, data);
+    const sim = makeSim('rotschopf', 1, data);
     const h = sim.state.heroes[0];
     // Nach Norden laufen: Dort steht eine Hecke (x 20, y 15).
     sim.step([input(sim, { x: 0, y: -1 }, { x: 20, y: 0 })]);
@@ -58,7 +58,7 @@ describe('Pfadsuche', () => {
   });
 
   it('schräg laufen ist nicht schneller als gerade, Blick folgt der Maus', () => {
-    const sim = makeSim('nahkampf', 1, arenaData(noWaves));
+    const sim = makeSim('rotschopf', 1, arenaData(noWaves));
     const h = sim.state.heroes[0];
     const start = { ...h.pos };
     sim.step([input(sim, { x: 1, y: 1 }, { x: start.x - 10, y: start.y })]);

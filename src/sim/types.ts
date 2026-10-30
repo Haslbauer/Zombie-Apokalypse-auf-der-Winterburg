@@ -19,16 +19,71 @@ export interface AttackDef {
   projectileRadius?: number;
 }
 
+/** Zahl, die je Rang einen eigenen Wert haben kann ([Rang 1, Rang 2, …]). */
+export type RankValue = number | number[];
+
+/** Form der Vorschau beim Halten der Taste (und grob der Wirkung). */
+export type AbilityShape = 'line' | 'cone' | 'circle' | 'target' | 'self' | 'dash';
+
+export interface AbilityDef {
+  id: string;
+  name: string;
+  description: string;
+  shape: AbilityShape;
+  /** Maximale Reichweite (Zielpunkt bzw. Länge) in Metern. */
+  range: number;
+  /** Radius der Wirkfläche, Breite einer Linie oder Öffnungswinkel eines Kegels (Grad). */
+  radius?: number;
+  width?: number;
+  arc?: number;
+  cooldown: RankValue;
+  /** Weitere Werte je Rang, z. B. { "damage": [60, 90, 120, 150, 180] }. */
+  values: Record<string, RankValue>;
+}
+
+export interface PassiveDef {
+  name: string;
+  description: string;
+  values: Record<string, number>;
+}
+
 export interface HeroDef {
   id: string;
   name: string;
+  role: string;
+  description: string;
   color: string;
+  /** Figur für die Darstellung (z. B. "dog", "hammer", "ball"). */
+  figure: string;
   hp: number;
   /** Lebensregeneration pro Sekunde. */
   hpRegen: number;
   speed: number;
   radius: number;
-  attack: AttackDef;
+  /** Wachstum pro Level: Leben, Regeneration und Schaden (0.06 = +6 % je Level). */
+  hpPerLevel: number;
+  regenPerLevel: number;
+  damagePerLevel: number;
+  attack: AttackDef & { look?: string };
+  passive: PassiveDef;
+  /** Genau vier Fähigkeiten, die vierte ist die Ultimate. */
+  abilities: AbilityDef[];
+}
+
+export interface ProgressionDef {
+  maxLevel: number;
+  /** XP, die von Level n auf n+1 nötig sind (Index 0 = von 1 auf 2). */
+  xpToNext: number[];
+  /** Helden in diesem Umkreis um einen getöteten Zombie bekommen XP. */
+  xpShareRange: number;
+  /** Anteil, den jeder Held bekommt, je nach Zahl der Helden in Reichweite (Index 0 = allein). */
+  xpShare: number[];
+  /** Zusätzliche XP pro Welle, relativ. */
+  xpWaveScale: number;
+  basicMaxRank: number;
+  ultMaxRank: number;
+  /** Level, ab denen die Ultimate Rang 1, 2, 3 bekommen kann. */
+  ultLevels: number[];
 }
 
 export interface ZombieDef {
@@ -43,6 +98,10 @@ export interface ZombieDef {
   attackCooldown: number;
   /** Helden in diesem Umkreis werden verfolgt statt das Ziel anzulaufen. */
   aggroRange: number;
+  /** XP für den Kill (vor der Wellen-Skalierung). */
+  xp: number;
+  /** Elite schlafen kürzer, Bosse sind immun gegen Schlaf (ab M4/M7). */
+  rank?: 'normal' | 'elite' | 'boss';
 }
 
 export interface WaveMixEntry {
@@ -141,6 +200,7 @@ export interface GameData {
   zombies: ZombieDef[];
   waves: WaveConfig;
   arena: ArenaDef;
+  progression: ProgressionDef;
 }
 
 // ---------- Befehle (Eingabe; im Mehrspieler das Netzwerkformat) ----------
@@ -155,7 +215,12 @@ export interface HeroInput {
   attack: boolean;
 }
 
-export type Command = { heroId: number; type: 'input' } & HeroInput;
+export type Command =
+  | ({ heroId: number; type: 'input' } & HeroInput)
+  /** Fähigkeit (slot 0–3) Richtung aim auslösen. */
+  | { heroId: number; type: 'cast'; slot: number; aim: Vec2 }
+  /** Skillpunkt in eine Fähigkeit stecken. */
+  | { heroId: number; type: 'levelUp'; slot: number };
 
 // ---------- Spielzustand ----------
 
@@ -173,6 +238,38 @@ export interface Unit {
   attackTimer: number;
 }
 
+export type BuffKind = 'haste' | 'attackSpeed' | 'damageReduction' | 'damageMult' | 'unstoppable' | 'invisible' | 'shield' | 'heal';
+
+/** Zeitlich begrenzte Wirkung auf einem Helden. value: Faktor, Schildpunkte oder Heilung pro Sekunde. */
+export interface Buff {
+  kind: BuffKind;
+  value: number;
+  until: number;
+  /** Herkunft, damit sich gleiche Buffs erneuern statt stapeln. */
+  source: string;
+}
+
+/** Sprung oder Antritt: Bewegung von from nach to über duration Sekunden. */
+export interface Dash {
+  from: Vec2;
+  to: Vec2;
+  elapsed: number;
+  duration: number;
+  /** Sprunghöhe für die Darstellung (0 = Antritt am Boden). */
+  height: number;
+  /** Wird bei der Landung an das Heldenmodul gemeldet. */
+  tag: string;
+  targetId?: number;
+}
+
+/** Libero: der Ball als Objekt auf der Karte. */
+export interface Ball {
+  pos: Vec2;
+  /** Id des Helden, der den Ball hält, sonst null (Ball liegt oder fliegt). */
+  heldBy: number | null;
+  flight: { from: Vec2; to: Vec2; elapsed: number; duration: number; tag: string; hitIds: number[] } | null;
+}
+
 export interface Hero extends Unit {
   /** Letzte Eingabe; gilt, bis eine neue kommt. */
   input: HeroInput;
@@ -181,6 +278,41 @@ export interface Hero extends Unit {
   respawnAt: number;
   /** Startplatz (Slot) für die Wiederbelebung. */
   slot: number;
+  level: number;
+  /** XP seit dem letzten Level-up. */
+  xp: number;
+  skillPoints: number;
+  /** Rang der vier Fähigkeiten (0 = noch nicht gelernt). */
+  ranks: number[];
+  /** Restliche Abklingzeit der vier Fähigkeiten in Sekunden. */
+  cooldowns: number[];
+  buffs: Buff[];
+  dash: Dash | null;
+  /** Kanalisieren (z. B. Powernap, Festhalten) bis zu dieser Zeit. */
+  channel: { until: number; tag: string; cancelOnMove: boolean } | null;
+  /** Letzter Kampfkontakt (Schaden ausgeteilt oder erhalten). */
+  lastCombatAt: number;
+  /** Zähler für Passive (z. B. Treffer bis zum nächsten Effekt). */
+  counters: Record<string, number>;
+  ball?: Ball;
+}
+
+/** Zustände eines Zombies; alle Zeiten sind Spielzeiten, 0 = nicht aktiv. */
+export interface ZombieStatus {
+  slowUntil: number;
+  slowFactor: number;
+  stunUntil: number;
+  sleepUntil: number;
+  fearUntil: number;
+  fearFrom: Vec2;
+  blindUntil: number;
+  rootUntil: number;
+  markedUntil: number;
+  /** Mondlicht: Stapel und wann sie verfallen. */
+  drowsy: number;
+  drowsyUntil: number;
+  /** Festgehalten von diesem Helden (Hetzjagd), solange rootUntil läuft. */
+  heldBy: number | null;
 }
 
 export interface Zombie extends Unit {
@@ -189,6 +321,43 @@ export interface Zombie extends Unit {
   targetId: number | null;
   /** Ziel (Objective-Id), zu dem der Zombie läuft, wenn er keinen Helden jagt. */
   objectiveId: string;
+  st: ZombieStatus;
+  /** Richtung beim Torkeln (geblendet). */
+  wander: number;
+}
+
+/** Fläche mit Wirkung über Zeit (Dornen, Rauch, Hecke, Block). */
+export interface Zone {
+  id: number;
+  /** Aussehen und Art, z. B. "thorns", "smoke", "hedge", "block". */
+  kind: string;
+  ownerId: number;
+  pos: Vec2;
+  radius: number;
+  /** Nur Ring: Wirkung im Band radius ± ring. */
+  ring?: number;
+  /** Wirkt erst ab dieser Zeit (z. B. Saat wächst 2 s). */
+  activeAt: number;
+  until: number;
+  slow?: number;
+  /** Schaden pro Sekunde, ausgeteilt alle 0,5 s. */
+  dps?: number;
+  blind?: boolean;
+  root?: boolean;
+  /** Schiebt Zombies aus der Fläche, weg von pushFrom. */
+  push?: boolean;
+  pushFrom?: Vec2;
+  tickTimer: number;
+}
+
+/** Verzögerte Wirkung einer Fähigkeit (z. B. Gähnen: Schlaf nach 1,5 s). */
+export interface Delayed {
+  at: number;
+  ownerId: number;
+  tag: string;
+  pos: Vec2;
+  targetIds: number[];
+  value: number;
 }
 
 export interface Objective {
@@ -216,6 +385,13 @@ export interface Projectile {
   radius: number;
   /** Restliche Flugstrecke in Metern. */
   remaining: number;
+  /** Wird beim Treffer an das Heldenmodul gemeldet ("basic" = Standardangriff). */
+  tag: string;
+  /** Durchschlagend: trifft jeden Zombie auf der Bahn einmal. */
+  pierce?: boolean;
+  hitIds?: number[];
+  /** Aussehen (z. B. "stone", "hook", "star", "ball"). */
+  look?: string;
 }
 
 export type WavePhase = 'pause' | 'wave';
@@ -247,6 +423,12 @@ export type GameEvent =
   | { type: 'beesAngry'; objectiveId: string }
   | { type: 'sting'; objectiveId: string; targetId: number }
   | { type: 'respawn'; id: number }
+  | { type: 'cast'; heroId: number; slot: number; pos: Vec2 }
+  | { type: 'levelUp'; heroId: number; level: number }
+  | { type: 'xp'; heroId: number; amount: number }
+  | { type: 'status'; zombieId: number; status: 'sleep' | 'stun' | 'fear' | 'blind' | 'root' | 'mark' | 'wake' }
+  | { type: 'land'; heroId: number; pos: Vec2; tag: string }
+  | { type: 'effect'; kind: string; pos: Vec2; radius: number; facing?: number; arc?: number; heroId?: number }
   | { type: 'gameOver'; wave: number; reason: string };
 
 export interface GameState {
@@ -258,6 +440,8 @@ export interface GameState {
   zombies: Zombie[];
   projectiles: Projectile[];
   objectives: Objective[];
+  zones: Zone[];
+  delayed: Delayed[];
   wave: WaveState;
   kills: number;
   gameOver: boolean;

@@ -5,7 +5,7 @@ import { arenaData, input, makeSim, noWaves, placeZombie, run } from './helpers'
 const still = { x: 0, y: 0 };
 
 /** Simulation mit einem Helden ohne Wellen; Zombies stehen still. */
-function setup(heroId: 'nahkampf' | 'fernkampf') {
+function setup(heroId: 'rotschopf' | 'gaertnerin') {
   const sim = makeSim(heroId, 1, arenaData(noWaves));
   const h = sim.state.heroes[0];
   const zombie = (dx: number, dy: number, defId = 'brute') => {
@@ -20,20 +20,20 @@ function setup(heroId: 'nahkampf' | 'fernkampf') {
 
 describe('Kampf', () => {
   it('Schaden zieht Leben ab, Tod zählt einen Kill und entfernt den Zombie', () => {
-    const sim = makeSim('nahkampf', 1, arenaData(noWaves));
+    const sim = makeSim('rotschopf', 1, arenaData(noWaves));
     const z = placeZombie(sim, 'walker', 5, 5, 50);
-    expect(applyDamage(sim, z, 20)).toBe(false);
+    expect(applyDamage(sim, z, 20)).toBe(20);
     expect(z.hp).toBe(30);
-    expect(applyDamage(sim, z, 100)).toBe(true);
+    expect(applyDamage(sim, z, 100)).toBe(30);
     expect(z.hp).toBe(0);
     expect(sim.state.kills).toBe(1);
-    expect(applyDamage(sim, z, 10)).toBe(false);
+    expect(applyDamage(sim, z, 10)).toBe(0);
     sim.step();
     expect(sim.state.zombies).toHaveLength(0);
   });
 
   it('kein Auto-Attack: ohne gedrückte Taste wird nicht angegriffen', () => {
-    for (const heroId of ['nahkampf', 'fernkampf'] as const) {
+    for (const heroId of ['rotschopf', 'gaertnerin'] as const) {
       const { sim, zombie, east } = setup(heroId);
       const z = zombie(1.5, 0);
       sim.step([input(sim, still, east, false)]);
@@ -44,7 +44,7 @@ describe('Kampf', () => {
   });
 
   it('Nahkampf trifft alle Zombies im Bogen vorne, nicht hinten und nicht zu weit weg', () => {
-    const { sim, h, zombie, east, attack } = setup('nahkampf');
+    const { sim, h, zombie, east, attack } = setup('rotschopf');
     expect(attack.range).toBe(2.5);
     expect(attack.arc).toBe(120);
     const reach = h.radius + attack.range;
@@ -63,7 +63,7 @@ describe('Kampf', () => {
   });
 
   it('gedrückt halten greift im Takt der Abklingzeit an', () => {
-    const { sim, zombie, east, attack } = setup('nahkampf');
+    const { sim, zombie, east, attack } = setup('rotschopf');
     const z = zombie(1.5, 0);
     sim.step([input(sim, still, east, true)]);
     run(sim, 40);
@@ -72,7 +72,7 @@ describe('Kampf', () => {
   });
 
   it('Fernkampf: Projektil fliegt geradeaus und trifft nur den ersten Zombie', () => {
-    const { sim, zombie, east, attack } = setup('fernkampf');
+    const { sim, zombie, east, attack } = setup('gaertnerin');
     const first = zombie(4, 0);
     const second = zombie(7, 0);
     sim.step([input(sim, still, east, true)]);
@@ -85,7 +85,7 @@ describe('Kampf', () => {
   });
 
   it('Fernkampf: Schuss neben den Zombie geht daneben und endet nach der Reichweite', () => {
-    const { sim, h, zombie, attack } = setup('fernkampf');
+    const { sim, h, zombie, attack } = setup('gaertnerin');
     const z = zombie(5, 0);
     // Nach Nordosten zielen, am Zombie vorbei.
     const aim = { x: h.pos.x + 10, y: h.pos.y - 10 };
@@ -98,9 +98,9 @@ describe('Kampf', () => {
   });
 
   it('Fernkampf: Hindernisse stoppen das Projektil', () => {
-    const { sim, h, zombie } = setup('fernkampf');
+    const { sim, h, zombie } = setup('gaertnerin');
     // Hecke bei (20, 15), Held bei (20, 22): Zombie dahinter wird nicht getroffen.
-    const z = zombie(0, -9);
+    const z = zombie(0, -8.3);
     const north = { x: h.pos.x, y: h.pos.y - 20 };
     sim.step([input(sim, still, north, true)]);
     sim.step([input(sim, still, north, false)]);
@@ -111,7 +111,7 @@ describe('Kampf', () => {
 
   it('Zombies greifen den Helden an; ein gefallener Held kommt nach dem Timer zurück', () => {
     const data = arenaData(noWaves);
-    const sim = makeSim('nahkampf', 1, data);
+    const sim = makeSim('rotschopf', 1, data);
     const h = sim.state.heroes[0];
     h.hp = 20;
     placeZombie(sim, 'brute', h.pos.x + 1.25, h.pos.y, 1e6);

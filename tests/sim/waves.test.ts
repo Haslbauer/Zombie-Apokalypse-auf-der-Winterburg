@@ -26,7 +26,7 @@ describe('Wellenaufbau', () => {
   });
 
   it('Ablauf: Pause, Welle spawnt komplett, nach dem Leeren folgt die nächste Pause', () => {
-    const sim = makeSim('fernkampf');
+    const sim = makeSim('gaertnerin');
     expect(sim.state.wave.phase).toBe('pause');
     run(sim, cfg.firstPauseDuration * 20 + 1);
     expect(sim.state.wave.phase).toBe('wave');

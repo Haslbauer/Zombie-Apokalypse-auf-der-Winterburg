@@ -9,6 +9,7 @@ export function parseGameData(raw: {
   zombies: unknown;
   waves: unknown;
   arena: unknown;
+  progression: unknown;
 }): GameData {
   const errors: string[] = [];
   const num = (o: any, key: string, path: string, min = 0): void => {
@@ -32,8 +33,25 @@ export function parseGameData(raw: {
     const p = `heroes[${i}]`;
     str(h, 'id', p);
     str(h, 'name', p);
-    str(h, 'color', p);
-    for (const k of ['hp', 'hpRegen', 'speed', 'radius']) num(h, k, p);
+    for (const k of ['color', 'role', 'description', 'figure']) str(h, k, p);
+    for (const k of ['hp', 'hpRegen', 'speed', 'radius', 'hpPerLevel', 'regenPerLevel', 'damagePerLevel']) num(h, k, p);
+    str(h?.passive, 'name', `${p}.passive`);
+    str(h?.passive, 'description', `${p}.passive`);
+    for (const [k, v] of Object.entries(h?.passive?.values ?? {})) {
+      if (typeof v !== 'number') errors.push(`${p}.passive.values.${k}: Zahl erwartet`);
+    }
+    if (!Array.isArray(h?.abilities) || h.abilities.length !== 4) errors.push(`${p}.abilities: genau 4 Fähigkeiten erwartet`);
+    (Array.isArray(h?.abilities) ? h.abilities : []).forEach((ab: any, j: number) => {
+      const q = `${p}.abilities[${j}]`;
+      for (const k of ['id', 'name', 'description']) str(ab, k, q);
+      if (!['line', 'cone', 'circle', 'target', 'self', 'dash'].includes(ab?.shape)) errors.push(`${q}.shape: unbekannte Form`);
+      num(ab, 'range', q);
+      const ranks = j === 3 ? 3 : 5;
+      for (const [k, v] of Object.entries({ cooldown: ab?.cooldown, ...(ab?.values ?? {}) })) {
+        const ok = typeof v === 'number' || (Array.isArray(v) && v.length === ranks && v.every((x) => typeof x === 'number'));
+        if (!ok) errors.push(`${q}.${k}: Zahl oder Liste mit ${ranks} Zahlen (eine je Rang) erwartet`);
+      }
+    });
     const a = h?.attack;
     if (a?.type !== 'melee' && a?.type !== 'ranged') errors.push(`${p}.attack.type: "melee" oder "ranged" erwartet`);
     for (const k of ['damage', 'range', 'cooldown']) num(a, k, `${p}.attack`);
@@ -116,6 +134,18 @@ export function parseGameData(raw: {
     } else errors.push(`${p}.kind: "circle" oder "rect" erwartet`);
     if (o?.blocksShots !== undefined && typeof o.blocksShots !== 'boolean') errors.push(`${p}.blocksShots: true oder false erwartet`);
   });
+
+  const pr: any = raw.progression;
+  num(pr, 'maxLevel', 'progression', 1);
+  for (const k of ['xpShareRange', 'xpWaveScale', 'basicMaxRank', 'ultMaxRank']) num(pr, k, 'progression');
+  if (!Array.isArray(pr?.xpToNext) || pr.xpToNext.length !== pr?.maxLevel - 1) {
+    errors.push('progression.xpToNext: eine Zahl pro Level-Aufstieg (maxLevel - 1) erwartet');
+  }
+  list(pr?.xpShare, 'progression.xpShare');
+  if (!Array.isArray(pr?.ultLevels) || pr.ultLevels.length !== pr?.ultMaxRank) {
+    errors.push('progression.ultLevels: ein Level pro Ultimate-Rang erwartet');
+  }
+  zombies.forEach((z, i) => num(z, 'xp', `zombies[${i}]`));
 
   if (errors.length > 0) throw new Error(`Ungültige Spieldaten:\n- ${errors.join('\n- ')}`);
   return raw as GameData;

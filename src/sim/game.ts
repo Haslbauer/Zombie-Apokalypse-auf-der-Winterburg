@@ -1,9 +1,12 @@
 import { updateProjectiles } from './combat';
 import type { SimContext } from './context';
 import { Grid, resolveObstacles } from './grid';
-import { applyInputs, updateHero } from './heroes';
+import { applyInputs, updateHero } from './hero';
 import { pushApart } from './movement';
 import { updateObjectives } from './objectives';
+import { levelStats, levelUp } from './progression';
+import { kitOf } from './heroes/index';
+import { updateDelayed, updateZones } from './zones';
 import { SpatialHash } from './spatial';
 import { type ArenaDef, DT, type Command, type GameData, type GameState, type Hero, type Zombie } from './types';
 import { updateWaves } from './waves';
@@ -18,6 +21,8 @@ export interface SimulationOptions {
   seed: number;
   /** Helden-Ids aus heroes.json, ein Eintrag pro Slot. */
   heroes: string[];
+  /** Startlevel (Entwicklermodus ?level=…); Standard 1. */
+  startLevel?: number;
 }
 
 /**
@@ -59,6 +64,8 @@ export class Simulation implements SimContext {
       heroes: [],
       zombies: [],
       projectiles: [],
+      zones: [],
+      delayed: [],
       objectives: data.arena.objectives.map((o) => ({
         id: o.id,
         pos: { x: o.x, y: o.y },
@@ -86,13 +93,13 @@ export class Simulation implements SimContext {
       const def = this.heroDefs.get(defId);
       if (!def) throw new Error(`Unbekannter Held: ${defId}`);
       const start = data.arena.heroStart;
-      this.state.heroes.push({
+      const hero: Hero = {
         id: this.state.nextId++,
         defId,
         pos: { x: start.x + slot * 1.5, y: start.y },
         radius: def.radius,
         hp: def.hp,
-        maxHp: def.hp,
+        maxHp: levelStats(def, 1).maxHp,
         speed: def.speed,
         facing: -Math.PI / 2,
         attackTimer: 0,
@@ -100,8 +107,22 @@ export class Simulation implements SimContext {
         alive: true,
         respawnAt: 0,
         slot,
-      });
+        level: 1,
+        xp: 0,
+        skillPoints: 1,
+        ranks: [0, 0, 0, 0],
+        cooldowns: [0, 0, 0, 0],
+        buffs: [],
+        dash: null,
+        channel: null,
+        lastCombatAt: -100,
+        counters: {},
+      };
+      this.state.heroes.push(hero);
+      kitOf(defId).init?.(this, hero);
+      for (let l = 1; l < (options.startLevel ?? 1); l++) levelUp(this, hero);
     });
+    this.state.events = [];
   }
 
   /** Ein Tick (1/20 s). */
@@ -124,6 +145,8 @@ export class Simulation implements SimContext {
     }
     updateZombies(this, this.field);
     updateProjectiles(this);
+    updateZones(this);
+    updateDelayed(this);
     updateObjectives(this);
     state.zombies = state.zombies.filter((z) => z.hp > 0);
     this.resolveCollisions();
@@ -136,8 +159,12 @@ export class Simulation implements SimContext {
     h.alive = true;
     h.hp = h.maxHp;
     h.attackTimer = 0;
+    h.buffs = [];
+    h.dash = null;
+    h.channel = null;
     h.pos = { x: start.x + h.slot * 1.5, y: start.y };
     resolveObstacles(h.pos, h.radius, this.arena);
+    kitOf(h.defId).onRespawn?.(this, h);
     this.state.events.push({ type: 'respawn', id: h.id });
   }
 

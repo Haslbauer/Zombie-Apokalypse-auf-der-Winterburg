@@ -4,7 +4,7 @@ import { makeSim, noWaves, placeZombie, run, testData } from './helpers';
 
 /** Winterburg ohne Wellen, Held weit weg im Nordosten geparkt und unverwundbar. */
 function setup() {
-  const sim = makeSim('fernkampf', 1, testData(noWaves));
+  const sim = makeSim('gaertnerin', 1, testData(noWaves));
   const h = sim.state.heroes[0];
   h.pos = { x: 48, y: 8 };
   h.maxHp = h.hp = 1e9;
