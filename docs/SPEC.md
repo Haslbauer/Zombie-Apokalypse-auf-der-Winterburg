@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v0.5)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v0.6)
 
 Stand: 30.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v0.6: M3 umgesetzt. Level- und Skillregeln konkret, sechs Helden im Spiel (Chupa, Gärtnerin, Pirat, Libero, Rotschopf, Schläferin), Linksklick-Angriff je Held, Passive für Pirat, Libero und Schläferin (Mondlicht). Fähigkeiten steigern mit Shift + Taste. Gegnerbilder in assets/reference/gegner/, Ratte als Minion-Vorlage.
 Änderungen v0.5: Optik der Helden nach den Referenzbildern in assets/reference/helden/ (Libero ist ein Mann mit Runen-Volleyball, die Schläferin eine Magierin mit Kristallstab).
 Änderungen v0.4: Karte nach der Skizze (echte Maße, U-Haus mit Innenhof als Herz der Base, Bunker als Zombie-Spawn, Heckenlücke Süd, Hang Ost, Bienenstock als zweites Ziel). Helden-Spawn im Innenhof, tote Helden respawnen.
 Änderungen v0.3: Steuerung wie in Supervive (WASD laufen, Maus zielt, Angriff Richtung Mauszeiger, kein Auto-Attack, keine Zielauswahl). Fähigkeiten auf 1–4, Items auf R und T, alle Tasten frei belegbar. Nahkampf-Reichweite 2,5 m im 120°-Bogen.
@@ -21,7 +22,8 @@ Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Ha
   - Kein Auto-Attack und keine Zielauswahl: Man greift in eine Richtung an. Reichweite und Trefferbereich hängen von der Waffe ab.
   - Nahkampf trifft alle Zombies im Bogen vor dem Helden (Testheld: 2,5 m, 120°). Fernkampf schießt ein Projektil geradeaus, das den ersten Zombie trifft, danebengehen kann und an Hindernissen endet.
   - Eine Markierung am Boden (Bogen bzw. Pfeil) zeigt Reichweite und Richtung des Angriffs
-  - Fähigkeiten auf 1, 2, 3, 4, Items auf R und T
+  - Fähigkeiten auf 1, 2, 3, 4 (4 = Ultimate), Items auf R und T. Taste halten zeigt eine Vorschau von Reichweite und Wirkfläche, Loslassen löst aus.
+  - Skillpunkt setzen: Shift + Fähigkeitstaste oder Klick auf „+“ in der Fähigkeitenleiste (Strg + Zahl wechselt im Browser den Tab und lässt sich nicht abfangen)
   - Alle Tasten sind frei belegbar (Esc öffnet Pause und Tastenbelegung)
 - Levelsystem nach League-of-Legends-Vorbild (XP, Level, Skillpunkte)
 - Gold sammeln und davon Waffen und Items kaufen
@@ -55,15 +57,26 @@ Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Ha
 
 ## 5. Level und Skills (LoL-Vorbild)
 
-- Level 1 bis 18, ein Skillpunkt pro Level
-- Q, W, E: maximal Rang 5. R (Ultimate): maximal Rang 3, freischaltbar ab Level 6, 11 und 16
-- XP durch Zombie-Kills, geteilt unter allen Helden in Reichweite. Elite und Boss geben Bonus-XP.
-- Grundwerte (Leben, Schaden, Tempo) wachsen pro Level
+Umgesetzt in M3, Zahlen in `data/progression.json` und `data/heroes.json`:
+- Level 1 bis 18, ein Skillpunkt pro Level (Start mit 1 Punkt)
+- Fähigkeiten 1–3: maximal Rang 5, aber höchstens Rang ⌈Level/2⌉. Fähigkeit 4 (Ultimate): maximal Rang 3, freischaltbar ab Level 6, 11 und 16
+- XP durch Zombie-Kills (je Typ in `zombies.json`, +5 % pro Welle), für alle lebenden Helden im Umkreis von 15 m. Teilen sich mehrere Helden einen Kill, bekommt jeder einen Anteil (allein 100 %, zu zweit 60 %, zu dritt 45 %, zu viert 35 %). Elite und Boss geben mehr XP.
+- XP-Kurve: etwa Level 6 um Welle 5 und Level 18 um Welle 25 (allein gespielt)
+- Grundwerte wachsen pro Level: Leben, Regeneration und Schaden (+6 % je Level, gilt auch für Fähigkeiten)
 - Vorschlag (später): dünne Übungsschicht zusätzlich. Zielgenauigkeit steigt durch viele Schüsse, Nahkampfschaden durch viele Treffer, jeweils als kleine Passivboni.
 
 ## 6. Helden
 
-Geplant sind 8 Helden, 2 Slots bleiben frei. Namen sind Platzhalter. Vorschlag für den MVP (5 Helden, je eine andere Rolle): Taucher (Tank), Chupa (Jäger), Gärtnerin (Fernkampf), Pirat (Kontrolle), Libero (Support). Die übrigen kommen nach und nach dazu.
+Geplant sind 8 Helden, 2 Slots bleiben frei. In M3 spielbar: **Chupa, Gärtnerin, Pirat, Libero, Rotschopf und Schläferin**. Taucher und Imker folgen in M7. Spalten Q/W/E/R entsprechen den Tasten 1/2/3/4. Werte stehen in `data/heroes.json`, der Code in `src/sim/heroes/`.
+
+| Held | Linksklick |
+|---|---|
+| Chupa | Biss (Nahkampf, 2 m, 90°) |
+| Gärtnerin | Steinschleuder (8 m) |
+| Pirat | Enterhaken-Wurf (6 m) |
+| Libero | Pritschen, kleiner Ballschuss (7 m) |
+| Rotschopf | Hammer (Nahkampf, 2,5 m, 120°) |
+| Schläferin | Sternenstaub aus dem Stab (8 m) |
 
 | Held | Rolle | Q | W | E | R |
 |---|---|---|---|---|---|
@@ -73,7 +86,7 @@ Geplant sind 8 Helden, 2 Slots bleiben frei. Namen sind Platzhalter. Vorschlag f
 | Libero | Fernkampf, Support | Aufschlag | Block | Zuspiel | Schmetterball |
 | Gärtnerin | Fernkampf, ausdauernd | Schleuderschuss | Saat | Kräutertee | Mein Garten! |
 | Rotschopf | Nahkampf, Berserker | Wuchtschlag | Wutanfall | Ungezielter Sprung | Amok |
-| Schläferin | Kontrolle, Sprinterin | Berührung | Gähnen | Powernap | Gute Nacht |
+| Schläferin | Kontrolle | Berührung | Gähnen | Powernap | Gute Nacht |
 | Chupa | Nahkampf, Jäger | Sprungbiss | Fährte | Heulen | Hetzjagd |
 
 ### Chupa
@@ -95,25 +108,28 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 ### Libero (Volleyball)
 - Rolle: Fernkampf, Kontrolle und Support. Optik (`assets/reference/helden/libero.jpg`): Mann mit braunen Locken und Bart, Ledermütze, ärmelloses Lederhemd mit goldener Palme, Knieschoner, bandagierte Hände, leuchtender Volleyball mit Runen und Funken. Spielgefühl: ein Held mit einem Ball, der liegen bleibt (Orianna in LoL).
 - Der Ball ist ein Objekt auf der Karte. Fähigkeiten gehen vom Ball aus oder bewegen ihn.
+- Passiv Ballgefühl: Der Ball kehrt zurück, wenn er mehr als 15 m entfernt ist. Mit Ball in der Hand läuft Libero 10 % schneller. Einen liegenden Ball hebt er im Vorbeilaufen auf.
 - Q Aufschlag: Ball fliegt als Linienschuss durch Zombies und bleibt am Ende liegen
 - W Block: kurze Sperre vor dem Helden, Zombies werden zurückgedrängt
-- E Zuspiel: Ball zu einem Mitspieler oder Bot, gibt ihm einen Schild
+- E Zuspiel: Ball zu einem Mitspieler oder Bot, gibt ihm einen Schild (ohne Mitspieler an sich selbst)
 - R Schmetterball: Ball springt hoch und schlägt nieder, Flächenschaden mit Betäubung
 
 ### Pirat (Rauch-Held, Platzhaltername Qualm)
-- Rolle: Kontrolle. Optik: Pirat. Spielgefühl: Rauchgranate, die Gegnern die Sicht nimmt (Graves in LoL).
+- Rolle: Kontrolle. Optik (`assets/reference/helden/pirat.jpg`): bärtiger Pirat mit Dreispitz, Kopftuch, Lederweste, Gurten, Enterhaken und Seil. Spielgefühl: Rauchgranate, die Gegnern die Sicht nimmt (Graves in LoL).
+- Linksklick: Enterhaken-Wurf. Passiv Pulverdampf: Jeder 4. Treffer hüllt den Zombie in Rauch (kurz geblendet).
 - Rauch-Regel: Zombies im Rauch sehen nur wenige Meter weit, verlieren ihr Ziel, torkeln und treffen oft daneben.
 - Q Qualmstoß: Rauchkegel nach vorne, wenig Schaden, Zombies sind kurz benommen
 - W Rauchwolke: Granate, die Wolke bleibt ca. 5 s und verlangsamt Zombies darin
-- E Nebelschritt: Sprung in eine eigene Rauchwolke, dort kurz unsichtbar
+- E Nebelschritt: Sprung in eine eigene Rauchwolke, dort kurz unsichtbar. Ohne Wolke ein kurzer Sprung ohne Unsichtbarkeit.
 - R Dicke Luft: große Wolke, Zombies sind 3 s betäubt und danach 5 s blind
 ### Gärtnerin
 - Rolle: Fernkampf, ausdauernd. Optik (`assets/reference/helden/gaertnerin.jpg`): ältere, grummelige Frau mit Stoffhut, Karohemd, Latzhose, Gummistiefeln, Arbeitshandschuhen, Werkzeuggürtel und großer Heckenschere. Spielgefühl: Pflanzen als kleine Geschütztürme (Zyra in LoL).
+- Linksklick: Steinschleuder (die Heckenschere ist Optik)
 - Passiv Sturschädel: regeneriert langsam Leben und wird zäher, je länger sie im Kampf bleibt
 - Q Schleuderschuss: Fernschuss mit Steinschleuder
 - W Saat: pflanzt Samen, nach 2 s wachsen Dornenranken, die Zombies verlangsamen und stechen (max. 3 gleichzeitig)
 - E Kräutertee: heilt sie und Verbündete im Umkreis über Zeit
-- R Mein Garten!: Dornenhecke wächst als Ring oder Linie (ca. 8 s), hält Zombies zurück und verursacht Schaden. Kann einen Zugang kurz sperren.
+- R Mein Garten!: Dornenhecke wächst als Ring (ca. 8 s), hält Zombies zurück und verursacht Schaden. Kann einen Zugang kurz sperren.
 
 ### Rotschopf
 - Rolle: Nahkämpfer, stark und unberechenbar. Optik (`assets/reference/helden/rotschopf.jpg`): rote Locken und Bart, kräftig, wild, Schutzbrille auf der Stirn, Beinschienen, riesiger Kriegshammer. Spielgefühl: Berserker (Olaf in LoL).
@@ -124,9 +140,9 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - R Amok: kurz unaufhaltsam (immun gegen Betäubung und Rückstoß), doppelter Schaden
 
 ### Schläferin
-- Rolle: Kontrolle und Sprinterin. Optik (`assets/reference/helden/schlaeferin.jpg`): Magierin mit braunem Haar, Kristallstab, blau-grünem Sternenmantel mit Mondmotiven, Mondanhänger, Schmetterling, Sternenstaub-Wirbel. Superkraft: sofortiger Schlaf. Spielgefühl: Schlaf-Fähigkeiten (Lillia und Zoe in LoL).
+- Rolle: Kontrolle. Optik (`assets/reference/helden/schlaeferin.jpg`): Magierin mit braunem Haar, Kristallstab, blau-grünem Sternenmantel mit Mondmotiven, Mondanhänger, Schmetterling, Sternenstaub-Wirbel. Superkraft: sofortiger Schlaf. Spielgefühl: Schlaf-Fähigkeiten (Lillia und Zoe in LoL).
 - Schlaf-Regel: Ein schlafender Zombie ist ausgeschaltet und wacht bei Schaden auf. Der erste Treffer auf einen Schlafenden macht Bonusschaden. Elite schlafen kürzer, Boss sind immun.
-- Passiv Sprinterin: Lauftempo steigt, je länger sie ohne Pause läuft
+- Passiv Mondlicht (ersetzt „Sprinterin“): Ihre Treffer machen Zombies schläfrig (langsamer). Nach 3 Treffern innerhalb von 4 s schläft der Zombie kurz ein.
 - Q Berührung: Antritt zu einem Zombie, er schläft sofort 2 s
 - W Gähnen: Kegel, Zombies werden langsamer und schlafen nach 1,5 s ein
 - E Powernap: kurz stillstehen, starke Heilung, danach Tempobonus
@@ -152,6 +168,8 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 ## 7. Gegner
 
 - Walker (langsam, Masse), Runner (schnell, wenig Leben), Brute (Tank), Spitter (Fernkampf), Elite (Mini-Boss mit Spezialfähigkeit), Boss
+- Minions: Zombie-Ratten als kleine, schnelle Gegner in Massen (Vorlage `assets/reference/gegner/ratte.jpg`)
+- Referenzbilder für Zombies in `assets/reference/gegner/` (Zombie mit Bart, einarmiger Zombie, Kriecher)
 - Verhalten: Zombies greifen Helden an, die in Reichweite sind. Sonst laufen sie zum Haus. Pfadfindung um Hindernisse.
 - Durchbruch: Erreicht ein Zombie das Haus, bleibt er stehen und greift es an (Schaden pro Sekunde, Elite und Boss mehr). Wird er getötet, endet der Schaden.
 
@@ -207,11 +225,11 @@ Grundlage ist die Skizze auf dem Lageplan (`assets/reference/karte-skizze.jpg`).
 
 1. M1: Offline-Prototyp. Eine Arena, ein Held (zwei Testhelden: Nah- und Fernkampf), Steuerung wie in Supervive, Zombies in Wellen, Nahkampf und Schuss.
 2. M2: Karte Winterburg mit Haus (Lebensbalken), Garten, Hindernissen und den drei Zugängen
-3. M3: Level, XP, Skillpunkte, 5 Helden mit Q/W/E/R
+3. M3: Level, XP, Skillpunkte, 6 Helden (Chupa, Gärtnerin, Pirat, Libero, Rotschopf, Schläferin) mit Fähigkeiten auf 1–4
 4. M4: Gold, Shop, Waffen und Items, Elite-Zombies
 5. M5: Bots (Singleplayer mit 3 Bots)
 6. M6: Server und Mehrspieler (Raum, Join per Link, Bot-Ersatz)
-7. M7: Weitere Helden, Boss, Balancing, Feinschliff
+7. M7: Weitere Helden (Taucher, Imker, zwei freie Slots), Boss, Balancing, Feinschliff
 
 ## 13. Offene Fragen
 

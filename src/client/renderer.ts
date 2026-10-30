@@ -1,9 +1,13 @@
 import * as THREE from 'three';
-import type { AttackDef, GameData, GameState, Hero, Unit, Zombie } from '../sim/types';
+import { hasBuff, shieldAmount } from '../sim/status';
+import type { AbilityDef, AttackDef, GameData, GameState, Hero, Zombie } from '../sim/types';
 import type { Vec2 } from '../sim/vec';
 import { GameCamera } from './camera';
 import { buildMap } from './map';
 import { ObjectiveView } from './objectives';
+import { AbilityPreview } from './preview';
+import { heroView, UnitView, zombieView } from './units';
+import { WorldView } from './world';
 
 /** Position und Blickrichtung eines Objekts im vorherigen Tick (für Interpolation). */
 export interface Snapshot {
@@ -12,92 +16,13 @@ export interface Snapshot {
   facing: number;
 }
 
-const UNIT_HEIGHT = 1.6;
-
-/** Darstellung einer Einheit: Körper, Blickrichtung, Lebensbalken, Markierungsring. */
-class UnitView {
-  readonly group = new THREE.Group();
-  readonly body: THREE.Mesh;
-  readonly material: THREE.MeshLambertMaterial;
-  private readonly barFill: THREE.Mesh;
-  readonly bar = new THREE.Group();
-  readonly ring: THREE.Mesh;
-  private flash = 0;
-  private readonly baseColor: THREE.Color;
-
-  constructor(radius: number, color: string, barColor: number, height = UNIT_HEIGHT) {
-    this.baseColor = new THREE.Color(color);
-    this.material = new THREE.MeshLambertMaterial({ color: this.baseColor });
-    const capsule = new THREE.CapsuleGeometry(radius, Math.max(0.1, height - 2 * radius), 4, 12);
-    this.body = new THREE.Mesh(capsule, this.material);
-    this.body.position.y = height / 2;
-    this.body.castShadow = true;
-    this.group.add(this.body);
-
-    // Kleine "Nase" zeigt die Blickrichtung.
-    const nose = new THREE.Mesh(
-      new THREE.BoxGeometry(radius * 0.7, radius * 0.4, radius * 0.4),
-      new THREE.MeshLambertMaterial({ color: this.baseColor.clone().multiplyScalar(0.6) }),
-    );
-    nose.position.set(radius * 0.9, height * 0.2, 0);
-    this.body.add(nose);
-
-    const w = Math.max(1, radius * 2.4);
-    const bg = new THREE.Mesh(new THREE.PlaneGeometry(w + 0.08, 0.2), new THREE.MeshBasicMaterial({ color: 0x111111 }));
-    this.barFill = new THREE.Mesh(
-      new THREE.PlaneGeometry(w, 0.13).translate(w / 2, 0, 0),
-      new THREE.MeshBasicMaterial({ color: barColor }),
-    );
-    this.barFill.position.set(-w / 2, 0, 0.01);
-    this.bar.add(bg, this.barFill);
-    this.bar.position.y = height + 0.45;
-    this.group.add(this.bar);
-
-    this.ring = new THREE.Mesh(
-      new THREE.RingGeometry(radius + 0.12, radius + 0.25, 32).rotateX(-Math.PI / 2),
-      new THREE.MeshBasicMaterial({ color: 0xff3b30, transparent: true, opacity: 0.9 }),
-    );
-    this.ring.position.y = 0.03;
-    this.ring.visible = false;
-    this.group.add(this.ring);
-  }
-
-  update(unit: Unit, prev: Snapshot | undefined, alpha: number, camera: THREE.Camera, dt: number): void {
-    const x = prev ? prev.x + (unit.pos.x - prev.x) * alpha : unit.pos.x;
-    const y = prev ? prev.y + (unit.pos.y - prev.y) * alpha : unit.pos.y;
-    this.group.position.set(x, 0, y);
-    this.body.rotation.y = -unit.facing;
-    this.bar.quaternion.copy(camera.quaternion);
-    this.barFill.scale.x = Math.max(0.001, unit.hp / unit.maxHp);
-    if (unit.hp < unit.maxHp) this.bar.visible = true;
-    this.flash = Math.max(0, this.flash - dt * 6);
-    this.material.color.copy(this.baseColor).lerp(WHITE, this.flash);
-  }
-
-  hit(): void {
-    this.flash = 1;
-  }
-
-  dispose(): void {
-    this.group.traverse((o) => {
-      if (o instanceof THREE.Mesh) {
-        o.geometry.dispose();
-        (o.material as THREE.Material).dispose();
-      }
-    });
-  }
-}
-
-const WHITE = new THREE.Color(0xffffff);
-
 export class GameRenderer {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
   readonly cam: GameCamera;
   private readonly units = new Map<number, UnitView>();
-  private readonly projectiles = new Map<number, THREE.Mesh>();
-  private readonly projectileGeometry = new THREE.SphereGeometry(0.15, 8, 6);
-  private readonly projectileMaterial = new THREE.MeshBasicMaterial({ color: 0xffe066 });
+  private readonly world: WorldView;
+  readonly preview: AbilityPreview;
   private readonly raycaster = new THREE.Raycaster();
   private readonly groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   private aimIndicator: THREE.Mesh | null = null;
@@ -127,6 +52,8 @@ export class GameRenderer {
     this.scene.add(sun, sun.target);
 
     buildMap(this.scene, data.arena);
+    this.world = new WorldView(this.scene);
+    this.preview = new AbilityPreview(this.scene);
     for (const def of data.arena.objectives) {
       const view = new ObjectiveView(def);
       this.objectives.set(def.id, view);
@@ -150,15 +77,15 @@ export class GameRenderer {
       v.dispose();
     }
     this.units.clear();
-    for (const m of this.projectiles.values()) this.scene.remove(m);
-    this.projectiles.clear();
+    this.world.reset();
+    this.preview.hide();
   }
 
   /** Szene an den Spielzustand angleichen, zwischen den Ticks interpoliert. */
-  sync(state: GameState, prev: Map<number, Snapshot>, alpha: number, dt: number): void {
+  sync(state: GameState, prev: Map<number, Snapshot>, alpha: number, dt: number, time: number): void {
     const camera = this.cam.camera;
     const seen = new Set<number>();
-    const upsert = (unit: Hero | Zombie, make: () => UnitView) => {
+    const upsert = (unit: Hero | Zombie, make: () => UnitView, lift = 0) => {
       seen.add(unit.id);
       let view = this.units.get(unit.id);
       if (!view) {
@@ -166,28 +93,25 @@ export class GameRenderer {
         this.units.set(unit.id, view);
         this.scene.add(view.group);
       }
-      view.update(unit, prev.get(unit.id), alpha, camera, dt);
+      view.update(unit, prev.get(unit.id), alpha, camera, dt, lift);
       return view;
     };
+
+    // Chupa wittert verwundete Zombies (unter revealBelow) auch hinter Wänden.
+    const chupa = state.heroes.find((h) => h.alive && h.defId === 'chupa');
+    const revealBelow = chupa ? (this.data.heroes.find((d) => d.id === 'chupa')?.passive.values.revealBelow ?? 0) : 0;
 
     for (const h of state.heroes) {
       if (!h.alive) continue;
       const def = this.data.heroes.find((d) => d.id === h.defId)!;
-      upsert(h, () => {
-        const view = new UnitView(h.radius, def.color, 0x4cd964);
-        view.bar.visible = true;
-        (view.ring.material as THREE.MeshBasicMaterial).color.set(0x4cd964);
-        view.ring.visible = true;
-        return view;
-      });
+      const lift = h.dash ? Math.sin((h.dash.elapsed / h.dash.duration) * Math.PI) * h.dash.height : 0;
+      const view = upsert(h, () => heroView(h, def), lift);
+      view.showHero(h, shieldAmount(h), hasBuff(h, 'invisible'));
     }
     for (const z of state.zombies) {
       const def = this.data.zombies.find((d) => d.id === z.defId)!;
-      upsert(z, () => {
-        const view = new UnitView(z.radius, def.color, 0xff453a, UNIT_HEIGHT * (0.7 + z.radius * 0.6));
-        view.bar.visible = false;
-        return view;
-      });
+      const view = upsert(z, () => zombieView(z, def.color));
+      view.showStatus(z, state.time, z.hp / z.maxHp < revealBelow);
     }
     for (const [id, view] of this.units) {
       if (!seen.has(id)) {
@@ -200,27 +124,18 @@ export class GameRenderer {
     for (const obj of state.objectives) {
       this.objectives.get(obj.id)?.update(obj, state.time, state.time < obj.aggroUntil, camera, dt);
     }
+    this.world.sync(state, prev, alpha, time);
+  }
 
-    const seenP = new Set<number>();
-    for (const p of state.projectiles) {
-      seenP.add(p.id);
-      let m = this.projectiles.get(p.id);
-      if (!m) {
-        m = new THREE.Mesh(this.projectileGeometry, this.projectileMaterial);
-        this.projectiles.set(p.id, m);
-        this.scene.add(m);
-      }
-      const pr = prev.get(p.id);
-      const x = pr ? pr.x + (p.pos.x - pr.x) * alpha : p.pos.x;
-      const y = pr ? pr.y + (p.pos.y - pr.y) * alpha : p.pos.y;
-      m.position.set(x, 1.1, y);
+  /** Vorschau einer Fähigkeit (Taste gehalten) oder ausblenden. */
+  showPreview(ability: AbilityDef | null, hero: Hero | undefined, aim: { x: number; y: number }): void {
+    if (!ability || !hero) {
+      this.preview.hide();
+      return;
     }
-    for (const [id, m] of this.projectiles) {
-      if (!seenP.has(id)) {
-        this.scene.remove(m);
-        this.projectiles.delete(id);
-      }
-    }
+    const pos = this.unitPosition(hero.id) ?? hero.pos;
+    const ball = hero.ball ? (hero.ball.heldBy !== null ? pos : hero.ball.pos) : undefined;
+    this.preview.show(ability, pos, hero.radius, aim, ball);
   }
 
   /**

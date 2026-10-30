@@ -3,6 +3,8 @@ import * as THREE from 'three';
 /** Neigung der festen Schrägkamera gegen den Boden (LoL-artig, kein Drehen). */
 const TILT_DEG = 55;
 const DISTANCE = 34;
+/** So viele Meter südlich vom Helden liegt der Kamerafokus. */
+const FOCUS_SOUTH = 2.5;
 
 export class GameCamera {
   readonly camera: THREE.PerspectiveCamera;
@@ -34,9 +36,10 @@ export class GameCamera {
     this.lookAt(x, y);
   }
 
-  /** Weich zum Ziel nachführen. */
+  /** Weich zum Ziel nachführen. Der Fokus liegt etwas südlich, weil unten die Heldenleiste sitzt. */
   follow(x: number, y: number, dt: number): void {
     if (!this.following) return;
+    y += FOCUS_SOUTH;
     const k = 1 - Math.exp(-8 * dt);
     this.lookAt(this.focus.x + (x - this.focus.x) * k, this.focus.z + (y - this.focus.z) * k);
   }

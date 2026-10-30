@@ -29,6 +29,49 @@ export class Effects {
     });
   }
 
+  /** Aufblitzender Kegel (z. B. Wuchtschlag, Qualmstoß, Gähnen). */
+  cone(p: Vec2, facing: number, radius: number, arcDeg: number, color: number, life = 0.3): void {
+    const arc = (arcDeg * Math.PI) / 180;
+    const material = new THREE.MeshBasicMaterial({ color, transparent: true, depthWrite: false });
+    const mesh = new THREE.Mesh(new THREE.RingGeometry(0.3, radius, 32, 1, -arc / 2, arc).rotateX(-Math.PI / 2), material);
+    mesh.position.set(p.x, 0.07, p.y);
+    mesh.rotation.y = -facing;
+    this.add(mesh, life, (t) => {
+      material.opacity = 0.6 * (1 - t);
+    });
+  }
+
+  /** Sich ausbreitender Ring (Landung, Heulen, Schmetterball, Level-up). */
+  ring(p: Vec2, radius: number, color: number, life = 0.45, height = 0.08): void {
+    const material = new THREE.MeshBasicMaterial({ color, transparent: true, depthWrite: false });
+    const mesh = new THREE.Mesh(new THREE.RingGeometry(0.85, 1, 48).rotateX(-Math.PI / 2), material);
+    mesh.position.set(p.x, height, p.y);
+    this.add(mesh, life, (t) => {
+      mesh.scale.setScalar(Math.max(0.05, radius * (0.3 + 0.7 * t)));
+      material.opacity = 0.8 * (1 - t);
+    });
+  }
+
+  /** Gefüllte Fläche, die kurz aufleuchtet und verblasst. */
+  disc(p: Vec2, radius: number, color: number, life = 0.5, opacity = 0.45): void {
+    const material = new THREE.MeshBasicMaterial({ color, transparent: true, depthWrite: false });
+    const mesh = new THREE.Mesh(new THREE.CircleGeometry(radius, 40).rotateX(-Math.PI / 2), material);
+    mesh.position.set(p.x, 0.07, p.y);
+    this.add(mesh, life, (t) => {
+      material.opacity = opacity * (1 - t);
+    });
+  }
+
+  /** Markierung, die bis zum Einschlag sichtbar bleibt (Schmetterball). */
+  warning(p: Vec2, radius: number, color: number, life: number): void {
+    const material = new THREE.MeshBasicMaterial({ color, transparent: true, depthWrite: false });
+    const mesh = new THREE.Mesh(new THREE.RingGeometry(radius - 0.15, radius, 48).rotateX(-Math.PI / 2), material);
+    mesh.position.set(p.x, 0.08, p.y);
+    this.add(mesh, life, (t) => {
+      material.opacity = 0.4 + 0.5 * t;
+    });
+  }
+
   /** Eine Biene fliegt vom Stock zum gestochenen Ziel. */
   sting(from: Vec2, to: Vec2, angry: boolean): void {
     const material = new THREE.MeshBasicMaterial({ color: angry ? 0xff3b30 : 0xffd23f });

@@ -1,5 +1,6 @@
-import type { GameData, GameState } from '../sim/types';
-import { ACTIONS, type Keybindings, keyName } from './keybindings';
+import { rankValue } from '../sim/abilities';
+import type { GameData, GameState, Hero, HeroDef } from '../sim/types';
+import { type Action, ACTIONS, type Keybindings, keyName } from './keybindings';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -18,8 +19,18 @@ export class Hud {
   private readonly respawn = el('div', 'hud-respawn');
   private readonly bottom = el('div', 'hud-bottom');
   private readonly heroName = el('div', 'hud-hero-name');
+  private readonly portrait = el('img', 'hud-portrait');
+  private readonly levelBadge = el('div', 'hud-level');
+  private readonly xpFill = el('div', 'hud-xp-fill');
   private readonly hpFill = el('div', 'hud-hp-fill');
   private readonly hpText = el('div', 'hud-hp-text');
+  private readonly abilityRow = el('div', 'hud-abilities');
+  private readonly skillHint = el('div', 'hud-skill-hint');
+  private readonly tooltip = el('div', 'hud-tooltip');
+  private slots: { box: HTMLElement; key: HTMLElement; cd: HTMLElement; pips: HTMLElement; plus: HTMLElement }[] = [];
+  private heroDef: HeroDef | null = null;
+  /** Skillpunkt per Klick auf „+“ setzen. */
+  onLevelUp: (slot: number) => void = () => {};
   private readonly banner = el('div', 'hud-banner');
   private readonly help = el('div', 'hud-help');
   private readonly overlay = el('div', 'hud-overlay');
@@ -42,9 +53,17 @@ export class Hud {
     }
     const hp = el('div', 'hud-hp');
     hp.append(this.hpFill, this.hpText);
-    this.bottom.append(this.heroName, hp);
+    const xp = el('div', 'hud-xp');
+    xp.append(this.xpFill);
+    const info = el('div', 'hud-hero-info');
+    info.append(this.heroName, hp, xp);
+    const portraitBox = el('div', 'hud-portrait-box');
+    portraitBox.append(this.portrait, this.levelBadge);
+    const head = el('div', 'hud-hero-head');
+    head.append(portraitBox, info);
+    this.bottom.append(head, this.abilityRow, this.skillHint);
     this.updateHelp();
-    root.append(this.top, this.bottom, this.banner, this.respawn, this.help, this.overlay);
+    root.append(this.top, this.bottom, this.banner, this.respawn, this.help, this.overlay, this.tooltip);
     this.showInGame(false);
   }
 
@@ -58,14 +77,16 @@ export class Hud {
     delete this.overlay.dataset.menu;
     this.showInGame(false);
     this.overlay.replaceChildren();
-    const box = el('div', 'hud-box');
+    const box = el('div', 'hud-box hud-start');
     box.append(el('h1', '', 'Zombie-Apokalypse'), el('h2', '', 'auf der Winterburg'), el('p', '', 'Wähle deinen Helden:'));
     const row = el('div', 'hud-heroes');
     for (const h of this.data.heroes) {
       const btn = el('button', 'hud-hero-btn');
-      const swatch = el('span', 'hud-swatch');
-      swatch.style.background = h.color;
-      btn.append(swatch, el('strong', '', h.name), el('small', '', h.attack.type === 'melee' ? 'Nahkampf' : 'Fernkampf'));
+      btn.dataset.hero = h.id;
+      const img = el('img', 'hud-hero-portrait');
+      img.src = `portraits/${h.id}.jpg`;
+      img.alt = h.name;
+      btn.append(img, el('strong', '', h.name), el('small', 'hud-role', h.role), el('span', 'hud-hero-desc', h.description));
       btn.addEventListener('click', () => onPick(h.id));
       row.append(btn);
     }
@@ -95,7 +116,7 @@ export class Hud {
   /** Kurzbeschreibung der Steuerung mit der aktuellen Belegung. */
   private controlsText(): string {
     const k = (a: Parameters<Keybindings['get']>[0]) => `<b>${keyName(this.bindings.get(a))}</b>`;
-    return `${k('up')}${k('left')}${k('down')}${k('right')} laufen · <b>Maus</b> zielen · ${k('attack')} angreifen · <b>Esc</b> Tastenbelegung`;
+    return `${k('up')}${k('left')}${k('down')}${k('right')} laufen · <b>Maus</b> zielen · ${k('attack')} angreifen · ${k('ability1')}–${k('ability4')} Fähigkeiten (halten = Vorschau) · <b>Shift</b>+Taste steigern · <b>Esc</b> Menü`;
   }
 
   private updateHelp(): void {
@@ -139,7 +160,7 @@ export class Hud {
       resume.addEventListener('click', onClose);
       const buttons = el('div', 'hud-buttons');
       buttons.append(reset, resume);
-      box.append(table, el('p', 'hud-small', 'Fähigkeiten folgen mit Meilenstein 3, Items mit Meilenstein 4. Esc: weiter spielen.'), buttons);
+      box.append(table, el('p', 'hud-small', 'Fähigkeiten 1–4: halten zeigt die Vorschau, loslassen löst aus. Shift + Taste setzt einen Skillpunkt. Items (R/T) folgen mit Meilenstein 4. Esc: weiter spielen.'), buttons);
       this.overlay.append(box);
     };
     render();
@@ -154,8 +175,54 @@ export class Hud {
 
   startGame(heroDefId: string): void {
     this.overlay.style.display = 'none';
-    this.heroName.textContent = this.data.heroes.find((h) => h.id === heroDefId)?.name ?? '';
+    const def = this.data.heroes.find((h) => h.id === heroDefId)!;
+    this.heroDef = def;
+    this.heroName.textContent = def.name;
+    this.portrait.src = `portraits/${def.id}.jpg`;
+    this.buildAbilities(def);
     this.showInGame(true);
+  }
+
+  /** Fähigkeitenleiste: Passiv plus vier Felder mit Taste, Abklingzeit, Rang und „+“. */
+  private buildAbilities(def: HeroDef): void {
+    this.abilityRow.replaceChildren();
+    const passive = el('div', 'hud-ability passive');
+    passive.append(el('span', 'hud-ability-name', def.passive.name), el('span', 'hud-ability-key', 'Passiv'));
+    this.tip(passive, () => `<b>${def.passive.name}</b> (Passiv)<br>${def.passive.description}`);
+    this.abilityRow.append(passive);
+    this.slots = def.abilities.map((ab, i) => {
+      const box = el('div', 'hud-ability');
+      const key = el('span', 'hud-ability-key');
+      const cd = el('span', 'hud-ability-cd');
+      const pips = el('span', 'hud-ability-pips');
+      const plus = el('button', 'hud-ability-plus', '+');
+      plus.addEventListener('click', () => this.onLevelUp(i));
+      box.append(el('span', 'hud-ability-name', ab.name), key, pips, cd, plus);
+      this.tip(box, () => this.abilityTip(i));
+      this.abilityRow.append(box);
+      return { box, key, cd, pips, plus };
+    });
+  }
+
+  private currentHero: Hero | null = null;
+
+  private abilityTip(slot: number): string {
+    const ab = this.heroDef!.abilities[slot];
+    const rank = this.currentHero?.ranks[slot] ?? 0;
+    const cd = rankValue(ab.cooldown, Math.max(1, rank));
+    const head = slot === 3 ? 'Ultimate' : `Fähigkeit ${slot + 1}`;
+    return `<b>${ab.name}</b> · ${head} · Rang ${rank}/${slot === 3 ? 3 : 5}<br>${ab.description}<br><small>Abklingzeit ${cd} s${ab.range ? ` · Reichweite ${ab.range} m` : ''}</small>`;
+  }
+
+  private tip(target: HTMLElement, html: () => string): void {
+    target.addEventListener('mouseenter', () => {
+      this.tooltip.innerHTML = html();
+      this.tooltip.style.display = 'block';
+      const r = target.getBoundingClientRect();
+      this.tooltip.style.left = `${Math.max(8, Math.min(window.innerWidth - 300, r.left + r.width / 2 - 140))}px`;
+      this.tooltip.style.bottom = `${window.innerHeight - r.top + 8}px`;
+    });
+    target.addEventListener('mouseleave', () => (this.tooltip.style.display = 'none'));
   }
 
   message(text: string): void {
@@ -164,7 +231,29 @@ export class Hud {
     this.bannerTimer = 2.2;
   }
 
-  update(state: GameState, heroId: number, dt: number): void {
+  /** Level, XP und Fähigkeitenleiste des eigenen Helden. */
+  private updateHero(h: Hero, canRankUp: (slot: number) => boolean): void {
+    this.currentHero = h;
+    const prog = this.data.progression;
+    this.levelBadge.textContent = String(h.level);
+    this.xpFill.style.width = h.level >= prog.maxLevel ? '100%' : `${(100 * h.xp) / prog.xpToNext[h.level - 1]}%`;
+    const actions: Action[] = ['ability1', 'ability2', 'ability3', 'ability4'];
+    this.slots.forEach((s, i) => {
+      s.key.textContent = keyName(this.bindings.get(actions[i]));
+      const rank = h.ranks[i];
+      const max = i === 3 ? prog.ultMaxRank : prog.basicMaxRank;
+      s.pips.textContent = '●'.repeat(rank) + '○'.repeat(max - rank);
+      const cd = h.cooldowns[i];
+      s.cd.textContent = cd > 0 ? (cd >= 10 ? String(Math.ceil(cd)) : cd.toFixed(1)) : '';
+      s.box.classList.toggle('locked', rank === 0);
+      s.box.classList.toggle('cooling', cd > 0);
+      s.plus.style.visibility = canRankUp(i) ? 'visible' : 'hidden';
+    });
+    this.skillHint.textContent =
+      h.skillPoints > 0 ? `${h.skillPoints} Skillpunkt${h.skillPoints > 1 ? 'e' : ''} frei – Shift + Taste oder „+“` : '';
+  }
+
+  update(state: GameState, heroId: number, dt: number, canRankUp: (slot: number) => boolean = () => false): void {
     const w = state.wave;
     this.waveLabel.textContent = `Welle ${w.number}`;
     this.waveInfo.textContent =
@@ -174,6 +263,7 @@ export class Hud {
     this.kills.textContent = `Kills: ${state.kills}`;
 
     const h = state.heroes.find((x) => x.id === heroId);
+    if (h) this.updateHero(h, canRankUp);
     if (h) {
       this.hpFill.style.width = `${(100 * h.hp) / h.maxHp}%`;
       this.hpText.textContent = `${Math.ceil(h.hp)} / ${h.maxHp}`;

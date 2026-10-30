@@ -23,7 +23,8 @@ Dann http://localhost:5173 öffnen. Weitere Befehle: `npm test` (Simulationstest
 | W A S D | laufen |
 | Maus | Blickrichtung und Zielen |
 | Linksklick | Angriff Richtung Mauszeiger (halten = Dauerangriff) |
-| 1 2 3 4 | Fähigkeiten (ab M3) |
+| 1 2 3 4 | Fähigkeiten (4 = Ultimate). Halten zeigt die Vorschau, Loslassen löst aus |
+| Shift + 1–4 | Skillpunkt setzen (oder „+“ in der Fähigkeitenleiste) |
 | R T | Items, z. B. Heiltrank (ab M4) |
 | Esc | Pause und Tastenbelegung (alle Tasten frei belegbar) |
 
@@ -33,7 +34,20 @@ Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bog
 
 Die Winterburg nach der Skizze in `assets/reference/karte-skizze.jpg`: U-förmiges Haus mit dem **Herz** im Innenhof (nur über einen schmalen Durchgang erreichbar), **Bienenstock** als zweites Ziel, Zombies aus dem **Bunker**, durch die **Heckenlücke Süd** und den **Hang Ost** hinauf. Fällt das Herz, ist das Spiel verloren.
 
-Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben.
+Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben, `?level=6` startet auf Level 6.
+
+## Helden
+
+| Held | Rolle | Fähigkeiten (1–4) |
+|---|---|---|
+| Chupa | Nahkampf-Jäger | Sprungbiss, Fährte, Heulen, Hetzjagd |
+| Gärtnerin | Fernkampf, ausdauernd | Schleuderschuss, Saat, Kräutertee, Mein Garten! |
+| Pirat | Kontrolle | Qualmstoß, Rauchwolke, Nebelschritt, Dicke Luft |
+| Libero | Fernkampf, Support | Aufschlag, Block, Zuspiel, Schmetterball |
+| Rotschopf | Nahkampf, Berserker | Wuchtschlag, Wutanfall, Ungezielter Sprung, Amok |
+| Schläferin | Kontrolle | Berührung, Gähnen, Powernap, Gute Nacht |
+
+Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.
 
 ## Aufbau
 
@@ -46,7 +60,7 @@ Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben.
 
 1. M1: Offline-Prototyp (Arena, ein Held, Zombiewellen, Nah- und Fernkampf) ✅
 2. M2: Karte Winterburg mit Herz, Bienenstock und drei Zugängen ✅
-3. M3: Level, XP, Skillpunkte, 5 Helden mit Q/W/E/R
+3. M3: Level, XP, Skillpunkte, 6 Helden mit Fähigkeiten ✅
 4. M4: Gold, Shop, Waffen und Items, Elite-Zombies
 5. M5: Bots (Singleplayer mit 3 Bots)
 6. M6: Server und Mehrspieler

@@ -15,6 +15,11 @@ export class Input {
   capture: ((code: string | null) => void) | null = null;
   /** Wird bei Esc aufgerufen. */
   onMenu: () => void = () => {};
+  /** Fähigkeit, deren Taste gerade gehalten wird (Vorschau), sonst null. */
+  previewSlot: number | null = null;
+  /** Fähigkeit auslösen (Taste losgelassen) bzw. steigern (Shift + Taste). */
+  onCast: (slot: number) => void = () => {};
+  onLevelUp: (slot: number) => void = () => {};
 
   constructor(
     private readonly renderer: GameRenderer,
@@ -35,6 +40,7 @@ export class Input {
     window.addEventListener('keydown', (e) => {
       if (e.code === MENU_KEY) {
         if (this.capture) this.finishCapture(null);
+        else if (this.previewSlot !== null) this.previewSlot = null;
         else this.onMenu();
         return;
       }
@@ -44,11 +50,28 @@ export class Input {
         return;
       }
       if (e.code === 'Tab') e.preventDefault();
+      const slot = this.abilitySlot(e.code);
+      if (slot !== null && !e.repeat) {
+        e.preventDefault();
+        // Shift + Taste: Skillpunkt setzen (Strg + Zahl wechselt im Browser den Tab).
+        if (e.shiftKey) this.onLevelUp(slot);
+        else this.previewSlot = slot;
+      }
       this.pressed.add(e.code);
     });
-    window.addEventListener('keyup', (e) => this.pressed.delete(e.code));
+    window.addEventListener('keyup', (e) => {
+      this.pressed.delete(e.code);
+      const slot = this.abilitySlot(e.code);
+      if (slot !== null && slot === this.previewSlot) {
+        this.previewSlot = null;
+        this.onCast(slot);
+      }
+    });
     // Fenster verlassen: alles loslassen, sonst läuft der Held weiter.
-    window.addEventListener('blur', () => this.pressed.clear());
+    window.addEventListener('blur', () => {
+      this.pressed.clear();
+      this.previewSlot = null;
+    });
   }
 
   /** code null: abgebrochen (Esc). */
@@ -58,12 +81,25 @@ export class Input {
     done(code);
   }
 
+  /** Welche Fähigkeit (0–3) liegt auf dieser Taste? */
+  private abilitySlot(code: string): number | null {
+    const actions: Action[] = ['ability1', 'ability2', 'ability3', 'ability4'];
+    const i = actions.findIndex((a) => this.bindings.get(a) === code);
+    return i >= 0 ? i : null;
+  }
+
+  /** Aktueller Zielpunkt der Maus am Boden. */
+  get aimPoint(): Vec2 {
+    return { ...this.aim };
+  }
+
   isDown(action: Action): boolean {
     return this.pressed.has(this.bindings.get(action));
   }
 
   releaseAll(): void {
     this.pressed.clear();
+    this.previewSlot = null;
   }
 
   /** Aktueller Eingabezustand. W ist Norden (−y), passend zur festen Kamera. */
