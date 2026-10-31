@@ -1,6 +1,6 @@
 import { updateProjectiles } from './combat';
 import type { SimContext } from './context';
-import { Grid, resolveObstacles } from './grid';
+import { arenaBounds, Grid, resolveObstacles } from './grid';
 import { botCommands, createBot } from './bots/brain';
 import { applyInputs, updateHero } from './hero';
 import { pushApart } from './movement';
@@ -216,8 +216,9 @@ export class Simulation implements SimContext {
     for (const z of zombies) {
       if (this.zombieDefs.get(z.defId)?.flying) {
         // Fliegende Gegner: nur am Kartenrand halten
-        z.pos.x = Math.max(z.radius, Math.min(arena.width - z.radius, z.pos.x));
-        z.pos.y = Math.max(z.radius, Math.min(arena.height - z.radius, z.pos.y));
+        const b = arenaBounds(arena);
+        z.pos.x = Math.max(b.x0 + z.radius, Math.min(b.x1 - z.radius, z.pos.x));
+        z.pos.y = Math.max(b.y0 + z.radius, Math.min(b.y1 - z.radius, z.pos.y));
       } else resolveObstacles(z.pos, z.radius, arena);
     }
     for (const h of heroes) if (h.alive) resolveObstacles(h.pos, h.radius, arena);

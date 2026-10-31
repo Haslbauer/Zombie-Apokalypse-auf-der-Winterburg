@@ -16,24 +16,35 @@ const NB_COST = NEIGHBORS.map((n) => n[2]);
  * Raster über der Arena: welche Zellen begehbar sind, Pfadsuche (A*),
  * Sichtlinie und Distanzfeld (Flow Field) für viele Zombies.
  */
+/** Ränder der begehbaren Fläche. */
+export function arenaBounds(arena: ArenaDef): { x0: number; y0: number; x1: number; y1: number } {
+  return { x0: arena.minX ?? 0, y0: arena.minY ?? 0, x1: arena.width, y1: arena.height };
+}
+
 export class Grid {
   readonly cols: number;
   readonly rows: number;
   readonly cell: number;
+  /** Linke obere Ecke des Rasters (Karten mit negativen Koordinaten). */
+  readonly x0: number;
+  readonly y0: number;
   readonly blocked: Uint8Array;
   private readonly fieldHeap: MinHeap;
 
   constructor(readonly arena: ArenaDef) {
     this.cell = arena.cellSize;
-    this.cols = Math.ceil(arena.width / this.cell);
-    this.rows = Math.ceil(arena.height / this.cell);
+    const b = arenaBounds(arena);
+    this.x0 = b.x0;
+    this.y0 = b.y0;
+    this.cols = Math.ceil((b.x1 - b.x0) / this.cell);
+    this.rows = Math.ceil((b.y1 - b.y0) / this.cell);
     this.blocked = new Uint8Array(this.cols * this.rows);
     this.fieldHeap = new MinHeap(this.cols * this.rows * 4);
     for (let r = 0; r < this.rows; r++) {
       for (let c = 0; c < this.cols; c++) {
         const p = this.center(c, r);
         const nearEdge =
-          p.x < CLEARANCE || p.y < CLEARANCE || p.x > arena.width - CLEARANCE || p.y > arena.height - CLEARANCE;
+          p.x < b.x0 + CLEARANCE || p.y < b.y0 + CLEARANCE || p.x > b.x1 - CLEARANCE || p.y > b.y1 - CLEARANCE;
         if (nearEdge || arena.obstacles.some((o) => distanceToObstacle(p, o) < CLEARANCE)) {
           this.blocked[r * this.cols + c] = 1;
         }
@@ -42,12 +53,12 @@ export class Grid {
   }
 
   center(c: number, r: number): Vec2 {
-    return { x: (c + 0.5) * this.cell, y: (r + 0.5) * this.cell };
+    return { x: this.x0 + (c + 0.5) * this.cell, y: this.y0 + (r + 0.5) * this.cell };
   }
 
   cellOf(p: Vec2): number {
-    const c = clamp(Math.floor(p.x / this.cell), 0, this.cols - 1);
-    const r = clamp(Math.floor(p.y / this.cell), 0, this.rows - 1);
+    const c = clamp(Math.floor((p.x - this.x0) / this.cell), 0, this.cols - 1);
+    const r = clamp(Math.floor((p.y - this.y0) / this.cell), 0, this.rows - 1);
     return r * this.cols + c;
   }
 
@@ -182,10 +193,10 @@ export class Grid {
     for (const t of targets) {
       let seeded = false;
       if (seedRadius > 0) {
-        const c0 = Math.max(0, Math.floor((t.x - seedRadius) / this.cell));
-        const c1 = Math.min(cols - 1, Math.floor((t.x + seedRadius) / this.cell));
-        const r0 = Math.max(0, Math.floor((t.y - seedRadius) / this.cell));
-        const r1 = Math.min(rows - 1, Math.floor((t.y + seedRadius) / this.cell));
+        const c0 = Math.max(0, Math.floor((t.x - seedRadius - this.x0) / this.cell));
+        const c1 = Math.min(cols - 1, Math.floor((t.x + seedRadius - this.x0) / this.cell));
+        const r0 = Math.max(0, Math.floor((t.y - seedRadius - this.y0) / this.cell));
+        const r1 = Math.min(rows - 1, Math.floor((t.y + seedRadius - this.y0) / this.cell));
         for (let r = r0; r <= r1; r++) {
           for (let c = c0; c <= c1; c++) {
             const idx = r * cols + c;
@@ -235,10 +246,10 @@ export class Grid {
     open.clear();
     for (const s of shapes) {
       const ext = s.kind === 'circle' ? s.r : Math.max(s.w, s.h) / 2;
-      const c0 = Math.max(0, Math.floor((s.x - ext - seed) / this.cell));
-      const c1 = Math.min(cols - 1, Math.floor((s.x + ext + seed) / this.cell));
-      const r0 = Math.max(0, Math.floor((s.y - ext - seed) / this.cell));
-      const r1 = Math.min(rows - 1, Math.floor((s.y + ext + seed) / this.cell));
+      const c0 = Math.max(0, Math.floor((s.x - ext - seed - this.x0) / this.cell));
+      const c1 = Math.min(cols - 1, Math.floor((s.x + ext + seed - this.x0) / this.cell));
+      const r0 = Math.max(0, Math.floor((s.y - ext - seed - this.y0) / this.cell));
+      const r1 = Math.min(rows - 1, Math.floor((s.y + ext + seed - this.y0) / this.cell));
       for (let r = r0; r <= r1; r++) {
         for (let c = c0; c <= c1; c++) {
           const idx = r * cols + c;
@@ -305,7 +316,8 @@ export function distanceToObstacle(p: Vec2, o: Obstacle): number {
 
 /** Hält ein Hindernis an diesem Punkt Schüsse auf? Niedrige Hindernisse (blocksShots: false) nicht. */
 export function shotBlocked(p: Vec2, arena: ArenaDef): boolean {
-  if (p.x < 0 || p.y < 0 || p.x > arena.width || p.y > arena.height) return true;
+  const b = arenaBounds(arena);
+  if (p.x < b.x0 || p.y < b.y0 || p.x > b.x1 || p.y > b.y1) return true;
   return arena.obstacles.some((o) => o.blocksShots !== false && distanceToObstacle(p, o) < 0);
 }
 
@@ -353,8 +365,9 @@ export function resolveObstacles(pos: Vec2, radius: number, arena: ArenaDef): vo
       }
     }
   }
-  pos.x = clamp(pos.x, radius, arena.width - radius);
-  pos.y = clamp(pos.y, radius, arena.height - radius);
+  const b = arenaBounds(arena);
+  pos.x = clamp(pos.x, b.x0 + radius, b.x1 - radius);
+  pos.y = clamp(pos.y, b.y0 + radius, b.y1 - radius);
 }
 
 /** Binärer Min-Heap über Zellindizes (wächst bei Bedarf). */

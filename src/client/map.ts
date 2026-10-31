@@ -1,9 +1,11 @@
 import * as THREE from 'three';
+import { arenaBounds } from '../sim/grid';
 import type { ArenaDef, Obstacle } from '../sim/types';
 
 const COLORS = {
   grass: 0x74b350,
-  outside: 0x4f7f3a,
+  outside: 0x5f9443,
+  forest: 0x3c6630,
   blocked: 0x5a8c43,
   wall: 0xe3d3b0,
   roof: 0x9c4a36,
@@ -49,15 +51,14 @@ export function buildMap(scene: THREE.Scene, arena: ArenaDef): void {
     return add(mesh);
   };
 
-  const { width, height } = arena;
-  flat(width * 4, height * 4, width / 2, height / 2, COLORS.outside, -0.02);
-  flat(width, height, width / 2, height / 2, COLORS.grass);
-
-  // Niedriger Zaun am Kartenrand.
-  box(width, 0.5, 0.2, width / 2, -0.1, COLORS.wood);
-  box(width, 0.5, 0.2, width / 2, height + 0.1, COLORS.wood);
-  box(0.2, 0.5, height, -0.1, height / 2, COLORS.wood);
-  box(0.2, 0.5, height, width + 0.1, height / 2, COLORS.wood);
+  // Gelände außerhalb des Gartens dunkler, der Garten heller; ringsum Wald als Kulisse.
+  const { x0, y0, x1, y1 } = arenaBounds(arena);
+  const g = arena.garden ?? { x: (x0 + x1) / 2, y: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 };
+  flat((x1 - x0) * 4, (y1 - y0) * 4, (x0 + x1) / 2, (y0 + y1) / 2, COLORS.forest, -0.03);
+  flat(x1 - x0, y1 - y0, (x0 + x1) / 2, (y0 + y1) / 2, COLORS.outside, -0.02);
+  flat(g.w, g.h, g.x, g.y, COLORS.grass, -0.01);
+  for (const p of arena.paths ?? []) flat(p.w, p.h, p.x, p.y, COLORS.dirt, 0.005);
+  forestBorder(scene, x0, y0, x1, y1, m);
 
   // Hang als Kiesweg mit Querstreifen.
   for (const z of arena.slowZones) {
@@ -131,11 +132,13 @@ function buildObstacle(o: Obstacle, b: Builders, arena: ArenaDef): void {
     case 'bunker': {
       b.box(w, 2.2, h, x, y, COLORS.concrete);
       b.box(w + 0.2, 0.25, h + 0.2, x, y, COLORS.concreteTop, 2.2);
-      // Tür an der Seite, die dem Bunker-Spawn am nächsten liegt.
+      // Tür an der Seite, auf der der Bunker-Spawn liegt.
       const spawn = arena.spawnPoints.find((s) => s.id === 'bunker');
       if (spawn) {
-        const east = spawn.x > x;
-        b.box(0.1, 1.8, 1.8, east ? x + w / 2 + 0.05 : x - w / 2 - 0.05, spawn.y, COLORS.doorway);
+        const dx = (spawn.x - x) / (w / 2);
+        const dy = (spawn.y - y) / (h / 2);
+        if (Math.abs(dx) > Math.abs(dy)) b.box(0.1, 1.8, 1.8, x + Math.sign(dx) * (w / 2 + 0.05), spawn.y, COLORS.doorway);
+        else b.box(1.8, 1.8, 0.1, spawn.x, y + Math.sign(dy) * (h / 2 + 0.05), COLORS.doorway);
       }
       break;
     }
@@ -145,5 +148,34 @@ function buildObstacle(o: Obstacle, b: Builders, arena: ArenaDef): void {
     case 'tree':
     case 'objective':
       break;
+  }
+}
+
+/** Dichter Wald jenseits des Kartenrands (nur Kulisse, feste Anordnung). */
+function forestBorder(scene: THREE.Scene, x0: number, y0: number, x1: number, y1: number, m: (c: number) => THREE.MeshLambertMaterial): void {
+  const trunkGeo = new THREE.CylinderGeometry(0.35, 0.45, 1.6, 6);
+  const crownGeo = new THREE.IcosahedronGeometry(2, 0);
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const tree = (x: number, y: number) => {
+    const s = 0.8 + rnd() * 0.6;
+    const trunk = new THREE.Mesh(trunkGeo, m(COLORS.trunk));
+    trunk.position.set(x, 0.8, y);
+    const crown = new THREE.Mesh(crownGeo, m(COLORS.crown));
+    crown.scale.setScalar(s);
+    crown.position.set(x, 1.6 + 2 * s, y);
+    crown.castShadow = true;
+    scene.add(trunk, crown);
+  };
+  for (let row = 0; row < 3; row++) {
+    const d = 2.5 + row * 4;
+    for (let x = x0 - d; x <= x1 + d; x += 4.5) {
+      tree(x + rnd() * 2, y0 - d - rnd() * 1.5);
+      tree(x + rnd() * 2, y1 + d + rnd() * 1.5);
+    }
+    for (let y = y0; y <= y1; y += 4.5) {
+      tree(x0 - d - rnd() * 1.5, y + rnd() * 2);
+      tree(x1 + d + rnd() * 1.5, y + rnd() * 2);
+    }
   }
 }

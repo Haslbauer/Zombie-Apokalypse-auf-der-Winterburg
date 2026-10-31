@@ -111,7 +111,7 @@ function startGame(defId: string | null, bots: string[], diff: BotDifficulty): v
   renderer.cam.lookAt(hero.pos.x, hero.pos.y);
   if (overview || !defId) {
     renderer.scene.fog = null;
-    renderer.cam.overview(gameData.arena.width / 2, gameData.arena.height / 2 + 6, 95);
+    renderer.cam.overview(gameData.arena.width / 2 + (gameData.arena.minX ?? 0) / 2, gameData.arena.height / 2 + (gameData.arena.minY ?? 0) / 2 + 6, 110);
   }
   hud.message('Mach dich bereit!');
 }

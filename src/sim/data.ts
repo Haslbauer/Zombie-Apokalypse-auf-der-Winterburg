@@ -95,14 +95,24 @@ export function parseGameData(raw: {
   const a: any = raw.arena;
   for (const k of ['width', 'height']) num(a, k, 'arena', 1);
   num(a, 'cellSize', 'arena', 0.1);
+  // Koordinaten dürfen bis minX/minY ins Gelände außerhalb des Gartens reichen
+  for (const k of ['minX', 'minY']) if (a?.[k] !== undefined && typeof a[k] !== 'number') errors.push(`arena.${k}: Zahl erwartet`);
+  const x0 = Math.min(0, a?.minX ?? 0);
+  const y0 = Math.min(0, a?.minY ?? 0);
+  const pos = (o: any, path: string): void => {
+    num(o, 'x', path, x0);
+    num(o, 'y', path, y0);
+  };
   list(a?.spawnPoints, 'arena.spawnPoints').forEach((s, i) => {
     const p = `arena.spawnPoints[${i}]`;
     str(s, 'id', p);
-    for (const k of ['x', 'y', 'weight']) num(s, k, p);
+    pos(s, p);
+    num(s, 'weight', p);
   });
   if (!Array.isArray(a?.slowZones)) errors.push('arena.slowZones: Liste erwartet');
   (Array.isArray(a?.slowZones) ? a.slowZones : []).forEach((z: any, i: number) => {
-    for (const k of ['x', 'y', 'w', 'h', 'factor']) num(z, k, `arena.slowZones[${i}]`);
+    pos(z, `arena.slowZones[${i}]`);
+    for (const k of ['w', 'h', 'factor']) num(z, k, `arena.slowZones[${i}]`);
   });
   num(a?.respawn, 'base', 'arena.respawn');
   num(a?.respawn, 'perWave', 'arena.respawn');
@@ -113,7 +123,8 @@ export function parseGameData(raw: {
     str(o, 'id', p);
     str(o, 'name', p);
     str(o, 'kind', p);
-    for (const k of ['x', 'y', 'radius', 'regen', 'pauseRegen']) num(o, k, p);
+    pos(o, p);
+    for (const k of ['radius', 'regen', 'pauseRegen']) num(o, k, p);
     num(o, 'hp', p, 1);
     if (typeof o?.loseOnDestroy !== 'boolean') errors.push(`${p}.loseOnDestroy: true oder false erwartet`);
     if (o?.bees !== undefined) {
@@ -134,12 +145,10 @@ export function parseGameData(raw: {
     for (const k of ['fromWave', 'packsPerWave', 'minSize', 'maxSize']) num(p, k, `waves.packs[${i}]`);
     if (p?.sizePerWave !== undefined) num(p, 'sizePerWave', `waves.packs[${i}]`);
   }
-  num(a?.heroStart, 'x', 'arena.heroStart');
-  num(a?.heroStart, 'y', 'arena.heroStart');
+  pos(a?.heroStart, 'arena.heroStart');
   (Array.isArray(a?.obstacles) ? a.obstacles : []).forEach((o: any, i: number) => {
     const p = `arena.obstacles[${i}]`;
-    num(o, 'x', p);
-    num(o, 'y', p);
+    pos(o, p);
     if (o?.kind === 'circle') num(o, 'r', p);
     else if (o?.kind === 'rect') {
       num(o, 'w', p);

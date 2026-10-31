@@ -1,7 +1,41 @@
 {
-  "//": "Winterburg nach der Skizze in assets/reference/karte-skizze.jpg. 1 Einheit = 1 m, x nach Osten, y nach Süden. Rechtecke: Mittelpunkt x/y, Breite w, Höhe h.",
-  "width": 66,
-  "height": 75,
+  "//": "Winterburg nach der Skizze in assets/reference/karte-skizze.jpg. 1 Einheit = 1 m, x nach Osten, y nach Süden. Rechtecke: Mittelpunkt x/y, Breite w, Höhe h. Der Garten liegt bei 0–66 × 0–75; außen herum 10 m Gelände (minX/minY negativ), dort liegen die Spawnpunkte. Zombies kommen durch die Tore im Westen, Süden und Osten, nur der Bunker liegt im Garten (Tür nach Norden).",
+  "minX": -10,
+  "minY": -10,
+  "width": 76,
+  "height": 85,
+  "garden": {
+    "x": 33,
+    "y": 37.5,
+    "w": 66,
+    "h": 75
+  },
+  "paths": [
+    {
+      "x": -5,
+      "y": 9,
+      "w": 10,
+      "h": 4
+    },
+    {
+      "x": 37.25,
+      "y": 80,
+      "w": 3.5,
+      "h": 10
+    },
+    {
+      "x": 71,
+      "y": 33.25,
+      "w": 10,
+      "h": 4.5
+    },
+    {
+      "x": 15.7,
+      "y": 46.5,
+      "w": 2.5,
+      "h": 3
+    }
+  ],
   "cellSize": 0.5,
   "heroStart": {
     "x": 33.5,
@@ -143,25 +177,25 @@
   "spawnPoints": [
     {
       "id": "bunker",
-      "x": 22.8,
-      "y": 53.5,
+      "x": 15.7,
+      "y": 47.4,
       "weight": 2
     },
     {
       "id": "sued",
       "x": 37.25,
-      "y": 73.5,
+      "y": 82,
       "weight": 2
     },
     {
       "id": "ost",
-      "x": 65,
+      "x": 72,
       "y": 33.25,
       "weight": 1
     },
     {
       "id": "nordwest",
-      "x": 2.5,
+      "x": -6,
       "y": 9,
       "weight": 1
     }
@@ -308,6 +342,51 @@
       "look": "bunker"
     },
     {
+      "kind": "rect",
+      "x": 26,
+      "y": 0,
+      "w": 52,
+      "h": 0.5,
+      "look": "fence",
+      "blocksShots": false
+    },
+    {
+      "kind": "rect",
+      "x": 0,
+      "y": 3,
+      "w": 0.5,
+      "h": 6,
+      "look": "fence",
+      "blocksShots": false
+    },
+    {
+      "kind": "rect",
+      "x": 0,
+      "y": 43.5,
+      "w": 0.5,
+      "h": 63,
+      "look": "fence",
+      "blocksShots": false
+    },
+    {
+      "kind": "rect",
+      "x": 17.75,
+      "y": 75,
+      "w": 35.5,
+      "h": 0.5,
+      "look": "fence",
+      "blocksShots": false
+    },
+    {
+      "kind": "rect",
+      "x": 50.5,
+      "y": 75,
+      "w": 23,
+      "h": 0.5,
+      "look": "fence",
+      "blocksShots": false
+    },
+    {
       "kind": "circle",
       "x": 6,
       "y": 6,
@@ -388,6 +467,160 @@
       "kind": "circle",
       "x": 42,
       "y": 67.5,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": -7,
+      "y": -7,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": 4,
+      "y": -8,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": 16,
+      "y": -7.5,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": 30,
+      "y": -8,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": 44,
+      "y": -7.5,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": 58,
+      "y": -8,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": 72,
+      "y": -7,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": -8,
+      "y": 22,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": -7.5,
+      "y": 36,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": -8,
+      "y": 52,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": -7.5,
+      "y": 66,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": -7,
+      "y": 79,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": 8,
+      "y": 82,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": 22,
+      "y": 81.5,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": 52,
+      "y": 82,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": 64,
+      "y": 81.5,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": 73,
+      "y": 79,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": 73.5,
+      "y": 8,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": 74,
+      "y": 20,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": 74,
+      "y": 47,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": 73.5,
+      "y": 60,
+      "r": 1.4,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": 74,
+      "y": 72,
       "r": 1.4,
       "look": "tree"
     }

@@ -257,8 +257,15 @@ export interface ObjectiveDef {
 }
 
 export interface ArenaDef {
+  /** Begehbare Fläche: x von minX (Standard 0) bis width, y von minY bis height. */
+  minX?: number;
+  minY?: number;
   width: number;
   height: number;
+  /** Der Garten innerhalb der Karte (nur Darstellung); außen liegt das Gelände mit den Spawnpunkten. */
+  garden?: { x: number; y: number; w: number; h: number };
+  /** Wege im Gelände (nur Darstellung). */
+  paths?: { x: number; y: number; w: number; h: number }[];
   /** Kantenlänge einer Rasterzelle für die Pfadsuche. */
   cellSize: number;
   obstacles: Obstacle[];
