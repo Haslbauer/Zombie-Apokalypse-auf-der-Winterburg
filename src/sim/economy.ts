@@ -4,20 +4,23 @@ import { addBuff, hasBuff } from './status';
 import type { Hero, Zombie, ZombieDef } from './types';
 import { dist } from './vec';
 
-/** Kill-Gold: jeder lebende Held im Umkreis bekommt den vollen Betrag (Koop, kein Last-Hit). */
-export function awardGold(ctx: SimContext, z: Zombie): void {
+/**
+ * Kill-Gold nach Leistung (wie in LoL): Der letzte Treffer bekommt das volle
+ * Gold, Mitkämpfer einen Anteil, wer nur danebensteht nichts. Der Postbote
+ * (Team-Ziel) bringt allen Beteiligten das volle Paket-Gold.
+ */
+export function awardGold(ctx: SimContext, z: Zombie, killer?: Hero, assists: Hero[] = []): void {
   const def = ctx.zombieDefs.get(z.defId);
   if (def?.courier) {
-    // Sidequest: Das Paket bringt allen Helden Gold, egal wo sie stehen
     const gold = courierGold(ctx, def);
-    for (const h of ctx.state.heroes) giveGold(ctx, h, gold, h.alive ? z.pos : undefined);
+    for (const h of [killer, ...assists]) if (h) giveGold(ctx, h, gold, h.alive ? z.pos : undefined);
     ctx.state.events.push({ type: 'courier', zombieId: z.id, phase: 'caught', gold });
     return;
   }
   if (!def || def.gold <= 0) return;
-  for (const h of ctx.state.heroes) {
-    if (h.alive && dist(h.pos, z.pos) <= ctx.data.economy.goldShareRange) giveGold(ctx, h, def.gold, z.pos);
-  }
+  if (killer) giveGold(ctx, killer, def.gold, z.pos);
+  const share = Math.round(def.gold * ctx.data.economy.rewards.assistGold);
+  if (share > 0) for (const h of assists) giveGold(ctx, h, share, z.pos);
 }
 
 /** Gold, das jeder Held für den Postboten (Sidequest) bekommt. */
@@ -26,10 +29,10 @@ export function courierGold(ctx: SimContext, def: ZombieDef): number {
   return c.gold + c.goldPerWave * ctx.state.wave.number;
 }
 
-/** Bonus für eine überstandene Welle an alle Helden. */
+/** Bonus für eine überstandene Welle, nur an Helden, die in dieser Welle mitgekämpft haben. */
 export function awardWaveBonus(ctx: SimContext, wave: number): void {
   const eco = ctx.data.economy;
-  for (const h of ctx.state.heroes) giveGold(ctx, h, eco.waveBonusBase + eco.waveBonusPerWave * wave);
+  for (const h of ctx.state.heroes) if (h.activeWave === wave) giveGold(ctx, h, eco.waveBonusBase + eco.waveBonusPerWave * wave);
 }
 
 /**

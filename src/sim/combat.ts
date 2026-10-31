@@ -70,12 +70,13 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
     target.respawnAt = state.time + respawn.base + respawn.perWave * (state.wave.number - 1);
   } else {
     state.kills++;
-    awardXp(ctx, target);
-    awardGold(ctx, target);
-    // Kill-Zähler: wer den letzten Treffer gesetzt hat (ohne Quelle: wer zuletzt beteiligt war)
+    // Wer hat ihn erlegt (letzter Treffer; ohne Quelle: wer zuletzt beteiligt war), wer hat mitgekämpft?
     const killer = source ?? lastContributor(ctx, target);
+    const assists = assistsOf(ctx, target, killer);
+    awardXp(ctx, target, killer, assists);
+    awardGold(ctx, target, killer, assists);
     if (killer) killer.score.kills++;
-    if (target.contrib) awardBoss(ctx, target, killer);
+    if (isBoss(ctx, target) && target.contrib) awardBoss(ctx, target, killer);
   }
   return dealt;
 }
@@ -86,13 +87,22 @@ export function isBoss(ctx: SimContext, z: Zombie): boolean {
   return rank === 'elite' || rank === 'boss';
 }
 
-/** Bosse merken sich, wer ihnen wann Schaden gemacht hat. */
+/** Zombies merken sich, wer ihnen wann Schaden gemacht hat (Kill, Assist, Boss-Gold). */
 function noteContribution(ctx: SimContext, z: Zombie, h: Hero): void {
-  if (!isBoss(ctx, z)) return;
+  h.activeWave = ctx.state.wave.number;
   z.contrib ??= [];
   const entry = z.contrib.find((c) => c.id === h.id);
   if (entry) entry.t = ctx.state.time;
   else z.contrib.push({ id: h.id, t: ctx.state.time });
+}
+
+/** Mitkämpfer: wer in den letzten Sekunden Schaden gemacht hat, ohne den Killer. */
+function assistsOf(ctx: SimContext, z: Zombie, killer: Hero | undefined): Hero[] {
+  const window = Math.max(ctx.data.economy.rewards.assistWindow, isBoss(ctx, z) ? ctx.data.economy.boss.assistWindow : 0);
+  return (z.contrib ?? [])
+    .filter((c) => c.id !== killer?.id && ctx.state.time - c.t <= window)
+    .map((c) => ctx.state.heroes.find((h) => h.id === c.id))
+    .filter((h): h is Hero => !!h);
 }
 
 function lastContributor(ctx: SimContext, z: Zombie): Hero | undefined {

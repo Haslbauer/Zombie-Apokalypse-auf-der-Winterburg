@@ -120,9 +120,15 @@ Wie in LoL wählst du vor dem Spiel zwei Zauber, unabhängig vom Helden (auf dem
 
 Bots nehmen je nach Rolle Blitz plus Entzünden (Nahkampf), Heilen (Fernkampf), Erschöpfen (Kontrolle) bzw. Zerschmettern (Grimm) und setzen sie selbst ein. Werte in `data/spells.json`.
 
+## Sieg und Belohnung
+
+Wer **Welle 20** übersteht, gewinnt. Das Spiel ist auf vier aktive Spieler ausgelegt; fällt einer aus, wird es zu dritt sehr schwer.
+
+Gutes Spielen wird belohnt (wie in LoL): Der letzte Treffer bringt das volle Gold, Mithelfen ein Drittel, Danebenstehen nichts. Erfahrung: Killer voll, Mithelfer die Hälfte, Zuschauer in der Nähe ein Viertel. Den Wellenbonus bekommt nur, wer in der Welle mitgekämpft hat.
+
 ## Shop
 
-Gold gibt es für Kills und jede überstandene Welle. In der Pause im Innenhof öffnet **B** den Shop: Waffen (wirken als Werte-Items), Rüstung, Werte-Items und Verbrauchsgüter für R/T. Rechtsklick auf ein Item im Inventar verkauft es (70 %).
+Gold gibt es für Kills und jede überstandene Welle, in der man mitgekämpft hat. In der Pause im Innenhof öffnet **B** den Shop: Waffen (wirken als Werte-Items), Rüstung, Werte-Items und Verbrauchsgüter für R/T. Rechtsklick auf ein Item im Inventar verkauft es (70 %).
 
 ## Helden
 

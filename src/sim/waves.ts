@@ -117,6 +117,13 @@ export function updateWaves(ctx: SimContext): void {
   if (w.queue.length === 0 && state.zombies.every((z) => z.neutral)) {
     state.events.push({ type: 'waveCleared', number: w.number });
     awardWaveBonus(ctx, w.number);
+    // Letzte Welle überstanden: Sieg
+    if (cfg.victoryWave && w.number >= cfg.victoryWave) {
+      state.gameOver = true;
+      state.victory = true;
+      state.events.push({ type: 'gameOver', wave: w.number, reason: 'Die Winterburg ist gehalten!', victory: true });
+      return;
+    }
     harvest(ctx);
     w.number++;
     w.phase = 'pause';

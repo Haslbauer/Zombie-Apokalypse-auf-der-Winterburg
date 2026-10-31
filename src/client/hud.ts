@@ -402,18 +402,22 @@ export class Hud {
     this.overlay.style.display = '';
   }
 
-  showGameOver(state: GameState, reason: string, onRestart: () => void): void {
+  showGameOver(state: GameState, reason: string, onRestart: () => void, victory = false): void {
     delete this.overlay.dataset.menu;
     this.overlay.replaceChildren();
-    const box = el('div', 'hud-box');
+    const box = el('div', victory ? 'hud-box hud-victory' : 'hud-box');
     const btn = el('button', 'hud-restart', 'Nochmal');
     btn.addEventListener('click', onRestart);
+    // Bester Spieler (meiste Kills und Bosse) wie in LoL hervorheben
+    const best = [...state.heroes].sort((a, b) => (b.score?.bosses ?? 0) * 5 + (b.score?.kills ?? 0) - ((a.score?.bosses ?? 0) * 5 + (a.score?.kills ?? 0)))[0];
+    const bestDef = best ? this.data.heroes.find((d) => d.id === best.defId) : undefined;
     box.append(
-      el('h1', '', 'Game Over'),
+      el('h1', '', victory ? 'Sieg!' : 'Game Over'),
       el('h2', '', reason),
-      el('p', '', `Erreicht: Welle ${state.wave.number} · ${state.kills} Zombies erledigt · ${formatTime(state.time)}`),
-      btn,
+      el('p', '', `${victory ? 'Geschafft' : 'Erreicht'}: Welle ${state.wave.number} · ${state.kills} Zombies erledigt · ${formatTime(state.time)}`),
     );
+    if (best && bestDef) box.append(el('p', 'hud-small', `Bester Spieler: ${bestDef.name} (${best.score.kills} Kills, ${best.score.bosses} Bosse, ${best.score.gold} Gold)`));
+    box.append(btn);
     this.overlay.append(box);
     this.overlay.style.display = '';
   }

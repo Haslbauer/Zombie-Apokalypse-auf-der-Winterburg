@@ -1,3 +1,4 @@
+import { applyDamage } from '../../src/sim/combat';
 import { describe, expect, it } from 'vitest';
 import { Simulation } from '../../src/sim/game';
 import { buy } from '../../src/sim/economy';
@@ -12,7 +13,7 @@ function shopSim(heroId = 'rotschopf') {
 }
 
 describe('Gold und Shop', () => {
-  it('Startgold, Kill-Gold für alle Helden im Umkreis, Wellenbonus', () => {
+  it('Startgold, Kill-Gold nach Leistung (Killer voll, Mitkämpfer ein Drittel, Zuschauer nichts), Wellenbonus nur für Aktive', () => {
     const data = testData();
     const sim = new Simulation(data, { seed: 1, heroes: ['rotschopf', 'gaertnerin', 'pirat'] });
     const [a, b, far] = sim.state.heroes;
@@ -23,17 +24,27 @@ describe('Gold und Shop', () => {
     sim.step();
     const gold = data.zombies.find((d) => d.id === 'walker')!.gold;
     expect(a.gold).toBe(data.economy.startGold + gold);
-    expect(b.gold).toBe(data.economy.startGold + gold);
+    // b stand nur daneben: kein Gold
+    expect(b.gold).toBe(data.economy.startGold);
     expect(far.gold).toBe(data.economy.startGold);
 
-    // Welle 1 abschließen: Bonus für alle
+    // Mitkämpfer: b trifft einen Brute, a erledigt ihn
+    const brute = placeZombie(sim, 'brute', a.pos.x + 1.2, a.pos.y, 30);
+    applyDamage(sim, brute, 10, b);
+    applyDamage(sim, brute, 100, a);
+    const bruteGold = data.zombies.find((d) => d.id === 'brute')!.gold;
+    expect(b.gold).toBe(data.economy.startGold + Math.round(bruteGold * data.economy.rewards.assistGold));
+
+    // Welle 1 abschließen: Bonus nur für Helden, die in der Welle gekämpft haben (a und b, nicht far)
     sim.state.wave.phase = 'wave';
     sim.state.wave.queue = [];
     sim.state.zombies = [];
     a.input.attack = false;
+    const before = [a.gold, far.gold];
     sim.step();
     const bonus = data.economy.waveBonusBase + data.economy.waveBonusPerWave;
-    expect(far.gold).toBe(data.economy.startGold + bonus);
+    expect(a.gold).toBe(before[0] + bonus);
+    expect(far.gold).toBe(before[1]);
   });
 
   it('Kaufen geht nur in der Pause, im Innenhof und mit genug Gold', () => {

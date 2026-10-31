@@ -14,16 +14,22 @@ export function levelStats(def: HeroDef, level: number): { maxHp: number; regen:
 }
 
 /** XP für einen getöteten Zombie an alle lebenden Helden in Reichweite verteilen. */
-export function awardXp(ctx: SimContext, z: Zombie): void {
+/**
+ * Erfahrung nach Leistung: Killer voll, Mitkämpfer die Hälfte, Helden in der
+ * Nähe, die nicht mitgekämpft haben, ein Viertel (Werte in economy.rewards).
+ */
+export function awardXp(ctx: SimContext, z: Zombie, killer?: Hero, assists: Hero[] = []): void {
   const { state, data } = ctx;
   const prog = data.progression;
+  const rw = data.economy.rewards;
   const def = ctx.zombieDefs.get(z.defId);
   if (!def) return;
-  const near = state.heroes.filter((h) => h.alive && dist(h.pos, z.pos) <= prog.xpShareRange);
-  if (near.length === 0) return;
-  const share = prog.xpShare[Math.min(near.length, prog.xpShare.length) - 1];
-  const amount = def.xp * (1 + prog.xpWaveScale * (state.wave.number - 1)) * share;
-  for (const h of near) addXp(ctx, h, amount);
+  const base = def.xp * (1 + prog.xpWaveScale * (state.wave.number - 1));
+  for (const h of state.heroes) {
+    if (!h.alive) continue;
+    const share = h === killer ? rw.xpKiller : assists.includes(h) ? rw.xpAssist : dist(h.pos, z.pos) <= prog.xpShareRange ? rw.xpNearby : 0;
+    if (share > 0) addXp(ctx, h, base * share);
+  }
 }
 
 export function addXp(ctx: SimContext, h: Hero, amount: number): void {

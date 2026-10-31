@@ -4,7 +4,7 @@ import { addXp, canRankUp } from '../../src/sim/progression';
 import { arenaData, heroSim, makeSim, noWaves, placeZombie, run } from './helpers';
 
 describe('Level, XP und Skillpunkte', () => {
-  it('XP für einen Kill werden unter den Helden in Reichweite geteilt', () => {
+  it('XP nach Leistung: Killer voll, Zuschauer in der Nähe ein Viertel, weit weg nichts', () => {
     const data = arenaData(noWaves);
     const sim = new Simulation(data, { seed: 1, heroes: ['rotschopf', 'gaertnerin', 'pirat'] });
     const [a, b, far] = sim.state.heroes;
@@ -13,9 +13,9 @@ describe('Level, XP und Skillpunkte', () => {
     // Tötet den Zombie direkt über die Kampflogik.
     a.input = { move: { x: 0, y: 0 }, aim: z.pos, attack: true };
     sim.step();
-    const xp = data.zombies.find((d) => d.id === 'walker')!.xp * data.progression.xpShare[1];
-    expect(a.xp).toBeCloseTo(xp, 5);
-    expect(b.xp).toBeCloseTo(xp, 5);
+    const xp = data.zombies.find((d) => d.id === 'walker')!.xp;
+    expect(a.xp).toBeCloseTo(xp * data.economy.rewards.xpKiller, 5);
+    expect(b.xp).toBeCloseTo(xp * data.economy.rewards.xpNearby, 5);
     expect(far.xp).toBe(0);
   });
 

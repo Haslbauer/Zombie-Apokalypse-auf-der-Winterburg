@@ -202,6 +202,11 @@ Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `
 - Verhalten: Zombies greifen Helden an, die in Reichweite sind. Sonst laufen sie zum Haus. Pfadfindung um Hindernisse.
 - Durchbruch: Erreicht ein Zombie das Haus, bleibt er stehen und greift es an (Schaden pro Sekunde, Elite und Boss mehr). Wird er getötet, endet der Schaden.
 
+## 8a. Sieg (v1.9)
+
+- Wer **Welle 20 übersteht, gewinnt** (`victoryWave` in `data/waves.json`). Der Sieg-Bildschirm zeigt den besten Spieler (Kills, Bosse, Gold).
+- Die Wellen sind auf **vier aktive Spieler** ausgelegt: Fällt einer aus (AFK), ist es zu dritt kaum zu schaffen. Sein Held bekommt dann auch kein Gold und keine Erfahrung mehr.
+
 ## 8. Niederlage
 
 - Der **Lebensmittelvorrat** (früher „Herz“) im Innenhof hat einen gut sichtbaren Lebensbalken (5500). Fällt er auf 0, ist das Spiel verloren: „Der Lebensmittelvorrat ist geplündert“.
@@ -234,7 +239,8 @@ Freiwillige Ziele im Gelände außerhalb des Gartens. Sie bringen Gold und XP, k
 
 Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
 
-- **Gold:** Startgold 350. Kill-Gold je Zombie-Typ bekommt jeder Held im Umkreis von 15 m in voller Höhe (Koop, kein Last-Hit). Bonus pro überstandener Welle: 50 + 10 × Welle für alle.
+- **Gold nach Leistung (v1.9, wie in LoL):** Startgold 350. Der **letzte Treffer** bringt das volle Kill-Gold des Zombies, wer in den letzten 8 s Schaden gemacht hat (**Assist**), ein Drittel, wer nur danebensteht nichts. Der **Wellenbonus** (50 + 10 × Welle) geht nur an Helden, die in dieser Welle gekämpft haben. Der Postbote bringt allen Beteiligten das Paket-Gold.
+- **Erfahrung nach Leistung (v1.9):** Killer 100 %, Mitkämpfer 50 %, Helden in 15 m, die nicht mitgekämpft haben, 25 % (`economy.rewards`). Wer viele Zombies erlegt, levelt also deutlich schneller.
 - **Bosse wie in LoL (v1.7):** Elites, Postbote und die großen Neutralen (Riesenspinne, Kröte) merken sich, wer ihnen in den letzten 10 s Schaden gemacht hat. Der letzte Treffer bringt 100 + 15 × Welle Gold, jeder andere Beteiligte die Hälfte (Assist). Der erste Boss der Partie bringt +150 Gold („Erstes Blut“). Normales Kill-Gold und Postboten-Gold kommen dazu. Jeder Held zählt Kills, Bosse, Assists und verdientes Gold; **Tab halten** zeigt die Anzeigetafel, die Teamleiste einen Totenkopf mit der Zahl der Bosse.
 - **Shop:** nur in der Pause **und** nur im Innenhof (6 m um das Herz). Taste B oder Klick auf den Hinweis „B: Shop öffnen“. Das Spiel läuft beim Einkaufen weiter, die Pause tickt also. Beginnt die Welle oder verlässt man den Hof, schließt der Shop.
 - **Waffen sind Werte-Items** (wie in LoL): Der Standardangriff des Helden bleibt, die Waffe macht ihn stärker. Nahkampfwaffen wirken bei Nahkämpfern voll, Fernkampfwaffen bei Fernkämpfern, sonst halb.

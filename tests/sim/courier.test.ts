@@ -75,7 +75,7 @@ describe('Sidequest Zombie-Postbote', () => {
     expect(z.maxHp).toBeGreaterThan(5000);
   });
 
-  it('erwischt: alle Helden bekommen Gold, auch weit weg', () => {
+  it('erwischt: alle Beteiligten bekommen das Paket-Gold, wer nicht mitgekämpft hat nichts', () => {
     const { sim, z, def } = courierSim();
     const [a, b] = sim.state.heroes;
     b.pos = { x: 30, y: 60 };
@@ -86,7 +86,7 @@ describe('Sidequest Zombie-Postbote', () => {
     const boss = sim.state.events.find((e) => e.type === 'bossKill');
     expect(boss).toMatchObject({ killerId: a.id });
     expect(a.gold).toBe(before[0] + gold + (boss?.type === 'bossKill' ? boss.gold : 0));
-    expect(b.gold).toBe(before[1] + gold);
+    expect(b.gold).toBe(before[1]);
     expect(sim.state.events).toContainEqual(expect.objectContaining({ type: 'courier', phase: 'caught', gold }));
   });
 

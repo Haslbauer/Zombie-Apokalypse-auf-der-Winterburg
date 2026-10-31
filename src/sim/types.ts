@@ -182,6 +182,13 @@ export interface EconomyDef {
    * Der erste Boss der Partie bringt zusätzlich firstBlood.
    */
   boss: { gold: number; goldPerWave: number; assistShare: number; firstBlood: number; assistWindow: number };
+  /**
+   * Belohnung nach Leistung (wie in LoL): Der letzte Treffer bekommt das volle
+   * Kill-Gold, wer in den letzten assistWindow Sekunden Schaden gemacht hat den
+   * Anteil assistGold, Zuschauer nichts. Erfahrung: Killer xpKiller, Mitkämpfer
+   * xpAssist, Helden in der Nähe (xpShareRange) xpNearby.
+   */
+  rewards: { assistWindow: number; assistGold: number; xpKiller: number; xpAssist: number; xpNearby: number };
 }
 
 /** Punktestand eines Helden (Anzeigetafel). */
@@ -217,6 +224,8 @@ export interface WaveConfig {
   packs?: { type: string; fromWave: number; packsPerWave: number; minSize: number; maxSize: number; sizePerWave?: number }[];
   /** Elites: alle `every` Wellen, Anzahl ⌈Welle/countEvery⌉ (Standard: ⌊Welle/every⌋), Typen abwechselnd. */
   elites?: { every: number; countEvery?: number; types: string[] };
+  /** Diese Welle überstanden = Sieg (fehlt: endlos). */
+  victoryWave?: number;
   /** Sidequest: Typ mit courier-Werten, erscheint ab firstWave alle every Wellen, delay Sekunden nach Wellenbeginn. */
   courier?: { type: string; firstWave: number; every: number; delay: number };
 }
@@ -592,6 +601,8 @@ export interface Hero extends Unit {
   ball?: Ball;
   gold: number;
   score: HeroScore;
+  /** Welle, in der der Held zuletzt Schaden an Zombies gemacht hat (Wellenbonus nur für Aktive). */
+  activeWave?: number;
   /** Waffen und Items (Item-Ids), null = frei. */
   inventory: (string | null)[];
   /** Verbrauchsgüter auf R und T. */
@@ -813,7 +824,7 @@ export type GameEvent =
   | { type: 'status'; zombieId: number; status: 'sleep' | 'stun' | 'fear' | 'blind' | 'root' | 'mark' | 'wake' }
   | { type: 'land'; heroId: number; pos: Vec2; tag: string }
   | { type: 'effect'; kind: string; pos: Vec2; radius: number; facing?: number; arc?: number; heroId?: number }
-  | { type: 'gameOver'; wave: number; reason: string };
+  | { type: 'gameOver'; wave: number; reason: string; victory?: boolean };
 
 export interface GameState {
   tick: number;
@@ -831,6 +842,8 @@ export interface GameState {
   gameOver: boolean;
   /** Ereignisse des letzten Ticks (für Effekte im Client). */
   events: GameEvent[];
+  /** Gewonnen (letzte Welle überstanden)? */
+  victory?: boolean;
   /** Wurde schon ein Boss erlegt? (Erstes Blut gibt es nur einmal.) */
   firstBlood?: boolean;
   /** Neutrale Lager: wann ein geleertes Lager wiederkommt (null: besetzt). */

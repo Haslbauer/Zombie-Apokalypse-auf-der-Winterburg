@@ -1020,3 +1020,7 @@ html, body {
 .hud-spellchooser {
   max-width: min(520px, calc(100vw - 32px));
 }
+.hud-victory h1 {
+  color: #ffd166;
+  text-shadow: 0 0 18px rgba(255, 209, 102, 0.6);
+}

@@ -232,6 +232,9 @@ export function parseGameData(raw: {
   const boss = (eco as { boss?: Record<string, unknown> }).boss;
   if (!boss || typeof boss !== 'object') throw new Error('economy.boss fehlt');
   for (const k of ['gold', 'goldPerWave', 'assistShare', 'firstBlood', 'assistWindow']) num(boss, k, 'economy.boss');
+  const rw = (eco as { rewards?: Record<string, unknown> }).rewards;
+  if (!rw || typeof rw !== 'object') throw new Error('economy.rewards fehlt');
+  for (const k of ['assistWindow', 'assistGold', 'xpKiller', 'xpAssist', 'xpNearby']) num(rw, k, 'economy.rewards');
   num(eco, 'inventorySlots', 'economy', 1);
 
   const bots: any = raw.bots;

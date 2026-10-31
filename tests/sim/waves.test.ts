@@ -62,3 +62,18 @@ describe('Wellenaufbau', () => {
     expect(sim.state.wave.phase).toBe('wave');
   });
 });
+
+describe('Sieg', () => {
+  it('wer die letzte Welle übersteht, gewinnt', async () => {
+    const { Simulation } = await import('../../src/sim/game');
+    const { testData } = await import('./helpers');
+    const sim = new Simulation(testData(), { seed: 1, heroes: ['rotschopf'] });
+    const last = sim.data.waves.victoryWave!;
+    expect(last).toBe(20);
+    Object.assign(sim.state.wave, { number: last, phase: 'wave', queue: [] });
+    sim.state.zombies = sim.state.zombies.filter((z) => z.neutral);
+    sim.step();
+    expect(sim.state.gameOver).toBe(true);
+    expect(sim.state.victory).toBe(true);
+  });
+});

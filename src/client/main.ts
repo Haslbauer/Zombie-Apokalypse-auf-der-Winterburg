@@ -500,8 +500,8 @@ function handleEvents(state: GameState): void {
         spellEffect(e);
         break;
       case 'courier':
-        if (e.phase === 'arrive') hud.message(`Zombie-Postbote im Gelände! Besiegt ihn im Team: ${e.gold} Gold für alle`);
-        else if (e.phase === 'caught') hud.message(`Paket erbeutet: +${e.gold} Gold für alle!`);
+        if (e.phase === 'arrive') hud.message(`Zombie-Postbote im Gelände! Besiegt ihn im Team: ${e.gold} Gold für jeden, der mitkämpft`);
+        else if (e.phase === 'caught') hud.message(`Paket erbeutet: +${e.gold} Gold für alle Beteiligten!`);
         else hud.message('Der Postbote ist entkommen');
         break;
       case 'camp':
@@ -566,12 +566,17 @@ function handleEvents(state: GameState): void {
         hud.message(`Welle ${e.number} geschafft`);
         break;
       case 'gameOver':
-        hud.showGameOver(state, e.reason, () => {
-          if (session instanceof RemoteSession) {
-            session.restart();
-            begin(true);
-          } else startGame(spectate ? null : heroDefId, team, difficulty);
-        });
+        hud.showGameOver(
+          state,
+          e.reason,
+          () => {
+            if (session instanceof RemoteSession) {
+              session.restart();
+              begin(true);
+            } else startGame(spectate ? null : heroDefId, team, difficulty);
+          },
+          e.victory,
+        );
         break;
     }
   }

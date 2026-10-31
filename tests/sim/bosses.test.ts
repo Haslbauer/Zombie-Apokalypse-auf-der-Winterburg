@@ -31,11 +31,13 @@ describe('Boss-Kills wie in LoL', () => {
     applyDamage(sim, z, 100, a); // letzter Treffer
     const [e] = bossKills(sim);
     expect(e).toMatchObject({ killerId: a.id, assists: [b.id], firstBlood: true, gold: base + cfg.firstBlood });
-    // Schlächter weit weg: kein normales Kill-Gold, nur Boss-Gold
-    expect(a.gold - gold[0]).toBe(base + cfg.firstBlood);
-    expect(b.gold - gold[1]).toBe(Math.round(base * cfg.assistShare));
+    // Killer: Kill-Gold des Schlächters plus Boss-Gold; Mitkämpfer: Anteile von beidem; Zuschauer: nichts
+    const killGold = sim.zombieDefs.get('schlaechter')!.gold;
+    const rw = sim.data.economy.rewards;
+    expect(a.gold - gold[0]).toBe(killGold + base + cfg.firstBlood);
+    expect(b.gold - gold[1]).toBe(Math.round(killGold * rw.assistGold) + Math.round(base * cfg.assistShare));
     expect(c.gold).toBe(gold[2]);
-    expect(a.score).toMatchObject({ kills: 1, bosses: 1, assists: 0, gold: base + cfg.firstBlood });
+    expect(a.score).toMatchObject({ kills: 1, bosses: 1, assists: 0, gold: killGold + base + cfg.firstBlood });
     expect(b.score).toMatchObject({ kills: 0, bosses: 0, assists: 1 });
 
     // Zweiter Boss: kein Erstes Blut mehr
@@ -64,6 +66,6 @@ describe('Boss-Kills wie in LoL', () => {
     applyDamage(sim, z, 50, a);
     expect(bossKills(sim)).toEqual([]);
     expect(a.score).toMatchObject({ kills: 1, bosses: 0 });
-    expect(z.contrib).toBeUndefined();
+    expect(z.contrib?.map((c) => c.id)).toEqual([a.id]);
   });
 });

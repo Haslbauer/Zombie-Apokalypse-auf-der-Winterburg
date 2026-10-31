@@ -6,5 +6,6 @@
   "shopRange": 6,
   "sellFactor": 0.7,
   "inventorySlots": 6,
+  "rewards": { "assistWindow": 8, "assistGold": 0.34, "xpKiller": 1, "xpAssist": 0.5, "xpNearby": 0.25 },
   "boss": { "gold": 100, "goldPerWave": 15, "assistShare": 0.5, "firstBlood": 150, "assistWindow": 10 }
 }

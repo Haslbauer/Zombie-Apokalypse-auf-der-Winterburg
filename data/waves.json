@@ -1,4 +1,5 @@
 {
+  "victoryWave": 20,
   "baseCount": 16,
   "countPerWave": 7,
   "hpScalePerWave": 0.4,
