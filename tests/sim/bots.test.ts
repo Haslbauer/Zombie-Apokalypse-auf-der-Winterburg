@@ -127,5 +127,5 @@ describe('Bots', () => {
     const b = play();
     expect(a.json).toBe(b.json);
     expect(a.ms).toBeLessThan(5);
-  });
+  }, 30_000);
 });

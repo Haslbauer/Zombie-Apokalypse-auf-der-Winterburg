@@ -357,7 +357,12 @@ export type Command =
   /** Verbrauchsgut auf R (0) oder T (1) benutzen. */
   | { heroId: number; type: 'use'; slot: number }
   /** Pause beenden und die nächste Welle sofort starten. */
-  | { heroId: number; type: 'startWave' };
+  | { heroId: number; type: 'startWave' }
+  | { heroId: number; type: 'ping'; kind: PingKind; pos: Vec2 };
+
+/** Pings für Absprachen im Team (wie in LoL): Hier, Angriff, Bin unterwegs, Hilfe, Gefahr. */
+export const PING_KINDS = ['here', 'attack', 'omw', 'help', 'danger'] as const;
+export type PingKind = (typeof PING_KINDS)[number];
 
 // ---------- Spielzustand ----------
 
@@ -422,6 +427,8 @@ export interface Ball {
 export interface Hero extends Unit {
   /** Letzte Eingabe; gilt, bis eine neue kommt. */
   input: HeroInput;
+  /** Zeitpunkte der letzten Pings (Spam-Schutz). */
+  pingTimes?: number[];
   alive: boolean;
   /** Spielzeit, zu der ein gefallener Held wiederbelebt wird. */
   respawnAt: number;
@@ -620,6 +627,7 @@ export type GameEvent =
   | { type: 'elite'; zombieId: number; defId: string }
   | { type: 'courier'; zombieId: number; phase: 'arrive' | 'caught' | 'escaped'; gold?: number }
   | { type: 'camp'; campId: string; phase: 'spawn' | 'cleared' }
+  | { type: 'ping'; heroId: number; kind: PingKind; pos: Vec2 }
   | { type: 'charge'; zombieId: number; from: Vec2; to: Vec2 }
   | { type: 'heroStatus'; heroId: number; status: 'rooted' | 'stunned' }
   | { type: 'cast'; heroId: number; slot: number; pos: Vec2 }

@@ -79,6 +79,21 @@ describe('Server: Räume', () => {
     expect(state.s.tick).toBe(room.sim.state.tick);
   });
 
+  it('ein Ping kommt bei allen Spielern im Raum an', () => {
+    const { lobby, player } = setup();
+    const host = player();
+    host.send({ t: 'create', heroes: ['rotschopf'], difficulty: 'mittel', name: 'Anna' });
+    const code = host.last('joined')!.room.code;
+    const guest = player();
+    guest.send({ t: 'join', room: code, slot: 1, name: 'Ben' });
+    guest.send({ t: 'cmd', cmd: { type: 'ping', kind: 'attack', pos: { x: 12, y: 34 } } });
+    lobby.tick();
+    const guestId = guest.last('joined')!.heroId;
+    for (const p of [host, guest]) {
+      expect(p.last('state')!.s.events).toContainEqual({ type: 'ping', heroId: guestId, kind: 'attack', pos: { x: 12, y: 34 } });
+    }
+  });
+
   it('leere Räume stehen still und werden nach 5 Minuten geschlossen', () => {
     const { lobby, player, advance } = setup();
     const host = player();

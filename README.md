@@ -53,6 +53,7 @@ Port über `PORT` (Standard 3000). Beim Entwickeln (`npm run dev`) leitet Vite d
 | R T | Verbrauchsgüter benutzen (Heiltrank, Energiedrink) |
 | B | Shop (nur in der Pause im Innenhof) |
 | N | Welle sofort starten (in der Pause) |
+| Rechtsklick | Ping an alle: kurz = „Hier!“, halten und ziehen = Ping-Rad (oben Angriff, rechts Bin unterwegs, unten Hilfe, links Gefahr). Auch auf der Minimap. |
 | Mausrad | Kamera heran- bzw. herauszoomen |
 | Esc | Pause und Tastenbelegung (alle Tasten frei belegbar) |
 

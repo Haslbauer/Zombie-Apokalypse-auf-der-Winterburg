@@ -1,6 +1,7 @@
-import type { HeroInput } from '../sim/types';
+import type { HeroInput, PingKind } from '../sim/types';
 import type { Vec2 } from '../sim/vec';
 import { type Action, type Keybindings, MENU_KEY } from './keybindings';
+import { PingWheel } from './pingwheel';
 import type { GameRenderer } from './renderer';
 
 /**
@@ -28,6 +29,12 @@ export class Input {
   onZoom: (deltaY: number) => void = () => {};
   /** Esc zuerst hier anbieten (z. B. Shop schließen); true = erledigt. */
   onEscape: () => boolean = () => false;
+  /** Ping an alle (Ping-Taste bzw. rechte Maustaste, auch auf der Minimap). */
+  onPing: (kind: PingKind, pos: Vec2) => void = () => {};
+  /** Ping-Geste: kurz = „Hier!“, halten = Ping-Rad. */
+  readonly pingWheel = new PingWheel(document.body);
+  /** Die Minimap rechnet Bildschirmpunkte über ihr in Orte um (null: Maus nicht über der Minimap). */
+  minimapPoint: (x: number, y: number) => Vec2 | null = () => null;
 
   constructor(
     private readonly renderer: GameRenderer,
@@ -47,14 +54,29 @@ export class Input {
       { passive: false },
     );
     canvas.addEventListener('pointerdown', (e) => {
-      if (!this.capture) this.pressed.add(`Mouse${e.button}`);
+      if (this.capture) return;
+      const code = `Mouse${e.button}`;
+      if (code === this.bindings.get('ping')) this.beginPing(e.clientX, e.clientY);
+      else this.pressed.add(code);
+    });
+    // Ping-Geste auch über der Minimap (die liegt im HUD, nicht auf dem Canvas)
+    window.addEventListener('pointerdown', (e) => {
+      if (this.capture || `Mouse${e.button}` !== this.bindings.get('ping') || e.target === canvas) return;
+      if (this.minimapPoint(e.clientX, e.clientY)) this.beginPing(e.clientX, e.clientY);
+    });
+    window.addEventListener('contextmenu', (e) => {
+      if (this.minimapPoint(e.clientX, e.clientY)) e.preventDefault();
     });
     window.addEventListener('pointerdown', (e) => {
       if (this.capture && (e.target as HTMLElement).dataset.rebind === undefined) this.finishCapture(`Mouse${e.button}`);
     });
-    window.addEventListener('pointerup', (e) => this.pressed.delete(`Mouse${e.button}`));
+    window.addEventListener('pointerup', (e) => {
+      if (`Mouse${e.button}` === this.bindings.get('ping')) this.endPing();
+      this.pressed.delete(`Mouse${e.button}`);
+    });
     window.addEventListener('pointermove', (e) => {
       this.mouse = { x: e.clientX, y: e.clientY };
+      this.pingWheel.move(e.clientX, e.clientY);
     });
     window.addEventListener('keydown', (e) => {
       if (e.code === MENU_KEY) {
@@ -70,6 +92,7 @@ export class Input {
       }
       if (e.code === 'Tab') e.preventDefault();
       if (!e.repeat) {
+        if (e.code === this.bindings.get('ping')) this.beginPing(this.mouse.x, this.mouse.y);
         if (e.code === this.bindings.get('item1')) this.onUse(0);
         if (e.code === this.bindings.get('item2')) this.onUse(1);
         if (e.code === this.bindings.get('shop')) this.onShop();
@@ -86,6 +109,7 @@ export class Input {
     });
     window.addEventListener('keyup', (e) => {
       this.pressed.delete(e.code);
+      if (e.code === this.bindings.get('ping')) this.endPing();
       const slot = this.abilitySlot(e.code);
       if (slot !== null && slot === this.previewSlot) {
         this.previewSlot = null;
@@ -96,7 +120,19 @@ export class Input {
     window.addEventListener('blur', () => {
       this.pressed.clear();
       this.previewSlot = null;
+      this.pingWheel.cancel();
     });
+  }
+
+  /** Ping-Geste beginnen: Ort auf der Minimap oder am Boden unter der Maus. */
+  private beginPing(x: number, y: number): void {
+    const world = this.minimapPoint(x, y) ?? this.renderer.pickGround(x, y);
+    if (world) this.pingWheel.begin(x, y, world);
+  }
+
+  private endPing(): void {
+    const ping = this.pingWheel.end();
+    if (ping) this.onPing(ping.kind, ping.pos);
   }
 
   /** code null: abgebrochen (Esc). */
@@ -125,6 +161,7 @@ export class Input {
   releaseAll(): void {
     this.pressed.clear();
     this.previewSlot = null;
+    this.pingWheel.cancel();
   }
 
   /** Aktueller Eingabezustand. W ist Norden (−y), passend zur festen Kamera. */

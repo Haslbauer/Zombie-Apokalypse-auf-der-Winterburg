@@ -7,7 +7,9 @@ import { kitOf } from './heroes/index';
 import { face } from './movement';
 import { levelStats, rankUp } from './progression';
 import { buffSum, hasBuff, updateBuffs } from './status';
-import { DT, type Command, type Hero } from './types';
+import { arenaBounds } from './grid';
+import { DT, PING_KINDS, type Command, type Hero, type PingKind } from './types';
+import type { Vec2 } from './vec';
 
 /** Übernimmt die Befehle eines Ticks. Eingaben gelten, bis eine neue kommt. */
 export function applyInputs(ctx: SimContext, commands: readonly Command[]): void {
@@ -16,6 +18,10 @@ export function applyInputs(ctx: SimContext, commands: readonly Command[]): void
     if (!h) continue;
     if (cmd.type === 'levelUp') {
       rankUp(ctx, h, cmd.slot);
+      continue;
+    }
+    if (cmd.type === 'ping') {
+      ping(ctx, h, cmd.kind, cmd.pos);
       continue;
     }
     if (cmd.type === 'startWave') {
@@ -44,6 +50,24 @@ export function applyInputs(ctx: SimContext, commands: readonly Command[]): void
     const move = len > 1 ? { x: cmd.move.x / len, y: cmd.move.y / len } : { ...cmd.move };
     h.input = { move, aim: { ...cmd.aim }, attack: cmd.attack };
   }
+}
+
+/** Höchstens so viele Pings je Held in PING_WINDOW Sekunden. */
+const PING_LIMIT = 3;
+const PING_WINDOW = 5;
+
+/** Ping an alle: nur gültige Arten, Position auf der Karte, mit Spam-Schutz. Auch gefallene Helden dürfen pingen. */
+function ping(ctx: SimContext, h: Hero, kind: unknown, pos: unknown): void {
+  if (!PING_KINDS.includes(kind as PingKind)) return;
+  const p = pos as Vec2 | undefined;
+  if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y)) return;
+  const t = ctx.state.time;
+  const recent = (h.pingTimes ?? []).filter((x) => t - x < PING_WINDOW);
+  if (recent.length >= PING_LIMIT) return;
+  h.pingTimes = [...recent, t];
+  const b = arenaBounds(ctx.arena);
+  const at = { x: Math.max(b.x0, Math.min(b.x1, p.x)), y: Math.max(b.y0, Math.min(b.y1, p.y)) };
+  ctx.state.events.push({ type: 'ping', heroId: h.id, kind: kind as PingKind, pos: at });
 }
 
 /** Laufen mit WASD, Blick zur Maus, Angriff nur auf Tastendruck (kein Auto-Attack). */

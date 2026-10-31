@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.3)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.4)
 
 Stand: 31.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v1.4: Minimap und Pings mit der rechten Maustaste (Ping-Rad wie in LoL).
 Änderungen v1.3: M6 Mehrspieler: Node-Server mit Räumen, Beitritt per Link, Bots auf freien Plätzen, Docker.
 Änderungen v1.2: Heldennamen Grimm (Hund), Hagedorn (Gärtnerin), Rauchbart (Pirat), Spike (Libero), Ragnar (Rotschopf), Somnia (Schläferin). Die internen IDs bleiben (`gaertnerin`, `pirat`, `libero`, `rotschopf`, `schlaeferin`, `grimm`).
 Änderungen v1.1: Karte um 10 m Gelände erweitert, Zombies kommen von außen durch Tore (West, Süd, Ost), Bunkertür nach Norden. Hornissen ab Welle 1 in wachsenden Schwärmen, mehr Zombies aus Nordwest. Ohne Bienenstock wachsen Beete nicht mehr nach. Sidequests: Zombie-Postbote als Team-Ziel, neutrale Lager (Fledermäuse, Spinnen, Kröte).
@@ -30,6 +31,8 @@ Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Ha
   - Nahkampf trifft alle Zombies im Bogen vor dem Helden (Testheld: 2,5 m, 120°). Fernkampf schießt ein Projektil geradeaus, das den ersten Zombie trifft, danebengehen kann und an Hindernissen endet.
   - Eine Markierung am Boden (Bogen bzw. Pfeil) zeigt Reichweite und Richtung des Angriffs
   - Fähigkeiten auf 1, 2, 3, 4 (4 = Ultimate), Items auf R und T. Taste halten zeigt eine Vorschau von Reichweite und Wirkfläche, Loslassen löst aus.
+  - **Pings** (wie in LoL) mit der rechten Maustaste, für alle Spieler sichtbar: kurz klicken = „Hier!“, halten oder ziehen öffnet ein Ping-Rad mit Angriff (oben), Bin unterwegs (rechts), Hilfe (unten), Gefahr (links); die Mitte bricht ab. Geht auch auf der Minimap. Ping in der Welt (pulsierende Ringe und Symbol, 3 s, durch Wände sichtbar), auf der Minimap und als Meldung „Name: Ping“. Höchstens 3 Pings in 5 s pro Spieler. Läuft als Befehl durch die Simulation, im Mehrspieler also automatisch an alle.
+  - **Minimap** unten rechts: Garten, Gelände, Wege, Lager, Vorrat, Bienenstock, Hochbeete, Helden (Heldenfarbe, eigener mit weißem Rand, Gefallene als Kreuz), Zombies (rot, Elites orange), Neutrale (grau), Postbote (golden, blinkend), Pings und der Kameraausschnitt.
   - Skillpunkt setzen: Shift + Fähigkeitstaste oder Klick auf „+“ in der Fähigkeitenleiste (Strg + Zahl wechselt im Browser den Tab und lässt sich nicht abfangen)
   - Alle Tasten sind frei belegbar (Esc öffnet Pause und Tastenbelegung)
 - Levelsystem nach League-of-Legends-Vorbild (XP, Level, Skillpunkte)

@@ -49,6 +49,7 @@ export class Hud {
   private readonly help = el('div', 'hud-help');
   private readonly overlay = el('div', 'hud-overlay');
   private readonly invite = el('div', 'hud-invite');
+  private readonly pingLog = el('div', 'hud-ping-log');
   private bannerTimer = 0;
 
   constructor(
@@ -85,7 +86,7 @@ export class Hud {
     this.shopHint.style.display = 'none';
     root.append(this.shopHint, this.team);
     this.updateHelp();
-    root.append(this.top, this.bottom, this.banner, this.respawn, this.help, this.invite, this.overlay, this.tooltip);
+    root.append(this.top, this.bottom, this.banner, this.respawn, this.help, this.invite, this.pingLog, this.overlay, this.tooltip);
     this.invite.style.display = 'none';
     this.showInGame(false);
   }
@@ -235,6 +236,15 @@ export class Hud {
     box.append(el('h1', '', title), el('p', '', text), back);
     this.overlay.append(box);
     this.overlay.style.display = '';
+  }
+
+  /** Ping-Meldung („Ben: Gefahr!“); die letzten drei bleiben 4 s stehen. */
+  addPing(text: string, color: string): void {
+    const line = el('div', '', text);
+    line.style.setProperty('--ping', color);
+    this.pingLog.append(line);
+    while (this.pingLog.children.length > 3) this.pingLog.firstElementChild!.remove();
+    setTimeout(() => line.remove(), 4000);
   }
 
   /** Einladung im Spiel: Raum-Code und Link zum Kopieren (null blendet aus). */

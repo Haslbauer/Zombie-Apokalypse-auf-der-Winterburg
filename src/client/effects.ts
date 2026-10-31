@@ -87,6 +87,32 @@ export class Effects {
     });
   }
 
+  /** Ping: pulsierende Ringe am Boden und ein Symbol darüber, auch durch Wände sichtbar (3 s). */
+  ping(p: Vec2, color: string, icon: string): void {
+    const c = new THREE.Color(color);
+    for (let i = 0; i < 2; i++) {
+      const material = new THREE.MeshBasicMaterial({ color: c, transparent: true, depthWrite: false, depthTest: false });
+      const mesh = new THREE.Mesh(new THREE.RingGeometry(0.8, 1, 40).rotateX(-Math.PI / 2), material);
+      mesh.position.set(p.x, 0.1, p.y);
+      mesh.renderOrder = 20;
+      this.add(mesh, 3, (t) => {
+        // Zwei versetzt pulsierende Ringe, am Ende ausblenden
+        const phase = (t * 6 + i * 0.5) % 1;
+        mesh.scale.setScalar(0.5 + phase * 1.8);
+        material.opacity = (1 - phase) * 0.9 * Math.min(1, (1 - t) * 4);
+      });
+    }
+    const sprite = textSprite(icon, color);
+    sprite.material.depthTest = false;
+    sprite.renderOrder = 21;
+    this.add(sprite, 3, (t) => {
+      const s = 1.3 + Math.sin(t * Math.PI * 10) * 0.08;
+      sprite.scale.set(s, s, 1);
+      sprite.position.set(p.x, 2.2 + Math.min(1, t * 8) * 0.4, p.y);
+      sprite.material.opacity = Math.min(1, (1 - t) * 4);
+    });
+  }
+
   /** Aufsteigende Zahl, z. B. „+8“ Gold. */
   floatingText(p: Vec2, text: string, color: string, height = 1.8): void {
     const sprite = textSprite(text, color);

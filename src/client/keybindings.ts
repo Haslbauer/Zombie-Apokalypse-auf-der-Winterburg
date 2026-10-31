@@ -13,6 +13,7 @@ export const ACTIONS = [
   { id: 'item2', label: 'Item 2' },
   { id: 'shop', label: 'Shop' },
   { id: 'startWave', label: 'Welle starten' },
+  { id: 'ping', label: 'Ping (halten: Ping-Rad)' },
 ] as const;
 
 export type Action = (typeof ACTIONS)[number]['id'];
@@ -35,6 +36,7 @@ const DEFAULTS: Record<Action, string> = {
   item2: 'KeyT',
   shop: 'KeyB',
   startWave: 'KeyN',
+  ping: 'Mouse2',
 };
 
 const STORAGE_KEY = 'winterburg.keybindings';

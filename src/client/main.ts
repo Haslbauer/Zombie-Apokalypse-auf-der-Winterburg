@@ -13,6 +13,8 @@ import { Input } from './input';
 import { Keybindings } from './keybindings';
 import { loadRiggedModel } from './models';
 import { GameRenderer } from './renderer';
+import { Minimap } from './minimap';
+import { PING_STYLE } from './pingwheel';
 import { LocalSession, RemoteSession, type Session } from './session';
 import { ShopView } from './shop';
 
@@ -23,6 +25,8 @@ const hudRoot = document.getElementById('hud')!;
 const hud = new Hud(hudRoot, gameData, bindings);
 const shop = new ShopView(hudRoot, gameData);
 const input = new Input(renderer, bindings);
+const minimap = new Minimap(hudRoot, gameData);
+input.minimapPoint = (x, y) => minimap.worldAt(x, y);
 const params = new URLSearchParams(location.search);
 /** Entwicklermodus: ?overview zeigt die ganze Karte von oben, ?level=6 setzt das Startlevel. */
 const overview = params.has('overview');
@@ -51,6 +55,7 @@ const ctx = (): DataContext => ({ state: session!.state, data: gameData });
 const myHero = () => session?.state.heroes.find((h) => h.id === heroId);
 
 input.onCast = (slot) => cmd({ type: 'cast', slot, aim: input.aimPoint });
+input.onPing = (kind, pos) => cmd({ type: 'ping', kind, pos });
 input.onLevelUp = (slot) => cmd({ type: 'levelUp', slot });
 hud.onLevelUp = input.onLevelUp;
 input.onUse = (slot) => cmd({ type: 'use', slot });
@@ -127,7 +132,20 @@ function begin(isPlayer: boolean): void {
     renderer.scene.fog = null;
     renderer.cam.overview(gameData.arena.width / 2 + (gameData.arena.minX ?? 0) / 2, gameData.arena.height / 2 + (gameData.arena.minY ?? 0) / 2 + 8, 135);
   }
+  minimap.visible = true;
   hud.message('Mach dich bereit!');
+}
+
+/** Sichtbarer Boden (Ecken des Bildschirms) für den Rahmen auf der Minimap. */
+function viewCorners() {
+  const r = renderer.canvas.getBoundingClientRect();
+  const corners = [
+    [r.left, r.top],
+    [r.right, r.top],
+    [r.right, r.bottom],
+    [r.left, r.bottom],
+  ].map(([x, y]) => renderer.pickGround(x, y));
+  return corners.every((c) => c) ? (corners as { x: number; y: number }[]) : [];
 }
 
 /** Mitspieler-Namen nach Helden-Id (Mehrspieler). */
@@ -196,6 +214,7 @@ function connect(first: Parameters<typeof RemoteSession.connect>[0], heroes: str
       remote.onClose = () => {
         if (session === remote) {
           session = null;
+          minimap.visible = false;
           hud.setInvite(null);
           hud.showNotice('Verbindung getrennt', 'Die Verbindung zum Spielserver ist abgebrochen. Über den Einladungslink kommst du zurück.', leaveOnline);
         }
@@ -209,6 +228,7 @@ function connect(first: Parameters<typeof RemoteSession.connect>[0], heroes: str
 function leaveOnline(): void {
   session?.close();
   session = null;
+  minimap.visible = false;
   hud.setInvite(null);
   history.replaceState(null, '', location.pathname);
   hud.showStart(pickHero);
@@ -357,6 +377,16 @@ function handleEvents(state: GameState): void {
           if (camp && state.heroes.some((h) => h.alive && Math.hypot(h.pos.x - camp.x, h.pos.y - camp.y) < 15)) hud.message(`${camp.name} besiegt`);
         }
         break;
+      case 'ping': {
+        const style = PING_STYLE[e.kind];
+        effects.ping(e.pos, style.color, style.icon);
+        minimap.ping(e.pos, style.color);
+        const h = state.heroes.find((x) => x.id === e.heroId);
+        const heroName = gameData.heroes.find((d) => d.id === h?.defId)?.name ?? '?';
+        const who = e.heroId === heroId ? 'Du' : (playerNames()?.get(e.heroId) ?? heroName);
+        hud.addPing(`${who}: ${style.label}`, style.color);
+        break;
+      }
       case 'levelUp':
         if (e.heroId === heroId) {
           const h = state.heroes.find((x) => x.id === heroId);
@@ -436,6 +466,7 @@ renderer.renderer.setAnimationLoop((now) => {
     }
     hud.setShopHint(!shopReason && !shop.open && !session.paused);
     shop.update(me, def.attack.type, (id) => buildPlan(ctx(), me, id));
+    minimap.update(dt, state, heroId, viewCorners());
   }
 
   effects.update(dt);

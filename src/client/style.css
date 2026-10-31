@@ -725,3 +725,65 @@ html, body {
   padding: 4px 8px;
   cursor: pointer;
 }
+/* ---------- Pings und Minimap ---------- */
+.ping-wheel {
+  position: fixed;
+  width: 220px;
+  height: 220px;
+  margin: -110px 0 0 -110px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(15, 22, 17, 0.25) 0 26px, rgba(15, 22, 17, 0.7) 27px 100%);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+  z-index: 20;
+  font-family: inherit;
+}
+.ping-wheel-item {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--ping);
+  opacity: 0.7;
+  text-shadow: 0 1px 2px #000;
+}
+.ping-wheel-item span {
+  font-size: 26px;
+  line-height: 1;
+}
+.ping-wheel-item small {
+  font-size: 11px;
+  color: #f2f2e8;
+}
+.ping-wheel-item.active {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.25);
+}
+.hud-ping-log {
+  position: absolute;
+  right: 12px;
+  bottom: 252px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-size: 13px;
+  pointer-events: none;
+}
+.hud-ping-log div {
+  padding: 3px 8px;
+  background: rgba(15, 22, 17, 0.8);
+  border-radius: 6px;
+  border-left: 3px solid var(--ping);
+}
+.hud-minimap {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  border: 2px solid #4f7a57;
+  border-radius: 8px;
+  background: #2b4724;
+  pointer-events: auto;
+  cursor: crosshair;
+}
