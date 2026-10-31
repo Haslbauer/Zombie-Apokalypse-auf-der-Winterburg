@@ -81,9 +81,10 @@ export function updateNeutral(ctx: SimContext, z: Zombie, def: ZombieDef, speed:
       else move(n.home, speed * RETURN_SPEED * DT);
       return true;
     }
-    // Zurück am Platz: voll geheilt, Reizung vergessen
+    // Zurück am Platz: Lagerbewohner voll geheilt, Reizung vergessen. Der
+    // Postbote heilt nicht (sein Platz wandert mit, sonst wäre er im Team kaum zu schaffen).
     n.returning = false;
-    z.hp = z.maxHp;
+    if (n.campId !== null) z.hp = z.maxHp;
     z.st.provokedUntil = 0;
   }
   return false;

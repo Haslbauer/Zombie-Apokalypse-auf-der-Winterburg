@@ -141,8 +141,10 @@ describe('Server: Räume', () => {
     expect(guest.all('state').length).toBe(before);
     guest.io.buffered = 0;
     lobby.tick();
-    const events = guest.last('state')!.s.events.filter((e) => e.type === 'ping');
-    expect(events.map((e) => (e as { kind: string }).kind)).toEqual(['danger', 'omw']);
+    // Nur die Pings des Gastgebers (Bots antworten auf „Bin unterwegs“ mit eigenen Pings)
+    const pings = guest.last('state')!.s.events.filter((e) => e.type === 'ping') as { heroId: number; kind: string }[];
+    const events = pings.filter((e) => e.heroId === pings[0].heroId);
+    expect(events.map((e) => e.kind)).toEqual(['danger', 'omw']);
     expect(host.all('state').length).toBe(4);
   });
 

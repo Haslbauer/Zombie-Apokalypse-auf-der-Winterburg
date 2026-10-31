@@ -538,6 +538,22 @@ export interface BotState {
   pathAt: number;
   /** Zielfehler, beim Denken neu gewürfelt. */
   aimOffset: Vec2;
+  /** Auftrag aus einem Ping eines Menschen (siehe orderBots). */
+  order?: BotOrder | null;
+  /** Gefahr-Ping: diesen Bereich meiden. */
+  avoid?: { pos: Vec2; radius: number; until: number } | null;
+}
+
+/**
+ * Auftrag an einen Bot: attack (Ziel bzw. Ort angreifen), help (Helden
+ * beschützen), here (Ort halten). until: Spielzeit, bis zu der er gilt.
+ */
+export interface BotOrder {
+  kind: 'attack' | 'help' | 'here';
+  pos: Vec2;
+  targetId: number | null;
+  heroId: number;
+  until: number;
 }
 
 /** Zustände eines Zombies; alle Zeiten sind Spielzeiten, 0 = nicht aktiv. */

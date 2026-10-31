@@ -52,7 +52,7 @@ describe('Sidequest Zombie-Postbote', () => {
     expect(sim.state.zombies).toContain(z);
   });
 
-  it('angegriffen schlägt er zurück, entkommt man ihm, kehrt er um und heilt sich', () => {
+  it('angegriffen schlägt er zurück, entkommt man ihm, kehrt er um (ohne sich zu heilen)', () => {
     const { sim, z, def } = courierSim();
     const h = sim.state.heroes[0];
     h.pos = { x: z.pos.x + 1.2, y: z.pos.y };
@@ -61,11 +61,12 @@ describe('Sidequest Zombie-Postbote', () => {
     run(sim, 20 * 3);
     expect(z.targetId).toBe(h.id);
     expect(h.hp).toBeLessThan(hp);
-    // Held flieht weit weg (in den Innenhof): Postbote kehrt um und ist wieder voll
+    // Held flieht weit weg (in den Innenhof): Postbote kehrt um, der Schaden bleibt
+    // (im Team soll man ihn auch über mehrere Anläufe schaffen)
     h.pos = { ...sim.data.arena.heroStart };
     run(sim, 20 * 10);
     expect(z.targetId).toBeNull();
-    expect(z.hp).toBe(z.maxHp);
+    expect(z.hp).toBeLessThan(z.maxHp);
     expect(def.neutral!.leash).toBeGreaterThan(5);
   });
 

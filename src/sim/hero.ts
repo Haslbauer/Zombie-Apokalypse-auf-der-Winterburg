@@ -8,6 +8,7 @@ import { face } from './movement';
 import { levelStats, rankUp } from './progression';
 import { buffSum, hasBuff, updateBuffs } from './status';
 import { arenaBounds } from './grid';
+import { orderBots } from './bots/brain';
 import { DT, PING_KINDS, type Command, type Hero, type PingKind } from './types';
 import type { Vec2 } from './vec';
 
@@ -68,6 +69,8 @@ function ping(ctx: SimContext, h: Hero, kind: unknown, pos: unknown): void {
   const b = arenaBounds(ctx.arena);
   const at = { x: Math.max(b.x0, Math.min(b.x1, p.x)), y: Math.max(b.y0, Math.min(b.y1, p.y)) };
   ctx.state.events.push({ type: 'ping', heroId: h.id, kind: kind as PingKind, pos: at });
+  // Pings von Menschen sind Aufträge an die Bots
+  if (!h.bot) orderBots(ctx, h, kind as PingKind, at);
 }
 
 /**
