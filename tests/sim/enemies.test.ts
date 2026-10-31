@@ -32,7 +32,7 @@ describe('Neue Gegner und Elites', () => {
     expect(b.h.buffs.some((x) => x.kind === 'rooted')).toBe(false);
   });
 
-  it('Rattenrudel ab Welle 2, Elites in Welle 5, 10 und zwei ab 15', () => {
+  it('Rattenrudel ab Welle 2, Elites in Welle 5, 10 und zwei ab 15 (mit Dämon)', () => {
     expect(packCount(1, cfg, 'ratte')).toBe(0);
     expect(packCount(2, cfg, 'ratte')).toBe(1);
     expect(packCount(8, cfg, 'ratte')).toBeGreaterThan(2);
@@ -46,7 +46,9 @@ describe('Neue Gegner und Elites', () => {
     expect(waveElites(4, cfg)).toEqual([]);
     expect(waveElites(5, cfg)).toEqual(['rattenkoenig']);
     expect(waveElites(10, cfg)).toEqual(['schlaechter']);
-    expect(waveElites(15, cfg)).toEqual(['rattenkoenig', 'schlaechter']);
+    // Ab Welle 15 kommt der Dämon dazu (Wechsel Rattenkönig, Schlächter, Dämon)
+    expect(waveElites(15, cfg)).toEqual(['daemon', 'rattenkoenig']);
+    expect(waveElites(25, cfg)).toEqual(['schlaechter', 'daemon', 'rattenkoenig']);
     const q = waveQueue({ rng: 1 }, 5, cfg);
     expect(q.filter((e) => e.startsWith('elite:'))).toEqual(['elite:rattenkoenig']);
     expect(q.filter((e) => e.startsWith('pack:ratte')).length).toBe(packCount(5, cfg, 'ratte'));
@@ -162,5 +164,42 @@ describe('Neue Gegner und Elites', () => {
     }
     expect(hive.hp).toBeLessThan(hive.maxHp);
     expect(angry).toBe(true);
+  });
+
+  it('Dämon: Höllensprung mit Warnzeit, Flächenschaden bei der Landung', () => {
+    const { sim, h } = setup();
+    const other = sim.state.heroes[0];
+    const z = placeZombie(sim, 'daemon', h.pos.x + 7, h.pos.y, 1e6);
+    z.specialTimer = 0;
+    const def = sim.zombieDefs.get('daemon')!;
+    const sp = def.special!;
+    sim.step();
+    expect(z.leap).toBeTruthy();
+    const leapEvent = sim.state.events.find((e) => e.type === 'leap');
+    expect(leapEvent).toMatchObject({ zombieId: z.id, radius: sp.radius });
+    const target = { ...z.leap!.to };
+    const hp = other.hp;
+    // Während der Warnzeit steht er still
+    const start = { ...z.pos };
+    for (let i = 0; i < Math.floor((sp.windup as number) * 20) - 1; i++) sim.step();
+    expect(dist(z.pos, start)).toBeLessThan(0.01);
+    expect(other.hp).toBe(hp);
+    run(sim, Math.ceil((sp.flight as number) * 20) + 3);
+    expect(z.leap ?? null).toBeNull();
+    expect(dist(z.pos, target)).toBeLessThan(2); // landet beim Helden (wird von ihm weggeschoben)
+    expect(other.hp).toBeLessThan(hp);
+  });
+
+  it('Dämon: wer aus der Warnmarkierung läuft, bleibt heil', () => {
+    const { sim, h } = setup();
+    const z = placeZombie(sim, 'daemon', h.pos.x + 7, h.pos.y, 1e6);
+    z.damage = 0;
+    z.specialTimer = 0;
+    sim.step();
+    expect(z.leap).toBeTruthy();
+    const hp = h.hp;
+    h.pos = { x: z.leap!.to.x - 6, y: z.leap!.to.y };
+    run(sim, 20 * 1.3);
+    expect(h.hp).toBe(hp);
   });
 });

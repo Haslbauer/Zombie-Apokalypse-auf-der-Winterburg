@@ -896,3 +896,7 @@ html, body {
   opacity: 0.7;
   font-size: 11px;
 }
+/* Bienenstock zerstört: Beete wachsen nicht nach */
+.withered {
+  color: #ff6b5a;
+}

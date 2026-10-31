@@ -18,6 +18,8 @@ import { updateZombies } from './zombies';
 const FIELD_TICKS = 5;
 /** Zombies, die in diesem Abstand um ein Ziel stehen, können es angreifen (Saatradius der Felder). */
 const OBJECTIVE_SEED = 0.9;
+/** Abstand der Wegfelder zu Hindernissen für kleine Einheiten (Rattenloch 0,8 m). */
+const SMALL_CLEARANCE = 0.3;
 
 /** Karte samt Zielen als Hindernisse (für Kollision und Schüsse); auch die Vorhersage im Client nutzt sie. */
 export function collisionArena(data: GameData): ArenaDef {
@@ -50,16 +52,22 @@ export class Simulation implements SimContext {
   readonly grid: Grid;
   readonly arena: ArenaDef;
   readonly objectiveFields = new Map<string, Float32Array>();
+  readonly smallArena: ArenaDef;
+  readonly smallGrid: Grid;
+  readonly smallObjectiveFields = new Map<string, Float32Array>();
   readonly heroDefs: Map<string, GameData['heroes'][number]>;
   readonly zombieDefs: Map<string, GameData['zombies'][number]>;
   state: GameState;
   private field: Float32Array | null = null;
+  private smallField: Float32Array | null = null;
   private readonly hash = new SpatialHash<Zombie>(2);
   private readonly neighbors: Zombie[] = [];
 
   constructor(readonly data: GameData, options: SimulationOptions) {
     this.arena = collisionArena(data);
     this.grid = new Grid(this.arena);
+    this.smallArena = { ...this.arena, obstacles: this.arena.obstacles.filter((o) => o.look !== 'rathole') };
+    this.smallGrid = new Grid(this.smallArena, SMALL_CLEARANCE);
     this.heroDefs = new Map(data.heroes.map((h) => [h.id, h]));
     this.zombieDefs = new Map(data.zombies.map((z) => [z.id, z]));
 
@@ -148,15 +156,18 @@ export class Simulation implements SimContext {
 
   /** Distanzfelder zu jedem Ziel und zu jeder Zielgruppe (nur intakte Mitglieder). */
   refreshObjectiveFields(kind?: string): void {
-    for (const o of this.data.arena.objectives) {
-      if (!kind && !this.objectiveFields.has(o.id)) {
-        this.objectiveFields.set(o.id, this.grid.distanceFieldToShapes([objectiveShape(o)], OBJECTIVE_SEED));
+    for (const [grid, fields] of [
+      [this.grid, this.objectiveFields],
+      [this.smallGrid, this.smallObjectiveFields],
+    ] as const) {
+      for (const o of this.data.arena.objectives) {
+        if (!kind && !fields.has(o.id)) fields.set(o.id, grid.distanceFieldToShapes([objectiveShape(o)], OBJECTIVE_SEED));
       }
-    }
-    const kinds = kind ? [kind] : [...new Set(this.data.arena.objectives.map((o) => o.kind))];
-    for (const k of kinds) {
-      const alive = this.data.arena.objectives.filter((o) => o.kind === k && !this.state.objectives.find((s) => s.id === o.id)?.destroyed);
-      if (alive.length > 0) this.objectiveFields.set(k, this.grid.distanceFieldToShapes(alive.map(objectiveShape), OBJECTIVE_SEED));
+      const kinds = kind ? [kind] : [...new Set(this.data.arena.objectives.map((o) => o.kind))];
+      for (const k of kinds) {
+        const alive = this.data.arena.objectives.filter((o) => o.kind === k && !this.state.objectives.find((s) => s.id === o.id)?.destroyed);
+        if (alive.length > 0) fields.set(k, grid.distanceFieldToShapes(alive.map(objectiveShape), OBJECTIVE_SEED));
+      }
     }
   }
 
@@ -179,8 +190,11 @@ export class Simulation implements SimContext {
     if (state.tick % FIELD_TICKS === 1 || !this.field) {
       const targets = state.heroes.filter((h) => h.alive).map((h) => h.pos);
       this.field = targets.length > 0 ? this.grid.distanceField(targets) : null;
+      // Feld für kleine Einheiten nur, wenn welche unterwegs sind
+      const small = state.zombies.some((z) => this.zombieDefs.get(z.defId)?.small);
+      this.smallField = small && targets.length > 0 ? this.smallGrid.distanceField(targets) : null;
     }
-    updateZombies(this, this.field);
+    updateZombies(this, this.field, this.smallField);
     updateProjectiles(this);
     updateZones(this);
     updateDelayed(this);
@@ -230,7 +244,7 @@ export class Simulation implements SimContext {
         const b = arenaBounds(arena);
         z.pos.x = Math.max(b.x0 + z.radius, Math.min(b.x1 - z.radius, z.pos.x));
         z.pos.y = Math.max(b.y0 + z.radius, Math.min(b.y1 - z.radius, z.pos.y));
-      } else resolveObstacles(z.pos, z.radius, arena);
+      } else resolveObstacles(z.pos, z.radius, this.zombieDefs.get(z.defId)?.small ? this.smallArena : arena);
     }
     for (const h of heroes) if (h.alive) resolveObstacles(h.pos, h.radius, arena);
   }

@@ -233,6 +233,14 @@ export class Minimap {
         continue;
       }
       const look = o.look ?? 'hedge';
+      if (look === 'rathole') {
+        // Rattenloch: kleiner dunkler Punkt in der Mauer
+        c.fillStyle = '#1a1210';
+        c.beginPath();
+        c.arc((o.x - this.b.x0) * k, (o.y - this.b.y0) * k, Math.max(1.5 * this.ratio, 0.5 * k), 0, Math.PI * 2);
+        c.fill();
+        continue;
+      }
       if (look === 'objective' || look === 'bed' || look === 'flowers' || look === 'bench' || look === 'wheelbarrow') continue;
       const color =
         look === 'house' ? COLORS.house

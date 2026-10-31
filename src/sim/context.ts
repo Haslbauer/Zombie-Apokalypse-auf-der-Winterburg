@@ -10,6 +10,10 @@ export interface SimContext {
   arena: ArenaDef;
   /** Distanzfelder zu jedem Ziel und jeder Zielgruppe (Id bzw. Art → Feld). */
   objectiveFields: Map<string, Float32Array>;
+  /** Kleine Einheiten (Ratten): eigene Karte ohne Rattenloch, eigenes Raster und eigene Felder. */
+  smallArena: ArenaDef;
+  smallGrid: Grid;
+  smallObjectiveFields: Map<string, Float32Array>;
   /** Felder einer Zielgruppe neu berechnen (z. B. wenn ein Hochbeet zerstört wird oder nachwächst). */
   refreshObjectiveFields(kind: string): void;
   heroDefs: Map<string, HeroDef>;

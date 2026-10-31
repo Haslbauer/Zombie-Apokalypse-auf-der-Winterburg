@@ -159,7 +159,9 @@ export class GameRenderer {
     }
     for (const z of state.zombies) {
       const def = this.data.zombies.find((d) => d.id === z.defId)!;
-      const view = upsert(z, () => zombieView(z, def, this.models));
+      // Dämon im Sprung: Bogen über dem Boden
+      const leap = z.leap && z.leap.windup <= 0 ? Math.sin(Math.min(1, 1 - z.leap.flight / z.leap.total) * Math.PI) * 3 : 0;
+      const view = upsert(z, () => zombieView(z, def, this.models), leap);
       // Im Gebüsch verborgen, bis ein Held dort steht oder nah dran ist (wie in LoL)
       view.group.visible = zombieRevealed(this.data, state, z);
       view.showStatus(z, state.time, z.hp / z.maxHp < revealBelow);

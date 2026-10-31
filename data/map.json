@@ -234,14 +234,9 @@
       "h": 7.5,
       "look": "house"
     },
-    {
-      "kind": "rect",
-      "x": 38.75,
-      "y": 10.5,
-      "w": 5.5,
-      "h": 1,
-      "look": "house"
-    },
+    { "kind": "rect", "x": 37.425, "y": 10.5, "w": 2.85, "h": 1, "look": "house" },
+    { "kind": "rect", "x": 39.25, "y": 10.5, "w": 0.8, "h": 1, "look": "rathole" },
+    { "kind": "rect", "x": 40.575, "y": 10.5, "w": 1.85, "h": 1, "look": "house" },
     {
       "kind": "rect",
       "x": 43.5,

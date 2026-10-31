@@ -92,6 +92,21 @@ export class ObjectiveView {
       plants.add(p);
     }
     g.add(plants);
+    // Zerstört: verdorrte, braune Stängel (ohne Bienenstock wachsen sie nicht nach)
+    const withered = new THREE.Group();
+    withered.name = 'withered';
+    withered.visible = false;
+    const stalk = new THREE.ConeGeometry(0.05, 0.6, 4);
+    const dry = this.lambert(0x6b5332);
+    for (let t = 0.4; t < length - 0.2; t += 0.55) {
+      const s = new THREE.Mesh(stalk, dry);
+      const o = -length / 2 + t;
+      const side = ((t * 7) % 1) - 0.5;
+      s.position.set(along ? o : side * (h - 0.4), 0.85, along ? side * (h - 0.4) : o);
+      s.rotation.set(Math.sin(t * 5) * 0.6, 0, Math.cos(t * 3) * 0.6);
+      withered.add(s);
+    }
+    g.add(withered);
     return g;
   }
 
@@ -144,6 +159,7 @@ export class ObjectiveView {
       // Pflanzen schrumpfen mit dem Leben; zerstört: nur noch Erde
       const plants = this.core.getObjectByName('plants')!;
       plants.visible = !obj.destroyed;
+      this.core.getObjectByName('withered')!.visible = obj.destroyed;
       const k = 0.25 + 0.75 * (obj.hp / obj.maxHp);
       plants.scale.set(k, k, k);
       this.bar.visible = !obj.destroyed && obj.hp < obj.maxHp;

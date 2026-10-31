@@ -630,7 +630,10 @@ export class Hud {
     const beds = state.objectives.filter((o) => o.kind === 'bed');
     if (beds.length > 0) {
       const intact = beds.filter((b) => !b.destroyed).length;
-      this.beds.textContent = `Beete ${intact}/${beds.length}`;
+      // Ohne Bienenstock wachsen zerstörte Beete nicht mehr nach
+      const hiveLost = state.objectives.some((o) => o.kind === 'hive' && o.destroyed);
+      this.beds.textContent = `Beete ${intact}/${beds.length}${hiveLost ? ' · wachsen nicht nach' : ''}`;
+      this.beds.classList.toggle('withered', hiveLost);
       this.beds.classList.toggle('angry', beds.some((b) => !b.destroyed && b.hp < b.maxHp));
     }
 

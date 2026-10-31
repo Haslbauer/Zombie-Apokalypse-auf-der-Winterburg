@@ -192,6 +192,32 @@ export function house(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chimne
   return g;
 }
 
+/**
+ * Rattenloch: ein Stück Hausmauer wie die Nachbarn, unten ein dunkles
+ * Kellerloch mit zerbrochenen Brettern (auf beiden Seiten der Mauer).
+ */
+export function rathole(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chimneys: THREE.Vector3[]): THREE.Group {
+  const g = house(o, mats, chimneys);
+  const alongX = o.w >= o.h;
+  const thick = (alongX ? o.h : o.w) + 0.2;
+  const hole = part(new THREE.BoxGeometry(alongX ? 0.62 : thick, 0.46, alongX ? thick : 0.62), mats.lambert(0x080706), 0, 0.23, 0, false);
+  g.add(hole);
+  const board = mats.lambert(0x5a4630);
+  for (const side of [-1, 1]) {
+    const off = (thick / 2 + 0.03) * side;
+    const b1 = part(new THREE.BoxGeometry(0.75, 0.09, 0.04), board, 0, 0.36, 0, false);
+    b1.rotation.z = 0.35;
+    const b2 = part(new THREE.BoxGeometry(0.4, 0.08, 0.04), board, 0.18, 0.12, 0, false);
+    b2.rotation.z = -0.5;
+    const boards = new THREE.Group();
+    boards.add(b1, b2);
+    boards.position.set(alongX ? 0 : off, 0, alongX ? off : 0);
+    if (!alongX) boards.rotation.y = Math.PI / 2;
+    g.add(boards);
+  }
+  return g;
+}
+
 /** Bunker unter der Erde: flache Luke im Rasen mit Betonrand und rostiger Doppeltür. */
 export function hatch(s: SpawnPoint, mats: Mats): THREE.Group {
   const g = new THREE.Group();

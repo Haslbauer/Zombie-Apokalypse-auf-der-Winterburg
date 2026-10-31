@@ -24,7 +24,7 @@ const BLIND_MISS = 0.5;
  * seinem Ziel (Herz oder Bienenstock) und greift es an.
  * heroField ist das Distanzfeld zu allen lebenden Helden.
  */
-export function updateZombies(ctx: SimContext, heroField: Float32Array | null): void {
+export function updateZombies(ctx: SimContext, heroField: Float32Array | null, smallHeroField: Float32Array | null = null): void {
   const { state, zombieDefs } = ctx;
   // Unsichtbare Helden (Nebelschritt) werden nicht gesehen.
   const heroes = state.heroes.filter((h) => h.alive && !hasBuff(h, 'invisible'));
@@ -68,7 +68,7 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null): 
       } else if (!rooted) {
         if (blind) stagger(ctx, z, hero.pos, speed * DT);
         else if (def.flying) stepToward(z, hero.pos, speed * DT);
-        else moveTo(ctx, z, hero.pos, heroField, speed * DT);
+        else moveTo(ctx, z, hero.pos, def.small ? smallHeroField : heroField, speed * DT, def.small);
       }
       continue;
     }
@@ -89,7 +89,7 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null): 
     } else if (!rooted) {
       if (blind) stagger(ctx, z, obj.pos, speed * DT);
       else if (def.flying) stepToward(z, obj.pos, speed * DT);
-      else moveTo(ctx, z, obj.pos, ctx.objectiveFields.get(found.key) ?? null, speed * DT);
+      else moveTo(ctx, z, obj.pos, (def.small ? ctx.smallObjectiveFields : ctx.objectiveFields).get(found.key) ?? null, speed * DT, def.small);
     }
   }
 }
@@ -200,11 +200,12 @@ function currentObjective(ctx: SimContext, z: Zombie): { obj: Objective; key: st
   return best ? { obj: best, key: z.objectiveId } : null;
 }
 
-function moveTo(ctx: SimContext, z: Zombie, target: Vec2, field: Float32Array | null, step: number): void {
-  if (!field || dist(z.pos, target) < DIRECT_RANGE || ctx.grid.lineOfSight(z.pos, target)) {
+function moveTo(ctx: SimContext, z: Zombie, target: Vec2, field: Float32Array | null, step: number, small = false): void {
+  const grid = small ? ctx.smallGrid : ctx.grid;
+  if (!field || dist(z.pos, target) < DIRECT_RANGE || grid.lineOfSight(z.pos, target)) {
     stepToward(z, target, step);
   } else {
-    stepToward(z, ctx.grid.downhill(field, z.pos) ?? target, step);
+    stepToward(z, grid.downhill(field, z.pos) ?? target, step);
   }
 }
 

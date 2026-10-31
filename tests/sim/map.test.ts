@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { gameData } from '../../src/gameData';
 import { Grid } from '../../src/sim/grid';
-import { makeSim } from './helpers';
+import { dist } from '../../src/sim/vec';
+import { input, makeSim, noWaves, placeZombie, testData } from './helpers';
 
 describe('Karte Winterburg', () => {
   const sim = makeSim();
@@ -97,5 +98,46 @@ describe('Karte Winterburg', () => {
     const next = sim.grid.downhill(field, stuck)!;
     expect(next).not.toBeNull();
     expect(sim.grid.isBlocked(next)).toBe(false);
+  });
+});
+
+describe('Rattenloch in der Hofmauer', () => {
+  function sim() {
+    const s = makeSim('rotschopf', 1, testData(noWaves));
+    s.state.wave.phase = 'wave';
+    s.state.wave.queue = ['walker'];
+    s.state.wave.spawnTimer = 1e9;
+    s.state.heroes[0].pos = { x: 10, y: 70 }; // weit weg
+    return s;
+  }
+  const inHole = (p: { x: number; y: number }) => Math.abs(p.x - 39.25) < 0.7 && p.y > 9.9 && p.y < 11.1;
+
+  it('Ratten laufen durch das Loch zum Vorrat', () => {
+    const s = sim();
+    const rat = placeZombie(s, "ratte", 39.25, 6);
+    rat.objectiveId = 'heart';
+    let through = false;
+    for (let i = 0; i < 20 * 6; i++) {
+      s.step();
+      if (inHole(rat.pos)) through = true;
+    }
+    expect(through).toBe(true);
+    expect(rat.pos.y).toBeGreaterThan(12);
+    expect(dist(rat.pos, { x: 37.5, y: 19.5 })).toBeLessThan(2.5);
+  });
+
+  it('Walker und Helden kommen nicht durch', () => {
+    const s = sim();
+    const walker = placeZombie(s, 'walker', 39, 7);
+    walker.objectiveId = 'heart';
+    const runner = placeZombie(s, 'runner', 39.5, 7);
+    runner.objectiveId = 'heart';
+    const h = s.state.heroes[0];
+    h.pos = { x: 39, y: 8.5 };
+    for (let i = 0; i < 20 * 8; i++) {
+      s.step([input(s, { x: 0, y: 1 }, { x: 39, y: 20 })]);
+      expect(inHole(walker.pos) || inHole(runner.pos) || inHole(h.pos)).toBe(false);
+    }
+    expect(h.pos.y).toBeLessThan(10);
   });
 });

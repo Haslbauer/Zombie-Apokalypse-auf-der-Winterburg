@@ -31,7 +31,11 @@ export class Grid {
   readonly blocked: Uint8Array;
   private readonly fieldHeap: MinHeap;
 
-  constructor(readonly arena: ArenaDef) {
+  /** clearance: Mindestabstand freier Zellen zu Hindernissen (kleine Einheiten: weniger). */
+  constructor(
+    readonly arena: ArenaDef,
+    readonly clearance = CLEARANCE,
+  ) {
     this.cell = arena.cellSize;
     const b = arenaBounds(arena);
     this.x0 = b.x0;
@@ -44,8 +48,8 @@ export class Grid {
       for (let c = 0; c < this.cols; c++) {
         const p = this.center(c, r);
         const nearEdge =
-          p.x < b.x0 + CLEARANCE || p.y < b.y0 + CLEARANCE || p.x > b.x1 - CLEARANCE || p.y > b.y1 - CLEARANCE;
-        if (nearEdge || arena.obstacles.some((o) => distanceToObstacle(p, o) < CLEARANCE)) {
+          p.x < b.x0 + clearance || p.y < b.y0 + clearance || p.x > b.x1 - clearance || p.y > b.y1 - clearance;
+        if (nearEdge || arena.obstacles.some((o) => distanceToObstacle(p, o) < clearance)) {
           this.blocked[r * this.cols + c] = 1;
         }
       }

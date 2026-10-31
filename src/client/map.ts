@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { arenaBounds } from '../sim/grid';
 import type { ArenaDef, Obstacle } from '../sim/types';
-import { brushes, decor, hatch, hedge, house, Mats, obstacleDecor, smoke, thicket, tree, windTime } from './mapdecor';
+import { brushes, decor, hatch, hedge, house, Mats, obstacleDecor, smoke, thicket, tree, windTime, rathole } from './mapdecor';
 
 const COLORS = {
   forest: 0x3a6230,
@@ -86,6 +86,7 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   const chimneys: THREE.Vector3[] = [];
   for (const o of arena.obstacles) {
     if (o.kind === 'rect' && o.look === 'house') scene.add(house(o, mats, chimneys));
+    else if (o.kind === 'rect' && o.look === 'rathole') scene.add(rathole(o, mats, chimneys));
     else if (o.kind === 'rect' && (o.look ?? 'hedge') === 'hedge') scene.add(hedge(o, mats));
     else if (o.kind === 'circle' && o.look === 'tree') scene.add(tree(o.x, o.y, o.r, mats));
     else if (o.kind === 'rect' && o.look === 'blocked') {

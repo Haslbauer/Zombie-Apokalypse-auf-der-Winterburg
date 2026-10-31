@@ -116,6 +116,8 @@ export interface ZombieDef {
   provokeOnly?: boolean;
   /** Fliegt über Hindernisse (Hornissen). */
   flying?: boolean;
+  /** Kleine Einheit (Ratten): passt durch das Rattenloch und enge Lücken. */
+  small?: boolean;
   /**
    * Sidequest (Zombie-Postbote): läuft die Route im Gelände ab und zählt nicht
    * zur Welle. Nach stay Sekunden ist er weg. Wer ihn besiegt: Gold für alle Helden.
@@ -128,7 +130,7 @@ export interface ZombieDef {
    */
   neutral?: { leash: number };
   /** Elite-Fähigkeit mit ihren Werten. */
-  special?: { kind: 'summon' | 'charge'; interval: number; [key: string]: number | string };
+  special?: { kind: 'summon' | 'charge' | 'leap'; interval: number; [key: string]: number | string };
 }
 
 export type ItemCategory = 'meleeWeapon' | 'rangedWeapon' | 'armor' | 'stat' | 'consumable';
@@ -222,6 +224,8 @@ export interface WaveConfig {
 /** Aussehen eines Hindernisses (nur für die Darstellung). */
 export type ObstacleLook =
   | 'house'
+  /** Kellerloch in der Hofmauer: nur kleine Einheiten (Ratten) kommen durch. */
+  | 'rathole'
   | 'hedge'
   | 'fence'
   | 'tree'
@@ -590,6 +594,8 @@ export interface Zombie extends Unit {
   specialTimer?: number;
   /** Schlächter: laufender Anlauf. */
   charge?: { dir: Vec2; remaining: number; hitIds: number[]; windup: number } | null;
+  /** Dämon: Höllensprung von from nach to; erst windup Sekunden Warnung, dann flight Sekunden in der Luft. */
+  leap?: { from: Vec2; to: Vec2; windup: number; flight: number; total: number } | null;
   /** Postbote: nächster Wegpunkt, Laufrichtung (+1/−1) und wann er verschwindet. */
   courier?: { wp: number; dir: number; leaveAt: number };
   /** Neutrale: Lager (oder null beim Postboten), Platz, zu dem er zurückkehrt, und ob er gerade heimkehrt. */
@@ -713,6 +719,7 @@ export type GameEvent =
   | { type: 'camp'; campId: string; phase: 'spawn' | 'cleared' }
   | { type: 'ping'; heroId: number; kind: PingKind; pos: Vec2 }
   | { type: 'charge'; zombieId: number; from: Vec2; to: Vec2 }
+  | { type: 'leap'; zombieId: number; from: Vec2; to: Vec2; radius: number; windup: number }
   | { type: 'heroStatus'; heroId: number; status: 'rooted' | 'stunned' }
   | { type: 'cast'; heroId: number; slot: number; pos: Vec2 }
   | { type: 'levelUp'; heroId: number; level: number }

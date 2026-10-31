@@ -87,10 +87,12 @@
     "gold": 1,
     "figure": "rat",
     "targets": {
-      "bed": 0.75,
-      "hive": 0.25
+      "bed": 0.45,
+      "hive": 0.2,
+      "heart": 0.35
     },
-    "provokeOnly": true
+    "provokeOnly": true,
+    "small": true
   },
   {
     "id": "rattenkoenig",
@@ -142,6 +144,35 @@
       "stun": 0.75,
       "knockback": 3,
       "damage": 30
+    },
+    "targets": {
+      "heart": 1
+    }
+  },
+  {
+    "id": "daemon",
+    "name": "Dämon",
+    "color": "#5a1f6b",
+    "hp": 1100,
+    "speed": 2.6,
+    "radius": 0.75,
+    "damage": 30,
+    "attackRange": 0.6,
+    "attackCooldown": 1.2,
+    "aggroRange": 10,
+    "xp": 130,
+    "gold": 60,
+    "figure": "demon",
+    "rank": "elite",
+    "special": {
+      "kind": "leap",
+      "interval": 8,
+      "range": 10,
+      "windup": 0.7,
+      "flight": 0.45,
+      "radius": 2.5,
+      "damage": 55,
+      "stun": 0.4
     },
     "targets": {
       "heart": 1

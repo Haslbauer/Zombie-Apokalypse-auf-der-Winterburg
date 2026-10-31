@@ -316,6 +316,7 @@ const EFFECT_COLORS: Record<string, number> = {
   smokecone: 0xb8b8b8,
   puff: 0xb8b8b8,
   spike: 0xff8a3d,
+  leapLand: 0xb04dff,
   'rage-haste': 0xffd23f,
   'rage-shield': 0x7fd1ff,
   'rage-heal': 0x7bd36a,
@@ -336,6 +337,7 @@ function abilityEffect(e: Extract<GameEvent, { type: 'effect' }>): void {
       effects.disc(e.pos, e.radius, color, 0.8, 0.35);
       break;
     case 'spike':
+    case 'leapLand':
     case 'quake':
     case 'howl':
       effects.disc(e.pos, e.radius, color, 0.35, 0.4);
@@ -429,6 +431,11 @@ function handleEvents(state: GameState): void {
         if (e.assists.includes(heroId)) hud.addPing(`Assist: +${e.assistGold} Gold`, '#ffd166');
         break;
       }
+      case 'leap':
+        // Höllensprung: Landeplatz warnen, Dämon schreit
+        effects.warning(e.to, e.radius, 0xb04dff, e.windup + 0.45);
+        renderer.zombieScream(e.zombieId);
+        break;
       case 'courier':
         if (e.phase === 'arrive') hud.message(`Zombie-Postbote im Gelände! Besiegt ihn im Team: ${e.gold} Gold für alle`);
         else if (e.phase === 'caught') hud.message(`Paket erbeutet: +${e.gold} Gold für alle!`);

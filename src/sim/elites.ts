@@ -31,6 +31,8 @@ export function updateElite(ctx: SimContext, z: Zombie, def: ZombieDef, heroes: 
     return false;
   }
 
+  if (sp.kind === 'leap') return updateLeap(ctx, z, sp, heroes);
+
   // Anlauf (Schlächter): kurz ausholen, dann geradeaus stürmen.
   if (z.charge) {
     const c = z.charge;
@@ -74,5 +76,48 @@ export function updateElite(ctx: SimContext, z: Zombie, def: ZombieDef, heroes: 
     from: { ...z.pos },
     to: { x: z.pos.x + dir.x * distance, y: z.pos.y + dir.y * distance },
   });
+  return true;
+}
+
+/**
+ * Höllensprung (Dämon): Alle interval Sekunden springt er auf einen Helden in
+ * Reichweite. Vorher markiert eine Warnung windup Sekunden lang den
+ * Landeplatz (Ausweichen möglich), bei der Landung trifft er alle Helden im
+ * Umkreis radius.
+ */
+function updateLeap(ctx: SimContext, z: Zombie, sp: NonNullable<ZombieDef['special']>, heroes: Hero[]): boolean {
+  const l = z.leap;
+  if (l) {
+    if (l.windup > 0) {
+      l.windup -= DT;
+      return true;
+    }
+    l.flight -= DT;
+    const k = Math.min(1, 1 - l.flight / l.total);
+    z.pos = { x: l.from.x + (l.to.x - l.from.x) * k, y: l.from.y + (l.to.y - l.from.y) * k };
+    if (l.flight > 0) return true;
+    // Landung
+    z.leap = null;
+    resolveObstacles(z.pos, z.radius, ctx.arena);
+    const radius = sp.radius as number;
+    for (const h of heroes) {
+      if (Math.hypot(h.pos.x - z.pos.x, h.pos.y - z.pos.y) - h.radius > radius) continue;
+      applyDamage(ctx, h, sp.damage as number);
+      if (sp.stun) heroCC(ctx, h, 'stunned', sp.stun as number);
+    }
+    ctx.state.events.push({ type: 'effect', kind: 'leapLand', pos: { ...z.pos }, radius });
+    return true;
+  }
+  if ((z.specialTimer ?? 0) > 0 || isBlind(ctx, z)) return false;
+  const range = sp.range as number;
+  const target = heroes.find((h) => edgeDistance(z, h) <= range && edgeDistance(z, h) > 2);
+  if (!target) return false;
+  z.specialTimer = sp.interval;
+  const to = { ...target.pos };
+  resolveObstacles(to, z.radius, ctx.arena);
+  face(z, to);
+  const flight = sp.flight as number;
+  z.leap = { from: { ...z.pos }, to, windup: sp.windup as number, flight, total: flight };
+  ctx.state.events.push({ type: 'leap', zombieId: z.id, from: { ...z.pos }, to: { ...to }, radius: sp.radius as number, windup: sp.windup as number });
   return true;
 }
