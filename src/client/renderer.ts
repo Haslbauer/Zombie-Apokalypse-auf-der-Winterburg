@@ -57,6 +57,8 @@ export class GameRenderer {
   private readonly corpses = new Map<UnitView, number>();
   /** Held des Spielers (grüner Ring); Bots bekommen einen blauen Ring. null = nur Bots. */
   playerId: number | null = null;
+  /** Ego-Sicht: eigenen Helden ausblenden (die Kamera sitzt in seinem Kopf). */
+  hideOwn = false;
   private readonly objectives = new Map<string, ObjectiveView>();
 
   constructor(container: HTMLElement, private readonly data: GameData) {
@@ -169,6 +171,7 @@ export class GameRenderer {
       view.ring.visible = true;
       const hidden = (h.brush ?? -1) >= 0 && state.time >= (h.revealedUntil ?? 0);
       view.showHero(h, shieldAmount(h), hasBuff(h, 'invisible') ? 0.3 : hidden ? 0.55 : 1);
+      view.group.visible = !(this.hideOwn && h.id === this.playerId);
       const hold = h.channel?.tag === 'nap' ? 'ability3' : undefined;
       view.animate(dt, speed, state.gameOver, hold);
     }
@@ -363,8 +366,9 @@ export class GameRenderer {
   render(): void {
     // Nebel beginnt ein Stück hinter dem Fokus, sonst wäre die Übersicht nur grau
     const d = this.cam.distance;
-    this.fog.near = d + 10;
-    this.fog.far = d * 1.6 + 50;
+    // Ego-Sicht: näherer Nebel, stimmungsvoll und schneller
+    this.fog.near = this.cam.inFirstPerson ? 6 : d + 10;
+    this.fog.far = this.cam.inFirstPerson ? 40 : d * 1.6 + 50;
     this.renderer.render(this.scene, this.cam.camera);
   }
 }

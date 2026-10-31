@@ -697,7 +697,15 @@ renderer.renderer.setAnimationLoop((now) => {
     const me = myHero() ?? hero;
     renderer.sync(state, session.prev, alpha, dt, time);
     const focus = renderer.unitPosition(heroId) ?? me.pos;
-    renderer.updateAimIndicator(me.alive && !spectate ? focus : null, me.facing, me.attackTimer <= 0);
+    // Ego-Sicht: Augenhöhe, eigener Held ausgeblendet, kein Zielbogen; Maus frei bei Shop, Menü, Spielende
+    const cam = renderer.cam;
+    cam.eyeHeight = heroDefId === 'grimm' ? 0.7 : 1.6;
+    renderer.hideOwn = cam.inFirstPerson;
+    input.firstPerson = cam.firstPerson ? firstPersonControls : null;
+    const mouseNeeded = shop.open || hud.menuOpen || state.gameOver;
+    if ((!cam.firstPerson || mouseNeeded) && input.mouseLocked) document.exitPointerLock?.();
+    hud.setFirstPerson(cam.firstPerson && !mouseNeeded, input.mouseLocked);
+    renderer.updateAimIndicator(me.alive && !spectate && !cam.inFirstPerson ? focus : null, me.facing, me.attackTimer <= 0);
     const slot = input.previewSlot;
     const def = gameData.heroes.find((h) => h.id === heroDefId)!;
     renderer.showPreview(slot !== null && me.alive && me.ranks[slot] > 0 ? def.abilities[slot] : null, me, input.aimPoint);
@@ -764,7 +772,32 @@ input.onMute = () => {
   sound.toggleMute();
   hud.message(sound.settings.muted ? 'Ton aus' : 'Ton an');
 };
-input.onZoom = (d) => renderer.cam.zoom(d);
+input.onZoom = (d) => {
+  const cam = renderer.cam;
+  const was = cam.firstPerson;
+  cam.zoom(d);
+  // Ego-Sicht beginnt in Blickrichtung des Helden
+  if (cam.firstPerson && !was) {
+    cam.yaw = myHero()?.facing ?? cam.yaw;
+    cam.pitch = -0.12;
+    hud.message('Ego-Sicht: Klicken zum Umsehen, Mausrad zurück');
+  }
+};
+
+/** Ego-Sicht: Steuerung relativ zur Blickrichtung, Ziel unter dem Fadenkreuz. */
+const firstPersonControls = {
+  yaw: () => renderer.cam.yaw,
+  look: (dx: number, dy: number) => renderer.cam.look(dx, dy),
+  aim: () => {
+    const cam = renderer.cam;
+    const from = renderer.unitPosition(heroId) ?? myHero()?.pos ?? { x: 0, y: 0 };
+    const rect = renderer.canvas.getBoundingClientRect();
+    const hit = cam.pitch < -0.02 ? renderer.pickGround(rect.left + rect.width / 2, rect.top + rect.height / 2) : null;
+    // Über den Horizont oder sehr weit: 12 m voraus in Blickrichtung
+    if (hit && Math.hypot(hit.x - from.x, hit.y - from.y) <= 20) return hit;
+    return { x: from.x + Math.cos(cam.yaw) * 12, y: from.y + Math.sin(cam.yaw) * 12 };
+  },
+};
 hud.startWaveBtn.addEventListener('click', input.onStartWave);
 
 // Entwicklermodus ?debug: Zugriff für Tests (z. B. Messung der Vorhersage im Browser)
@@ -786,6 +819,13 @@ if (params.has('debug')) {
         if (!(session instanceof LocalSession)) return;
         const def = session.sim.zombieDefs.get(defId);
         if (def) spawnZombieAt(session.sim, def, { x, y });
+      },
+      // Ego-Sicht: Zustand lesen bzw. Blickrichtung setzen (Tests)
+      view: (yaw?: number, pitch?: number) => {
+        const cam = renderer.cam;
+        if (yaw !== undefined) cam.yaw = yaw;
+        if (pitch !== undefined) cam.pitch = pitch;
+        return { firstPerson: cam.firstPerson, yaw: cam.yaw, pitch: cam.pitch, locked: input.mouseLocked };
       },
       // Einzelspieler: Spiel sofort beenden (Sieg bzw. Niederlage), z. B. um die Endstatistik zu prüfen
       finish: (victory: boolean) => {

@@ -35,6 +35,15 @@ export class Input {
   onPing: (kind: PingKind, pos: Vec2) => void = () => {};
   /** Ping-Geste: kurz = „Hier!“, halten = Ping-Rad. */
   readonly pingWheel = new PingWheel(document.body);
+  /**
+   * Ego-Sicht (null: Schrägsicht): Blickrichtung für das Laufen relativ zum
+   * Blick, Zielpunkt unter dem Fadenkreuz, Drehen mit der gefangenen Maus.
+   */
+  firstPerson: { yaw: () => number; aim: () => Vec2; look: (dx: number, dy: number) => void } | null = null;
+  /** Ist die Maus in der Ego-Sicht gefangen (Pointer Lock)? */
+  get mouseLocked(): boolean {
+    return document.pointerLockElement === this.renderer.canvas;
+  }
   /** Die Minimap rechnet Bildschirmpunkte über ihr in Orte um (null: Maus nicht über der Minimap). */
   minimapPoint: (x: number, y: number) => Vec2 | null = () => null;
 
@@ -57,7 +66,17 @@ export class Input {
     );
     canvas.addEventListener('pointerdown', (e) => {
       if (this.capture) return;
+      // Ego-Sicht: erster Klick fängt die Maus (Browser erlauben das nur nach einem Klick)
+      if (this.firstPerson && !this.mouseLocked) {
+        canvas.requestPointerLock?.();
+        return;
+      }
       const code = `Mouse${e.button}`;
+      // Ego-Sicht: Rechtsklick = „Hier!“ am Fadenkreuz (kein Ping-Rad mit gefangener Maus)
+      if (this.firstPerson && code === this.bindings.get('ping')) {
+        this.onPing('here', this.firstPerson.aim());
+        return;
+      }
       if (code === this.bindings.get('ping')) this.beginPing(e.clientX, e.clientY);
       else this.pressed.add(code);
     });
@@ -77,6 +96,11 @@ export class Input {
       this.pressed.delete(`Mouse${e.button}`);
     });
     window.addEventListener('pointermove', (e) => {
+      if (this.firstPerson && this.mouseLocked) {
+        // Manche Browser melden direkt nach dem Fangen einen großen Sprung: ignorieren
+        if (Math.abs(e.movementX) < 300 && Math.abs(e.movementY) < 300) this.firstPerson.look(e.movementX, e.movementY);
+        return;
+      }
       this.mouse = { x: e.clientX, y: e.clientY };
       this.pingWheel.move(e.clientX, e.clientY);
     });
@@ -132,6 +156,10 @@ export class Input {
 
   /** Ping-Geste beginnen: Ort auf der Minimap oder am Boden unter der Maus. */
   private beginPing(x: number, y: number): void {
+    if (this.firstPerson) {
+      this.onPing('here', this.firstPerson.aim());
+      return;
+    }
     const world = this.minimapPoint(x, y) ?? this.renderer.pickGround(x, y);
     if (world) this.pingWheel.begin(x, y, world);
   }
@@ -170,9 +198,12 @@ export class Input {
     this.pingWheel.cancel();
   }
 
-  /** Aktueller Eingabezustand. W ist Norden (−y), passend zur festen Kamera. */
+  /**
+   * Aktueller Eingabezustand. Schrägsicht: W ist Norden (−y), passend zur
+   * festen Kamera. Ego-Sicht: W ist vorn (Blickrichtung), A/D seitlich.
+   */
   read(): HeroInput {
-    const move = {
+    let move = {
       x: (this.isDown('right') ? 1 : 0) - (this.isDown('left') ? 1 : 0),
       y: (this.isDown('down') ? 1 : 0) - (this.isDown('up') ? 1 : 0),
     };
@@ -181,8 +212,25 @@ export class Input {
       move.x /= len;
       move.y /= len;
     }
+    if (this.firstPerson) {
+      move = rotateToView(move, this.firstPerson.yaw());
+      this.aim = this.firstPerson.aim();
+      return { move, aim: { ...this.aim }, attack: this.isDown('attack') };
+    }
     // Jedes Mal neu berechnen: Die Kamera läuft mit, auch wenn die Maus stillsteht.
     this.aim = this.renderer.pickGround(this.mouse.x, this.mouse.y) ?? this.aim;
     return { move, aim: { ...this.aim }, attack: this.isDown('attack') };
   }
+}
+
+/**
+ * Ego-Sicht: Tastenrichtung (x rechts, y = −1 vorn) in Weltrichtung drehen.
+ * yaw ist die Blickrichtung in Spielkoordinaten (vorn = (cos, sin)).
+ */
+export function rotateToView(move: Vec2, yaw: number): Vec2 {
+  const forward = -move.y;
+  const right = move.x;
+  const c = Math.cos(yaw);
+  const s = Math.sin(yaw);
+  return { x: forward * c - right * s, y: forward * s + right * c };
 }

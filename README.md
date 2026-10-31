@@ -82,7 +82,7 @@ Beim Entwickeln (`npm run dev`) leitet Vite den Mehrspieler an einen laufenden `
 | Rechtsklick | Ping an alle: kurz = „Hier!“, halten und ziehen = Ping-Rad (oben Angriff, rechts Bin unterwegs, unten Hilfe, links Gefahr). Auch auf der Minimap. Bots folgen den Pings (siehe unten). |
 | Tab (halten) | Anzeigetafel: Kills, Bosse, Assists, Gold und Level aller Helden |
 | M | Ton an/aus |
-| Mausrad | Kamera heran- bzw. herauszoomen |
+| Mausrad | Kamera heran- bzw. herauszoomen. Ganz hinein und weiter: **Ego-Sicht** (Klick fängt die Maus, Maus dreht den Blick, W läuft nach vorn, A/D seitlich, Angriff und Fähigkeiten zielen aufs Fadenkreuz, Rechtsklick pingt „Hier!“). Herausscrollen: zurück |
 | Esc | Pause und Tastenbelegung (alle Tasten frei belegbar); online läuft das Spiel weiter |
 
 Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bogen beim Nahkampf, einen Pfeil beim Fernkampf.
@@ -99,6 +99,8 @@ Alle Geräusche und die Musik entstehen im Browser (Web-Audio, `src/client/audio
 - **Musik:** düsterer Bordun mit Moll-Akkorden; in der Welle mit Trommeln und schneller, bei Bossen dichter.
 
 Geräusche werden mit dem Abstand zum eigenen Helden leiser und links/rechts verteilt. Es laufen höchstens 24 Geräusche gleichzeitig, damit viele Zombies nicht übersteuern.
+
+Der Hintergrund ist bewusst fast still: keine Dauergeräusche, nur ab und zu eine Windböe, Knacken nah am Feuer, Summen nah am Bienenstock, eine Krähe oder ein Zombie in der Nähe. Musik (weiche Akkorde) gibt es nur während der Wellen.
 
 **Einstellungen:** Im Esc-Menü unter „Ton“ gibt es Regler für Gesamt, Effekte, Umgebung, Musik und Oberfläche sowie „Stumm“ (Taste M, frei belegbar). Die Werte bleiben im Browser gespeichert.
 

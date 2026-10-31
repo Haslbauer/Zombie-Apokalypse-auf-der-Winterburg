@@ -78,7 +78,7 @@ export class Hud {
   private bannerTimer = 0;
 
   constructor(
-    root: HTMLElement,
+    private readonly root: HTMLElement,
     private readonly data: GameData,
     private readonly bindings: Keybindings,
   ) {
@@ -453,6 +453,22 @@ export class Hud {
       table.append(tr);
     }
     this.scoreboard.replaceChildren(el('h3', '', `Welle ${state.wave.number} · ${state.kills} Kills`), table);
+  }
+
+  private crosshair: HTMLElement | null = null;
+  private fpState = '';
+  /** Ego-Sicht: Fadenkreuz in der Bildmitte, ohne gefangene Maus mit Hinweis. */
+  setFirstPerson(active: boolean, locked: boolean): void {
+    const key = active ? (locked ? 'locked' : 'free') : '';
+    if (key === this.fpState) return;
+    this.fpState = key;
+    if (!this.crosshair) {
+      this.crosshair = el('div', 'hud-crosshair');
+      this.crosshair.append(el('i', ''), el('span', 'hud-crosshair-hint', 'Klicken zum Umsehen'));
+      this.root.append(this.crosshair);
+    }
+    this.crosshair.style.display = active ? '' : 'none';
+    this.crosshair.classList.toggle('locked', locked);
   }
 
   /** Leistungsanzeige oben rechts: Bildrate, Qualitätsstufe, Ping. */
