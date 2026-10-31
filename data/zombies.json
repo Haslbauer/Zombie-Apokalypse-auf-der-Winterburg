@@ -170,5 +170,30 @@
     },
     "provokeOnly": true,
     "flying": true
+  },
+  {
+    "id": "postbote",
+    "name": "Zombie-Postbote",
+    "hp": 450,
+    "speed": 2.4,
+    "radius": 0.45,
+    "damage": 0,
+    "attackRange": 0,
+    "attackCooldown": 1,
+    "aggroRange": 0,
+    "xp": 60,
+    "gold": 0,
+    "color": "#3a5fa8",
+    "figure": "postman",
+    "rank": "elite",
+    "targets": {
+      "heart": 1
+    },
+    "courier": {
+      "gold": 100,
+      "goldPerWave": 20,
+      "fleeFactor": 1.9,
+      "stay": 75
+    }
   }
 ]

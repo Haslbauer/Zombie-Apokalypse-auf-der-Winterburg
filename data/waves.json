@@ -62,5 +62,11 @@
       "maxSize": 3,
       "sizePerWave": 0.4
     }
-  ]
+  ],
+  "courier": {
+    "type": "postbote",
+    "firstWave": 2,
+    "every": 2,
+    "delay": 20
+  }
 }

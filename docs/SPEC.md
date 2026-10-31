@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.0)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.1)
 
 Stand: 31.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v1.1: Karte um 10 m Gelände erweitert, Zombies kommen von außen durch Tore (West, Süd, Ost), Bunkertür nach Norden. Hornissen ab Welle 1 in wachsenden Schwärmen, mehr Zombies aus Nordwest. Ohne Bienenstock wachsen Beete nicht mehr nach. Sidequest Zombie-Postbote.
 Änderungen v1.0: Items kombinierbar wie in LoL (Grundteile, Aufbau, fertige Items; Bauteile werden verbraucht und angerechnet). Animierte Modelle für alle Helden, Zombies, Ratten und Hornissen.
 Änderungen v0.9: Herz wird Lebensmittelvorrat (kein Selbstheilen, Ernte der Hochbeete füllt ihn auf). Zombies gehen auf Helden und Vorrat, Ratten auf Hochbeete und Bienenstock, neue Hornissen auf den Bienenstock. Neuer Spawnpunkt Nordwest. Elites langsamer mehr, Wellen neu abgestimmt.
 Änderungen v0.8: M5 umgesetzt. Bots in drei Stärken, ausgewogenes Team, Wellen für 4 Helden neu abgestimmt, Pausen 25 s (erste 20 s) mit „Welle starten“ (N).
@@ -179,7 +180,7 @@ Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `
 - **Kriecher** (ab Welle 3): kriecht am Boden, sehr langsam, viel Leben. Sein Treffer hält den Helden 1 s fest.
 - **Wer greift was an:** Zombies (Walker, Runner, Brute, Kriecher, Elites) jagen Helden in der Nähe und laufen sonst zum Lebensmittelvorrat. Den Bienenstock und die Beete lassen sie in Ruhe.
 - **Ratten (Minions):** klein, sehr schnell, wenig Leben und Schaden. Ab Welle 2 kommen Rudel von 5–8 Ratten gemeinsam an einem Spawnpunkt, mit jeder Welle mehr Rudel. Sie fressen die **Hochbeete** an (75 %, jeweils das nächste intakte Beet) oder gehen an den **Bienenstock** (25 %). Helden beißen sie nur, wenn sie gestört werden: Ein Held steht näher als 2 m oder hat sie in den letzten 4 s getroffen.
-- **Hornissen** (ab Welle 3, Schwärme von 4–6): gelb-schwarz, schnell, wenig Leben. Sie fliegen über Hecken, Zäune und das Haus und greifen die Honigkästen des Bienenstocks an. Sie kommen zu 85 % aus dem Spawnpunkt Nordwest. Helden greifen sie wie Ratten nur an, wenn sie gestört werden. Ihr Angriff macht die Bienen wütend.
+- **Hornissen** (ab Welle 1: anfangs ein Schwarm von 2–3, Schwärme wachsen um 0,4 Tiere pro Welle, alle 4 Wellen ein Schwarm mehr): gelb-schwarz, schnell, wenig Leben. Sie fliegen über Hecken, Zäune und das Haus und greifen die Honigkästen des Bienenstocks an. Sie kommen zu 85 % aus dem Spawnpunkt Nordwest. Helden greifen sie wie Ratten nur an, wenn sie gestört werden. Ihr Angriff macht die Bienen wütend.
 - **Elites** alle 5 Wellen (⌊Welle/5⌋ Stück, abwechselnd), mit immer sichtbarem Lebensbalken und Ankündigung:
   - **Rattenkönig:** große Ratte mit Krone, ruft alle 8 s vier Ratten herbei
   - **Schlächter:** großer Zombie mit Schürze und Beil. Holt alle 8 s aus (rote Warnlinie) und stürmt auf einen Helden in bis zu 8 m. Wer getroffen wird, nimmt Schaden, wird zurückgestoßen und 0,75 s betäubt.
@@ -194,9 +195,21 @@ Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `
 - Der **Lebensmittelvorrat** (früher „Herz“) im Innenhof hat einen gut sichtbaren Lebensbalken (5500). Fällt er auf 0, ist das Spiel verloren: „Der Lebensmittelvorrat ist geplündert“.
 - Ein Durchbruch (Zombie erreicht den Vorrat) ist keine sofortige Niederlage. Die Zombies brauchen Zeit zum Plündern, und die Helden können sie wegkämpfen. Ohne Gegenwehr führt der Durchbruch aber zur Niederlage.
 - Der Vorrat regeneriert **nicht** von selbst. Keine Reparatur im Shop.
-- **Ernte:** Nach jeder überstandenen Welle ernten die sechs Hochbeete und füllen den Vorrat auf, jedes Beet 80 bei vollem Leben, angefressene anteilig weniger. Ein zerstörtes Beet bringt nichts und wächst nach 2 Wellen mit vollem Leben nach. Zerstörte Beete sind keine Niederlage.
-- Der **Bienenstock** (1000 Leben) wird von Hornissen und einem Teil der Ratten angegriffen. Normalerweise stechen die Bienen nur Gegner in der Nähe. Sobald der Stock Schaden bekommt, werden sie für einige Sekunden wütend und stechen alle in der Nähe, auch Helden. Ein zerstörter Stock ist keine Niederlage, die Bienen sind dann aber weg.
+- **Ernte:** Nach jeder überstandenen Welle ernten die sechs Hochbeete und füllen den Vorrat auf, jedes Beet 80 bei vollem Leben, angefressene anteilig weniger. Ein zerstörtes Beet bringt nichts und wächst nach 2 Wellen mit vollem Leben nach, aber nur, solange der Bienenstock steht (ohne Bienen keine Bestäubung). Zerstörte Beete sind keine Niederlage.
+- Der **Bienenstock** (1000 Leben) wird von Hornissen und einem Teil der Ratten angegriffen. Normalerweise stechen die Bienen nur Gegner in der Nähe. Sobald der Stock Schaden bekommt, werden sie für einige Sekunden wütend und stechen alle in der Nähe, auch Helden. Ein zerstörter Stock ist keine Niederlage, die Bienen sind dann aber weg und zerstörte Beete wachsen nicht mehr nach.
 - Gefallene Helden respawnen nach einem Timer, der mit der Welle wächst (5 s + 1 s pro Welle), im Innenhof und müssen von dort durch den Durchgang nach draußen.
+
+## 8b. Sidequest: Zombie-Postbote
+
+Wie der Drache in LoL: ein freiwilliges Ziel für Extra-Gold, das die Verteidigung schwächt, solange man ihm nachjagt.
+
+- Erscheint ab Welle 2 in jeder zweiten Welle, 20 s nach Wellenbeginn, an einem zufälligen Punkt seines **Rundwegs** im Gelände außerhalb des Gartens (`courierRoute` in `data/map.json`, Werte in `data/waves.json` und beim Typ `postbote` in `data/zombies.json`).
+- Läuft seine Runde (2,4 m/s), greift nicht an und zählt nicht zur Welle: Die Welle ist auch geschafft, wenn er noch unterwegs ist. Nach 75 s ist er verschwunden („entkommen“).
+- Getroffen rennt er 1,9-mal so schnell weiter und dreht um, wenn das vom Angreifer wegführt. Man muss ihn also stellen oder mit Kontrolle (Schlaf, Betäuben, Festhalten) aufhalten.
+- Leben 450, wächst wie bei Zombies mit der Welle.
+- **Belohnung:** Jeder Held bekommt 100 + 20 × Welle Gold, egal wo er steht.
+- Darstellung: blauer Zombie mit Mütze und Paket, goldener Ring (auch durch Wände sichtbar), Meldungen beim Auftauchen, Erwischen und Entkommen.
+- Bots jagen ihn nur, wenn er zufällig nah an ihnen vorbeiläuft.
 
 ## 9. Gold, Shop und Items
 
@@ -236,17 +249,17 @@ Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
 
 Grundlage ist die Skizze auf dem Lageplan (`assets/reference/karte-skizze.jpg`). Umgesetzt in `data/map.json`, 1 Spieleinheit = 1 Meter, Norden oben.
 
-- Karte ca. 66 x 75 m (echte Maße aus dem Lageplan)
+- Garten ca. 66 x 75 m (echte Maße aus dem Lageplan). Rundherum 10 m **Gelände** (Karte von −10 bis 76 bzw. 85, `minX`/`minY` in `data/map.json`), dahinter Wald als Kulisse. Ein Zaun umschließt den Garten; offen sind nur die **Tore** im Westen (beim Bienenstock), Süden (Heckenlücke) und Osten (Zuwegung).
 - Haus in U-Form (ca. 21 x 24 m) mit Westflügel, Ostflügel und Südblock. Das Haus selbst ist nicht begehbar.
 - **Innenhof = Lebensmittelvorrat der Winterburg.** Dort stehen Kisten, Fässer und Säcke. Der Hof ist nur über einen schmalen Durchgang (ca. 2,7 m) von Süden zwischen Westflügel und Südblock erreichbar: die wichtigste Engstelle.
 - Helden starten im Innenhof und erscheinen dort nach dem Tod wieder.
 - **Bienenstock** nordwestlich vom Haus: Ziel der Hornissen und eines Teils der Ratten (siehe Abschnitt 8)
 - Sechs **Hochbeete** westlich vom Haus: Ziel der Ratten, versorgen den Vorrat mit ihrer Ernte. Sie blockieren das Laufen, nicht aber Schüsse.
 - Zombie-Zugänge:
-  1. **Bunker** unten links im Garten: Zombies kommen aus der Bunkertür (Ostseite)
-  2. **Heckenlücke Süd** in der Mitte der Südhecke
-  3. **Zuwegung Ost:** Die Zombies laufen den Hang hinauf und sind dort langsamer (halbes Tempo), oben auf der Ebene wieder normal schnell
-  4. **Nordwest** (beim Studentenwohnheim): vor allem Hornissen, selten Zombies und Ratten. Liegt nah an Bienenstock und Hochbeeten.
+  1. **Bunker** unten links im Garten, der einzige Spawn im Garten: Zombies kommen aus der Bunkertür (Nordseite)
+  2. **Süd:** im Gelände vor der Heckenlücke, durch das Südtor
+  3. **Ost:** am Ende der Zuwegung; die Zombies laufen den Hang hinauf und sind dort langsamer (halbes Tempo)
+  4. **Nordwest** (beim Studentenwohnheim) im Gelände vor dem Westtor: 85 % der Hornissen (sie fliegen über den Zaun) und ebenso oft Zombies wie Ost. Liegt nah an Bienenstock und Hochbeeten.
 - Hecken im Norden, Osten und Süden, Zäune an der Zuwegung und zum Nachbargrundstück (nordöstlich, nicht begehbar), Bäume als Hindernisse
 - Spawnpunkte haben Gewichte (wie oft dort Zombies erscheinen), alles in `data/map.json`
 - Grafikstil: stilisiert, Low-Poly (siehe Abschnitt 3)

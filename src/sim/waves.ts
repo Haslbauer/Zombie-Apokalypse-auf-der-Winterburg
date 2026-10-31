@@ -2,7 +2,7 @@ import type { SimContext } from './context';
 import { resolveObstacles } from './grid';
 import { nextRandom, shuffle } from './rng';
 import { emptyStatus } from './status';
-import { awardWaveBonus } from './economy';
+import { awardWaveBonus, courierGold } from './economy';
 import { harvest, objectivesFor } from './objectives';
 import { DT, type SpawnPoint, type WaveConfig, type Zombie, type ZombieDef } from './types';
 import type { Vec2 } from './vec';
@@ -97,17 +97,24 @@ export function updateWaves(ctx: SimContext): void {
       w.spawnTimer = 0;
       w.breached = false;
       w.queue = waveQueue(state, w.number, cfg);
+      const c = cfg.courier;
+      w.courierAt = c && w.number >= c.firstWave && (w.number - c.firstWave) % c.every === 0 ? state.time + c.delay : null;
       state.events.push({ type: 'waveStart', number: w.number });
     }
     return;
   }
 
+  if (w.courierAt != null && state.time >= w.courierAt) {
+    w.courierAt = null;
+    spawnCourier(ctx);
+  }
   w.spawnTimer -= DT;
   while (w.spawnTimer <= 0 && w.queue.length > 0) {
     spawnEntry(ctx, w.queue.shift()!);
     w.spawnTimer += cfg.spawnInterval;
   }
-  if (w.queue.length === 0 && state.zombies.length === 0) {
+  // Der Postbote zählt nicht zur Welle
+  if (w.queue.length === 0 && state.zombies.every((z) => z.courier)) {
     state.events.push({ type: 'waveCleared', number: w.number });
     awardWaveBonus(ctx, w.number);
     harvest(ctx);
@@ -136,6 +143,19 @@ function spawnEntry(ctx: SimContext, entry: string): void {
     const z = spawnZombieAt(ctx, def, pos);
     if (kind === 'elite') state.events.push({ type: 'elite', zombieId: z.id, defId: def.id });
   }
+}
+
+/** Sidequest: Postbote an einem zufälligen Punkt seines Rundwegs. */
+export function spawnCourier(ctx: SimContext): Zombie | null {
+  const { state, data } = ctx;
+  const route = data.arena.courierRoute ?? [];
+  const def = data.waves.courier ? ctx.zombieDefs.get(data.waves.courier.type) : undefined;
+  if (!def?.courier || route.length < 2) return null;
+  const wp = Math.floor(nextRandom(state) * route.length);
+  const z = spawnZombieAt(ctx, def, { ...route[wp] }, 'none');
+  z.courier = { wp: (wp + 1) % route.length, dir: 1, leaveAt: state.time + def.courier.stay };
+  state.events.push({ type: 'courier', zombieId: z.id, phase: 'arrive', gold: courierGold(ctx, def) });
+  return z;
 }
 
 /** Zombie an einer Stelle erscheinen lassen, Leben und Schaden nach der aktuellen Welle. */

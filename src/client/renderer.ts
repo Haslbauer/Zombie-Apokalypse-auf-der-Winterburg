@@ -141,6 +141,7 @@ export class GameRenderer {
       const def = this.data.zombies.find((d) => d.id === z.defId)!;
       const view = upsert(z, () => zombieView(z, def, this.models));
       view.showStatus(z, state.time, z.hp / z.maxHp < revealBelow);
+      if (z.courier) view.markCourier();
       const p = prev.get(z.id);
       const speed = p ? Math.hypot(z.pos.x - p.x, z.pos.y - p.y) / DT : 0;
       view.animate(dt, speed, state.time < z.st.sleepUntil || state.time < z.st.stunUntil || state.gameOver);

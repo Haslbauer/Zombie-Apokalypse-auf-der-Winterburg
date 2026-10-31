@@ -1,16 +1,29 @@
 import type { SimContext } from './context';
 import { buildPlan, itemDef, refreshMaxHp } from './items';
 import { addBuff, hasBuff } from './status';
-import type { Hero, Zombie } from './types';
+import type { Hero, Zombie, ZombieDef } from './types';
 import { dist } from './vec';
 
 /** Kill-Gold: jeder lebende Held im Umkreis bekommt den vollen Betrag (Koop, kein Last-Hit). */
 export function awardGold(ctx: SimContext, z: Zombie): void {
   const def = ctx.zombieDefs.get(z.defId);
+  if (def?.courier) {
+    // Sidequest: Das Paket bringt allen Helden Gold, egal wo sie stehen
+    const gold = courierGold(ctx, def);
+    for (const h of ctx.state.heroes) giveGold(ctx, h, gold, h.alive ? z.pos : undefined);
+    ctx.state.events.push({ type: 'courier', zombieId: z.id, phase: 'caught', gold });
+    return;
+  }
   if (!def || def.gold <= 0) return;
   for (const h of ctx.state.heroes) {
     if (h.alive && dist(h.pos, z.pos) <= ctx.data.economy.goldShareRange) giveGold(ctx, h, def.gold, z.pos);
   }
+}
+
+/** Gold, das jeder Held für den Postboten (Sidequest) bekommt. */
+export function courierGold(ctx: SimContext, def: ZombieDef): number {
+  const c = def.courier!;
+  return c.gold + c.goldPerWave * ctx.state.wave.number;
 }
 
 /** Bonus für eine überstandene Welle an alle Helden. */

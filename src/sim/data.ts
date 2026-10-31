@@ -145,6 +145,14 @@ export function parseGameData(raw: {
     for (const k of ['fromWave', 'packsPerWave', 'minSize', 'maxSize']) num(p, k, `waves.packs[${i}]`);
     if (p?.sizePerWave !== undefined) num(p, 'sizePerWave', `waves.packs[${i}]`);
   }
+  if (w?.courier !== undefined) {
+    for (const k of ['firstWave', 'every', 'delay']) num(w.courier, k, 'waves.courier', k === 'delay' ? 0 : 1);
+    const def = (Array.isArray(raw.zombies) ? raw.zombies : []).find((z: any) => z?.id === w.courier.type);
+    if (!def?.courier) errors.push('waves.courier.type: Zombie-Typ mit courier-Werten erwartet');
+    else for (const k of ['gold', 'goldPerWave', 'fleeFactor', 'stay']) num(def.courier, k, `zombies.${def.id}.courier`);
+    if (!Array.isArray(a?.courierRoute) || a.courierRoute.length < 2) errors.push('arena.courierRoute: mindestens 2 Wegpunkte erwartet');
+    else a.courierRoute.forEach((p: any, i: number) => pos(p, `arena.courierRoute[${i}]`));
+  }
   pos(a?.heroStart, 'arena.heroStart');
   (Array.isArray(a?.obstacles) ? a.obstacles : []).forEach((o: any, i: number) => {
     const p = `arena.obstacles[${i}]`;

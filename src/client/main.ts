@@ -111,7 +111,7 @@ function startGame(defId: string | null, bots: string[], diff: BotDifficulty): v
   renderer.cam.lookAt(hero.pos.x, hero.pos.y);
   if (overview || !defId) {
     renderer.scene.fog = null;
-    renderer.cam.overview(gameData.arena.width / 2 + (gameData.arena.minX ?? 0) / 2, gameData.arena.height / 2 + (gameData.arena.minY ?? 0) / 2 + 6, 110);
+    renderer.cam.overview(gameData.arena.width / 2 + (gameData.arena.minX ?? 0) / 2, gameData.arena.height / 2 + (gameData.arena.minY ?? 0) / 2 + 8, 135);
   }
   hud.message('Mach dich bereit!');
 }
@@ -255,6 +255,11 @@ function handleEvents(state: GameState): void {
         effects.line(e.from, e.to, 1.6, 0xff3b30, Number(def?.special?.windup ?? 0.6));
         break;
       }
+      case 'courier':
+        if (e.phase === 'arrive') hud.message(`Zombie-Postbote im Gelände! Fang ihn: ${e.gold} Gold für alle`);
+        else if (e.phase === 'caught') hud.message(`Paket erbeutet: +${e.gold} Gold für alle!`);
+        else hud.message('Der Postbote ist entkommen');
+        break;
       case 'levelUp':
         if (e.heroId === heroId) {
           const h = state.heroes.find((x) => x.id === heroId);

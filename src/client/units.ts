@@ -29,7 +29,7 @@ function iconMaterial(text: string, color: string): THREE.SpriteMaterial {
   return material;
 }
 
-type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown';
+type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap';
 
 /**
  * Aussehen einer animierten Figur (public/models/<model>.glb). move: Lauf-Clip,
@@ -63,6 +63,7 @@ const ZOMBIE_LOOKS: Record<string, ModelLook> = {
   crawler: { model: 'zombie', move: 'crawl', moveFast: 'crawlFast', fastAbove: 1.2, refSpeed: 0.8, scale: 1, tint: [1.9, 2.2, 1.7], attacks: ['bite', 'bite3'] },
   brute: { model: 'zombie', move: 'walk', idle: 'idle', refSpeed: 1.6, scale: 1.35, tint: [1.6, 1.9, 1.4], attacks: ['attack'] },
   butcher: { model: 'zombie', move: 'walk', idle: 'idle', refSpeed: 1.7, scale: 1.5, tint: [2.6, 1.3, 1.2], attacks: ['attack'], props: ['cleaver'] },
+  postman: { model: 'zombie', move: 'walk', moveFast: 'run', fastAbove: 3, idle: 'idle', refSpeed: 2.4, scale: 1, tint: [1.3, 1.7, 3.2], attacks: ['attack'], props: ['parcel', 'cap'] },
   rat: { model: 'rat', move: 'run', idle: 'idle', refSpeed: 5, scale: 1.2, tint: [1.8, 1.7, 1.6], attacks: ['attack', 'attack2'] },
   ratking: { model: 'rat', move: 'walk', idle: 'idle', refSpeed: 1.2, scale: 2.6, tint: [1.4, 1.1, 0.8], attacks: ['attack', 'attack2'], props: ['crown'], headBone: 'Head' },
   hornet: { model: 'wasp', move: 'fly', idle: 'fly', refSpeed: 4.5, scale: 1.6, tint: [1, 1, 1], attacks: ['attack'], lift: 0.9 },
@@ -237,7 +238,7 @@ export class UnitView {
     // Requisiten in Metern: Maßstab des Knochens herausrechnen (Mixamo und Quaternius unterscheiden sich)
     inst.root.updateMatrixWorld(true);
     for (const prop of look.props ?? []) {
-      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown';
+      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap';
       const bone = inst.root.getObjectByName(head ? (look.headBone ?? 'mixamorigHead') : 'mixamorigRightHand');
       if (!bone) continue;
       const mesh = this.propMesh(prop);
@@ -281,6 +282,14 @@ export class UnitView {
       case 'tricorn':
         add(new THREE.CylinderGeometry(0.17, 0.17, 0.03, 3), 0x1f1a16, 0, 0.17, 0.02);
         add(new THREE.CylinderGeometry(0.09, 0.11, 0.1, 10), 0x1f1a16, 0, 0.22, 0.02);
+        break;
+      case 'parcel':
+        add(new THREE.BoxGeometry(0.3, 0.22, 0.3), 0xb08850, 0, 0.12, 0.1);
+        add(new THREE.BoxGeometry(0.31, 0.04, 0.05), 0xe8d8a8, 0, 0.12, 0.1);
+        break;
+      case 'cap':
+        add(new THREE.CylinderGeometry(0.12, 0.12, 0.08, 12), 0x1f3f7a, 0, 0.18, 0.01);
+        add(new THREE.BoxGeometry(0.14, 0.02, 0.1), 0x1f3f7a, 0, 0.15, 0.11);
         break;
       case 'crown':
         // Der Kopfknochen der Ratte zeigt zur Schnauze: Krone hinter die Ohren, aufgerichtet
@@ -553,6 +562,15 @@ export class UnitView {
     // Schlafende leicht bläulich, Festgehaltene rötlich
     const tint = time < st.sleepUntil ? 0x9fc9ff : time < st.rootUntil ? 0xff8a80 : null;
     if (tint !== null) this.materials.forEach((m) => m.color.lerp(new THREE.Color(tint), 0.35));
+  }
+
+  /** Postbote (Sidequest): goldener Ring, auch durch Wände sichtbar. */
+  markCourier(): void {
+    this.ring.visible = true;
+    const mat = this.ring.material as THREE.MeshBasicMaterial;
+    mat.color.set(0xffd166);
+    mat.depthTest = false;
+    this.ring.renderOrder = 5;
   }
 
   /** Held: Schildblase, Unsichtbarkeit, festgehalten oder betäubt. */

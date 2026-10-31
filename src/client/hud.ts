@@ -428,7 +428,7 @@ export class Hud {
     this.waveInfo.textContent =
       w.phase === 'pause'
         ? `Nächste Welle in ${Math.ceil(w.timer)} s`
-        : `Zombies übrig: ${w.queue.length + state.zombies.length}`;
+        : `Zombies übrig: ${w.queue.length + state.zombies.filter((z) => !z.courier).length}`;
     this.startWaveBtn.textContent = `Jetzt starten (${keyName(this.bindings.get('startWave'))})`;
     this.startWaveBtn.style.display = w.phase === 'pause' && !state.gameOver ? '' : 'none';
     for (const t of state.heroes) {

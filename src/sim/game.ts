@@ -88,6 +88,7 @@ export class Simulation implements SimContext {
         queue: [],
         spawnTimer: 0,
         breached: false,
+        courierAt: null,
       },
       kills: 0,
       gameOver: false,

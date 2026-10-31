@@ -42,6 +42,10 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null): 
       continue;
     }
     if (def.special && updateElite(ctx, z, def, heroes)) continue;
+    if (z.courier) {
+      if (!rooted) updateCourier(ctx, z, speed, def.courier?.fleeFactor ?? 1);
+      continue;
+    }
 
     const hero = chaseTarget(ctx, z, heroes, blind ? BLIND_SIGHT : def.aggroRange, def.provokeOnly ?? false);
     if (hero) {
@@ -82,6 +86,39 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null): 
       else moveTo(ctx, z, obj.pos, ctx.objectiveFields.get(found.key) ?? null, speed * DT);
     }
   }
+}
+
+/**
+ * Postbote: läuft seinen Rundweg ab. Getroffen rennt er schneller und dreht
+ * so, dass er vom Angreifer wegläuft. Nach seiner Zeit ist er verschwunden.
+ */
+function updateCourier(ctx: SimContext, z: Zombie, speed: number, fleeFactor: number): void {
+  const { state } = ctx;
+  const c = z.courier!;
+  const route = ctx.data.arena.courierRoute ?? [];
+  if (state.time >= c.leaveAt || route.length < 2) {
+    z.hp = 0;
+    state.events.push({ type: 'courier', zombieId: z.id, phase: 'escaped' });
+    return;
+  }
+  const fleeing = state.time < z.st.provokedUntil;
+  if (fleeing) {
+    const attacker = state.heroes.find((h) => h.id === z.st.provokedBy);
+    if (attacker) {
+      // Richtung wählen, deren Wegpunkt weiter vom Angreifer weg liegt
+      const n = route.length;
+      const ahead = route[c.wp];
+      const back = route[(c.wp - c.dir + 2 * n) % n];
+      const turn = dist(back, attacker.pos) > dist(ahead, attacker.pos) + 2;
+      if (turn) {
+        c.dir = -c.dir;
+        c.wp = (c.wp + c.dir + n) % n;
+      }
+    }
+  }
+  const target = route[c.wp];
+  if (dist(z.pos, target) < 0.8) c.wp = (c.wp + c.dir + route.length) % route.length;
+  stepToward(z, target, speed * (fleeing ? fleeFactor : 1) * DT);
 }
 
 /** Vom Auslöser der Angst weglaufen. */

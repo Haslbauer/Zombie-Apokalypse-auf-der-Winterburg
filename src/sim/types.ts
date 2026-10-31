@@ -116,6 +116,12 @@ export interface ZombieDef {
   provokeOnly?: boolean;
   /** Fliegt über Hindernisse (Hornissen). */
   flying?: boolean;
+  /**
+   * Sidequest (Zombie-Postbote): läuft die Route im Gelände ab, greift nicht an
+   * und zählt nicht zur Welle. Getroffen rennt er fleeFactor-mal so schnell;
+   * nach stay Sekunden ist er weg. Wer ihn erwischt: Gold für alle Helden.
+   */
+  courier?: { gold: number; goldPerWave: number; fleeFactor: number; stay: number };
   /** Elite-Fähigkeit mit ihren Werten. */
   special?: { kind: 'summon' | 'charge'; interval: number; [key: string]: number | string };
 }
@@ -188,6 +194,8 @@ export interface WaveConfig {
   packs?: { type: string; fromWave: number; packsPerWave: number; minSize: number; maxSize: number; sizePerWave?: number }[];
   /** Elites: alle `every` Wellen, Anzahl ⌈Welle/countEvery⌉ (Standard: ⌊Welle/every⌋), Typen abwechselnd. */
   elites?: { every: number; countEvery?: number; types: string[] };
+  /** Sidequest: Typ mit courier-Werten, erscheint ab firstWave alle every Wellen, delay Sekunden nach Wellenbeginn. */
+  courier?: { type: string; firstWave: number; every: number; delay: number };
 }
 
 /** Aussehen eines Hindernisses (nur für die Darstellung). */
@@ -277,6 +285,8 @@ export interface ArenaDef {
   respawn: { base: number; perWave: number };
   /** Posten, die Bots verteidigen (der Reihe nach vergeben). */
   botPosts?: Vec2[];
+  /** Rundweg des Postboten im Gelände (geschlossene Schleife). */
+  courierRoute?: Vec2[];
 }
 
 export type BotDifficulty = 'leicht' | 'mittel' | 'schwer';
@@ -476,6 +486,8 @@ export interface Zombie extends Unit {
   specialTimer?: number;
   /** Schlächter: laufender Anlauf. */
   charge?: { dir: Vec2; remaining: number; hitIds: number[]; windup: number } | null;
+  /** Postbote: nächster Wegpunkt, Laufrichtung (+1/−1) und wann er verschwindet. */
+  courier?: { wp: number; dir: number; leaveAt: number };
 }
 
 /** Fläche mit Wirkung über Zeit (Dornen, Rauch, Hecke, Block). */
@@ -564,6 +576,8 @@ export interface WaveState {
   spawnTimer: number;
   /** Ist in dieser Welle schon ein Zombie zum Herz durchgebrochen? */
   breached: boolean;
+  /** Spielzeit, zu der in dieser Welle der Postbote erscheint (null: keiner). */
+  courierAt?: number | null;
 }
 
 export type GameEvent =
@@ -586,6 +600,7 @@ export type GameEvent =
   | { type: 'shop'; heroId: number; action: 'buy' | 'sell' | 'use'; itemId: string }
   | { type: 'shopDenied'; heroId: number; reason: string }
   | { type: 'elite'; zombieId: number; defId: string }
+  | { type: 'courier'; zombieId: number; phase: 'arrive' | 'caught' | 'escaped'; gold?: number }
   | { type: 'charge'; zombieId: number; from: Vec2; to: Vec2 }
   | { type: 'heroStatus'; heroId: number; status: 'rooted' | 'stunned' }
   | { type: 'cast'; heroId: number; slot: number; pos: Vec2 }
