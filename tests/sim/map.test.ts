@@ -26,11 +26,15 @@ describe('Karte Winterburg', () => {
     expect(sim.objectiveFields.get('bed')![sim.grid.cellOf(arena.spawnPoints[3])]).toBeLessThan(Infinity);
   });
 
-  it('der Innenhof ist nur über den Durchgang im Südwesten erreichbar', () => {
-    // Durchgang zwischen Westflügel (x bis 30) und Südblock (ab x 32,7) zumauern.
+  it('der Innenhof ist nur über den Durchgang im Südwesten und den Nordeingang erreichbar', () => {
+    // Durchgang zwischen Westflügel (x bis 30) und Südblock (ab x 32,7) und den Nordeingang (x 38,5–40,5) zumauern.
     const walled = {
       ...sim.arena,
-      obstacles: [...sim.arena.obstacles, { kind: 'rect' as const, x: 31.35, y: 31, w: 2.7, h: 1 }],
+      obstacles: [
+        ...sim.arena.obstacles,
+        { kind: 'rect' as const, x: 31.35, y: 31, w: 2.7, h: 1 },
+        { kind: 'rect' as const, x: 39.5, y: 10.5, w: 2, h: 1 },
+      ],
     };
     const grid = new Grid(walled);
     const field = grid.distanceFieldToShapes([{ kind: 'circle', x: arena.objectives[0].x, y: arena.objectives[0].y, r: arena.objectives[0].radius }], 0.9);
@@ -101,7 +105,7 @@ describe('Karte Winterburg', () => {
   });
 });
 
-describe('Rattenloch in der Hofmauer', () => {
+describe('Nordeingang zum Innenhof', () => {
   function sim() {
     const s = makeSim('rotschopf', 1, testData(noWaves));
     s.state.wave.phase = 'wave';
@@ -110,34 +114,26 @@ describe('Rattenloch in der Hofmauer', () => {
     s.state.heroes[0].pos = { x: 10, y: 70 }; // weit weg
     return s;
   }
-  const inHole = (p: { x: number; y: number }) => Math.abs(p.x - 39.25) < 0.7 && p.y > 9.9 && p.y < 11.1;
+  const inGate = (p: { x: number; y: number }) => Math.abs(p.x - 39.5) < 1.1 && p.y > 9.8 && p.y < 11.2;
 
-  it('Ratten laufen durch das Loch zum Vorrat', () => {
+  it('Zombies laufen von Norden durch den Eingang zum Vorrat', () => {
     const s = sim();
-    const rat = placeZombie(s, "ratte", 39.25, 6);
-    rat.objectiveId = 'heart';
+    const walker = placeZombie(s, 'walker', 39.5, 6);
+    walker.objectiveId = 'heart';
     let through = false;
-    for (let i = 0; i < 20 * 6; i++) {
+    for (let i = 0; i < 20 * 10; i++) {
       s.step();
-      if (inHole(rat.pos)) through = true;
+      if (inGate(walker.pos)) through = true;
     }
     expect(through).toBe(true);
-    expect(rat.pos.y).toBeGreaterThan(12);
-    expect(dist(rat.pos, { x: 37.5, y: 19.5 })).toBeLessThan(2.5);
+    expect(dist(walker.pos, { x: 37.5, y: 19.5 })).toBeLessThan(3);
   });
 
-  it('Walker und Helden kommen nicht durch', () => {
+  it('Helden gehen durch den Eingang hinaus nach Norden', () => {
     const s = sim();
-    const walker = placeZombie(s, 'walker', 39, 7);
-    walker.objectiveId = 'heart';
-    const runner = placeZombie(s, 'runner', 39.5, 7);
-    runner.objectiveId = 'heart';
     const h = s.state.heroes[0];
-    h.pos = { x: 39, y: 8.5 };
-    for (let i = 0; i < 20 * 8; i++) {
-      s.step([input(s, { x: 0, y: 1 }, { x: 39, y: 20 })]);
-      expect(inHole(walker.pos) || inHole(runner.pos) || inHole(h.pos)).toBe(false);
-    }
-    expect(h.pos.y).toBeLessThan(10);
+    h.pos = { x: 39.5, y: 13 };
+    for (let i = 0; i < 20 * 3; i++) s.step([input(s, { x: 0, y: -1 }, { x: 39.5, y: 0 })]);
+    expect(h.pos.y).toBeLessThan(9);
   });
 });
