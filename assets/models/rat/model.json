@@ -1,0 +1,26 @@
+{
+  "base": "rat.fbx",
+  "clips": {
+    "walk": {
+      "clip": "Rat_Walk"
+    },
+    "run": {
+      "clip": "Rat_Run"
+    },
+    "idle": {
+      "clip": "Rat_Idle"
+    },
+    "attack": {
+      "clip": "Rat_Attack"
+    },
+    "attack2": {
+      "clip": "Rat_Jump"
+    },
+    "death": {
+      "clip": "Rat_Death"
+    }
+  },
+  "textureSize": 512,
+  "simplifyRatio": 1,
+  "output": "public/models/rat.glb"
+}

@@ -24,29 +24,39 @@ const names = process.argv.slice(2).length
   ? process.argv.slice(2)
   : readdirSync(modelsDir).filter((d) => statSync(join(modelsDir, d)).isDirectory() && existsSync(join(modelsDir, d, 'model.json')));
 
-const TYPES = { '.js': 'text/javascript', '.fbx': 'application/octet-stream', '.html': 'text/html' };
+const TYPES = { '.js': 'text/javascript', '.html': 'text/html', '.gltf': 'model/gltf+json' };
 
 /** Läuft im Browser: FBX laden, Clips anhängen, Root-Motion entfernen, Textur verkleinern, GLB exportieren. */
 const BROWSER_CODE = `
 import * as THREE from 'three';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 
 window.convert = async (cfg) => {
-  const loader = new FBXLoader();
   const cache = new Map();
+  const loadFile = async (file) => {
+    if (file.endsWith('.fbx')) return new FBXLoader().loadAsync('/files/' + file);
+    const gltf = await new GLTFLoader().loadAsync('/files/' + file);
+    gltf.scene.animations = gltf.animations;
+    return gltf.scene;
+  };
   const load = async (file) => {
-    if (!cache.has(file)) cache.set(file, await loader.loadAsync('/files/' + file));
+    if (!cache.has(file)) cache.set(file, await loadFile(file));
     return cache.get(file);
   };
-  const base = await load(cfg.base);
   const clips = [];
   const entries = Object.entries(cfg.clips);
   if (cfg.idleFrom) entries.push(['idle', { file: cfg.idleFrom, firstFrame: true }]);
+  const base = await load(cfg.base);
   for (const [name, c] of entries) {
-    const obj = await load(c.file);
-    if (!obj.animations.length) throw new Error('Keine Animation in ' + c.file);
-    let clip = obj.animations[0].clone();
+    const file = c.file ?? cfg.base;
+    const obj = await load(file);
+    if (!obj.animations.length) throw new Error('Keine Animation in ' + file);
+    // Dateien mit mehreren Animationen: Clip über den Namen wählen ("Armature|Run" passt zu "Run")
+    const src = c.clip ? obj.animations.find((a) => a.name === c.clip || a.name.endsWith('|' + c.clip)) : obj.animations[0];
+    if (!src) throw new Error('Clip ' + c.clip + ' fehlt in ' + file + ': ' + obj.animations.map((a) => a.name).join(', '));
+    let clip = src.clone();
     // Stand-Pose: nur das erste Bild der Animation
     if (c.firstFrame) clip = THREE.AnimationUtils.subclip(clip, 'idle', 0, 1, 30);
     clip.name = name;
@@ -103,7 +113,7 @@ try {
     const rel = (f) => relative(modelsDir, join(dir, f)).split('\\').join('/');
     cfg.base = rel(cfg.base);
     if (cfg.idleFrom) cfg.idleFrom = rel(cfg.idleFrom);
-    for (const c of Object.values(cfg.clips)) c.file = rel(c.file);
+    for (const c of Object.values(cfg.clips)) if (c.file) c.file = rel(c.file);
     await page.route('http://models.local/**', async (route) => {
       const path = decodeURIComponent(new URL(route.request().url()).pathname);
       let file = null;
@@ -122,10 +132,12 @@ try {
     const io = new NodeIO();
     const doc = await io.readBinary(Buffer.from(res.glb, 'base64'));
     await MeshoptSimplifier.ready;
+    // simplifyRatio 1: Netz unverändert lassen (Low-Poly-Modelle)
+    const ratio = cfg.simplifyRatio ?? 0.5;
     await doc.transform(
       dedup(),
       weld(),
-      simplify({ simplifier: MeshoptSimplifier, ratio: cfg.simplifyRatio ?? 0.5, error: 0.002 }),
+      ...(ratio < 1 ? [simplify({ simplifier: MeshoptSimplifier, ratio, error: 0.002 })] : []),
       resample(),
       prune(),
     );

@@ -1,0 +1,38 @@
+{
+  "base": "german-shepherd.gltf",
+  "clips": {
+    "run": {
+      "clip": "Run"
+    },
+    "walk": {
+      "clip": "Walk"
+    },
+    "idle": {
+      "clip": "Idle"
+    },
+    "attack": {
+      "clip": "Attack"
+    },
+    "ability1": {
+      "clip": "Run_Jump"
+    },
+    "ability2": {
+      "clip": "Idle_2_HeadLow"
+    },
+    "ability3": {
+      "clip": "Idle_2"
+    },
+    "ability4": {
+      "clip": "Attack"
+    },
+    "use": {
+      "clip": "Eating"
+    },
+    "death": {
+      "clip": "Death"
+    }
+  },
+  "textureSize": 512,
+  "simplifyRatio": 1,
+  "output": "public/models/chupa.glb"
+}

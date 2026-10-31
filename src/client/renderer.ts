@@ -30,10 +30,8 @@ export class GameRenderer {
   private readonly raycaster = new THREE.Raycaster();
   private readonly groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   private aimIndicator: THREE.Mesh | null = null;
-  /** Animiertes Zombie-Modell; bis es geladen ist, erscheinen die einfachen Figuren. */
-  zombieModel: RiggedModel | null = null;
-  /** Animierte Heldenmodelle nach Helden-ID (fehlende: einfache Figur). */
-  readonly heroModels = new Map<string, RiggedModel>();
+  /** Animierte Modelle nach Name (public/models/<name>.glb); fehlende: einfache Figur. */
+  readonly models = new Map<string, RiggedModel>();
   /** Gestorbene Zombies: Leiche bleibt liegen und versinkt (Restzeit in s). */
   private readonly corpses = new Map<UnitView, number>();
   /** Held des Spielers (grüner Ring); Bots bekommen einen blauen Ring. null = nur Bots. */
@@ -119,15 +117,21 @@ export class GameRenderer {
       if (!h.alive && !this.units.get(h.id)?.isAnimated) continue;
       const def = this.data.heroes.find((d) => d.id === h.defId)!;
       const lift = h.dash ? Math.sin((h.dash.elapsed / h.dash.duration) * Math.PI) * h.dash.height : 0;
-      const view = upsert(h, () => heroView(h, def, h.id === this.playerId, this.heroModels.get(def.id)), lift);
+      const view = upsert(h, () => heroView(h, def, h.id === this.playerId, this.models), lift);
       const p = prev.get(h.id);
       const speed = p && h.alive ? Math.hypot(h.pos.x - p.x, h.pos.y - p.y) / DT : 0;
       if (!h.alive) {
+        // Menschen liegen (down), Chupa spielt seine Sterbe-Animation und bleibt liegen
+        if (view.hasClip('down')) view.animate(dt, 0, false, 'down');
+        else {
+          view.die();
+          view.animate(dt, 0, false);
+        }
         view.bar.visible = false;
         view.ring.visible = false;
-        view.animate(dt, 0, false, 'down');
         continue;
       }
+      view.revive();
       view.ring.visible = true;
       view.showHero(h, shieldAmount(h), hasBuff(h, 'invisible'));
       const hold = h.channel?.tag === 'nap' ? 'ability3' : undefined;
@@ -135,7 +139,7 @@ export class GameRenderer {
     }
     for (const z of state.zombies) {
       const def = this.data.zombies.find((d) => d.id === z.defId)!;
-      const view = upsert(z, () => zombieView(z, def, this.zombieModel));
+      const view = upsert(z, () => zombieView(z, def, this.models));
       view.showStatus(z, state.time, z.hp / z.maxHp < revealBelow);
       const p = prev.get(z.id);
       const speed = p ? Math.hypot(z.pos.x - p.x, z.pos.y - p.y) / DT : 0;

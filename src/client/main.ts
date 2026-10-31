@@ -343,14 +343,22 @@ renderer.renderer.setAnimationLoop((now) => {
   renderer.render();
 });
 
-// Animierte Modelle laden; bis dahin (oder bei einem Fehler) bleiben die einfachen Figuren.
-loadRiggedModel('models/zombie.glb')
-  .then((m) => (renderer.zombieModel = m))
-  .catch((err) => console.warn('Zombie-Modell nicht geladen:', err));
-for (const id of ['rotschopf', 'schlaeferin', 'libero', 'pirat', 'gaertnerin']) {
-  loadRiggedModel(`models/${id}.glb`, 1.8)
-    .then((m) => renderer.heroModels.set(id, m))
-    .catch((err) => console.warn(`Modell ${id} nicht geladen:`, err));
+// Animierte Modelle laden (Name → Höhe in Metern); bis dahin (oder bei einem Fehler) bleiben die einfachen Figuren.
+const MODELS: Record<string, number> = {
+  zombie: 1.75,
+  rotschopf: 1.8,
+  schlaeferin: 1.8,
+  libero: 1.8,
+  pirat: 1.8,
+  gaertnerin: 1.8,
+  chupa: 0.95,
+  rat: 0.3,
+  wasp: 0.35,
+};
+for (const [name, height] of Object.entries(MODELS)) {
+  loadRiggedModel(`models/${name}.glb`, height)
+    .then((m) => renderer.models.set(name, m))
+    .catch((err) => console.warn(`Modell ${name} nicht geladen:`, err));
 }
 
 input.onStartWave = () => pending.push({ heroId, type: 'startWave' });

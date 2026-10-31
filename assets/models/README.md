@@ -1,6 +1,8 @@
 # 3D-Modelle
 
-Quelle: [Mixamo](https://www.mixamo.com) (Adobe). Figuren und Animationen von Mixamo dürfen laut Adobe lizenzfrei in eigenen Projekten und Spielen verwendet werden (nicht als Rohdateien weiterverkauft).
+Quellen:
+- [Mixamo](https://www.mixamo.com) (Adobe): Zombie und die fünf Menschen-Helden. Figuren und Animationen von Mixamo dürfen laut Adobe lizenzfrei in eigenen Projekten und Spielen verwendet werden (nicht als Rohdateien weiterverkauft).
+- [Quaternius](https://quaternius.com), Lizenz CC0 (gemeinfrei): Schäferhund (`chupa`, aus dem Zombie Apocalypse Kit), Ratte (`rat`) und Wespe (`wasp`, aus den Animated Animals).
 
 ## Aufbau
 
@@ -17,7 +19,7 @@ assets/models/<name>/
 
 Voraussetzung lokal: `npx playwright install chromium`.
 
-Ein Clip kann mehrfach dieselbe Datei nutzen. `idleFrom` erzeugt den Clip `idle` aus dem ersten Bild einer Datei. Pfade wie `../shared/pill.fbx` verweisen auf gemeinsame Animationen.
+Neben FBX gehen auch glTF-Dateien. Enthält eine Datei mehrere Animationen (Quaternius), wählt `"clip": "Run"` eine davon aus; ohne `file` gilt die Figur-Datei (`base`). `simplifyRatio: 1` lässt Low-Poly-Netze unverändert. Ein Clip kann mehrfach dieselbe Datei nutzen. `idleFrom` erzeugt den Clip `idle` aus dem ersten Bild einer Datei. Pfade wie `../shared/pill.fbx` verweisen auf gemeinsame Animationen.
 
 ## zombie
 
@@ -46,7 +48,13 @@ Alle fünf Menschen-Helden haben einen eigenen Ordner, damit jeder später eine 
 
 Die Helden tragen noch Mixamos Mocap-Anzug. Das Spiel ersetzt die Textur durch die Heldenfarbe (`paint` in `HERO_LOOKS`, `src/client/units.ts`) und hängt Requisiten an Hand und Kopf (Hammer, Stab, Enterhaken, Schleuder, Hüte). Für eine eigene Figur in Mixamo die Figur wählen, dieselben Animationen „With Skin“ laden, die FBX im Ordner ersetzen, `paint` entfernen, `npm run models`.
 
-Chupa bleibt vorerst die einfache Hundefigur (Mixamo hat keine Vierbeiner).
+## chupa, rat, wasp (Quaternius)
+
+| Modell | Clips | Verwendung |
+|---|---|---|
+| chupa (german-shepherd.gltf) | run, walk, idle, attack, ability1 Run_Jump, ability2 Idle_2_HeadLow, ability3 Idle_2, ability4 Attack, use Eating, death | Chupa; stirbt mit `death` und bleibt bis zum Respawn liegen |
+| rat (rat.fbx) | run, walk, idle, attack, attack2 (Sprung), death | Ratte, Rattenkönig (2,6-fach, mit Krone am Knochen `Head`) |
+| wasp (wasp.fbx) | fly, attack, death | Hornisse (schwebt 0,9 m über dem Boden) |
 
 Ergebnis: je Modell ca. 1–1,4 MB, ca. 9.000 Dreiecke. Die Originale in `assets/models/` sind zusammen gut 200 MB groß.
 

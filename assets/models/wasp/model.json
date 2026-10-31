@@ -1,0 +1,17 @@
+{
+  "base": "wasp.fbx",
+  "clips": {
+    "fly": {
+      "clip": "Wasp_Flying"
+    },
+    "attack": {
+      "clip": "Wasp_Attack"
+    },
+    "death": {
+      "clip": "Wasp_Death"
+    }
+  },
+  "textureSize": 512,
+  "simplifyRatio": 1,
+  "output": "public/models/wasp.glb"
+}

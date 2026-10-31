@@ -29,14 +29,15 @@ function iconMaterial(text: string, color: string): THREE.SpriteMaterial {
   return material;
 }
 
-type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat';
+type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown';
 
 /**
- * Aussehen einer animierten Figur (Mixamo-Modell). move: Lauf-Clip, refSpeed:
- * Tempo, bei dem er normal schnell läuft. tint multipliziert die Textur (Werte
- * über 1 hellen auf – die aktuelle Mixamo-Figur trägt einen schwarzen Anzug).
+ * Aussehen einer animierten Figur (public/models/<model>.glb). move: Lauf-Clip,
+ * refSpeed: Tempo, bei dem er normal schnell läuft. tint multipliziert die
+ * Textur (Werte über 1 hellen auf – die Mixamo-Figur trägt einen schwarzen Anzug).
  */
 interface ModelLook {
+  model: string;
   move: string;
   /** Schnellere Variante ab fastAbove m/s (z. B. schnelles Kriechen). */
   moveFast?: string;
@@ -50,23 +51,31 @@ interface ModelLook {
   /** Angriffs-Clips, abwechselnd bzw. zufällig. */
   attacks: string[];
   props?: Prop[];
+  /** Kopfknochen für Hüte und Krone (Mixamo: mixamorigHead). */
+  headBone?: string;
+  /** Schwebehöhe über dem Boden (Hornissen). */
+  lift?: number;
 }
 
 const ZOMBIE_LOOKS: Record<string, ModelLook> = {
-  walker: { move: 'walk', idle: 'idle', refSpeed: 1.4, scale: 1, tint: [2.1, 2.5, 1.9], attacks: ['attack'] },
-  runner: { move: 'run', idle: 'idle', refSpeed: 3.6, scale: 0.95, tint: [2.5, 2.6, 2.2], attacks: ['bite', 'bite2', 'bite3'] },
-  crawler: { move: 'crawl', moveFast: 'crawlFast', fastAbove: 1.2, refSpeed: 0.8, scale: 1, tint: [1.9, 2.2, 1.7], attacks: ['bite', 'bite3'] },
-  brute: { move: 'walk', idle: 'idle', refSpeed: 1.6, scale: 1.35, tint: [1.6, 1.9, 1.4], attacks: ['attack'] },
-  butcher: { move: 'walk', idle: 'idle', refSpeed: 1.7, scale: 1.5, tint: [2.6, 1.3, 1.2], attacks: ['attack'], props: ['cleaver'] },
+  walker: { model: 'zombie', move: 'walk', idle: 'idle', refSpeed: 1.4, scale: 1, tint: [2.1, 2.5, 1.9], attacks: ['attack'] },
+  runner: { model: 'zombie', move: 'run', idle: 'idle', refSpeed: 3.6, scale: 0.95, tint: [2.5, 2.6, 2.2], attacks: ['bite', 'bite2', 'bite3'] },
+  crawler: { model: 'zombie', move: 'crawl', moveFast: 'crawlFast', fastAbove: 1.2, refSpeed: 0.8, scale: 1, tint: [1.9, 2.2, 1.7], attacks: ['bite', 'bite3'] },
+  brute: { model: 'zombie', move: 'walk', idle: 'idle', refSpeed: 1.6, scale: 1.35, tint: [1.6, 1.9, 1.4], attacks: ['attack'] },
+  butcher: { model: 'zombie', move: 'walk', idle: 'idle', refSpeed: 1.7, scale: 1.5, tint: [2.6, 1.3, 1.2], attacks: ['attack'], props: ['cleaver'] },
+  rat: { model: 'rat', move: 'run', idle: 'idle', refSpeed: 5, scale: 1.2, tint: [1.8, 1.7, 1.6], attacks: ['attack', 'attack2'] },
+  ratking: { model: 'rat', move: 'walk', idle: 'idle', refSpeed: 1.2, scale: 2.6, tint: [1.4, 1.1, 0.8], attacks: ['attack', 'attack2'], props: ['crown'], headBone: 'Head' },
+  hornet: { model: 'wasp', move: 'fly', idle: 'fly', refSpeed: 4.5, scale: 1.6, tint: [1, 1, 1], attacks: ['attack'], lift: 0.9 },
 };
 
-/** Helden mit Mixamo-Modell (assets/models/<held>). */
+/** Helden mit Modell (assets/models/<held>): Chupa ist ein Schäferhund (Quaternius), die übrigen Mixamo-Figuren. */
 const HERO_LOOKS: Record<string, ModelLook> = {
-  rotschopf: { move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], paint: true, attacks: ['attack'], props: ['hammer'] },
-  schlaeferin: { move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1, tint: [1, 1, 1], paint: true, attacks: ['attack', 'attack2', 'attack3'], props: ['staff'] },
-  libero: { move: 'run', idle: 'idle', refSpeed: 5.6, scale: 1.03, tint: [1, 1, 1], paint: true, attacks: ['attack'] },
-  pirat: { move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], paint: true, attacks: ['attack'], props: ['hook', 'tricorn'] },
-  gaertnerin: { move: 'run', idle: 'idle', refSpeed: 5.3, scale: 0.97, tint: [1, 1, 1], paint: true, attacks: ['attack'], props: ['sling', 'sunhat'] },
+  chupa: { model: 'chupa', move: 'run', idle: 'idle', refSpeed: 6.5, scale: 1, tint: [1.25, 1.2, 1.15], attacks: ['attack'] },
+  rotschopf: { model: 'rotschopf', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], paint: true, attacks: ['attack'], props: ['hammer'] },
+  schlaeferin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1, tint: [1, 1, 1], paint: true, attacks: ['attack', 'attack2', 'attack3'], props: ['staff'] },
+  libero: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.6, scale: 1.03, tint: [1, 1, 1], paint: true, attacks: ['attack'] },
+  pirat: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], paint: true, attacks: ['attack'], props: ['hook', 'tricorn'] },
+  gaertnerin: { model: 'gaertnerin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 0.97, tint: [1, 1, 1], paint: true, attacks: ['attack'], props: ['sling', 'sunhat'] },
 };
 
 /** Höchstdauer einer Angriffs- bzw. Fähigkeitsanimation in der Darstellung (Sekunden). */
@@ -219,18 +228,20 @@ export class UnitView {
   /** Figur aus einem Mixamo-Modell mit Animationen (assets/models/). */
   private buildFromModel(model: RiggedModel, look: ModelLook, color: string): void {
     const inst = instantiate(model, look.scale, look.tint, look.paint ? color : undefined);
+    inst.root.position.y = look.lift ?? 0;
     this.body.add(inst.root);
     for (const m of inst.materials) {
       this.materials.push(m);
       this.baseColors.push(m.color.clone());
     }
-    const k = 1 / (model.scale * look.scale); // Knochen liegen im Maßstab des Modells
+    // Requisiten in Metern: Maßstab des Knochens herausrechnen (Mixamo und Quaternius unterscheiden sich)
+    inst.root.updateMatrixWorld(true);
     for (const prop of look.props ?? []) {
-      const head = prop === 'tricorn' || prop === 'sunhat';
-      const bone = inst.root.getObjectByName(head ? 'mixamorigHead' : 'mixamorigRightHand');
+      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown';
+      const bone = inst.root.getObjectByName(head ? (look.headBone ?? 'mixamorigHead') : 'mixamorigRightHand');
       if (!bone) continue;
       const mesh = this.propMesh(prop);
-      mesh.scale.setScalar(k);
+      mesh.scale.setScalar(1 / bone.getWorldScale(new THREE.Vector3()).x);
       bone.add(mesh);
     }
     this.anim = { inst, look, loop: null, loopName: '', once: null, attackIndex: 0, dead: false };
@@ -270,6 +281,10 @@ export class UnitView {
       case 'tricorn':
         add(new THREE.CylinderGeometry(0.17, 0.17, 0.03, 3), 0x1f1a16, 0, 0.17, 0.02);
         add(new THREE.CylinderGeometry(0.09, 0.11, 0.1, 10), 0x1f1a16, 0, 0.22, 0.02);
+        break;
+      case 'crown':
+        // Der Kopfknochen der Ratte zeigt zur Schnauze: Krone hinter die Ohren, aufgerichtet
+        add(new THREE.CylinderGeometry(0.16, 0.14, 0.12, 6, 1, true), 0xffc93c, 0, -0.02, 0.16, 0x6b4a00).rotation.x = Math.PI / 2;
         break;
       case 'sunhat':
         add(new THREE.CylinderGeometry(0.2, 0.2, 0.02, 16), 0x8a7a55, 0, 0.17, 0.02);
@@ -372,6 +387,17 @@ export class UnitView {
       }
     }
     a.inst.mixer.update(frozen && !a.dead ? 0 : dt);
+  }
+
+  /** Nach dem Respawn: Sterbe-Animation beenden, wieder normal animieren. */
+  revive(): void {
+    const a = this.anim;
+    if (!a?.dead) return;
+    a.dead = false;
+    a.once?.action.stop();
+    a.once = null;
+    a.loop?.reset().play();
+    this.bar.visible = true;
   }
 
   /** Figur aus einem animierten Modell? */
@@ -571,10 +597,12 @@ function heroFigure(heroId: string): string | undefined {
 }
 
 /** Held mit Ring: grün für den eigenen Helden, blau für Bots. Mit Modell, sobald eins geladen ist. */
-export function heroView(h: Hero, def: HeroDef, isPlayer = true, model?: RiggedModel | null): UnitView {
-  const animated = !!model && !!HERO_LOOKS[def.id];
-  const figure = def.figure === 'dog' ? 'dog' : animated ? `h:${def.id}` : def.figure;
-  const height = def.figure === 'dog' ? 1.1 : animated ? 1.8 * HERO_LOOKS[def.id].scale : UNIT_HEIGHT;
+export function heroView(h: Hero, def: HeroDef, isPlayer: boolean, models: Map<string, RiggedModel>): UnitView {
+  const look = HERO_LOOKS[def.id];
+  const model = look ? models.get(look.model) : undefined;
+  const animated = !!model;
+  const figure = animated ? `h:${def.id}` : def.figure;
+  const height = def.figure === 'dog' ? 1.1 : animated ? 1.8 * look.scale : UNIT_HEIGHT;
   const view = new UnitView(h.radius, def.color, isPlayer ? 0x4cd964 : 0x5aa9ff, height, figure, animated ? model : null);
   view.bar.visible = true;
   (view.ring.material as THREE.MeshBasicMaterial).color.set(isPlayer ? 0x4cd964 : 0x5aa9ff);
@@ -582,10 +610,11 @@ export function heroView(h: Hero, def: HeroDef, isPlayer = true, model?: RiggedM
   return view;
 }
 
-export function zombieView(z: Zombie, def: ZombieDef, model?: RiggedModel | null): UnitView {
+export function zombieView(z: Zombie, def: ZombieDef, models: Map<string, RiggedModel>): UnitView {
   const elite = def.rank === 'elite' || def.rank === 'boss';
   const look = ZOMBIE_LOOKS[def.figure];
-  const height = model && look && def.figure !== 'crawler' ? 1.75 * look.scale : zombieHeight(def.figure, z.radius);
+  const model = look ? models.get(look.model) : undefined;
+  const height = model && look.model === 'zombie' && def.figure !== 'crawler' ? 1.75 * look.scale : zombieHeight(def.figure, z.radius);
   const view = new UnitView(z.radius, def.color, elite ? 0xff9f1c : 0xff453a, height, `z:${def.figure}`, model);
   view.bar.visible = elite;
   if (elite) view.bar.scale.set(1.6, 1.4, 1);
