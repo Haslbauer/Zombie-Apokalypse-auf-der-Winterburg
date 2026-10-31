@@ -2,6 +2,7 @@ import { edgeDistance, REVEAL_TIME } from './combat';
 import type { SimContext } from './context';
 import { kitOf } from './heroes/index';
 import { itemStats } from './items';
+import { statsOf } from './stats';
 import { hasBuff } from './status';
 import { DT, type Hero, type RankValue, type Zombie } from './types';
 import { dist, type Vec2 } from './vec';
@@ -38,6 +39,7 @@ export function tryCast(ctx: SimContext, h: Hero, slot: number, aim: Vec2): bool
   if (!kitOf(h.defId).cast(ctx, h, slot, target, aim)) return false;
   h.cooldowns[slot] = rankValue(ability.cooldown, h.ranks[slot]) * (1 - Math.min(0.5, itemStats(ctx, h).cooldownReduction));
   ctx.state.events.push({ type: 'cast', heroId: h.id, slot, pos: target });
+  statsOf(h).casts++;
   h.revealedUntil = ctx.state.time + REVEAL_TIME;
   return true;
 }

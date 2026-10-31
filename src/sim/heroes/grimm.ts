@@ -1,5 +1,6 @@
 import { startDash, val, zombieNearAim, zombiesInCircle, zombiesOnLine } from '../abilities';
 import { edgeDistance, heroHit } from '../combat';
+import { healHero } from '../stats';
 import { addBuff, fear, isMarked, mark, root } from '../status';
 import type { Hero, Zombie } from '../types';
 import { dist } from '../vec';
@@ -8,7 +9,7 @@ import { type HeroKit, passive } from './kit';
 /** Biss-Heilung: stärker, je weniger Leben Grimm hat (Passiv Wittern). */
 function bite(ctx: Parameters<HeroKit['cast']>[0], h: Hero, z: Zombie, base: number, healShare: number): void {
   const dealt = heroHit(ctx, h, z, base);
-  h.hp = Math.min(h.maxHp, h.hp + dealt * healShare * (1 + passive(ctx, h, 'lowHpBonus') * (1 - h.hp / h.maxHp)));
+  healHero(ctx, h, dealt * healShare * (1 + passive(ctx, h, 'lowHpBonus') * (1 - h.hp / h.maxHp)), h);
 }
 
 /** Grimm – kleiner weißer Hund, Nahkampf-Jäger. */
@@ -105,7 +106,7 @@ export const grimm: HeroKit = {
 
   /** Wittern: Biss heilt, stärker bei wenig eigenem Leben. */
   onBasicHit(ctx, h, _z, dealt) {
-    h.hp = Math.min(h.maxHp, h.hp + dealt * passive(ctx, h, 'lifesteal') * (1 + passive(ctx, h, 'lowHpBonus') * (1 - h.hp / h.maxHp)));
+    healHero(ctx, h, dealt * passive(ctx, h, 'lifesteal') * (1 + passive(ctx, h, 'lowHpBonus') * (1 - h.hp / h.maxHp)), h);
   },
 
   /** Fährte: schneller Richtung markierter Beute. */

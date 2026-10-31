@@ -14,6 +14,7 @@ import { updateCamps } from './neutrals';
 import { updateWaves } from './waves';
 import { updateZombies } from './zombies';
 import { defaultSpells, updateSpells, validSpells } from './spells';
+import { emptyStats } from './stats';
 
 /** Das Distanzfeld zu den Helden wird alle so viele Ticks neu berechnet. */
 const FIELD_TICKS = 5;
@@ -147,6 +148,7 @@ export class Simulation implements SimContext {
         spellCooldowns: [0, 0],
         gold: data.economy.startGold,
         score: { kills: 0, bosses: 0, assists: 0, gold: 0 },
+        stats: emptyStats(),
         inventory: Array<string | null>(data.economy.inventorySlots).fill(null),
         consumables: [null, null],
       };

@@ -5,6 +5,7 @@ import { shopClosedReason } from '../sim/economy';
 import { Simulation } from '../sim/game';
 import { buildPlan } from '../sim/items';
 import { spawnZombieAt } from '../sim/waves';
+import { endGame } from '../sim/stats';
 import { defaultTeam } from '../sim/bots/team';
 import { canRankUp } from '../sim/progression';
 import type { BotDifficulty, GameEvent, GameState } from '../sim/types';
@@ -668,17 +669,14 @@ function handleEvents(state: GameState): void {
         break;
       case 'gameOver':
         sound.play(e.victory ? 'victory' : 'defeat');
-        hud.showGameOver(
-          state,
-          e.reason,
-          () => {
-            if (session instanceof RemoteSession) {
-              // Online: zurück in die Lobby (der Server schickt die Raum-Info)
-              session.restart();
-            } else startGame(spectate ? null : heroDefId, team, difficulty);
-          },
-          e.victory,
-        );
+        // Endstatistik: Podest, Auszeichnungen, Rangliste; kurzer Klang für den MVP
+        hud.showGameOver(state, e, spectate ? -1 : heroId, playerNames(), () => {
+          if (session instanceof RemoteSession) {
+            // Online: zurück in die Lobby (der Server schickt die Raum-Info)
+            session.restart();
+          } else startGame(spectate ? null : heroDefId, team, difficulty);
+        });
+        setTimeout(() => sound.play('levelUp'), 900);
         break;
     }
   }
@@ -788,6 +786,18 @@ if (params.has('debug')) {
         if (!(session instanceof LocalSession)) return;
         const def = session.sim.zombieDefs.get(defId);
         if (def) spawnZombieAt(session.sim, def, { x, y });
+      },
+      // Einzelspieler: Spiel sofort beenden (Sieg bzw. Niederlage), z. B. um die Endstatistik zu prüfen
+      finish: (victory: boolean) => {
+        if (!(session instanceof LocalSession)) return;
+        // Am Ende des nächsten Ticks, damit das Ereignis nicht gleich wieder gelöscht wird
+        const sim = session.sim;
+        const step = sim.step;
+        sim.step = (commands) => {
+          step.call(sim, commands);
+          sim.step = step;
+          endGame(sim, victory ? 'Die Winterburg ist gehalten!' : 'Testende', victory);
+        };
       },
     },
   });

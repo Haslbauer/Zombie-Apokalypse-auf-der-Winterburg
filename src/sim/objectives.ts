@@ -1,6 +1,7 @@
 import { applyDamage } from './combat';
 import type { SimContext } from './context';
 import { distanceToObstacle } from './grid';
+import { endGame } from './stats';
 import { DT, type Hero, type Objective, type ObjectiveDef, type Obstacle, type Zombie } from './types';
 
 /** Form eines Ziels als Hindernis (Kreis oder Rechteck). */
@@ -45,10 +46,7 @@ export function damageObjective(ctx: SimContext, obj: Objective, amount: number)
   obj.regrowIn = def.regrowWaves ?? 0;
   state.events.push({ type: 'objectiveDestroyed', objectiveId: obj.id });
   ctx.refreshObjectiveFields(obj.kind);
-  if (def.loseOnDestroy && !state.gameOver) {
-    state.gameOver = true;
-    state.events.push({ type: 'gameOver', wave: state.wave.number, reason: def.lostText ?? `${def.name} ist gefallen` });
-  }
+  if (def.loseOnDestroy && !state.gameOver) endGame(ctx, def.lostText ?? `${def.name} ist gefallen`, false);
 }
 
 /**

@@ -210,6 +210,8 @@ export function encodeSnapshot(state: GameState, events: GameEvent[], zombieType
     const out: Partial<Hero> & Record<string, unknown> = { ...h, bot: h.bot ? ({ difficulty: h.bot.difficulty } as Hero['bot']) : undefined };
     delete out.input;
     delete out.pingTimes;
+    // Endstatistik kommt erst fertig im gameOver-Ereignis
+    delete out.stats;
     if (!full) for (const k of SLOW_HERO_KEYS) delete out[k];
     return out;
   });

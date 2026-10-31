@@ -1,5 +1,6 @@
 import type { DataContext, SimContext } from './context';
 import { buildPlan, itemDef, refreshMaxHp } from './items';
+import { statsOf } from './stats';
 import { addBuff, hasBuff } from './status';
 import type { Hero, Zombie, ZombieDef } from './types';
 import { dist } from './vec';
@@ -17,6 +18,7 @@ export function awardGold(ctx: SimContext, z: Zombie, killer?: Hero, assists: He
     // Der nächste Postbote kommt erst every Wellen später (stärker, weil die Welle höher ist)
     const every = ctx.data.waves.courier?.every ?? 3;
     ctx.state.wave.courierWave = ctx.state.wave.number + every;
+    ctx.state.couriersCaught = (ctx.state.couriersCaught ?? 0) + 1;
     ctx.state.events.push({ type: 'courier', zombieId: z.id, phase: 'caught', gold });
     return;
   }
@@ -114,6 +116,7 @@ export function buy(ctx: SimContext, h: Hero, itemId: string): boolean {
     refreshMaxHp(ctx, h);
   }
   h.gold -= plan.cost;
+  statsOf(h).goldSpent += plan.cost;
   ctx.state.events.push({ type: 'shop', heroId: h.id, action: 'buy', itemId });
   return true;
 }

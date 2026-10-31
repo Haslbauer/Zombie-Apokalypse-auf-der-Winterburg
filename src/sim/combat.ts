@@ -4,6 +4,7 @@ import { kitOf } from './heroes/index';
 import { awardBoss, awardGold } from './economy';
 import { itemStats } from './items';
 import { awardXp, heroDamage } from './progression';
+import { noteDeath, noteKill, statsOf } from './stats';
 import { absorbWithShield, buffSum } from './status';
 import { DT, type Hero, type Projectile, type Zombie } from './types';
 import { dist, type Vec2 } from './vec';
@@ -55,6 +56,9 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
 
   const dealt = Math.min(amount, target.hp);
   target.hp -= dealt;
+  // Endstatistik: Schaden an Zombies bzw. erlittener Schaden
+  if ('alive' in target) statsOf(target).damageTaken += dealt;
+  else if (source) statsOf(source).damage += dealt;
   state.events.push({ type: 'hit', targetId: target.id, amount: dealt, pos: { ...target.pos } });
   if (target.hp > 0) return dealt;
 
@@ -64,6 +68,7 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
     // Gefallene Helden kommen nach einem Timer im Innenhof zurück (kein Game Over).
     const { respawn } = ctx.data.arena;
     target.alive = false;
+    noteDeath(target);
     target.dash = null;
     target.channel = null;
     target.input = { move: { x: 0, y: 0 }, aim: target.input.aim, attack: false };
@@ -75,7 +80,10 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
     const assists = assistsOf(ctx, target, killer);
     awardXp(ctx, target, killer, assists);
     awardGold(ctx, target, killer, assists);
-    if (killer) killer.score.kills++;
+    if (killer) {
+      killer.score.kills++;
+      noteKill(killer, state.wave.number);
+    }
     if (isBoss(ctx, target) && target.contrib) awardBoss(ctx, target, killer);
   }
   return dealt;

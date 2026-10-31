@@ -1,4 +1,5 @@
 import { startDash, val, zombieNearAim, zombiesInCircle, zombiesInCone } from '../abilities';
+import { healHero } from '../stats';
 import { addBuff, sleep, slow } from '../status';
 import { dist } from '../vec';
 import { type HeroKit, passive } from './kit';
@@ -54,7 +55,7 @@ export const schlaeferin: HeroKit = {
 
   onChannelEnd(ctx, h, tag, completed) {
     if (tag !== 'nap' || !completed) return;
-    h.hp = Math.min(h.maxHp, h.hp + val(ctx, h, 2, 'heal'));
+    healHero(ctx, h, val(ctx, h, 2, 'heal'), h);
     addBuff(ctx, h, 'haste', val(ctx, h, 2, 'haste'), val(ctx, h, 2, 'hasteDuration'), 'powernap');
     ctx.state.events.push({ type: 'effect', kind: 'nap', pos: { ...h.pos }, radius: 1.5, heroId: h.id });
   },

@@ -4,6 +4,7 @@ import { nextRandom, shuffle } from './rng';
 import { emptyStatus } from './status';
 import { awardWaveBonus, courierGold } from './economy';
 import { harvest, objectivesFor } from './objectives';
+import { endGame } from './stats';
 import { DT, type SpawnPoint, type WaveConfig, type Zombie, type ZombieDef } from './types';
 import type { Vec2 } from './vec';
 
@@ -122,9 +123,7 @@ export function updateWaves(ctx: SimContext): void {
     awardWaveBonus(ctx, w.number);
     // Letzte Welle überstanden: Sieg
     if (cfg.victoryWave && w.number >= cfg.victoryWave) {
-      state.gameOver = true;
-      state.victory = true;
-      state.events.push({ type: 'gameOver', wave: w.number, reason: 'Die Winterburg ist gehalten!', victory: true });
+      endGame(ctx, 'Die Winterburg ist gehalten!', true);
       return;
     }
     harvest(ctx);

@@ -189,7 +189,15 @@ export interface EconomyDef {
    * Anteil assistGold, Zuschauer nichts. Erfahrung: Killer xpKiller, Mitkämpfer
    * xpAssist, Helden in der Nähe (xpShareRange) xpNearby.
    */
-  rewards: { assistWindow: number; assistGold: number; xpKiller: number; xpAssist: number; xpNearby: number };
+  rewards: {
+    assistWindow: number;
+    assistGold: number;
+    xpKiller: number;
+    xpAssist: number;
+    xpNearby: number;
+    /** Gewichte der Wertung nach Spielende (sim/stats.ts). */
+    mvp?: Partial<Record<'kills' | 'bosses' | 'assists' | 'damage' | 'healing' | 'damageTaken' | 'deaths', number>>;
+  };
 }
 
 /** Punktestand eines Helden (Anzeigetafel). */
@@ -199,6 +207,52 @@ export interface HeroScore {
   assists: number;
   /** Insgesamt verdientes Gold. */
   gold: number;
+}
+
+/** Statistik für den Bildschirm nach Spielende (nicht in den Schnappschüssen, siehe sim/stats.ts). */
+export interface HeroStats {
+  /** Schaden an Zombies und Neutralen. */
+  damage: number;
+  /** Erlittener Schaden nach Rüstung und Schild. */
+  damageTaken: number;
+  /** Heilung durch Fähigkeiten und Zauber (an sich und Verbündeten). */
+  healing: number;
+  deaths: number;
+  /** Kills seit dem letzten Tod und die längste Serie. */
+  streak: number;
+  bestStreak: number;
+  /** Kills je Welle (Index 0 = Welle 1). */
+  killsPerWave: number[];
+  /** Eingesetzte Fähigkeiten und Beschwörerzauber. */
+  casts: number;
+  goldSpent: number;
+}
+
+/** Endstatistik eines Helden (im gameOver-Ereignis, nach Wertung sortiert). */
+export interface FinalHeroStats {
+  heroId: number;
+  defId: string;
+  bot: boolean;
+  level: number;
+  score: HeroScore;
+  stats: HeroStats;
+  /** Wertung wie in LoL (sim/stats.ts mvpScore). */
+  mvp: number;
+}
+
+/** Endstatistik des Teams. */
+export interface TeamStats {
+  wave: number;
+  time: number;
+  kills: number;
+  bosses: number;
+  couriers: number;
+  /** Vorrat übrig in Prozent (0–100). */
+  food: number;
+  bedsAlive: number;
+  beds: number;
+  /** Leben des Bienenstocks in Prozent, null ohne Stock. */
+  hive: number | null;
 }
 
 export interface WaveMixEntry {
@@ -565,6 +619,8 @@ export interface Buff {
   until: number;
   /** Herkunft, damit sich gleiche Buffs erneuern statt stapeln. */
   source: string;
+  /** Held, der den Buff gegeben hat (Heilung zählt für seine Endstatistik). */
+  by?: number;
 }
 
 /** Sprung oder Antritt: Bewegung von from nach to über duration Sekunden. */
@@ -626,6 +682,8 @@ export interface Hero extends Unit {
   ball?: Ball;
   gold: number;
   score: HeroScore;
+  /** Endstatistik (nur Server/lokal, nicht in den Schnappschüssen). */
+  stats?: HeroStats;
   /** Welle, in der der Held zuletzt Schaden an Zombies gemacht hat (Wellenbonus nur für Aktive). */
   activeWave?: number;
   /** Letzte eigene Eingabe eines Menschen (Laufen, Angriff, Fähigkeit, Einkauf …), Spielzeit. */
@@ -858,7 +916,7 @@ export type GameEvent =
   | { type: 'status'; zombieId: number; status: 'sleep' | 'stun' | 'fear' | 'blind' | 'root' | 'mark' | 'wake' }
   | { type: 'land'; heroId: number; pos: Vec2; tag: string }
   | { type: 'effect'; kind: string; pos: Vec2; radius: number; facing?: number; arc?: number; heroId?: number }
-  | { type: 'gameOver'; wave: number; reason: string; victory?: boolean };
+  | { type: 'gameOver'; wave: number; reason: string; victory?: boolean; stats?: FinalHeroStats[]; team?: TeamStats };
 
 export interface GameState {
   tick: number;
@@ -878,6 +936,8 @@ export interface GameState {
   events: GameEvent[];
   /** Gewonnen (letzte Welle überstanden)? */
   victory?: boolean;
+  /** Erwischte Postboten (Endstatistik). */
+  couriersCaught?: number;
   /** Wurde schon ein Boss erlegt? (Erstes Blut gibt es nur einmal.) */
   firstBlood?: boolean;
   /** Neutrale Lager: wann ein geleertes Lager wiederkommt (null: besetzt). */

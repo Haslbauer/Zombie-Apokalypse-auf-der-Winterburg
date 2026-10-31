@@ -1,4 +1,5 @@
 import type { SimContext } from './context';
+import { healHero } from './stats';
 import type { Buff, BuffKind, Hero, Zombie, ZombieStatus } from './types';
 import type { Vec2 } from './vec';
 
@@ -132,9 +133,9 @@ export function heroCC(
 }
 
 /** Buff setzen; ein Buff gleicher Herkunft und Art wird ersetzt. */
-export function addBuff(ctx: SimContext, h: Hero, kind: BuffKind, value: number, duration: number, source: string): void {
+export function addBuff(ctx: SimContext, h: Hero, kind: BuffKind, value: number, duration: number, source: string, by?: number): void {
   h.buffs = h.buffs.filter((b) => !(b.kind === kind && b.source === source));
-  h.buffs.push({ kind, value, until: ctx.state.time + duration, source });
+  h.buffs.push(by === undefined ? { kind, value, until: ctx.state.time + duration, source } : { kind, value, until: ctx.state.time + duration, source, by });
 }
 
 export function hasBuff(h: Hero, kind: BuffKind): boolean {
@@ -152,8 +153,8 @@ export function buffSum(h: Hero, kind: BuffKind): number {
 export function updateBuffs(ctx: SimContext, h: Hero, dt: number): void {
   const t = ctx.state.time;
   h.buffs = h.buffs.filter((b: Buff) => b.until > t && !(b.kind === 'shield' && b.value <= 0));
-  const heal = buffSum(h, 'heal');
-  if (heal > 0) h.hp = Math.min(h.maxHp, h.hp + heal * dt);
+  // Heilung über Zeit; mit Heiler (by) zählt sie für dessen Endstatistik
+  for (const b of h.buffs) if (b.kind === 'heal' && b.value > 0) healHero(ctx, h, b.value * dt, b.by);
 }
 
 /** Schild fängt Schaden ab; gibt den Rest zurück, der durchkommt. */

@@ -27,7 +27,7 @@ export const rotschopf: HeroKit = {
         const effect = randomInt(ctx.state, 3);
         if (effect === 0) addBuff(ctx, h, 'haste', val(ctx, h, slot, 'haste'), duration, 'wutanfall');
         if (effect === 1) addBuff(ctx, h, 'shield', val(ctx, h, slot, 'shield'), duration, 'wutanfall');
-        if (effect === 2) addBuff(ctx, h, 'heal', (val(ctx, h, slot, 'healPct') * h.maxHp) / duration, duration, 'wutanfall');
+        if (effect === 2) addBuff(ctx, h, 'heal', (val(ctx, h, slot, 'healPct') * h.maxHp) / duration, duration, 'wutanfall', h.id);
         ctx.state.events.push({ type: 'effect', kind: `rage-${['haste', 'shield', 'heal'][effect]}`, pos: { ...h.pos }, radius: 1, heroId: h.id });
         return true;
       }

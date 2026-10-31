@@ -48,7 +48,7 @@ export const gaertnerin: HeroKit = {
         const duration = val(ctx, h, slot, 'duration');
         const perSecond = val(ctx, h, slot, 'heal') / duration;
         for (const ally of ctx.state.heroes) {
-          if (ally.alive && dist(ally.pos, h.pos) <= (ability.radius ?? 6)) addBuff(ctx, ally, 'heal', perSecond, duration, 'kraeutertee');
+          if (ally.alive && dist(ally.pos, h.pos) <= (ability.radius ?? 6)) addBuff(ctx, ally, 'heal', perSecond, duration, 'kraeutertee', h.id);
         }
         ctx.state.events.push({ type: 'effect', kind: 'tea', pos: { ...h.pos }, radius: ability.radius ?? 6, heroId: h.id });
         return true;

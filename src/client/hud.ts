@@ -2,7 +2,7 @@ import { rankValue } from '../sim/abilities';
 import { defaultTeam } from '../sim/bots/team';
 import { type Quality, QUALITY_LABELS, type QualitySetting } from './quality';
 import type { AudioSettings } from './audio';
-import type { BotDifficulty, GameData, GameState, Hero, HeroDef } from '../sim/types';
+import type { BotDifficulty, FinalHeroStats, GameData, GameEvent, GameState, Hero, HeroDef } from '../sim/types';
 import type { RoomInfo } from '../net/protocol';
 import { type Action, ACTIONS, type Keybindings, keyName } from './keybindings';
 
@@ -547,24 +547,171 @@ export class Hud {
     this.overlay.style.display = '';
   }
 
-  showGameOver(state: GameState, reason: string, onRestart: () => void, victory = false): void {
+  /**
+   * Bildschirm nach Spielende: Kopf mit Teamwerten, Podest der besten drei
+   * (MVP), Auszeichnungen, sortierbare Rangliste und Kills pro Welle.
+   * Die Statistik kommt fertig im gameOver-Ereignis (online für alle gleich).
+   */
+  showGameOver(state: GameState, end: GameOverInfo, playerId: number, names: Map<number, string> | undefined, onRestart: () => void): void {
     delete this.overlay.dataset.menu;
     this.overlay.replaceChildren();
-    const box = el('div', victory ? 'hud-box hud-victory' : 'hud-box');
+    const victory = !!end.victory;
+    const stats = end.stats ?? fallbackStats(state);
+    const team = end.team ?? { wave: state.wave.number, time: state.time, kills: state.kills, bosses: stats.reduce((n, r) => n + r.score.bosses, 0), couriers: 0, food: 0, bedsAlive: 0, beds: 0, hive: null };
+    const defOf = (r: FinalHeroStats) => this.data.heroes.find((d) => d.id === r.defId);
+    const heroName = (r: FinalHeroStats) => defOf(r)?.name ?? r.defId;
+    // Hauptname: „Du“, Spielername oder (bei Bots) der Heldenname; darunter Held bzw. „Bot“
+    const who = (r: FinalHeroStats) => (r.heroId === playerId ? 'Du' : (names?.get(r.heroId) ?? heroName(r)));
+    const sub = (r: FinalHeroStats) => (who(r) === heroName(r) ? (r.bot ? 'Bot' : 'Mitspieler') : heroName(r));
+    const color = (r: FinalHeroStats) => STAT_COLORS[state.heroes.findIndex((h) => h.id === r.heroId) % STAT_COLORS.length] ?? STAT_COLORS[0];
+    const portrait = (r: FinalHeroStats, cls: string) => {
+      const img = el('img', cls);
+      img.src = `portraits/${r.defId}.jpg`;
+      img.alt = heroName(r);
+      img.style.borderColor = color(r);
+      return img;
+    };
+    const num = (v: number, cls = '') => {
+      const e = el('span', `hud-count ${cls}`, '0');
+      e.dataset.count = String(Math.round(v));
+      return e;
+    };
+
+    const box = el('div', `hud-box hud-stats${victory ? ' hud-victory' : ''}`);
+    // 1. Kopf
+    box.append(el('h1', '', victory ? 'Sieg!' : 'Niederlage'), el('h2', '', end.reason));
+    const teamRow = el('div', 'hud-stats-team');
+    const teamItems: [string, HTMLElement | string][] = [
+      ['Welle', `${team.wave}${victory ? ' ✔' : ''}`],
+      ['Spielzeit', formatTime(team.time)],
+      ['Zombies', num(team.kills)],
+      ['Bosse', num(team.bosses)],
+      ['Postboten', num(team.couriers)],
+    ];
+    if (team.beds > 0) teamItems.push(['Beete', `${team.bedsAlive}/${team.beds}`]);
+    teamItems.push(['Vorrat', `${team.food} %`]);
+    if (team.hive !== null) teamItems.push(['Bienenstock', `${team.hive} %`]);
+    for (const [label, value] of teamItems) {
+      const item = el('div', 'hud-stats-team-item');
+      const v = el('b', '');
+      v.append(value);
+      item.append(v, el('span', '', label));
+      teamRow.append(item);
+    }
+    box.append(teamRow);
+
+    // 2. Podest: Platz 2 – 1 – 3
+    const podium = el('div', 'hud-podium');
+    const medals = ['🥇', '🥈', '🥉'];
+    for (const place of [1, 0, 2]) {
+      const r = stats[place];
+      if (!r) continue;
+      const card = el('div', `hud-podium-card place-${place + 1}${r.heroId === playerId ? ' me' : ''}`);
+      card.style.setProperty('--hero', color(r));
+      if (place === 0) card.append(el('div', 'hud-mvp', 'MVP'));
+      card.append(el('div', 'hud-medal', medals[place]), portrait(r, 'hud-podium-portrait'), el('div', 'hud-podium-name', who(r)), el('div', 'hud-podium-hero', `${sub(r)} · Lv ${r.level}`));
+      const kda = el('div', 'hud-podium-kda');
+      kda.append(num(r.score.kills), ' / ', num(r.stats.deaths), ' / ', num(r.score.assists));
+      const score = el('div', 'hud-podium-score');
+      score.append(el('span', '', 'Wertung '), el('b', '', r.mvp.toFixed(1)));
+      card.append(kda, el('div', 'hud-small', 'Kills / Tode / Assists'), score);
+      podium.append(card);
+    }
+    box.append(podium);
+
+    // 3. Auszeichnungen
+    const awards: [string, string, (r: FinalHeroStats) => number, string][] = [
+      ['🗡', 'Meiste Kills', (r) => r.score.kills, ''],
+      ['🤝', 'Meiste Assists', (r) => r.score.assists, ''],
+      ['💰', 'Meistes Gold', (r) => r.score.gold, ' Gold'],
+      ['💥', 'Meister Schaden', (r) => r.stats.damage, ''],
+      ['🛡', 'Bollwerk', (r) => r.stats.damageTaken, ' eingesteckt'],
+      ['🌿', 'Heiler', (r) => r.stats.healing, ' geheilt'],
+      ['🔥', 'Längste Serie', (r) => r.stats.bestStreak, ' Kills'],
+      ['☠', 'Bossjäger', (r) => r.score.bosses, ' Bosse'],
+    ];
+    const awardRow = el('div', 'hud-awards');
+    for (const [icon, title, value, unit] of awards) {
+      const best = [...stats].sort((a, b) => value(b) - value(a))[0];
+      if (!best || value(best) <= 0) continue;
+      const tile = el('div', `hud-award${best.heroId === playerId ? ' me' : ''}`);
+      tile.style.setProperty('--hero', color(best));
+      const text = el('div', 'hud-award-text');
+      const v = el('div', 'hud-award-value');
+      v.append(num(value(best)), unit);
+      text.append(el('div', 'hud-award-title', `${icon} ${title}`), el('div', 'hud-award-who', who(best)), v);
+      tile.append(portrait(best, 'hud-award-portrait'), text);
+      awardRow.append(tile);
+    }
+    if (awardRow.childElementCount) box.append(el('h3', 'hud-stats-h', 'Auszeichnungen'), awardRow);
+
+    // 4. Rangliste (Klick auf Spaltenkopf sortiert)
+    const columns: { label: string; title: string; value: (r: FinalHeroStats) => number; bar?: boolean; text?: (r: FinalHeroStats) => string }[] = [
+      { label: 'K', title: 'Kills', value: (r) => r.score.kills },
+      { label: 'T', title: 'Tode', value: (r) => r.stats.deaths },
+      { label: 'A', title: 'Assists', value: (r) => r.score.assists },
+      { label: 'Bosse', title: 'Bosse und Elites', value: (r) => r.score.bosses },
+      { label: 'Schaden', title: 'Schaden an Zombies', value: (r) => r.stats.damage, bar: true },
+      { label: 'Erlitten', title: 'Erlittener Schaden', value: (r) => r.stats.damageTaken },
+      { label: 'Heilung', title: 'Heilung an sich und anderen', value: (r) => r.stats.healing },
+      { label: 'Gold', title: 'Verdient / ausgegeben', value: (r) => r.score.gold, text: (r) => `${r.score.gold} / ${r.stats.goldSpent}` },
+      { label: 'Lv', title: 'Level', value: (r) => r.level },
+      { label: 'Wertung', title: 'Wertung (MVP)', value: (r) => r.mvp, text: (r) => r.mvp.toFixed(1) },
+    ];
+    const tableWrap = el('div', 'hud-stats-table-wrap');
+    let sortBy = columns.length - 1;
+    const renderTable = () => {
+      const rows = [...stats].sort((a, b) => columns[sortBy].value(b) - columns[sortBy].value(a) || b.mvp - a.mvp);
+      const table = el('table', 'hud-stats-table');
+      const head = el('tr', '');
+      head.append(el('th', '', '#'), el('th', 'left', 'Held'));
+      columns.forEach((c, i) => {
+        const th = el('th', i === sortBy ? 'sorted' : '', c.label);
+        th.title = `${c.title} – klicken zum Sortieren`;
+        th.addEventListener('click', () => {
+          sortBy = i;
+          renderTable();
+        });
+        head.append(th);
+      });
+      table.append(head);
+      const maxOf = columns.map((c) => Math.max(1, ...stats.map(c.value)));
+      rows.forEach((r, rank) => {
+        const tr = el('tr', r.heroId === playerId ? 'me' : '');
+        const name = el('td', 'left hud-stats-name');
+        const label = el('div', '');
+        label.append(el('b', '', who(r)), el('span', '', sub(r)));
+        name.append(portrait(r, 'hud-score-portrait'), label);
+        tr.append(el('td', 'hud-stats-rank', String(rank + 1)), name);
+        columns.forEach((c, i) => {
+          const td = el('td', i === sortBy ? 'sorted' : '', c.text ? c.text(r) : String(Math.round(c.value(r))));
+          if (c.bar) {
+            const bar = el('div', 'hud-stats-bar');
+            bar.style.width = `${(c.value(r) / maxOf[i]) * 100}%`;
+            bar.style.background = color(r);
+            td.append(bar);
+          }
+          tr.append(td);
+        });
+        table.append(tr);
+      });
+      tableWrap.replaceChildren(table);
+    };
+    renderTable();
+    box.append(el('h3', 'hud-stats-h', 'Rangliste'), tableWrap);
+
+    // 5. Kills pro Welle
+    const chart = killsChart(stats, team.wave, color, (r) => (who(r) === heroName(r) ? who(r) : `${who(r)} (${heroName(r)})`));
+    if (chart) box.append(el('h3', 'hud-stats-h', 'Kills pro Welle'), chart);
+
     const btn = el('button', 'hud-restart', 'Nochmal');
     btn.addEventListener('click', onRestart);
-    // Bester Spieler (meiste Kills und Bosse) wie in LoL hervorheben
-    const best = [...state.heroes].sort((a, b) => (b.score?.bosses ?? 0) * 5 + (b.score?.kills ?? 0) - ((a.score?.bosses ?? 0) * 5 + (a.score?.kills ?? 0)))[0];
-    const bestDef = best ? this.data.heroes.find((d) => d.id === best.defId) : undefined;
-    box.append(
-      el('h1', '', victory ? 'Sieg!' : 'Game Over'),
-      el('h2', '', reason),
-      el('p', '', `${victory ? 'Geschafft' : 'Erreicht'}: Welle ${state.wave.number} · ${state.kills} Zombies erledigt · ${formatTime(state.time)}`),
-    );
-    if (best && bestDef) box.append(el('p', 'hud-small', `Bester Spieler: ${bestDef.name} (${best.score.kills} Kills, ${best.score.bosses} Bosse, ${best.score.gold} Gold)`));
-    box.append(btn);
+    const buttons = el('div', 'hud-buttons');
+    buttons.append(btn);
+    box.append(buttons);
     this.overlay.append(box);
     this.overlay.style.display = '';
+    countUp(box);
   }
 
   /** Kurzbeschreibung der Steuerung mit der aktuellen Belegung. */
@@ -1003,6 +1150,90 @@ export class Hud {
       if (this.bannerTimer <= 0) this.banner.classList.remove('visible');
     }
   }
+}
+
+/** Spielende, wie es das gameOver-Ereignis liefert. */
+export type GameOverInfo = Pick<Extract<GameEvent, { type: 'gameOver' }>, 'reason' | 'victory' | 'stats' | 'team'>;
+
+/** Linienfarben der Helden (nach Platz im Team, gut lesbar auf dunklem Grund). */
+const STAT_COLORS = ['#ffd166', '#7fd1ff', '#ff8a7a', '#9be38a'];
+
+/** Ohne Statistik im Ereignis (älterer Server): aus dem Punktestand. */
+function fallbackStats(state: GameState): FinalHeroStats[] {
+  return state.heroes
+    .map((h) => ({
+      heroId: h.id,
+      defId: h.defId,
+      bot: !!h.bot,
+      level: h.level,
+      score: { ...h.score },
+      stats: { damage: 0, damageTaken: 0, healing: 0, deaths: 0, streak: 0, bestStreak: 0, killsPerWave: [], casts: 0, goldSpent: 0 },
+      mvp: h.score.kills + h.score.bosses * 5 + h.score.assists * 0.6,
+    }))
+    .sort((a, b) => b.mvp - a.mvp);
+}
+
+/** Zahlen (data-count) in etwa 0,8 s hochzählen lassen. */
+function countUp(root: HTMLElement): void {
+  const els = [...root.querySelectorAll<HTMLElement>('[data-count]')];
+  const start = performance.now();
+  const step = (now: number) => {
+    const k = Math.min(1, (now - start) / 800);
+    const ease = 1 - (1 - k) ** 3;
+    for (const e of els) e.textContent = String(Math.round(Number(e.dataset.count) * ease));
+    if (k < 1 && root.isConnected) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+/** Liniendiagramm „Kills pro Welle“ als SVG (null, wenn es nichts zu zeigen gibt). */
+function killsChart(stats: FinalHeroStats[], waves: number, color: (r: FinalHeroStats) => string, label: (r: FinalHeroStats) => string): HTMLElement | null {
+  const n = Math.max(waves, ...stats.map((r) => r.stats.killsPerWave.length));
+  const max = Math.max(0, ...stats.flatMap((r) => r.stats.killsPerWave));
+  if (n < 2 || max <= 0) return null;
+  const W = 520;
+  const H = 150;
+  const pad = { l: 28, r: 8, t: 8, b: 20 };
+  const x = (i: number) => pad.l + (i / (n - 1)) * (W - pad.l - pad.r);
+  const y = (v: number) => H - pad.b - (v / max) * (H - pad.t - pad.b);
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('class', 'hud-chart');
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', 'Kills pro Welle je Held');
+  const add = (tag: string, attrs: Record<string, string | number>, text?: string) => {
+    const e = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
+    if (text !== undefined) e.textContent = text;
+    svg.append(e);
+    return e;
+  };
+  // Raster: Grundlinie und Höchstwert, Wellen-Nummern unten
+  for (const v of [0, Math.ceil(max / 2), max]) {
+    add('line', { x1: pad.l, x2: W - pad.r, y1: y(v), y2: y(v), class: 'grid' });
+    add('text', { x: pad.l - 6, y: y(v) + 4, 'text-anchor': 'end', class: 'axis' }, String(v));
+  }
+  const every = n > 12 ? 2 : 1;
+  for (let i = 0; i < n; i += every) add('text', { x: x(i), y: H - 5, 'text-anchor': 'middle', class: 'axis' }, String(i + 1));
+  for (const r of stats) {
+    const pts = Array.from({ length: n }, (_, i) => `${x(i).toFixed(1)},${y(r.stats.killsPerWave[i] ?? 0).toFixed(1)}`);
+    const line = add('polyline', { points: pts.join(' '), fill: 'none', stroke: color(r), 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
+    const title = document.createElementNS(NS, 'title');
+    title.textContent = label(r);
+    line.append(title);
+  }
+  const wrap = el('div', 'hud-chart-wrap');
+  const legend = el('div', 'hud-chart-legend');
+  for (const r of stats) {
+    const item = el('span', '');
+    const dot = el('i', '');
+    dot.style.background = color(r);
+    item.append(dot, label(r));
+    legend.append(item);
+  }
+  wrap.append(svg, legend);
+  return wrap;
 }
 
 function formatTime(seconds: number): string {

@@ -146,6 +146,15 @@ Wer **Welle 20** übersteht, gewinnt. Das Spiel ist auf vier aktive Spieler ausg
 
 Gutes Spielen wird belohnt (wie in LoL): Der letzte Treffer bringt das volle Gold, Mithelfen ein Drittel, Danebenstehen nichts. Erfahrung: Killer voll, Mithelfer die Hälfte, Zuschauer in der Nähe ein Viertel. Den Wellenbonus bekommt nur, wer in der Welle mitgekämpft hat.
 
+**Endstatistik:** Nach Sieg oder Niederlage erscheint eine Statistik, online für alle gleich:
+- **Teamwerte:** Welle, Spielzeit, Zombies, Bosse, Postboten, Beete, Vorrat, Bienenstock.
+- **Podest:** die besten drei nach Wertung, der Erste ist **MVP**.
+- **Auszeichnungen:** Meiste Kills, Meiste Assists, Meistes Gold, Meister Schaden, Bollwerk (meister erlittener Schaden), Heiler, Längste Serie, Bossjäger.
+- **Rangliste:** Kills, Tode, Assists, Bosse, Schaden, Erlitten, Heilung, Gold (verdient/ausgegeben), Level und Wertung. Ein Klick auf eine Spalte sortiert.
+- **Diagramm:** Kills pro Welle je Held.
+
+Die Wertung funktioniert wie in LoL: Kill 1 Punkt, Boss 5, Assist 0,6, je 400 Schaden 1, je 300 Heilung 1, je 800 eingesteckter Schaden 1, je Tod −1. Die Gewichte lassen sich in `data/economy.json` unter `rewards.mvp` anpassen.
+
 ## Shop
 
 Gold gibt es für Kills und jede überstandene Welle, in der man mitgekämpft hat. In der Pause im Innenhof öffnet **B** den Shop: Waffen (wirken als Werte-Items), Rüstung, Werte-Items und Verbrauchsgüter für R/T. Rechtsklick auf ein Item im Inventar verkauft es (70 %).

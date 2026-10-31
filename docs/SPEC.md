@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v2.1)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v2.2)
 
 Stand: 31.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v2.2: Endstatistik nach Spielende (Podest mit MVP, Auszeichnungen, sortierbare Rangliste, Kills pro Welle).
 Änderungen v2.1: Lobby vor dem Spiel (freie Heldenwahl, Bereit, Countdown 15 s), erste Geräusche und Musik (im Code erzeugt) mit Lautstärke-Einstellungen.
 Änderungen v2.0: Figuren stehen auf dem Boden, Angriffe synchron zum Treffer, Bienen-/Beete-Kreislauf, Postbote ab Welle 6 ohne Zeitlimit, Landschaft überarbeitet.
 Änderungen v1.9: Karte mit mehr Details (Ruine, Stacheldraht, Barrikaden, Feuerstellen, Hochbeete, Bruchsteinwege, Gras), Nordeingang zum Innenhof (ersetzt das Rattenloch), Lager weichen aus. Beschwörerzauber wie in LoL (zwei pro Held, vor dem Spiel gewählt, Tasten F/G), siehe Abschnitt 9b.
@@ -206,8 +207,19 @@ Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `
 
 ## 8a. Sieg (v1.9)
 
-- Wer **Welle 20 übersteht, gewinnt** (`victoryWave` in `data/waves.json`). Der Sieg-Bildschirm zeigt den besten Spieler (Kills, Bosse, Gold).
+- Wer **Welle 20 übersteht, gewinnt** (`victoryWave` in `data/waves.json`). Nach Sieg oder Niederlage folgt die Endstatistik (v2.2, siehe unten).
 - Die Wellen sind auf **vier aktive Spieler** ausgelegt: Fällt einer aus (AFK), ist es zu dritt kaum zu schaffen. Sein Held bekommt dann auch kein Gold und keine Erfahrung mehr.
+
+## 8c. Endstatistik (v2.2)
+
+- **Zählung:** Die Sim zählt je Held in `h.stats` (`src/sim/stats.ts`):
+  - Schaden an Zombies und erlittenen Schaden (nach Rüstung und Schild)
+  - Heilung, die dem Heiler gutgeschrieben wird: Zauber, Fähigkeiten, Lebensraub, Heilung über Zeit über `Buff.by`; ohne die normale Regeneration
+  - Tode, Serien (Kills ohne Tod), Kills pro Welle
+  - Einsätze von Fähigkeiten und Zaubern, ausgegebenes Gold
+- **Übertragung:** `stats` geht nicht in die Schnappschüsse, weil sich die Werte bei jedem Treffer ändern. Das `gameOver`-Ereignis bringt `stats` (alle Helden, nach Wertung sortiert) und `team` (Welle, Zeit, Zombies, Bosse, Postboten, Vorrat, Beete, Stock) einmal fertig mit (`endGame`).
+- **Wertung (`mvpScore`):** Kill 1, Boss 5, Assist 0,6, Schaden/400, Heilung/300, erlittener Schaden/800, Tod −1, nie unter 0. Gewichte in `data/economy.json` unter `rewards.mvp`.
+- **Bildschirm:** Teamleiste, Podest (Platz 1 als MVP), Auszeichnungen (nur Kategorien mit Wert > 0), sortierbare Rangliste mit Schadensbalken, SVG-Diagramm „Kills pro Welle“. Die Zahlen zählen hoch. „Nochmal“ führt online zurück in die Lobby.
 
 ## 8. Niederlage
 

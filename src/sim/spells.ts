@@ -1,6 +1,7 @@
 import { applyDamage } from './combat';
 import type { DataContext, SimContext } from './context';
 import { resolveObstacles } from './grid';
+import { healHero, statsOf } from './stats';
 import { addBuff, hasBuff, slow } from './status';
 import { DT, type Hero, type SpellDef, type Zombie } from './types';
 import { dist, type Vec2 } from './vec';
@@ -117,7 +118,7 @@ export function castSpell(ctx: SimContext, h: Hero, slot: number, aim: Vec2): bo
         .filter((x) => x !== h && x.alive && dist(x.pos, h.pos) <= def.values.range)
         .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
       for (const x of friend ? [h, friend] : [h]) {
-        x.hp = Math.min(x.maxHp, x.hp + heal);
+        healHero(ctx, x, heal, h);
         addBuff(ctx, x, 'haste', def.values.haste, def.values.hasteTime, 'spell-heilen');
         state.events.push({ type: 'effect', kind: 'tea', pos: { ...x.pos }, radius: 1.2, heroId: x.id });
       }
@@ -156,6 +157,7 @@ export function castSpell(ctx: SimContext, h: Hero, slot: number, aim: Vec2): bo
       return false;
   }
   h.spellCooldowns[slot] = def.cooldown;
+  statsOf(h).casts++;
   state.events.push({ type: 'spell', heroId: h.id, spellId: def.id, from, to, targetId });
   return true;
 }
