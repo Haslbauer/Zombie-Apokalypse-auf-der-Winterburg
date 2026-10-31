@@ -441,5 +441,90 @@
         "heal": 0.01
       }
     }
+  },
+  {
+    "id": "sachbearbeiter",
+    "name": "Sachbearbeiter",
+    "color": "#5a6a8a",
+    "hp": 160,
+    "speed": 1.6,
+    "radius": 0.45,
+    "damage": 14,
+    "attackRange": 0.4,
+    "attackCooldown": 1.2,
+    "aggroRange": 7,
+    "xp": 16,
+    "gold": 6,
+    "figure": "clerk",
+    "targets": {
+      "heart": 1
+    }
+  },
+  {
+    "id": "bauamt",
+    "name": "Das Bauamt",
+    "color": "#f2c200",
+    "hp": 3200,
+    "speed": 1.5,
+    "radius": 1.25,
+    "damage": 55,
+    "attackRange": 0.8,
+    "attackCooldown": 1.8,
+    "aggroRange": 12,
+    "xp": 400,
+    "gold": 200,
+    "figure": "bauamt",
+    "rank": "boss",
+    "special": {
+      "kind": "summon",
+      "interval": 14,
+      "count": 3,
+      "summon": "sachbearbeiter"
+    },
+    "abilities": [
+      {
+        "kind": "slam",
+        "name": "Abrissbescheid",
+        "interval": 7,
+        "windup": 1.0,
+        "range": 3.5,
+        "radius": 2.3,
+        "damage": 150
+      },
+      {
+        "kind": "bolt",
+        "name": "Formularflut",
+        "interval": 8,
+        "windup": 1.2,
+        "range": 14,
+        "radius": 2.2,
+        "damage": 55,
+        "plague": 2,
+        "count": 4
+      },
+      {
+        "kind": "nova",
+        "name": "Baustopp",
+        "interval": 12,
+        "windup": 1.4,
+        "range": 5,
+        "radius": 4.5,
+        "damage": 60,
+        "stun": 1.2,
+        "plague": 1
+      }
+    ],
+    "teamBuff": {
+      "name": "Baugenehmigung",
+      "icon": "📜",
+      "duration": 120,
+      "effects": {
+        "damageMult": 1.25,
+        "damageReduction": 0.15
+      }
+    },
+    "targets": {
+      "heart": 1
+    }
   }
 ]

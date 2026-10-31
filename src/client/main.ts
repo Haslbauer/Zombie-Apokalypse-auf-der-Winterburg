@@ -556,7 +556,10 @@ function handleEvents(state: GameState): void {
         if (e.heroId === heroId) hud.message(e.reason);
         break;
       case 'elite':
-        hud.message(`Elite: ${gameData.zombies.find((z) => z.id === e.defId)?.name}!`);
+        if (e.defId === gameData.waves.finalBoss?.type) {
+          const last = state.wave.number >= (gameData.waves.victoryWave ?? Infinity);
+          hud.message(last ? 'Endkampf: Das Bauamt rückt mit allen Formularen an!' : 'Das Bauamt ist da – Baustopp für die Winterburg!');
+        } else hud.message(`Zwischenboss: ${gameData.zombies.find((z) => z.id === e.defId)?.name}!`);
         renderer.zombieScream(e.zombieId);
         sound.play('roar', state.zombies.find((z) => z.id === e.zombieId)?.pos);
         break;

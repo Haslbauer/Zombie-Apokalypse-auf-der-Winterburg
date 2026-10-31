@@ -151,6 +151,13 @@ Sie haben Fähigkeiten wie die Helden. Jede kündigt sich mit einer **Warnung am
 
 Der schwere Schlag braucht einen **Tank**, die Seuche einen **Support**, die Wut genug **Schaden**.
 
+**Endgegner: Das Bauamt.** Es erscheint ab Welle 15 in jeder Welle, jedes Mal stärker. In Welle 20 ist es der Endkampf: Erst wenn es fällt, ist die Winterburg gehalten. Seine Fähigkeiten:
+- **Abrissbescheid:** schwerer Schlag aufs Ziel.
+- **Formularflut:** 4 Einschläge mit Seuche.
+- **Baustopp:** große Fläche mit Betäubung und Seuche.
+
+Dazu ruft es Sachbearbeiter. Wer es besiegt, bekommt 📜 Baugenehmigung: +25 % Schaden und −15 % erlittenen Schaden, 120 s.
+
 **Team-Buffs:** Fällt ein Zwischenboss, bekommen alle lebenden Helden seinen Buff. Er wird oben unter der Kopfleiste mit Restzeit angezeigt:
 
 | Boss | Buff |

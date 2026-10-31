@@ -30,7 +30,7 @@ function iconMaterial(text: string, color: string): THREE.SpriteMaterial {
   return material;
 }
 
-type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap';
+type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp';
 
 /**
  * Aussehen einer animierten Figur (public/models/<model>.glb). move: Lauf-Clip,
@@ -91,12 +91,16 @@ const ZOMBIE_LOOKS: Record<string, ModelLook> = {
   toad: { model: 'frog', move: 'walk', idle: 'idle', refSpeed: 1.6, scale: 2.6, tint: [0.62, 0.62, 0.5], attacks: ['attack'] },
   rat: { model: 'rat', move: 'run', idle: 'idle', refSpeed: 5, scale: 1.2, tint: [1.8, 1.7, 1.6], attacks: ['attack', 'attack2'] },
   ratking: { model: 'rat', move: 'walk', idle: 'idle', refSpeed: 1.2, scale: 3, tint: [1.4, 1.1, 0.8], attacks: ['attack', 'attack2'], props: ['crown'], headBone: 'Head' },
+  // Endgegner Bauamt: riesiger Beamter mit Bauhelm und Amtsstempel; Sachbearbeiter mit Klemmbrett
+  bauamt: { model: 'zombie-cop', move: 'walk', refSpeed: 1.0, scale: 2.4, tint: [0.95, 0.95, 1.05], ...Z, attacks: ['attack', 'bite'], props: ['hardhat', 'stamp'], handOffset: 0.06 },
+  clerk: { model: 'zombie-cop', move: 'walk', refSpeed: 1.4, scale: 1, tint: [0.85, 0.9, 1.05], ...Z, attacks: [...Z.attacks], props: ['clipboard'] },
   hornet: { model: 'wasp', move: 'fly', idle: 'fly', refSpeed: 4.5, scale: 1.6, tint: [1, 1, 1], attacks: ['attack'], lift: 0.9 },
 };
 
 /** Leuchtfarbe der schweren Gegner (Boden-Ring, Augen, Namensschild). */
 export const ELITE_COLORS: Record<string, number> = {
   butcher: 0xff2a1a,
+  bauamt: 0xf2c200,
   demon: 0xb04dff,
   ratking: 0xffc93c,
   postman: 0xffd166,
@@ -173,6 +177,8 @@ function zombieHeight(figure: string, radius: number): number {
       return 2.6;
     case 'butcher':
       return 3.3;
+    case 'bauamt':
+      return 4.4;
     case 'demon':
       return 2.4;
     case 'postman':
@@ -319,7 +325,7 @@ export class UnitView {
     // Requisiten in Metern: Maßstab des Knochens herausrechnen (Mixamo und Quaternius unterscheiden sich)
     inst.root.updateMatrixWorld(true);
     for (const prop of look.props ?? []) {
-      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap';
+      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat';
       const bone = inst.root.getObjectByName(head ? (look.headBone ?? 'mixamorigHead') : (look.handBone ?? 'mixamorigRightHand'));
       if (!bone) continue;
       const mesh = this.propMesh(prop);
@@ -377,6 +383,23 @@ export class UnitView {
       case 'crown':
         // Der Kopfknochen der Ratte zeigt zur Schnauze: Krone hinter die Ohren, aufgerichtet
         add(new THREE.CylinderGeometry(0.16, 0.14, 0.12, 6, 1, true), 0xffc93c, 0, -0.02, 0.16, 0x6b4a00).rotation.x = Math.PI / 2;
+        break;
+      case 'hardhat':
+        // Bauhelm (gelb, mit Krempe und Mittelgrat)
+        add(new THREE.SphereGeometry(0.17, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), 0xf2c200, 0, 0.12, 0.02);
+        add(new THREE.CylinderGeometry(0.22, 0.22, 0.02, 14), 0xf2c200, 0, 0.12, 0.04);
+        add(new THREE.BoxGeometry(0.03, 0.05, 0.3), 0xd9ad00, 0, 0.27, 0.02);
+        break;
+      case 'clipboard':
+        add(new THREE.BoxGeometry(0.26, 0.34, 0.02), 0x8a6a40, 0, 0.16, 0.06);
+        add(new THREE.BoxGeometry(0.22, 0.28, 0.005), 0xf4f1e6, 0, 0.15, 0.075);
+        add(new THREE.BoxGeometry(0.1, 0.04, 0.03), 0xb0b0b0, 0, 0.31, 0.07);
+        break;
+      case 'stamp':
+        // Riesiger Amtsstempel
+        add(new THREE.CylinderGeometry(0.04, 0.04, 0.3, 8), 0x5a3a20, 0, 0.2, 0);
+        add(new THREE.BoxGeometry(0.3, 0.12, 0.2), 0x2a2a2a, 0, 0.4, 0);
+        add(new THREE.BoxGeometry(0.32, 0.03, 0.22), 0xc0302a, 0, 0.47, 0);
         break;
       case 'sunhat':
         add(new THREE.CylinderGeometry(0.2, 0.2, 0.02, 16), 0x8a7a55, 0, 0.17, 0.02);

@@ -322,6 +322,8 @@ export interface WaveConfig {
    * hpPerWave: zusätzlicher Lebensanteil je Welle (stärker als normale Zombies).
    */
   elites?: { fromWave?: number; every: number; everyFrom?: number; countPerWaves?: number; countEvery?: number; hpPerWave?: number; types: string[] };
+  /** Endgegner: ab fromWave in jeder Welle (Sieg erst, wenn er in der letzten Welle fällt). */
+  finalBoss?: { type: string; fromWave: number };
   /** Wut: Bosse, die länger als after Sekunden leben, machen je Sekunde perSecond mehr Schaden (bis max). */
   bossEnrage?: { after: number; perSecond: number; max: number };
   /** Diese Welle überstanden = Sieg (fehlt: endlos). */

@@ -78,5 +78,9 @@
     "after": 40,
     "perSecond": 0.025,
     "max": 2.5
+  },
+  "finalBoss": {
+    "type": "bauamt",
+    "fromWave": 15
   }
 }

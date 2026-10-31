@@ -89,6 +89,8 @@ export function waveQueue(state: { rng: number }, n: number, cfg: WaveConfig): s
   for (const p of cfg.packs ?? []) for (let i = 0; i < packCount(n, cfg, p.type); i++) queue.push(`pack:${p.type}`);
   shuffle(state, queue);
   const elites = waveElites(n, cfg).map((t) => `elite:${t}`);
+  // Endgegner (Bauamt): ab fromWave in jeder Welle, mit der Welle stärker; in der letzten Welle Endkampf
+  if (cfg.finalBoss && n >= cfg.finalBoss.fromWave) elites.push(`elite:${cfg.finalBoss.type}`);
   queue.splice(Math.floor(queue.length / 2), 0, ...elites);
   return queue;
 }
@@ -132,7 +134,8 @@ export function updateWaves(ctx: SimContext): void {
     awardWaveBonus(ctx, w.number);
     // Letzte Welle überstanden: Sieg
     if (cfg.victoryWave && w.number >= cfg.victoryWave) {
-      endGame(ctx, 'Die Winterburg ist gehalten!', true);
+      const fb = cfg.finalBoss ? ctx.zombieDefs.get(cfg.finalBoss.type) : undefined;
+      endGame(ctx, fb && w.number >= cfg.finalBoss!.fromWave ? `${fb.name} ist besiegt – die Winterburg ist gehalten!` : 'Die Winterburg ist gehalten!', true);
       return;
     }
     harvest(ctx);

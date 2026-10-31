@@ -76,3 +76,32 @@ describe('Zwischenbosse', () => {
     expect(c.buffs.some((x) => x.source === 'team-schlaechter')).toBe(false);
   });
 });
+
+describe('Endgegner Bauamt', () => {
+  it('kommt ab Welle 15 in jeder Welle, vorher nicht', async () => {
+    const { waveQueue } = await import('../../src/sim/waves');
+    const { testData } = await import('./helpers');
+    const cfg = testData().waves;
+    const has = (n: number) => waveQueue({ rng: 3 }, n, cfg).includes('elite:bauamt');
+    expect(has(14)).toBe(false);
+    expect(has(15)).toBe(true);
+    expect(has(18)).toBe(true);
+    expect(has(20)).toBe(true);
+  });
+
+  it('Sieg in der letzten Welle erst, wenn das Bauamt fällt', async () => {
+    const { testData, placeZombie: place } = await import('./helpers');
+    const sim = new Simulation(testData(), { seed: 1, heroes: ['rotschopf'] });
+    const last = sim.data.waves.victoryWave!;
+    Object.assign(sim.state.wave, { number: last, phase: 'wave', queue: [] });
+    sim.state.zombies = sim.state.zombies.filter((z) => z.neutral);
+    const boss = place(sim, 'bauamt', 5, 5, 10);
+    sim.step();
+    expect(sim.state.gameOver).toBe(false);
+    applyDamage(sim, boss, 1000, sim.state.heroes[0]);
+    sim.step();
+    expect(sim.state.victory).toBe(true);
+    const over = sim.state.events.find((e) => e.type === 'gameOver');
+    expect(over).toMatchObject({ reason: expect.stringContaining('Bauamt') });
+  });
+});
