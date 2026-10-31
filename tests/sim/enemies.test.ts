@@ -32,7 +32,7 @@ describe('Neue Gegner und Elites', () => {
     expect(b.h.buffs.some((x) => x.kind === 'rooted')).toBe(false);
   });
 
-  it('Rattenrudel ab Welle 2, Elites in Welle 5, 10 und zwei ab 15 (mit Dämon)', () => {
+  it('Rattenrudel ab Welle 2, Zwischenbosse ab Welle 3, immer mehr', () => {
     expect(packCount(1, cfg, 'ratte')).toBe(0);
     expect(packCount(2, cfg, 'ratte')).toBe(1);
     expect(packCount(8, cfg, 'ratte')).toBeGreaterThan(2);
@@ -43,14 +43,23 @@ describe('Neue Gegner und Elites', () => {
     expect(packSize(1, hornets, 0)).toBe(2);
     expect(packSize(1, hornets, 0.99)).toBe(3);
     expect(packSize(11, hornets, 0)).toBe(6);
+    // Zwischenbosse: ab Welle 3 jede zweite Welle, ab Welle 10 jede Welle, alle 5 Wellen einer mehr
+    expect(waveElites(1, cfg)).toEqual([]);
+    expect(waveElites(2, cfg)).toEqual([]);
+    expect(waveElites(3, cfg)).toHaveLength(1);
     expect(waveElites(4, cfg)).toEqual([]);
-    expect(waveElites(5, cfg)).toEqual(['rattenkoenig']);
-    expect(waveElites(10, cfg)).toEqual(['schlaechter']);
-    // Ab Welle 15 kommt der Dämon dazu (Wechsel Rattenkönig, Schlächter, Dämon)
-    expect(waveElites(15, cfg)).toEqual(['daemon', 'rattenkoenig']);
-    expect(waveElites(25, cfg)).toEqual(['schlaechter', 'daemon', 'rattenkoenig']);
+    expect(waveElites(5, cfg)).toHaveLength(1);
+    expect(waveElites(7, cfg)).toHaveLength(1);
+    expect(waveElites(8, cfg)).toEqual([]);
+    expect(waveElites(9, cfg)).toHaveLength(2);
+    expect(waveElites(10, cfg)).toHaveLength(2);
+    expect(waveElites(11, cfg)).toHaveLength(2);
+    expect(waveElites(13, cfg)).toHaveLength(3);
+    expect(waveElites(20, cfg)).toHaveLength(4);
+    // abwechselnd alle drei Typen
+    expect(new Set(waveElites(13, cfg))).toEqual(new Set(['rattenkoenig', 'schlaechter', 'daemon']));
     const q = waveQueue({ rng: 1 }, 5, cfg);
-    expect(q.filter((e) => e.startsWith('elite:'))).toEqual(['elite:rattenkoenig']);
+    expect(q.filter((e) => e.startsWith('elite:'))).toEqual(waveElites(5, cfg).map((t) => `elite:${t}`));
     expect(q.filter((e) => e.startsWith('pack:ratte')).length).toBe(packCount(5, cfg, 'ratte'));
     expect(q.filter((e) => e.startsWith('pack:hornisse')).length).toBe(packCount(5, cfg, 'hornisse'));
   });

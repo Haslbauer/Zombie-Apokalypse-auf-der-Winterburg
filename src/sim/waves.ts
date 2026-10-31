@@ -65,7 +65,16 @@ export function packSize(n: number, pack: NonNullable<WaveConfig['packs']>[numbe
 /** Elite-Typen in Welle n (alle `every` Wellen, Anzahl siehe WaveConfig.elites, abwechselnd). */
 export function waveElites(n: number, cfg: WaveConfig): string[] {
   const e = cfg.elites;
-  if (!e || e.types.length === 0 || n % e.every !== 0) return [];
+  if (!e || e.types.length === 0) return [];
+  // Neu: ab fromWave alle every Wellen, ab everyFrom jede Welle, Anzahl wächst
+  if (e.fromWave !== undefined) {
+    if (n < e.fromWave) return [];
+    const due = (n - e.fromWave) % e.every === 0 || (e.everyFrom !== undefined && n >= e.everyFrom);
+    if (!due) return [];
+    const count = 1 + Math.floor((n - e.fromWave) / (e.countPerWaves ?? Infinity));
+    return Array.from({ length: count }, (_, i) => e.types[(n + i) % e.types.length]);
+  }
+  if (n % e.every !== 0) return [];
   const count = e.countEvery ? Math.ceil(n / e.countEvery) : Math.floor(n / e.every);
   return Array.from({ length: count }, (_, i) => e.types[(n / e.every - 1 + i) % e.types.length]);
 }
@@ -178,7 +187,9 @@ export function spawnZombieAt(ctx: SimContext, def: ZombieDef, pos: Vec2, object
     objectiveId = keys.length > 0 ? pickWeighted(state, keys, ([, w]) => w)[0] : 'heart';
   }
   const scale = waveScaling(state.wave.number, data.waves);
-  const hp = Math.round(def.hp * scale.hp);
+  // Zwischenbosse werden mit jeder Welle zusätzlich stärker
+  const extra = def.rank === 'elite' && !def.courier && !def.neutral ? 1 + (data.waves.elites?.hpPerWave ?? 0) * (state.wave.number - 1) : 1;
+  const hp = Math.round(def.hp * scale.hp * extra);
   const z: Zombie = {
     id: state.nextId++,
     defId: def.id,
@@ -194,6 +205,7 @@ export function spawnZombieAt(ctx: SimContext, def: ZombieDef, pos: Vec2, object
     objectiveId,
     st: emptyStatus(),
     wander: 0,
+    bornAt: state.time,
   };
   state.zombies.push(z);
   return z;

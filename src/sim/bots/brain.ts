@@ -444,5 +444,18 @@ function steer(ctx: SimContext, h: Hero, bot: BotState): Command {
       move = { x: (h.pos.x - target.pos.x) / away, y: (h.pos.y - target.pos.y) / away };
     }
   }
+  // Bossfähigkeiten ausweichen: aus der Warnung herauslaufen (leichte Bots reagieren spät)
+  const late = bot.difficulty === 'leicht';
+  for (const z of ctx.state.zombies) {
+    const c = z.abil?.cast;
+    if (!c || (late && c.left > 0.35)) continue;
+    const r = ctx.zombieDefs.get(z.defId)?.abilities?.[c.i]?.radius ?? 0;
+    for (const p of c.points) {
+      const d = dist(h.pos, p);
+      if (d > r + h.radius + 0.4) continue;
+      const k = d > 1e-3 ? 1 / d : 1;
+      move = d > 1e-3 ? { x: (h.pos.x - p.x) * k, y: (h.pos.y - p.y) * k } : { x: Math.cos(h.facing + Math.PI / 2), y: Math.sin(h.facing + Math.PI / 2) };
+    }
+  }
   return { heroId: h.id, type: 'input', move, aim, attack };
 }

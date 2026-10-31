@@ -722,7 +722,7 @@ export class UnitView {
     ringMat.depthTest = !(marked || reveal);
     this.ring.renderOrder = marked || reveal ? 5 : 0;
     // Schlafende leicht bläulich, Festgehaltene rötlich
-    const tint = time < (st.burnUntil ?? 0) ? 0xff6a20 : time < st.sleepUntil ? 0x9fc9ff : time < st.rootUntil ? 0xff8a80 : time < (st.weakUntil ?? 0) ? 0x8a90b0 : null;
+    const tint = time < (st.enrageUntil ?? 0) ? 0xd01010 : time < (st.burnUntil ?? 0) ? 0xff6a20 : time < st.sleepUntil ? 0x9fc9ff : time < st.rootUntil ? 0xff8a80 : time < (st.weakUntil ?? 0) ? 0x8a90b0 : null;
     if (tint !== null) this.materials.forEach((m) => m.color.lerp(new THREE.Color(tint), 0.35));
   }
 

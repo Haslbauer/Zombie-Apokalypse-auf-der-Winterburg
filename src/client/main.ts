@@ -373,6 +373,9 @@ input.onMenu = () => {
   }
 };
 
+/** Farben der Bossfähigkeiten (Warnung und Einschlag). */
+const BOSS_COLORS: Record<string, number> = { slam: 0xff3b30, nova: 0x8bdc4a, bolt: 0xff8a3d };
+
 /** Farben der Fähigkeitseffekte. */
 const EFFECT_COLORS: Record<string, number> = {
   'slam-stun': 0xffd23f,
@@ -587,6 +590,27 @@ function handleEvents(state: GameState): void {
         effects.warning(e.to, e.radius, 0xb04dff, e.windup + 0.45);
         renderer.zombieScream(e.zombieId);
         sound.play('roar', e.from);
+        break;
+      case 'bossCast': {
+        // Bossfähigkeit: Warnung am Boden (ausweichen!), Name über dem Boss
+        const color = BOSS_COLORS[e.kind];
+        for (const p of e.points) effects.warning(p, e.radius, color, e.windup);
+        const at = renderer.unitPosition(e.zombieId);
+        if (at) effects.floatingText(at, e.name, '#ffb3a7', 3.2);
+        sound.play('whoosh', at ?? e.points[0], 0.7);
+        break;
+      }
+      case 'bossHit':
+        for (const p of e.points) {
+          effects.disc(p, e.radius, BOSS_COLORS[e.kind], 0.35, 0.4);
+          effects.ring(p, e.radius, BOSS_COLORS[e.kind], 0.45);
+        }
+        sound.play('slam', e.points[0], 0.8);
+        break;
+      case 'teamBuff':
+        hud.message(`${e.icon} Team-Buff: ${e.name} (${e.duration} s)`);
+        hud.addPing(`${e.icon} ${e.name} für alle (${e.duration} s)`, '#ffd166');
+        sound.play('levelUp');
         break;
       case 'spell':
         spellEffect(e);

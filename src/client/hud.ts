@@ -30,6 +30,9 @@ export class Hud {
   private readonly top = el('div', 'hud-top');
   private readonly waveLabel = el('div', 'hud-wave');
   private readonly waveInfo = el('div', 'hud-wave-info');
+  /** Team-Buffs und Seuche des eigenen Helden (unter der Kopfleiste). */
+  private readonly buffBar = el('div', 'hud-buffbar');
+  private buffKey = '';
   /** Speedrun-Uhr: Spielzeit seit Spielbeginn (bleibt beim Spielende stehen). */
   private readonly clock = el('div', 'hud-clock');
   /** Gespeicherte Bestzeit (für den Tooltip der Uhr). */
@@ -119,6 +122,7 @@ export class Hud {
     this.shopHint.style.display = 'none';
     root.append(this.shopHint, this.team);
     this.updateHelp();
+    root.append(this.buffBar);
     root.append(this.top, this.bottom, this.banner, this.respawn, this.help, this.invite, this.pingLog, this.scoreboard, this.perf, this.connection, this.overlay, this.tooltip);
     this.connection.style.display = 'none';
     this.invite.style.display = 'none';
@@ -589,6 +593,29 @@ export class Hud {
     }
     this.crosshair.style.display = active ? '' : 'none';
     this.crosshair.classList.toggle('locked', locked);
+  }
+
+  /** Team-Buffs (von Zwischenbossen) mit Restzeit und Seuche-Stapel des eigenen Helden. */
+  private updateBuffBar(h: Hero, time: number): void {
+    const chips: [string, string, string][] = [];
+    const seen = new Set<string>();
+    for (const b of h.buffs) {
+      if (!b.source.startsWith('team-') || seen.has(b.source)) continue;
+      seen.add(b.source);
+      const tb = this.data.zombies.find((z) => z.id === b.source.slice(5))?.teamBuff;
+      if (tb) chips.push(['buff', `${tb.icon} ${tb.name} ${Math.ceil(b.until - time)} s`, Object.entries(tb.effects).map(([k, v]) => `${k} ${v}`).join(', ')]);
+    }
+    if (h.plague && h.plague.until > time) chips.push(['plague', `☣ Seuche ×${h.plague.stacks}`, 'Schaden über Zeit – ein Support in der Nähe oder Reinigen entfernt sie']);
+    const key = chips.map((c) => c[1]).join('|');
+    if (key === this.buffKey) return;
+    this.buffKey = key;
+    this.buffBar.replaceChildren(
+      ...chips.map(([cls, text, title]) => {
+        const c = el('span', `hud-buff ${cls}`, text);
+        c.title = title;
+        return c;
+      }),
+    );
   }
 
   /** Leistungsanzeige oben rechts: Bildrate, Qualitätsstufe, Ping. */
@@ -1298,6 +1325,7 @@ export class Hud {
 
     const h = state.heroes.find((x) => x.id === heroId);
     if (h) this.updateHero(h, canRankUp);
+    if (h) this.updateBuffBar(h, state.time);
     if (h) {
       this.hpFill.style.width = `${(100 * h.hp) / h.maxHp}%`;
       this.hpText.textContent = `${Math.ceil(h.hp)} / ${h.maxHp}`;

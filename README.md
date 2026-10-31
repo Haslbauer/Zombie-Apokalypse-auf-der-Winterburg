@@ -135,6 +135,33 @@ Jeder Held hat eine Rolle im Team. Ohne Tank, Schaden und Support ist das Spiel 
 
 Die Heldenwahl und die Lobby zeigen die Rolle jedes Helden und warnen, wenn eine Rolle fehlt. Bots füllen zuerst die fehlenden Rollen auf.
 
+## Zwischenbosse und Team-Buffs
+
+Zwischenbosse (Rattenkönig, Schlächter, Dämon) kommen ab Welle 3 jede zweite Welle und ab Welle 10 in jeder Welle. Alle 5 Wellen kommt einer mehr dazu, und mit jeder Welle haben sie zusätzlich mehr Leben.
+
+Sie haben Fähigkeiten wie die Helden. Jede kündigt sich mit einer **Warnung am Boden** an; wer rechtzeitig herausläuft, weicht aus:
+
+| Boss | Fähigkeiten |
+|---|---|
+| Rattenkönig | **Pestbiss** (Einschläge bei 2 Helden, bevorzugt hinten, Seuche), **Pestwolke** ab Welle 8 (Fläche um ihn, Seuche), ruft weiter Ratten |
+| Schlächter | **Hackbeil** (schwerer Schlag aufs Ziel), **Fleischwolf** ab Welle 6 (Fläche, Seuche), Anlauf |
+| Dämon | **Klauenhieb** (schwerer Schlag), **Höllenfeuer** ab Welle 7 (3 Einschläge, Seuche), Höllensprung |
+
+**Wut:** Ein Boss, der länger als 40 s lebt, macht jede Sekunde 2,5 % mehr Schaden, höchstens das 2,5-Fache. Er färbt sich dann rot.
+
+Der schwere Schlag braucht einen **Tank**, die Seuche einen **Support**, die Wut genug **Schaden**.
+
+**Team-Buffs:** Fällt ein Zwischenboss, bekommen alle lebenden Helden seinen Buff. Er wird oben unter der Kopfleiste mit Restzeit angezeigt:
+
+| Boss | Buff |
+|---|---|
+| Rattenkönig | 🐀 Rattenfieber: +25 % Angriffstempo, 90 s |
+| Schlächter | 🩸 Blutrausch: +20 % Schaden, 90 s |
+| Dämon | 🔥 Höllenglut: +10 % Schaden, +12 % Tempo, 90 s |
+| Riesenspinne | 🕷 Spinnenbeine: +15 % Tempo, 75 s |
+| Kröte | 🐸 Krötenschleim: 1 % Leben pro Sekunde, 75 s |
+| Postbote | 📦 Eilzustellung: +10 % Tempo und Angriffstempo, 60 s |
+
 ## Gegner
 
 Walker, Runner, Brute, Kriecher (hält fest), Ratten in Rudeln (fressen Beete, schlüpfen zum Vorrat), Hornissen-Schwärme (greifen den Bienenstock an) und alle 5 Wellen Elites mit leuchtendem Ring: Rattenkönig (ruft Ratten), Schlächter (Anlauf, betäubt) und ab Welle 15 der Dämon (Höllensprung mit Warnkreis). **Bosse wie in LoL:** Der letzte Treffer an einem Elite, dem Postboten oder einem großen Neutralen bringt Extra-Gold, Mithelfer bekommen die Hälfte (Assist), der erste Boss der Partie +150 („Erstes Blut“). Details in `docs/SPEC.md` (Abschnitt 7).

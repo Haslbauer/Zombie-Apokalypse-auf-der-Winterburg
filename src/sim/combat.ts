@@ -5,6 +5,7 @@ import { awardBoss, awardGold } from './economy';
 import { itemStats } from './items';
 import { awardXp, heroDamage } from './progression';
 import { roleDamageFactor } from './roles';
+import { applyTeamBuff } from './bossabilities';
 import { noteDeath, noteKill, statsOf } from './stats';
 import { absorbWithShield, buffSum } from './status';
 import { DT, type Hero, type Projectile, type Zombie } from './types';
@@ -88,6 +89,9 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
       noteKill(killer, state.wave.number);
     }
     if (isBoss(ctx, target) && target.contrib) awardBoss(ctx, target, killer);
+    // Zwischenboss erlegt: Team-Buff für alle lebenden Helden
+    const zdef = ctx.zombieDefs.get(target.defId);
+    if (zdef?.teamBuff) applyTeamBuff(ctx, zdef);
   }
   return dealt;
 }

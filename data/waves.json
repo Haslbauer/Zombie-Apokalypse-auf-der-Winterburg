@@ -40,13 +40,16 @@
     }
   ],
   "elites": {
-    "every": 5,
+    "fromWave": 3,
+    "every": 2,
+    "everyFrom": 10,
+    "countPerWaves": 5,
+    "hpPerWave": 0.05,
     "types": [
       "rattenkoenig",
       "schlaechter",
       "daemon"
-    ],
-    "countEvery": 10
+    ]
   },
   "packs": [
     {
@@ -70,5 +73,10 @@
     "firstWave": 6,
     "every": 3,
     "delay": 20
+  },
+  "bossEnrage": {
+    "after": 40,
+    "perSecond": 0.025,
+    "max": 2.5
   }
 }

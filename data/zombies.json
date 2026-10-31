@@ -117,6 +117,38 @@
     },
     "targets": {
       "heart": 1
+    },
+    "abilities": [
+      {
+        "kind": "bolt",
+        "name": "Pestbiss",
+        "interval": 7,
+        "windup": 1.1,
+        "range": 10,
+        "radius": 1.8,
+        "damage": 30,
+        "plague": 2,
+        "count": 2
+      },
+      {
+        "kind": "nova",
+        "name": "Pestwolke",
+        "interval": 10,
+        "windup": 1.2,
+        "range": 4,
+        "radius": 3.5,
+        "damage": 20,
+        "plague": 2,
+        "fromWave": 8
+      }
+    ],
+    "teamBuff": {
+      "name": "Rattenfieber",
+      "icon": "🐀",
+      "duration": 90,
+      "effects": {
+        "attackSpeed": 0.25
+      }
     }
   },
   {
@@ -147,6 +179,36 @@
     },
     "targets": {
       "heart": 1
+    },
+    "abilities": [
+      {
+        "kind": "slam",
+        "name": "Hackbeil",
+        "interval": 6,
+        "windup": 0.9,
+        "range": 3,
+        "radius": 1.8,
+        "damage": 95
+      },
+      {
+        "kind": "nova",
+        "name": "Fleischwolf",
+        "interval": 11,
+        "windup": 1.2,
+        "range": 4,
+        "radius": 3.2,
+        "damage": 40,
+        "plague": 1,
+        "fromWave": 6
+      }
+    ],
+    "teamBuff": {
+      "name": "Blutrausch",
+      "icon": "🩸",
+      "duration": 90,
+      "effects": {
+        "damageMult": 1.2
+      }
     }
   },
   {
@@ -176,6 +238,38 @@
     },
     "targets": {
       "heart": 1
+    },
+    "abilities": [
+      {
+        "kind": "slam",
+        "name": "Klauenhieb",
+        "interval": 6,
+        "windup": 0.8,
+        "range": 3,
+        "radius": 1.6,
+        "damage": 80
+      },
+      {
+        "kind": "bolt",
+        "name": "Höllenfeuer",
+        "interval": 8,
+        "windup": 1.1,
+        "range": 11,
+        "radius": 2,
+        "damage": 40,
+        "plague": 1,
+        "count": 3,
+        "fromWave": 7
+      }
+    ],
+    "teamBuff": {
+      "name": "Höllenglut",
+      "icon": "🔥",
+      "duration": 90,
+      "effects": {
+        "damageMult": 1.1,
+        "haste": 0.12
+      }
     }
   },
   {
@@ -234,6 +328,15 @@
     },
     "neutral": {
       "leash": 14
+    },
+    "teamBuff": {
+      "name": "Eilzustellung",
+      "icon": "📦",
+      "duration": 60,
+      "effects": {
+        "haste": 0.1,
+        "attackSpeed": 0.1
+      }
     }
   },
   {
@@ -299,6 +402,14 @@
     },
     "neutral": {
       "leash": 11
+    },
+    "teamBuff": {
+      "name": "Spinnenbeine",
+      "icon": "🕷",
+      "duration": 75,
+      "effects": {
+        "haste": 0.15
+      }
     }
   },
   {
@@ -321,6 +432,14 @@
     },
     "neutral": {
       "leash": 10
+    },
+    "teamBuff": {
+      "name": "Krötenschleim",
+      "icon": "🐸",
+      "duration": 75,
+      "effects": {
+        "heal": 0.01
+      }
     }
   }
 ]

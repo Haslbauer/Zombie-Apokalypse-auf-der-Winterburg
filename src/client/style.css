@@ -1574,3 +1574,31 @@ html, body {
   color: #ffb347;
   font-weight: 600;
 }
+
+/* Team-Buffs und Seuche unter der Kopfleiste */
+.hud-buffbar {
+  position: absolute;
+  top: 62px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  pointer-events: auto;
+}
+.hud-buff {
+  padding: 2px 9px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255, 209, 102, 0.18);
+  color: #ffd166;
+  border: 1px solid rgba(255, 209, 102, 0.4);
+  font-variant-numeric: tabular-nums;
+}
+.hud-buff.plague {
+  background: rgba(139, 220, 74, 0.18);
+  color: #b5f07a;
+  border-color: rgba(139, 220, 74, 0.5);
+}

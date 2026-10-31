@@ -10,6 +10,7 @@ import { DT, type Hero, type Objective, type Zombie } from './types';
 import { dist, type Vec2 } from './vec';
 import { brushAt } from './grid';
 import { threatTarget } from './roles';
+import { enrageFactor, updateBossAbilities } from './bossabilities';
 
 /** Bis zu diesem Abstand laufen Zombies direkt aufs Ziel zu, sonst entlang des Distanzfelds. */
 const DIRECT_RANGE = 3;
@@ -46,6 +47,7 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null, s
     }
     // Versteckte Helden (Gebüsch, hohes Gras) sieht der Zombie nur aus nächster Nähe
     const seen = heroes.some((h) => (h.brush ?? -1) >= 0) ? heroes.filter((h) => canSee(ctx, z, h)) : heroes;
+    if (def.abilities && updateBossAbilities(ctx, z, def, seen)) continue;
     if (def.special && updateElite(ctx, z, def, seen)) continue;
     if (z.neutral) {
       if (rooted) continue;
@@ -66,7 +68,7 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null, s
           z.attackTimer = def.attackCooldown;
           state.events.push({ type: 'attack', id: z.id, targetId: hero.id });
           if (!blind || nextRandom(state) >= BLIND_MISS) {
-            applyDamage(ctx, hero, z.damage * (state.time < (z.st.weakUntil ?? 0) ? (z.st.weakFactor ?? 1) : 1));
+            applyDamage(ctx, hero, z.damage * (state.time < (z.st.weakUntil ?? 0) ? (z.st.weakFactor ?? 1) : 1) * enrageFactor(ctx, z));
             if (def.rootOnHit) heroCC(ctx, hero, 'rooted', def.rootOnHit);
           }
         }

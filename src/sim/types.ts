@@ -130,8 +130,44 @@ export interface ZombieDef {
    * seinem Platz, kehrt er um und heilt sich voll (wie im LoL-Dschungel).
    */
   neutral?: { leash: number };
+  /** Bossfähigkeiten wie bei den Helden (mit Warnzeit, ausweichbar), siehe sim/bossabilities.ts. */
+  abilities?: BossAbilityDef[];
+  /** Team-Buff, wenn dieser Boss fällt (alle lebenden Helden). */
+  teamBuff?: TeamBuffDef;
   /** Elite-Fähigkeit mit ihren Werten. */
   special?: { kind: 'summon' | 'charge' | 'leap' | 'parcel'; interval: number; [key: string]: number | string };
+}
+
+/**
+ * Bossfähigkeit: slam = schwerer Schlag auf das Ziel (Tank-Prüfung), nova =
+ * Fläche um den Boss, bolt = Einschläge bei count Helden (bevorzugt hinten).
+ * Erst windup Sekunden Warnung am Boden, dann Schaden im Radius.
+ */
+export interface BossAbilityDef {
+  kind: 'slam' | 'nova' | 'bolt';
+  name: string;
+  interval: number;
+  windup: number;
+  range: number;
+  radius: number;
+  damage: number;
+  /** Seuche-Stapel für jeden Getroffenen. */
+  plague?: number;
+  /** Betäubung in Sekunden. */
+  stun?: number;
+  /** bolt: so viele Helden. */
+  count?: number;
+  /** Erst ab dieser Welle. */
+  fromWave?: number;
+}
+
+/** Team-Buff durch einen Boss-Kill: Wirkungen für duration Sekunden. */
+export interface TeamBuffDef {
+  name: string;
+  icon: string;
+  duration: number;
+  /** Wirkungen als Buff-Art → Wert (z. B. damageMult 1.2, attackSpeed 0.25, haste 0.15). heal = Anteil maxHp pro Sekunde. */
+  effects: Partial<Record<'damageMult' | 'attackSpeed' | 'haste' | 'damageReduction' | 'heal', number>>;
 }
 
 export type ItemCategory = 'meleeWeapon' | 'rangedWeapon' | 'armor' | 'stat' | 'consumable';
@@ -280,7 +316,14 @@ export interface WaveConfig {
    */
   packs?: { type: string; fromWave: number; packsPerWave: number; minSize: number; maxSize: number; sizePerWave?: number }[];
   /** Elites: alle `every` Wellen, Anzahl ⌈Welle/countEvery⌉ (Standard: ⌊Welle/every⌋), Typen abwechselnd. */
-  elites?: { every: number; countEvery?: number; types: string[] };
+  /**
+   * Zwischenbosse: ab fromWave alle every Wellen, ab everyFrom in jeder Welle;
+   * 1 + (Welle − fromWave) / countPerWaves Stück, abwechselnd aus types.
+   * hpPerWave: zusätzlicher Lebensanteil je Welle (stärker als normale Zombies).
+   */
+  elites?: { fromWave?: number; every: number; everyFrom?: number; countPerWaves?: number; countEvery?: number; hpPerWave?: number; types: string[] };
+  /** Wut: Bosse, die länger als after Sekunden leben, machen je Sekunde perSecond mehr Schaden (bis max). */
+  bossEnrage?: { after: number; perSecond: number; max: number };
   /** Diese Welle überstanden = Sieg (fehlt: endlos). */
   victoryWave?: number;
   /** Sidequest: Typ mit courier-Werten, erscheint ab firstWave alle every Wellen, delay Sekunden nach Wellenbeginn. */
@@ -777,6 +820,8 @@ export interface ZombieStatus {
   /** Erschöpfen: macht bis dahin weniger Schaden (Faktor weakFactor). */
   weakUntil?: number;
   weakFactor?: number;
+  /** Boss in Wut (zu lange am Leben): bis dahin angezeigt, jeden Tick aufgefrischt. */
+  enrageUntil?: number;
 }
 
 export interface Zombie extends Unit {
@@ -788,6 +833,10 @@ export interface Zombie extends Unit {
   st: ZombieStatus;
   /** Richtung beim Torkeln (geblendet). */
   wander: number;
+  /** Spielzeit beim Erscheinen (Wut der Bosse). */
+  bornAt?: number;
+  /** Bossfähigkeiten: Abklingzeiten und laufende Ausführung (Warnung an points). */
+  abil?: { timers: number[]; cast: { i: number; left: number; points: Vec2[] } | null };
   /** Elite: Restzeit bis zur nächsten Spezialfähigkeit. */
   specialTimer?: number;
   /** Schlächter: laufender Anlauf. */
@@ -929,6 +978,9 @@ export type GameEvent =
   | { type: 'camp'; campId: string; phase: 'spawn' | 'cleared' | 'reset' }
   | { type: 'ping'; heroId: number; kind: PingKind; pos: Vec2 }
   | { type: 'charge'; zombieId: number; from: Vec2; to: Vec2 }
+  | { type: 'bossCast'; zombieId: number; kind: BossAbilityDef['kind']; name: string; points: Vec2[]; radius: number; windup: number }
+  | { type: 'bossHit'; zombieId: number; kind: BossAbilityDef['kind']; points: Vec2[]; radius: number }
+  | { type: 'teamBuff'; defId: string; name: string; icon: string; duration: number }
   | { type: 'parcel'; zombieId: number; from: Vec2; to: Vec2; radius: number; windup: number }
   | { type: 'leap'; zombieId: number; from: Vec2; to: Vec2; radius: number; windup: number }
   | { type: 'heroStatus'; heroId: number; status: 'rooted' | 'stunned' }
