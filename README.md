@@ -143,6 +143,8 @@ Jeder Held hat eine Rolle im Team. Ohne Tank, Schaden und Support ist das Spiel 
 
 **Seuche:** Bossfähigkeiten hinterlassen einen stapelbaren Schaden über Zeit, der nur abklingt, wenn sie eine Weile nicht mehr trifft. Ein Support in der Nähe (oder der Zauber Reinigen) entfernt sie.
 
+Bot-Partien auf „schwer“ (je 3 Läufe, `BALANCE_TEAM=… npm run balance`): komplettes Team Ø Welle 14,3; ohne Tank 13,0; ohne Support 12,0; ohne Schaden 11,3. Siege schaffen Bots noch keine. Die genaue Abstimmung braucht echte Partien.
+
 Die Heldenwahl und die Lobby zeigen die Rolle jedes Helden und warnen, wenn eine Rolle fehlt. Bots füllen zuerst die fehlenden Rollen auf.
 
 ## Zwischenbosse und Team-Buffs
