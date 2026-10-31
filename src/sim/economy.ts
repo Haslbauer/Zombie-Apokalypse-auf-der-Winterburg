@@ -1,5 +1,5 @@
 import type { SimContext } from './context';
-import { itemDef, refreshMaxHp } from './items';
+import { buildPlan, itemDef, refreshMaxHp } from './items';
 import { addBuff, hasBuff } from './status';
 import type { Hero, Zombie } from './types';
 import { dist } from './vec';
@@ -43,7 +43,9 @@ export function buy(ctx: SimContext, h: Hero, itemId: string): boolean {
   if (!item) return deny(ctx, h, 'Unbekanntes Item');
   const closed = shopClosedReason(ctx, h);
   if (closed) return deny(ctx, h, closed);
-  if (h.gold < item.price) return deny(ctx, h, 'Nicht genug Gold');
+  // Rezepte: vorhandene Bauteile werden verbraucht und angerechnet
+  const plan = item.category === 'consumable' ? { cost: item.price, consumed: [] } : buildPlan(ctx, h, itemId);
+  if (h.gold < plan.cost) return deny(ctx, h, 'Nicht genug Gold');
 
   if (item.category === 'consumable') {
     const max = item.maxStack ?? 1;
@@ -55,12 +57,13 @@ export function buy(ctx: SimContext, h: Hero, itemId: string): boolean {
       h.consumables[free] = { itemId, count: 1 };
     }
   } else {
-    const free = h.inventory.findIndex((s) => s === null);
+    const free = plan.consumed.length > 0 ? plan.consumed[0] : h.inventory.findIndex((s) => s === null);
     if (free < 0) return deny(ctx, h, 'Inventar ist voll');
+    for (const slot of plan.consumed) h.inventory[slot] = null;
     h.inventory[free] = itemId;
     refreshMaxHp(ctx, h);
   }
-  h.gold -= item.price;
+  h.gold -= plan.cost;
   ctx.state.events.push({ type: 'shop', heroId: h.id, action: 'buy', itemId });
   return true;
 }

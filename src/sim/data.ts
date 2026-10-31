@@ -184,6 +184,27 @@ export function parseGameData(raw: {
     for (const k of ['think', 'aimError', 'abilityChance', 'retreatHp']) num(bots?.difficulties?.[d], k, `bots.difficulties.${d}`);
   }
   const itemIds = new Set((Array.isArray(raw.items) ? raw.items : []).map((i: any) => i?.id));
+  // Rezepte: Bauteile müssen existieren, keine Verbrauchsgüter sein, billiger als das Ergebnis und ohne Kreis
+  const rawItems: any[] = Array.isArray(raw.items) ? raw.items : [];
+  const byId = new Map(rawItems.map((i) => [i?.id, i]));
+  const cyclic = (id: string, seen: string[]): boolean =>
+    seen.includes(id) || (byId.get(id)?.from ?? []).some((c: string) => cyclic(c, [...seen, id]));
+  for (const item of rawItems) {
+    if (item?.from === undefined) continue;
+    if (!Array.isArray(item.from) || item.from.length === 0) {
+      errors.push(`items.${item.id}.from: Liste von Bauteilen erwartet`);
+      continue;
+    }
+    let sum = 0;
+    for (const c of item.from) {
+      const part = byId.get(c);
+      if (!part) errors.push(`items.${item.id}.from: unbekanntes Item ${c}`);
+      else if (part.category === 'consumable') errors.push(`items.${item.id}.from: Verbrauchsgut ${c} kann kein Bauteil sein`);
+      else sum += part.price;
+    }
+    if (item.price <= sum) errors.push(`items.${item.id}.price: muss über der Summe der Bauteile (${sum}) liegen`);
+    if (cyclic(item.id, [])) errors.push(`items.${item.id}.from: Rezept enthält sich selbst`);
+  }
   for (const h of heroes) {
     const b = bots?.heroes?.[h?.id];
     if (!b) {

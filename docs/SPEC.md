@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v0.9)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.0)
 
-Stand: 30.10.2026. Arbeitsgrundlage für Claude Code.
+Stand: 31.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v1.0: Items kombinierbar wie in LoL (Grundteile, Aufbau, fertige Items; Bauteile werden verbraucht und angerechnet). Animierte Modelle für alle Helden, Zombies, Ratten und Hornissen.
 Änderungen v0.9: Herz wird Lebensmittelvorrat (kein Selbstheilen, Ernte der Hochbeete füllt ihn auf). Zombies gehen auf Helden und Vorrat, Ratten auf Hochbeete und Bienenstock, neue Hornissen auf den Bienenstock. Neuer Spawnpunkt Nordwest. Elites langsamer mehr, Wellen neu abgestimmt.
 Änderungen v0.8: M5 umgesetzt. Bots in drei Stärken, ausgewogenes Team, Wellen für 4 Helden neu abgestimmt, Pausen 25 s (erste 20 s) mit „Welle starten“ (N).
 Änderungen v0.7: M4 umgesetzt. Gold, Shop (Pause + Innenhof), Waffen als Werte-Items, Inventar und Verbrauchsgüter auf R/T. Neue Gegner Kriecher und Ratten, Elites Rattenkönig und Schlächter.
@@ -204,9 +205,12 @@ Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
 - **Gold:** Startgold 350. Kill-Gold je Zombie-Typ bekommt jeder Held im Umkreis von 15 m in voller Höhe (Koop, kein Last-Hit). Bonus pro überstandener Welle: 50 + 10 × Welle für alle.
 - **Shop:** nur in der Pause **und** nur im Innenhof (6 m um das Herz). Taste B oder Klick auf den Hinweis „B: Shop öffnen“. Das Spiel läuft beim Einkaufen weiter, die Pause tickt also. Beginnt die Welle oder verlässt man den Hof, schließt der Shop.
 - **Waffen sind Werte-Items** (wie in LoL): Der Standardangriff des Helden bleibt, die Waffe macht ihn stärker. Nahkampfwaffen wirken bei Nahkämpfern voll, Fernkampfwaffen bei Fernkämpfern, sonst halb.
-  - Nahkampf: Baseballschläger (+15 % Schaden), Axt (+30 %), Kettensäge (+45 % Angriffstempo, +15 % Schaden)
-  - Fernkampf: Pistole (+15 % Schaden), Schrotflinte (+35 %), Gewehr (+20 % Schaden, +25 % Reichweite), Armbrust (+40 % Angriffstempo)
-- **Items:** Lederjacke und Kettenhemd (10 % bzw. 20 % weniger Schaden), Laufschuhe (+12 % Tempo), Kräuterbeutel (+5 Leben/s), Lebensamulett (+200 Leben), Taschenuhr (−15 % Abklingzeit)
+- **Rezepte wie in LoL:** Items haben drei Stufen. Ein Rezept besteht aus Bauteilen plus Aufpreis (`from` in `data/items.json`, der Preis ist der Gesamtpreis). Beim Kauf werden Bauteile im Inventar verbraucht und auf den Preis angerechnet; fehlt ein Bauteil, zählen dessen eigene Bauteile (rekursiv). Kombinieren geht auch bei vollem Inventar. Der Shop zeigt den Restpreis („noch 450 Gold“), vorhandene Bauteile grün und beim Überfahren mit der Maus Bauteile und Weiterentwicklungen.
+  - **Grundteile:** Baseballschläger (+15 % Schaden, Nahkampf), Pistole (+15 % Schaden, Fernkampf), Arbeitshandschuhe (+12 % Angriffstempo), Lederjacke (10 % weniger Schaden), Lebensamulett (+200 Leben), Laufschuhe (+12 % Tempo), Kräuterbeutel (+5 Leben/s), Küchenwecker (−8 % Abklingzeit)
+  - **Aufbau:** Axt (Schläger, +30 % Schaden), Schrotflinte (Pistole, +35 % Schaden), Gewehr (Pistole, +20 % Schaden, +25 % Reichweite), Armbrust (Handschuhe, +35 % Angriffstempo, Fernkampf), Kettenhemd (Lederjacke, 20 % weniger Schaden), Taschenuhr (Küchenwecker, −15 % Abklingzeit)
+  - **Fertig:** Kettensäge (Axt + Handschuhe: +40 % Schaden, +40 % Angriffstempo), Vorschlaghammer (Axt + Amulett: +40 % Schaden, +300 Leben), Jagdgewehr (Schrotflinte + Gewehr: +55 % Schaden, +35 % Reichweite), Repetierarmbrust (Armbrust + Schrotflinte: +45 % Angriffstempo, +40 % Schaden), Ritterrüstung (Kettenhemd + Amulett: 30 % weniger Schaden, +300 Leben), Siebenmeilenstiefel (Laufschuhe + Kräuterbeutel: +20 % Tempo, +10 Leben/s), Großvateruhr (Taschenuhr + Amulett: −25 % Abklingzeit, +250 Leben)
+  - Obergrenzen: Schadensreduktion höchstens 80 %, Abklingzeit-Verkürzung höchstens 50 %.
+  - Bots kaufen nach ihrer Liste in `data/bots.json`: Reicht das Gold nicht für das ganze Rezept, kaufen sie zuerst Bauteile; Verbautes zählt als vorhanden.
 - **Inventar:** 6 Plätze für Waffen und Items. Verkaufen (Rechtsklick im offenen Shop) bringt 70 % des Preises.
 - **Verbrauchsgüter** auf den Item-Tasten R und T, stapelbar: Heiltrank (150 Leben über 5 s, bis 5 Stück), Energiedrink (6 s lang +30 % Tempo und Angriffstempo, bis 3 Stück). Benutzbar jederzeit, außer wenn betäubt.
 - Keine Munition.
@@ -226,7 +230,7 @@ Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
   - **Einkauf** in der Pause nach Einkaufsliste je Held. Skillpunkte nach Reihenfolge, die Ultimate sobald möglich.
   - Bots schicken dieselben Befehle wie Menschen. Übernimmt in M6 ein Mensch einen Bot-Slot, wird nur die Bot-Steuerung entfernt.
 - Bots laufen auf dem Server (Mehrspieler) bzw. lokal (Singleplayer)
-- **Balancing für 4 Helden** (Wellen in `data/waves.json`, `npm run balance` lässt vier Bots über mehrere Seeds spielen). Stand v0.9 (Vorrat, Beete, Hornissen; Elites: eine in Welle 5 und 10, zwei ab Welle 15): Vier Bots allein schaffen im Schnitt Welle 11,3 (leicht), 14,5 (mittel) und 14,3 (schwer). „Schwer“ ist damit nicht stärker als „mittel“: Seit dem Umbau entscheidet vor allem der Druck auf den Vorrat, nicht die Feinsteuerung. Das ist ein Punkt für M7. Mit einem guten menschlichen Spieler kommt das Team weiter. Ziel bleibt Welle 30 für sehr gute Teams.
+- **Balancing für 4 Helden** (Wellen in `data/waves.json`, `npm run balance` lässt vier Bots über mehrere Seeds spielen). Stand v0.9 (Vorrat, Beete, Hornissen; Elites: eine in Welle 5 und 10, zwei ab Welle 15): Vier Bots allein schaffen im Schnitt Welle 11,3 (leicht), 14,5 (mittel) und 14,3 (schwer). „Schwer“ ist damit nicht stärker als „mittel“: Seit dem Umbau entscheidet vor allem der Druck auf den Vorrat, nicht die Feinsteuerung. Das ist ein Punkt für M7. Seit den Item-Rezepten (v1.0) liegen die Bots bei 11,2 / 12,7 / 12,8 (je 6 Seeds), weil sie ihre Kraft später in wenigen fertigen Items bündeln; Feinabstimmung der Preise in M7. Mit einem guten menschlichen Spieler kommt das Team weiter. Ziel bleibt Welle 30 für sehr gute Teams.
 
 ## 11. Karte
 

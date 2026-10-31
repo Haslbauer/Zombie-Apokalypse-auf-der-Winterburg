@@ -141,7 +141,10 @@ export interface ItemDef {
   name: string;
   description: string;
   category: ItemCategory;
+  /** Gesamtpreis; bei Rezepten inklusive der Bauteile. */
   price: number;
+  /** Rezept (wie in LoL): Bauteile, die beim Kauf verbraucht und auf den Preis angerechnet werden. */
+  from?: string[];
   stats?: ItemStats;
   /** Verbrauchsgüter: so viele passen auf einen Platz. */
   maxStack?: number;

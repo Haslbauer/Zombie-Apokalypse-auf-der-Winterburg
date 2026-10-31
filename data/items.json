@@ -10,27 +10,6 @@
     }
   },
   {
-    "id": "axt",
-    "name": "Axt",
-    "description": "+30 % Schaden (Nahkampfwaffe)",
-    "category": "meleeWeapon",
-    "price": 750,
-    "stats": {
-      "damage": 0.3
-    }
-  },
-  {
-    "id": "kettensaege",
-    "name": "Kettensäge",
-    "description": "+45 % Angriffstempo, +15 % Schaden (Nahkampfwaffe)",
-    "category": "meleeWeapon",
-    "price": 1100,
-    "stats": {
-      "attackSpeed": 0.45,
-      "damage": 0.15
-    }
-  },
-  {
     "id": "pistole",
     "name": "Pistole",
     "description": "+15 % Schaden (Fernkampfwaffe)",
@@ -41,34 +20,13 @@
     }
   },
   {
-    "id": "schrotflinte",
-    "name": "Schrotflinte",
-    "description": "+35 % Schaden (Fernkampfwaffe)",
-    "category": "rangedWeapon",
-    "price": 800,
+    "id": "arbeitshandschuhe",
+    "name": "Arbeitshandschuhe",
+    "description": "+12 % Angriffstempo",
+    "category": "stat",
+    "price": 350,
     "stats": {
-      "damage": 0.35
-    }
-  },
-  {
-    "id": "gewehr",
-    "name": "Gewehr",
-    "description": "+20 % Schaden, +25 % Reichweite (Fernkampfwaffe)",
-    "category": "rangedWeapon",
-    "price": 1000,
-    "stats": {
-      "damage": 0.2,
-      "range": 0.25
-    }
-  },
-  {
-    "id": "armbrust",
-    "name": "Armbrust",
-    "description": "+40 % Angriffstempo (Fernkampfwaffe)",
-    "category": "rangedWeapon",
-    "price": 900,
-    "stats": {
-      "attackSpeed": 0.4
+      "attackSpeed": 0.12
     }
   },
   {
@@ -82,13 +40,13 @@
     }
   },
   {
-    "id": "kettenhemd",
-    "name": "Kettenhemd",
-    "description": "20 % weniger Schaden",
-    "category": "armor",
-    "price": 950,
+    "id": "lebensamulett",
+    "name": "Lebensamulett",
+    "description": "+200 maximales Leben",
+    "category": "stat",
+    "price": 450,
     "stats": {
-      "damageReduction": 0.2
+      "hp": 200
     }
   },
   {
@@ -112,13 +70,79 @@
     }
   },
   {
-    "id": "lebensamulett",
-    "name": "Lebensamulett",
-    "description": "+200 maximales Leben",
+    "id": "kuechenwecker",
+    "name": "Küchenwecker",
+    "description": "−8 % Abklingzeit der Fähigkeiten",
     "category": "stat",
-    "price": 450,
+    "price": 400,
     "stats": {
-      "hp": 200
+      "cooldownReduction": 0.08
+    }
+  },
+  {
+    "id": "axt",
+    "name": "Axt",
+    "description": "+30 % Schaden (Nahkampfwaffe)",
+    "category": "meleeWeapon",
+    "price": 700,
+    "from": [
+      "baseballschlaeger"
+    ],
+    "stats": {
+      "damage": 0.3
+    }
+  },
+  {
+    "id": "schrotflinte",
+    "name": "Schrotflinte",
+    "description": "+35 % Schaden (Fernkampfwaffe)",
+    "category": "rangedWeapon",
+    "price": 750,
+    "from": [
+      "pistole"
+    ],
+    "stats": {
+      "damage": 0.35
+    }
+  },
+  {
+    "id": "gewehr",
+    "name": "Gewehr",
+    "description": "+20 % Schaden, +25 % Reichweite (Fernkampfwaffe)",
+    "category": "rangedWeapon",
+    "price": 800,
+    "from": [
+      "pistole"
+    ],
+    "stats": {
+      "damage": 0.2,
+      "range": 0.25
+    }
+  },
+  {
+    "id": "armbrust",
+    "name": "Armbrust",
+    "description": "+35 % Angriffstempo (Fernkampfwaffe)",
+    "category": "rangedWeapon",
+    "price": 750,
+    "from": [
+      "arbeitshandschuhe"
+    ],
+    "stats": {
+      "attackSpeed": 0.35
+    }
+  },
+  {
+    "id": "kettenhemd",
+    "name": "Kettenhemd",
+    "description": "20 % weniger Schaden",
+    "category": "armor",
+    "price": 900,
+    "from": [
+      "lederjacke"
+    ],
+    "stats": {
+      "damageReduction": 0.2
     }
   },
   {
@@ -126,9 +150,117 @@
     "name": "Taschenuhr",
     "description": "−15 % Abklingzeit der Fähigkeiten",
     "category": "stat",
-    "price": 800,
+    "price": 750,
+    "from": [
+      "kuechenwecker"
+    ],
     "stats": {
       "cooldownReduction": 0.15
+    }
+  },
+  {
+    "id": "kettensaege",
+    "name": "Kettensäge",
+    "description": "+40 % Schaden, +40 % Angriffstempo (Nahkampfwaffe)",
+    "category": "meleeWeapon",
+    "price": 1550,
+    "from": [
+      "axt",
+      "arbeitshandschuhe"
+    ],
+    "stats": {
+      "damage": 0.4,
+      "attackSpeed": 0.4
+    }
+  },
+  {
+    "id": "vorschlaghammer",
+    "name": "Vorschlaghammer",
+    "description": "+40 % Schaden, +300 Leben (Nahkampfwaffe)",
+    "category": "meleeWeapon",
+    "price": 1550,
+    "from": [
+      "axt",
+      "lebensamulett"
+    ],
+    "stats": {
+      "damage": 0.4,
+      "hp": 300
+    }
+  },
+  {
+    "id": "jagdgewehr",
+    "name": "Jagdgewehr",
+    "description": "+55 % Schaden, +35 % Reichweite (Fernkampfwaffe)",
+    "category": "rangedWeapon",
+    "price": 1900,
+    "from": [
+      "schrotflinte",
+      "gewehr"
+    ],
+    "stats": {
+      "damage": 0.55,
+      "range": 0.35
+    }
+  },
+  {
+    "id": "repetierarmbrust",
+    "name": "Repetierarmbrust",
+    "description": "+45 % Angriffstempo, +40 % Schaden (Fernkampfwaffe)",
+    "category": "rangedWeapon",
+    "price": 1800,
+    "from": [
+      "armbrust",
+      "schrotflinte"
+    ],
+    "stats": {
+      "attackSpeed": 0.45,
+      "damage": 0.4
+    }
+  },
+  {
+    "id": "ritterruestung",
+    "name": "Ritterrüstung",
+    "description": "30 % weniger Schaden, +300 Leben",
+    "category": "armor",
+    "price": 1650,
+    "from": [
+      "kettenhemd",
+      "lebensamulett"
+    ],
+    "stats": {
+      "damageReduction": 0.3,
+      "hp": 300
+    }
+  },
+  {
+    "id": "siebenmeilenstiefel",
+    "name": "Siebenmeilenstiefel",
+    "description": "+20 % Lauftempo, +10 Leben pro Sekunde",
+    "category": "stat",
+    "price": 1100,
+    "from": [
+      "laufschuhe",
+      "kraeuterbeutel"
+    ],
+    "stats": {
+      "moveSpeed": 0.2,
+      "regen": 10
+    }
+  },
+  {
+    "id": "grossvateruhr",
+    "name": "Großvateruhr",
+    "description": "−25 % Abklingzeit, +250 Leben",
+    "category": "stat",
+    "price": 1450,
+    "from": [
+      "taschenuhr",
+      "lebensamulett"
+    ],
+    "stats": {
+      "cooldownReduction": 0.25,
+      "hp": 250
     }
   },
   {

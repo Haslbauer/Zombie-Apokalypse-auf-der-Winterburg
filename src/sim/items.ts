@@ -47,3 +47,29 @@ export function refreshMaxHp(ctx: SimContext, h: Hero): void {
   h.maxHp = max;
   if (h.alive) h.hp = Math.max(1, Math.min(max, h.hp + Math.max(0, delta)));
 }
+
+/**
+ * Kauf eines Rezept-Items: Welche Inventarplätze werden verbraucht und was
+ * kostet der Rest? Fehlt ein Bauteil, zählen dessen eigene Bauteile (rekursiv).
+ */
+export function buildPlan(ctx: SimContext, h: Hero, itemId: string): { cost: number; consumed: number[] } {
+  const taken = new Set<number>();
+  const owned = (id: string): number => {
+    let value = 0;
+    for (const c of itemDef(ctx, id)?.from ?? []) {
+      const slot = h.inventory.findIndex((s, i) => s === c && !taken.has(i));
+      if (slot >= 0) {
+        taken.add(slot);
+        value += itemDef(ctx, c)?.price ?? 0;
+      } else value += owned(c);
+    }
+    return value;
+  };
+  const value = owned(itemId);
+  return { cost: (itemDef(ctx, itemId)?.price ?? 0) - value, consumed: [...taken].sort((a, b) => a - b) };
+}
+
+/** Alle Bauteile eines Items, rekursiv (ohne das Item selbst). */
+export function componentsOf(ctx: SimContext, itemId: string): string[] {
+  return (itemDef(ctx, itemId)?.from ?? []).flatMap((c) => [c, ...componentsOf(ctx, c)]);
+}

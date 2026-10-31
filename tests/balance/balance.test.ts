@@ -31,7 +31,7 @@ function play(difficulty: BotDifficulty, seed: number) {
     deaths,
     breaches,
     levels: sim.state.heroes.map((h) => h.level),
-    items: sim.state.heroes.map((h) => h.inventory.filter(Boolean).length),
+    items: sim.state.heroes.map((h) => `${h.defId}: ${h.inventory.filter(Boolean).join(', ')} (${h.gold} Gold)`),
     hive: sim.state.objectives.find((o) => o.id === 'hive')!.destroyed,
     msPerTick: (performance.now() - t0) / sim.state.tick,
   };
@@ -43,8 +43,9 @@ describe.skipIf(!process.env.BALANCE)('Balancing mit Bot-Partien', () => {
       const runs = Array.from({ length: seeds }, (_, i) => play(d, 1000 + i * 77));
       for (const r of runs) {
         console.log(
-          `${d}: Welle ${r.wave} nach ${r.minutes.toFixed(1)} min | Tode ${r.deaths} | Durchbrüche ${r.breaches} | Level ${r.levels.join('/')} | Items ${r.items.join('/')} | Stock ${r.hive ? 'zerstört' : 'steht'} | ${r.msPerTick.toFixed(2)} ms/Tick`,
+          `${d}: Welle ${r.wave} nach ${r.minutes.toFixed(1)} min | Tode ${r.deaths} | Durchbrüche ${r.breaches} | Level ${r.levels.join('/')} | Stock ${r.hive ? 'zerstört' : 'steht'} | ${r.msPerTick.toFixed(2)} ms/Tick`,
         );
+        console.log(`   Items: ${r.items.join(' | ')}`);
       }
       const avg = runs.reduce((s, r) => s + r.wave, 0) / runs.length;
       console.log(`>>> ${d}: Durchschnitt Welle ${avg.toFixed(1)}`);

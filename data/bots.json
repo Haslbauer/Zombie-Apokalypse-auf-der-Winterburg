@@ -33,9 +33,14 @@
         "lederjacke",
         "laufschuhe",
         "axt",
-        "kettenhemd",
+        "arbeitshandschuhe",
         "kettensaege",
-        "lebensamulett"
+        "kettenhemd",
+        "lebensamulett",
+        "ritterruestung",
+        "lebensamulett",
+        "vorschlaghammer",
+        "siebenmeilenstiefel"
       ],
       "abilities": [
         {
@@ -66,10 +71,15 @@
         "baseballschlaeger",
         "lederjacke",
         "axt",
+        "arbeitshandschuhe",
+        "kettensaege",
         "kettenhemd",
         "lebensamulett",
-        "kettensaege",
-        "kraeuterbeutel"
+        "ritterruestung",
+        "vorschlaghammer",
+        "laufschuhe",
+        "kraeuterbeutel",
+        "siebenmeilenstiefel"
       ],
       "abilities": [
         {
@@ -102,10 +112,18 @@
         "pistole",
         "lederjacke",
         "schrotflinte",
+        "kuechenwecker",
         "taschenuhr",
         "gewehr",
+        "jagdgewehr",
         "kettenhemd",
-        "armbrust"
+        "lebensamulett",
+        "grossvateruhr",
+        "lebensamulett",
+        "ritterruestung",
+        "arbeitshandschuhe",
+        "armbrust",
+        "repetierarmbrust"
       ],
       "abilities": [
         {
@@ -137,10 +155,19 @@
         "pistole",
         "lederjacke",
         "schrotflinte",
-        "taschenuhr",
-        "gewehr",
+        "arbeitshandschuhe",
+        "armbrust",
+        "repetierarmbrust",
         "kettenhemd",
-        "armbrust"
+        "kuechenwecker",
+        "taschenuhr",
+        "lebensamulett",
+        "grossvateruhr",
+        "lebensamulett",
+        "ritterruestung",
+        "schrotflinte",
+        "gewehr",
+        "jagdgewehr"
       ],
       "abilities": [
         {
@@ -171,11 +198,17 @@
         "heiltrank",
         "pistole",
         "lederjacke",
+        "kuechenwecker",
         "taschenuhr",
-        "schrotflinte",
+        "lebensamulett",
+        "grossvateruhr",
         "kettenhemd",
+        "schrotflinte",
         "gewehr",
-        "lebensamulett"
+        "jagdgewehr",
+        "lebensamulett",
+        "ritterruestung",
+        "siebenmeilenstiefel"
       ],
       "abilities": [
         {
@@ -205,13 +238,19 @@
       ],
       "buy": [
         "heiltrank",
-        "pistole",
+        "kuechenwecker",
         "lederjacke",
         "taschenuhr",
-        "schrotflinte",
+        "lebensamulett",
+        "grossvateruhr",
         "kettenhemd",
-        "gewehr",
-        "lebensamulett"
+        "pistole",
+        "schrotflinte",
+        "lebensamulett",
+        "ritterruestung",
+        "laufschuhe",
+        "kraeuterbeutel",
+        "siebenmeilenstiefel"
       ],
       "abilities": [
         {

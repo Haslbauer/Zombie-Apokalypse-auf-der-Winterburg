@@ -1,7 +1,7 @@
 import { edgeDistance } from '../combat';
 import type { SimContext } from '../context';
 import { shopClosedReason } from '../economy';
-import { itemDef, itemStats } from '../items';
+import { buildPlan, componentsOf, itemDef, itemStats } from '../items';
 import { objDistance } from '../objectives';
 import { canRankUp } from '../progression';
 import { nextRandom } from '../rng';
@@ -131,22 +131,45 @@ function think(ctx: SimContext, h: Hero, bot: BotState, cmds: Command[]): void {
   if (hpShare < 0.5 && potion >= 0 && !healing) cmds.push({ heroId: h.id, type: 'use', slot: potion });
 }
 
-/** Nächstes Item der Einkaufsliste, das sich der Bot leisten kann (Heiltrank: bis 2 Stück). */
+/**
+ * Nächster Kauf laut Einkaufsliste (Heiltrank: bis 2 Stück). Ein Listeneintrag
+ * gilt als erledigt, wenn der Bot das Item besitzt oder es in einem eigenen
+ * Item verbaut ist. Fehlt Gold für das ganze Rezept, kauft er erst Bauteile.
+ */
 function nextPurchase(ctx: SimContext, h: Hero): string | null {
   const list = ctx.data.bots.heroes[h.defId]?.buy ?? [];
+  // Besitz samt verbauter Bauteile; jeder Eintrag wird nur einmal angerechnet
+  const have: string[] = [];
+  for (const id of h.inventory) if (id) have.push(id, ...componentsOf(ctx, id));
   for (const id of list) {
     const item = itemDef(ctx, id);
     if (!item) continue;
     if (item.category === 'consumable') {
-      const have = h.consumables.reduce((n, c) => n + (c?.itemId === id ? c.count : 0), 0);
-      if (have >= 2) continue;
+      const count = h.consumables.reduce((n, c) => n + (c?.itemId === id ? c.count : 0), 0);
+      if (count >= 2) continue;
       const space = h.consumables.some((c) => c === null || (c.itemId === id && c.count < (item.maxStack ?? 1)));
       if (!space) continue;
-    } else {
-      if (h.inventory.includes(id)) continue;
-      if (!h.inventory.includes(null)) continue;
+      return h.gold >= item.price ? id : null;
     }
-    return h.gold >= item.price ? id : null; // der Reihe nach sparen
+    const i = have.indexOf(id);
+    if (i >= 0) {
+      have.splice(i, 1);
+      continue;
+    }
+    return affordableStep(ctx, h, id); // der Reihe nach sparen
+  }
+  return null;
+}
+
+/** Das Item selbst, wenn bezahlbar und Platz da ist, sonst das erste bezahlbare fehlende Bauteil. */
+function affordableStep(ctx: SimContext, h: Hero, id: string): string | null {
+  const plan = buildPlan(ctx, h, id);
+  const space = plan.consumed.length > 0 || h.inventory.includes(null);
+  if (space && h.gold >= plan.cost) return id;
+  for (const c of itemDef(ctx, id)?.from ?? []) {
+    if (h.inventory.includes(c)) continue;
+    const step = affordableStep(ctx, h, c);
+    if (step) return step;
   }
   return null;
 }

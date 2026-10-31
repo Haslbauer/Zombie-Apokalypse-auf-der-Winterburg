@@ -1,6 +1,7 @@
 import { gameData } from '../gameData';
 import { Simulation } from '../sim/game';
 import { shopClosedReason } from '../sim/economy';
+import { buildPlan } from '../sim/items';
 import { defaultTeam } from '../sim/bots/team';
 import { canRankUp } from '../sim/progression';
 import { type BotDifficulty, type Command, DT, type GameEvent, type GameState } from '../sim/types';
@@ -336,7 +337,7 @@ renderer.renderer.setAnimationLoop((now) => {
       hud.message(shopReason);
     }
     hud.setShopHint(!shopReason && !shop.open && !paused);
-    shop.update(hero, def.attack.type);
+    shop.update(hero, def.attack.type, (id) => buildPlan(sim!, hero, id));
   }
 
   effects.update(dt);
