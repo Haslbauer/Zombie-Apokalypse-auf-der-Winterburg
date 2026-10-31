@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { arenaBounds, brushAt } from '../sim/grid';
 import { hasBuff, shieldAmount } from '../sim/status';
-import { type AbilityDef, type AttackDef, DT, type GameData, type GameState, type Hero, type Zombie } from '../sim/types';
+import { type AbilityDef, type AttackDef, type GameData, type GameState, type Hero, type Zombie } from '../sim/types';
 import type { Vec2 } from '../sim/vec';
 import { GameCamera } from './camera';
 import { buildMap, type MapAnimation } from './map';
@@ -145,8 +145,7 @@ export class GameRenderer {
       const def = this.data.heroes.find((d) => d.id === h.defId)!;
       const lift = h.dash ? Math.sin((h.dash.elapsed / h.dash.duration) * Math.PI) * h.dash.height : 0;
       const view = upsert(h, () => heroView(h, def, h.id === this.playerId, this.models), lift);
-      const p = prev.get(h.id);
-      const speed = p && h.alive ? Math.hypot(h.pos.x - p.x, h.pos.y - p.y) / DT : 0;
+      const speed = h.alive ? view.measureSpeed(dt) : 0;
       if (!h.alive) {
         // Menschen liegen (down), Grimm spielt seine Sterbe-Animation und bleibt liegen
         if (view.hasClip('down')) view.animate(dt, 0, false, 'down');
@@ -174,8 +173,7 @@ export class GameRenderer {
       view.group.visible = zombieRevealed(this.data, state, z);
       view.showStatus(z, state.time, z.hp / z.maxHp < revealBelow);
       if (z.courier) view.markCourier();
-      const p = prev.get(z.id);
-      const speed = p ? Math.hypot(z.pos.x - p.x, z.pos.y - p.y) / DT : 0;
+      const speed = view.measureSpeed(dt);
       view.animate(dt, speed, state.time < z.st.sleepUntil || state.time < z.st.stunUntil || state.gameOver);
     }
     for (const [id, view] of this.units) {

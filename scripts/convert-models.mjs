@@ -67,6 +67,38 @@ window.convert = async (cfg) => {
       return true;
     });
   };
+
+  const unifySkeletons = (root) => {
+    const skinned = [];
+    root.traverse((o) => { if (o.isSkinnedMesh) skinned.push(o); });
+    if (skinned.length < 2) return 0;
+    root.updateMatrixWorld(true);
+    // Gemeinsames Skelett: je Name der erste Knochen in der Baumreihenfolge
+    // (denselben findet auch die Animation über den Namen)
+    const canon = new Map();
+    root.traverse((o) => { if (o.isBone && !canon.has(o.name)) canon.set(o.name, o); });
+    const keep = new Set(canon.values());
+    let maxDiff = 0;
+    for (const m of skinned) {
+      const bones = m.skeleton.bones.map((b) => {
+        const c = canon.get(b.name);
+        for (let i = 0; i < 16; i++) maxDiff = Math.max(maxDiff, Math.abs(c.matrixWorld.elements[i] - b.matrixWorld.elements[i]));
+        return c;
+      });
+      m.bind(new THREE.Skeleton(bones, m.skeleton.boneInverses), m.bindMatrix);
+    }
+    // Gemeinsame Knochen, die unter einem Duplikat hängen, an den gleichnamigen Elternknochen hängen
+    for (const b of keep) {
+      const p = b.parent;
+      if (p && p.isBone && !keep.has(p)) canon.get(p.name).attach(b);
+    }
+    // Alle übrigen Knochen (Duplikate) entfernen
+    const extra = [];
+    root.traverse((o) => { if (o.isBone && !keep.has(o)) extra.push(o); });
+    for (const b of extra) b.removeFromParent();
+    if (maxDiff > 1e-3) console.warn('Skelette weichen ab: ' + maxDiff.toFixed(4));
+    return skinned.length;
+  };
   const clips = [];
   const entries = Object.entries(cfg.clips);
   if (cfg.idleFrom) entries.push(['idle', { file: cfg.idleFrom, firstFrame: true }]);
@@ -96,6 +128,10 @@ window.convert = async (cfg) => {
     if (obj !== base) retarget(clip, obj, base);
     clips.push(clip);
   }
+  // Figuren aus mehreren Teilen (Körper, Kleidung, Haare …) haben nach dem
+  // Laden je Teil ein eigenes Skelett; die Animation träfe nur eines davon.
+  // Alle Teile auf ein gemeinsames Skelett binden, doppelte Knochen entfernen.
+  const unified = unifySkeletons(base);
   let triangles = 0;
   base.traverse((o) => {
     if (!o.isMesh) return;
@@ -147,11 +183,14 @@ window.convert = async (cfg) => {
     }
   });
   base.animations = clips;
+  const skeletons = new Set();
+  let meshes = 0;
+  base.traverse((o) => { if (o.isSkinnedMesh) { skeletons.add(o.skeleton.bones[0]); meshes++; } });
   const glb = await new GLTFExporter().parseAsync(base, { binary: true, animations: clips, onlyVisible: false });
   const bytes = new Uint8Array(glb);
   let bin = '';
   for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return { glb: btoa(bin), triangles, clips: clips.map((c) => c.name + ' ' + c.duration.toFixed(2) + 's') };
+  return { glb: btoa(bin), triangles, skeletons: skeletons.size, meshes, unified, clips: clips.map((c) => c.name + ' ' + c.duration.toFixed(2) + 's') };
 };
 window.ready = true;
 `;
@@ -163,6 +202,7 @@ try {
     const cfg = JSON.parse(readFileSync(join(dir, 'model.json'), 'utf8'));
     const page = await browser.newPage();
     page.on('pageerror', (e) => console.error('Browser:', e.message));
+    page.on('console', (m) => { if (m.type() === 'warning' && !m.text().includes('GLTFExporter')) console.warn(name + ':', m.text()); });
     // Dateipfade relativ zu assets/models, damit auch gemeinsame Dateien (../shared/…) gehen
     const rel = (f) => relative(modelsDir, join(dir, f)).split('\\').join('/');
     cfg.base = rel(cfg.base);
@@ -202,7 +242,7 @@ try {
     const out = join(root, cfg.output);
     const bytes = await io.writeBinary(doc);
     writeFileSync(out, bytes);
-    console.log(`${name}: ${res.triangles} → ${tris} Dreiecke, Clips: ${res.clips.join(', ')}, ${(bytes.length / 1e6).toFixed(2)} MB → ${cfg.output}`);
+    console.log(`${name}: Skelette ${res.skeletons}, Meshes ${res.meshes}, ${res.triangles} → ${tris} Dreiecke, Clips: ${res.clips.join(', ')}, ${(bytes.length / 1e6).toFixed(2)} MB → ${cfg.output}`);
   }
 } finally {
   await browser.close();

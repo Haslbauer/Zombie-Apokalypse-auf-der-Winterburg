@@ -205,6 +205,9 @@ export class UnitView {
   private flash = 0;
   readonly height: number;
   private hero = false;
+  /** Gezeigtes Tempo (m/s), aus der Bewegung der Figur gemessen und geglättet. */
+  private shownSpeed = 0;
+  private lastShown: { x: number; z: number } | null = null;
 
   constructor(radius: number, color: string, barColor: number, height = UNIT_HEIGHT, figure?: string, model?: RiggedModel | null) {
     this.height = height;
@@ -731,6 +734,22 @@ export class UnitView {
 
   hit(): void {
     this.flash = 1;
+  }
+
+  /**
+   * Tempo aus der tatsächlich gezeigten Bewegung (inklusive Vorhersage und
+   * Überblenden), geglättet, damit die Laufanimation nicht flackert.
+   */
+  measureSpeed(dt: number): number {
+    const p = this.group.position;
+    if (this.lastShown && dt > 0) {
+      const v = Math.hypot(p.x - this.lastShown.x, p.z - this.lastShown.z) / dt;
+      // Sprünge (Teleport, Respawn) nicht als Tempo werten
+      const k = 1 - Math.exp(-dt / 0.12);
+      if (v < 30) this.shownSpeed += (v - this.shownSpeed) * k;
+    }
+    this.lastShown = { x: p.x, z: p.z };
+    return this.shownSpeed;
   }
 
   dispose(): void {
