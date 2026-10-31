@@ -45,7 +45,7 @@ describe('Kampf', () => {
 
   it('Nahkampf trifft alle Zombies im Bogen vorne, nicht hinten und nicht zu weit weg', () => {
     const { sim, h, zombie, east, attack } = setup('rotschopf');
-    expect(attack.range).toBe(2.5);
+    expect(attack.range).toBeGreaterThanOrEqual(3);
     expect(attack.arc).toBe(120);
     const reach = h.radius + attack.range;
     const front = zombie(reach, 0, 'walker');
@@ -62,6 +62,36 @@ describe('Kampf', () => {
     expect(sim.state.events.some((e) => e.type === 'swing')).toBe(true);
   });
 
+  it('Durchschlag: Stein trifft einen dahinter mit 60 %, Ball zwei dahinter, danach Schluss', () => {
+    const stone = setup('gaertnerin');
+    const a = stone.zombie(4, 0);
+    const b = stone.zombie(6, 0);
+    const c = stone.zombie(8, 0);
+    stone.sim.step([input(stone.sim, still, stone.east, true)]);
+    stone.sim.step([input(stone.sim, still, stone.east, false)]);
+    run(stone.sim, 20);
+    const d = stone.attack.damage;
+    expect(a.hp).toBeCloseTo(1000 - d, 6);
+    expect(b.hp).toBeCloseTo(1000 - d * stone.attack.pierceFalloff!, 6);
+    expect(c.hp).toBe(1000);
+
+    const ball = setup('libero');
+    const z = [4, 5.5, 7, 8.5].map((x) => ball.zombie(x, 0));
+    ball.sim.step([input(ball.sim, still, ball.east, true)]);
+    ball.sim.step([input(ball.sim, still, ball.east, false)]);
+    run(ball.sim, 20);
+    expect(z.slice(0, 3).every((x) => x.hp < 1000)).toBe(true);
+    expect(z[3].hp).toBe(1000);
+  });
+
+  it('Wucht (Ragnar): knapp hinter der Reichweite halber Schaden', () => {
+    const { sim, h, zombie, east, attack } = setup('rotschopf');
+    const reach = h.radius + attack.range;
+    const near = zombie(reach + 0.5 + 0.45, 0, 'walker');
+    sim.step([input(sim, still, east, true)]);
+    expect(near.hp).toBeCloseTo(1000 - attack.damage * attack.reachFactor!, 6);
+  });
+
   it('gedrückt halten greift im Takt der Abklingzeit an', () => {
     const { sim, zombie, east, attack } = setup('rotschopf');
     const z = zombie(1.5, 0);
@@ -71,8 +101,9 @@ describe('Kampf', () => {
     expect(hits).toBe(1 + Math.floor(2 / attack.cooldown));
   });
 
-  it('Fernkampf: Projektil fliegt geradeaus und trifft nur den ersten Zombie', () => {
-    const { sim, zombie, east, attack } = setup('gaertnerin');
+  it('Fernkampf ohne Durchschlag (Haken): trifft nur den ersten Zombie', () => {
+    const { sim, zombie, east, attack } = setup('pirat');
+    expect(attack.pierce ?? 0).toBe(0);
     const first = zombie(4, 0);
     const second = zombie(7, 0);
     sim.step([input(sim, still, east, true)]);

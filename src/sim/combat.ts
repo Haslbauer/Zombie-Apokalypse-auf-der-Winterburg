@@ -160,10 +160,16 @@ export function heroAttack(ctx: SimContext, h: Hero, cooldown: number): void {
   if (attack.type === 'melee') {
     const arc = ((attack.arc ?? 90) * Math.PI) / 180;
     ctx.state.events.push({ type: 'swing', id: h.id, facing: h.facing, range, arc });
+    const behind = attack.reachBehind ?? 0;
+    const narrow = ((attack.reachArc ?? 60) * Math.PI) / 180;
     for (const z of ctx.state.zombies) {
-      if (z.hp > 0 && inArc(h, z, h.facing, arc, range)) {
+      if (z.hp <= 0) continue;
+      if (inArc(h, z, h.facing, arc, range)) {
         const dealt = heroHit(ctx, h, z, attack.damage);
         kitOf(h.defId).onBasicHit?.(ctx, h, z, dealt);
+      } else if (behind > 0 && inArc(h, z, h.facing, narrow, range + behind)) {
+        // Wucht: auch knapp dahinter, mit weniger Schaden
+        heroHit(ctx, h, z, attack.damage * (attack.reachFactor ?? 0.5));
       }
     }
     return;
@@ -177,6 +183,8 @@ export function heroAttack(ctx: SimContext, h: Hero, cooldown: number): void {
     range,
     tag: 'basic',
     look: attack.look,
+    pierceCount: attack.pierce,
+    pierceFalloff: attack.pierceFalloff,
   });
 }
 
@@ -185,7 +193,7 @@ export function fireProjectile(
   ctx: SimContext,
   h: Hero,
   dir: Vec2,
-  o: { speed: number; damage: number; radius: number; range: number; tag: string; look?: string; pierce?: boolean },
+  o: { speed: number; damage: number; radius: number; range: number; tag: string; look?: string; pierce?: boolean; pierceCount?: number; pierceFalloff?: number },
 ): Projectile {
   const p: Projectile = {
     id: ctx.state.nextId++,
@@ -198,8 +206,10 @@ export function fireProjectile(
     remaining: o.range,
     tag: o.tag,
     look: o.look,
-    pierce: o.pierce,
-    hitIds: o.pierce ? [] : undefined,
+    pierce: o.pierce || (o.pierceCount ?? 0) > 0,
+    hitIds: o.pierce || (o.pierceCount ?? 0) > 0 ? [] : undefined,
+    pierceLeft: o.pierce ? undefined : o.pierceCount || undefined,
+    pierceFalloff: o.pierceFalloff,
   };
   ctx.state.projectiles.push(p);
   return p;
@@ -255,6 +265,12 @@ export function updateProjectiles(ctx: SimContext): void {
       if (owner) projectileHit(ctx, owner, z, p);
       if (!p.pierce) return false;
       p.hitIds!.push(z.id);
+      // Begrenzter Durchschlag: weniger Schaden für das nächste Ziel, irgendwann Schluss
+      if (p.pierceLeft !== undefined) {
+        if (p.pierceLeft <= 0) return false;
+        p.pierceLeft--;
+        p.damage *= p.pierceFalloff ?? 1;
+      }
     }
     if (blockedAt < Infinity) return false;
     p.pos = { x: from.x + p.dir.x * step, y: from.y + p.dir.y * step };

@@ -17,6 +17,13 @@ export interface AttackDef {
   projectileSpeed?: number;
   /** Nur Fernkampf: Radius des Projektils in Metern. */
   projectileRadius?: number;
+  /** Fernkampf: so viele Gegner dahinter trifft der Schuss noch (Durchschlag), je mit pierceFalloff des vorigen Schadens. */
+  pierce?: number;
+  pierceFalloff?: number;
+  /** Nahkampf (Wucht): Gegner bis reachBehind Meter hinter der Reichweite im Kegel reachArc (Grad) nehmen reachFactor des Schadens. */
+  reachBehind?: number;
+  reachArc?: number;
+  reachFactor?: number;
 }
 
 /** Zahl, die je Rang einen eigenen Wert haben kann ([Rang 1, Rang 2, …]). */
@@ -941,6 +948,9 @@ export interface Projectile {
   /** Durchschlagend: trifft jeden Zombie auf der Bahn einmal. */
   pierce?: boolean;
   hitIds?: number[];
+  /** Begrenzter Durchschlag: noch so viele weitere Ziele; der Schaden sinkt je Treffer auf pierceFalloff. */
+  pierceLeft?: number;
+  pierceFalloff?: number;
   /** Aussehen (z. B. "stone", "hook", "star", "ball"). */
   look?: string;
 }

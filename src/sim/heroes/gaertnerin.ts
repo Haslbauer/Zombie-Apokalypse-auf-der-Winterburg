@@ -20,6 +20,8 @@ export const gaertnerin: HeroKit = {
           range: ability.range,
           tag: 'schleuderschuss',
           look: 'bigstone',
+          pierceCount: ability.values?.pierce as number | undefined,
+          pierceFalloff: ability.values?.pierceFalloff as number | undefined,
         });
         return true;
       case 1: {

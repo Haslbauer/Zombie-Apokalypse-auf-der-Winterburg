@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { applyDamage } from '../../src/sim/combat';
 import { itemStats } from '../../src/sim/items';
 import { refreshMaxHp } from '../../src/sim/items';
-import { heroSim, run } from './helpers';
+import { heroSim, run, testData } from './helpers';
 
 function equip(h: { inventory: (string | null)[] }, ...ids: string[]) {
   ids.forEach((id, i) => (h.inventory[i] = id));
@@ -46,7 +46,8 @@ describe('Items', () => {
       return sim.state.projectiles[0].remaining;
     };
     // Nach dem ersten Tick ist das Projektil schon gleich weit geflogen; der Rest unterscheidet sich um 25 % der Reichweite.
-    expect(reach(true) - reach(false)).toBeCloseTo(8 * 0.25, 5);
+    const range = testData().heroes.find((h) => h.id === 'gaertnerin')!.attack.range;
+    expect(reach(true) - reach(false)).toBeCloseTo(range * 0.25, 5);
   });
 
   it('Rüstung verringert erlittenen Schaden', () => {

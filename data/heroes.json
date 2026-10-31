@@ -16,7 +16,7 @@
     "attack": {
       "type": "melee",
       "damage": 30,
-      "range": 2,
+      "range": 2.5,
       "arc": 90,
       "cooldown": 0.6,
       "look": "bite"
@@ -36,7 +36,7 @@
         "name": "Sprungbiss",
         "description": "Sprung in Zielrichtung. Beißt den ersten getroffenen Zombie und heilt sich um einen Teil des Schadens.",
         "shape": "dash",
-        "range": 6,
+        "range": 6.9,
         "cooldown": [
           9,
           8,
@@ -107,7 +107,7 @@
         "name": "Hetzjagd",
         "description": "Langer Sprung zu einem Zombie (Elite und Boss bevorzugt). Grimm hält ihn fest, beißt ihn pro Sekunde und heilt sich dabei.",
         "shape": "target",
-        "range": 10,
+        "range": 11.5,
         "cooldown": [
           80,
           65,
@@ -146,11 +146,13 @@
     "attack": {
       "type": "ranged",
       "damage": 26,
-      "range": 8,
+      "range": 10,
       "cooldown": 0.7,
       "projectileSpeed": 22,
       "projectileRadius": 0.18,
-      "look": "stone"
+      "look": "stone",
+      "pierce": 1,
+      "pierceFalloff": 0.6
     },
     "passive": {
       "name": "Sturschädel",
@@ -168,7 +170,7 @@
         "name": "Pfeilschuss",
         "description": "Starker Pfeilschuss mit dem Bogen, stößt den Zombie leicht zurück.",
         "shape": "line",
-        "range": 12,
+        "range": 13.8,
         "width": 0.6,
         "cooldown": [
           7,
@@ -186,7 +188,9 @@
             240
           ],
           "knockback": 1.5,
-          "speed": 30
+          "speed": 30,
+          "pierce": 2,
+          "pierceFalloff": 0.75
         }
       },
       {
@@ -194,7 +198,7 @@
         "name": "Saat",
         "description": "Pflanzt einen Samen. Nach 2 s wachsen Dornenranken, die Zombies verlangsamen und stechen (höchstens 3 gleichzeitig).",
         "shape": "circle",
-        "range": 8,
+        "range": 9.2,
         "radius": 2.5,
         "cooldown": [
           5,
@@ -247,7 +251,7 @@
         "name": "Mein Garten!",
         "description": "Eine Dornenhecke wächst als Ring. Zombies an der Hecke werden festgehalten und nehmen Schaden. Sperrt kurz einen Zugang.",
         "shape": "circle",
-        "range": 10,
+        "range": 11.5,
         "radius": 4,
         "cooldown": [
           90,
@@ -283,7 +287,7 @@
     "attack": {
       "type": "ranged",
       "damage": 30,
-      "range": 6,
+      "range": 7.5,
       "cooldown": 0.8,
       "projectileSpeed": 20,
       "projectileRadius": 0.25,
@@ -303,7 +307,7 @@
         "name": "Qualmstoß",
         "description": "Rauchkegel nach vorne. Wenig Schaden, Zombies sind kurz benommen.",
         "shape": "cone",
-        "range": 6,
+        "range": 6.9,
         "arc": 60,
         "cooldown": [
           8,
@@ -328,7 +332,7 @@
         "name": "Rauchwolke",
         "description": "Rauchgranate. Die Wolke bleibt 5 s, verlangsamt Zombies und blendet sie.",
         "shape": "circle",
-        "range": 9,
+        "range": 10.3,
         "radius": 3,
         "cooldown": [
           14,
@@ -347,7 +351,7 @@
         "name": "Nebelschritt",
         "description": "Sprung in eine eigene Rauchwolke, dort kurz unsichtbar. Ohne Wolke ein kurzer Sprung.",
         "shape": "dash",
-        "range": 8,
+        "range": 9.2,
         "cooldown": [
           12,
           11,
@@ -371,7 +375,7 @@
         "name": "Dicke Luft",
         "description": "Riesige Rauchwolke: Zombies darin sind 3 s betäubt und danach 5 s geblendet.",
         "shape": "circle",
-        "range": 8,
+        "range": 9.2,
         "radius": 7,
         "cooldown": [
           80,
@@ -402,11 +406,13 @@
     "attack": {
       "type": "ranged",
       "damage": 25,
-      "range": 7,
+      "range": 9,
       "cooldown": 0.7,
       "projectileSpeed": 22,
       "projectileRadius": 0.2,
-      "look": "volley"
+      "look": "volley",
+      "pierce": 2,
+      "pierceFalloff": 0.5
     },
     "passive": {
       "name": "Ballgefühl",
@@ -422,7 +428,7 @@
         "name": "Aufschlag",
         "description": "Der Ball fliegt als Linienschuss durch die Zombies und bleibt am Ende liegen.",
         "shape": "line",
-        "range": 10,
+        "range": 11.5,
         "width": 1.2,
         "cooldown": [
           6,
@@ -447,7 +453,7 @@
         "name": "Block",
         "description": "Kurze Sperre vor Libero: Zombies werden zurückgedrängt und kurz betäubt.",
         "shape": "cone",
-        "range": 3,
+        "range": 3.4,
         "arc": 100,
         "radius": 2,
         "cooldown": [
@@ -468,7 +474,7 @@
         "name": "Zuspiel",
         "description": "Spielt den Ball einem Mitspieler zu (ohne Mitspieler an sich selbst). Der Empfänger bekommt einen Schild.",
         "shape": "target",
-        "range": 10,
+        "range": 11.5,
         "cooldown": [
           12,
           11,
@@ -528,10 +534,13 @@
     "attack": {
       "type": "melee",
       "damage": 46,
-      "range": 2.5,
+      "range": 3.1,
       "arc": 120,
       "cooldown": 1.0,
-      "look": "hammer"
+      "look": "hammer",
+      "reachBehind": 1.0,
+      "reachArc": 60,
+      "reachFactor": 0.5
     },
     "passive": {
       "name": "Jähzorn",
@@ -546,7 +555,7 @@
         "name": "Wuchtschlag",
         "description": "Hammerschlag mit zufälligem Zusatzeffekt: Betäubung, doppelter Schaden oder Rückstoß.",
         "shape": "cone",
-        "range": 3,
+        "range": 3.4,
         "arc": 140,
         "cooldown": [
           8,
@@ -604,7 +613,7 @@
         "name": "Ungezielter Sprung",
         "description": "Sprung mit kleiner Zufallsabweichung, hoher Flächenschaden bei der Landung.",
         "shape": "dash",
-        "range": 6,
+        "range": 6.9,
         "radius": 2.5,
         "cooldown": [
           12,
@@ -663,11 +672,13 @@
     "attack": {
       "type": "ranged",
       "damage": 22,
-      "range": 8,
+      "range": 10,
       "cooldown": 0.7,
       "projectileSpeed": 20,
       "projectileRadius": 0.2,
-      "look": "star"
+      "look": "star",
+      "pierce": 1,
+      "pierceFalloff": 0.7
     },
     "passive": {
       "name": "Mondlicht",
@@ -684,7 +695,7 @@
         "name": "Berührung",
         "description": "Antritt zum Zombie am Mauszeiger, er schläft sofort ein.",
         "shape": "target",
-        "range": 6,
+        "range": 6.9,
         "cooldown": [
           11,
           10,
@@ -707,7 +718,7 @@
         "name": "Gähnen",
         "description": "Kegel: Zombies werden langsamer und schlafen nach 1,5 s ein.",
         "shape": "cone",
-        "range": 7,
+        "range": 8.0,
         "arc": 70,
         "cooldown": [
           13,
@@ -753,7 +764,7 @@
         "name": "Gute Nacht",
         "description": "Großes Gebiet: Alle Zombies darin schlafen ein.",
         "shape": "circle",
-        "range": 10,
+        "range": 11.5,
         "radius": 8,
         "cooldown": [
           100,
