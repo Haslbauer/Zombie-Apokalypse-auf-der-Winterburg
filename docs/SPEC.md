@@ -222,7 +222,7 @@ Freiwillige Ziele im Gelände außerhalb des Gartens. Sie bringen Gold und XP, k
 
 **Zombie-Postbote** (Drache): ein Team-Ziel
 - Erscheint ab Welle 3 in jeder dritten Welle, 20 s nach Wellenbeginn, und läuft seinen **Rundweg** im Gelände (`courierRoute` in `data/map.json`). Nach 120 s ist er weg.
-- 2500 Leben, wachsend mit der Welle (in Welle 3 etwa 4500, in Welle 6 etwa 7500), schlägt hart zurück (45 Schaden, ebenfalls wachsend). Allein kaum zu schaffen, im Team gut.
+- 2700 Leben, wachsend mit der Welle (in Welle 3 etwa 4400, in Welle 6 etwa 7000), schlägt hart zurück (45 Schaden, ebenfalls wachsend). Allein kaum zu schaffen, im Team gut.
 - Leine 14 m ab dem Punkt, an dem der Kampf beginnt.
 - **Belohnung:** Jeder Held bekommt 150 + 30 × Welle Gold, egal wo er steht.
 - Zombie in Uniform mit Postmütze und Paket, goldener Ring (auch durch Wände sichtbar), Meldungen beim Auftauchen, Besiegen und Entkommen.

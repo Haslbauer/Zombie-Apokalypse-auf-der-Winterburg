@@ -205,7 +205,7 @@
   {
     "id": "postbote",
     "name": "Zombie-Postbote",
-    "hp": 2500,
+    "hp": 2700,
     "speed": 2.4,
     "radius": 0.45,
     "damage": 45,
