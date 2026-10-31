@@ -52,8 +52,9 @@ describe('Items', () => {
   it('Rüstung verringert erlittenen Schaden', () => {
     const { sim, h } = heroSim('rotschopf');
     equip(h, 'kettenhemd');
-    // Ragnar ist Tank (−15 %), dazu das Kettenhemd (−20 %)
-    expect(applyDamage(sim, h, 100)).toBeCloseTo(68, 6);
+    // Ragnar ist Tank (Rollen-Abzug), dazu das Kettenhemd (−20 %)
+    const tank = sim.data.economy.roles!.tank.damageReduction;
+    expect(applyDamage(sim, h, 100)).toBeCloseTo(100 * (1 - tank) * 0.8, 6);
   });
 
   it('Laufschuhe, Lebensamulett und Taschenuhr', () => {

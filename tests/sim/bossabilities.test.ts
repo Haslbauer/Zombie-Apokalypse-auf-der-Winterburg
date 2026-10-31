@@ -53,14 +53,15 @@ describe('Zwischenbosse', () => {
     expect(sim.state.heroes[0].stats!.damageTaken).toBeLessThan(80);
   });
 
-  it('Wut nach 40 s: mehr Schaden, angezeigt', () => {
+  it('Wut nach einer Weile: mehr Schaden, angezeigt', () => {
     const sim = setup();
     const z = placeZombie(sim, 'daemon', 30, 30);
     z.bornAt = sim.state.time;
     expect(enrageFactor(sim, z)).toBe(1);
     sim.state.time += 60;
     const f = enrageFactor(sim, z);
-    expect(f).toBeCloseTo(1 + 20 * sim.data.waves.bossEnrage!.perSecond, 6);
+    const cfg = sim.data.waves.bossEnrage!;
+    expect(f).toBeCloseTo(Math.min(cfg.max, 1 + (60 - cfg.after) * cfg.perSecond), 6);
     expect(z.st.enrageUntil).toBeGreaterThan(sim.state.time);
   });
 

@@ -137,8 +137,8 @@ Jeder Held hat eine Rolle im Team. Ohne Tank, Schaden und Support ist das Spiel 
 
 | Rolle | Helden | Wirkung |
 |---|---|---|
-| 🛡 Tank | Ragnar, Spike | nimmt 15 % weniger Schaden; Bosse und Elites in 8 m Nähe greifen ihn an statt der anderen |
-| ⚔ Schaden | Grimm, Rauchbart | 30 % mehr Schaden an Bossen und Elites |
+| 🛡 Tank | Ragnar, Spike | nimmt 20 % weniger Schaden; Bosse und Elites in 10 m Nähe greifen ihn an statt der anderen |
+| ⚔ Schaden | Grimm, Rauchbart | 40 % mehr Schaden an Bossen und Elites |
 | ✚ Support | Hagedorn, Somnia | heilt Verbündete in 7 m Nähe ständig ein wenig und reinigt sie alle 3 s von **Seuche** |
 
 **Seuche:** Bossfähigkeiten hinterlassen einen stapelbaren Schaden über Zeit, der nur abklingt, wenn sie eine Weile nicht mehr trifft. Ein Support in der Nähe (oder der Zauber Reinigen) entfernt sie.
@@ -157,7 +157,7 @@ Sie haben Fähigkeiten wie die Helden. Jede kündigt sich mit einer **Warnung am
 | Schlächter | **Hackbeil** (schwerer Schlag aufs Ziel), **Fleischwolf** ab Welle 6 (Fläche, Seuche), Anlauf |
 | Dämon | **Klauenhieb** (schwerer Schlag), **Höllenfeuer** ab Welle 7 (3 Einschläge, Seuche), Höllensprung |
 
-**Wut:** Ein Boss, der länger als 40 s lebt, macht jede Sekunde 2,5 % mehr Schaden, höchstens das 2,5-Fache. Er färbt sich dann rot.
+**Wut:** Ein Boss, der länger als 30 s lebt, macht jede Sekunde 3,5 % mehr Schaden, höchstens das 2,5-Fache. Er färbt sich dann rot.
 
 Der schwere Schlag braucht einen **Tank**, die Seuche einen **Support**, die Wut genug **Schaden**.
 

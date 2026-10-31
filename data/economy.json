@@ -25,27 +25,27 @@
       "name": "Tank",
       "icon": "🛡",
       "description": "Zieht Bosse auf sich, hält mehr aus",
-      "damageReduction": 0.15,
-      "threatRange": 8
+      "damageReduction": 0.2,
+      "threatRange": 10
     },
     "dmg": {
       "name": "Schaden",
       "icon": "⚔",
       "description": "Mehr Schaden an Bossen und Elites",
-      "bossDamage": 0.3
+      "bossDamage": 0.4
     },
     "support": {
       "name": "Support",
       "icon": "✚",
       "description": "Heilt und reinigt Verbündete in der Nähe von Seuche",
       "auraRadius": 7,
-      "auraHeal": 0.006,
+      "auraHeal": 0.008,
       "cleanseEvery": 3
     }
   },
   "plague": {
-    "dpsPerStack": 5,
-    "duration": 8,
+    "dpsPerStack": 9,
+    "duration": 10,
     "maxStacks": 10
   },
   "pvp": {
