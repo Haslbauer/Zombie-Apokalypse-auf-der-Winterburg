@@ -1,6 +1,7 @@
 import { rankValue } from '../sim/abilities';
 import { defaultTeam } from '../sim/bots/team';
 import { type Quality, QUALITY_LABELS, type QualitySetting } from './quality';
+import type { AudioSettings } from './audio';
 import type { BotDifficulty, GameData, GameState, Hero, HeroDef } from '../sim/types';
 import type { RoomInfo } from '../net/protocol';
 import { type Action, ACTIONS, type Keybindings, keyName } from './keybindings';
@@ -584,12 +585,15 @@ export class Hud {
    * Menü „Tastenbelegung“: Klick auf eine Taste, dann die neue Taste oder
    * Maustaste drücken. startCapture wartet auf diese Eingabe.
    */
+  /** Ton-Einstellungen fürs Esc-Menü (gesetzt in main.ts). */
+  audio: { settings: AudioSettings; apply: () => void } | null = null;
+
   showSettings(startCapture: (done: (code: string | null) => void) => void, onClose: () => void): void {
     this.overlay.dataset.menu = 'settings';
     const render = () => {
       this.overlay.replaceChildren();
       const box = el('div', 'hud-box');
-      box.append(el('h1', '', 'Pause'), el('h2', '', 'Tastenbelegung'));
+      box.append(el('h1', '', 'Pause'));
       const table = el('div', 'hud-binds');
       for (const { id, label } of ACTIONS) {
         const btn = el('button', 'hud-key', keyName(this.bindings.get(id)));
@@ -626,6 +630,45 @@ export class Hud {
         row.append(el('span', '', 'Qualität'), select, perfLabel);
         box.append(row);
       }
+      // Ton: Regler je Kanal und Stumm (gespeichert im Browser)
+      const a = this.audio;
+      if (a) {
+        box.append(el('h2', '', 'Ton'));
+        const grid = el('div', 'hud-audio');
+        const labels: [keyof Omit<AudioSettings, 'muted'>, string][] = [
+          ['master', 'Gesamt'],
+          ['effects', 'Effekte'],
+          ['ambience', 'Umgebung'],
+          ['music', 'Musik'],
+          ['ui', 'Oberfläche'],
+        ];
+        for (const [key, label] of labels) {
+          const range = el('input', 'hud-range');
+          range.type = 'range';
+          range.min = '0';
+          range.max = '100';
+          range.value = String(Math.round(a.settings[key] * 100));
+          range.dataset.audio = key;
+          const value = el('span', 'hud-range-value', range.value);
+          range.addEventListener('input', () => {
+            a.settings[key] = Number(range.value) / 100;
+            value.textContent = range.value;
+            a.apply();
+          });
+          grid.append(el('span', '', label), range, value);
+        }
+        const muteLabel = el('label', 'hud-check');
+        const mute = el('input', '');
+        mute.type = 'checkbox';
+        mute.checked = a.settings.muted;
+        mute.dataset.audio = 'muted';
+        mute.addEventListener('change', () => {
+          a.settings.muted = mute.checked;
+          a.apply();
+        });
+        muteLabel.append(mute, el('span', '', ` Stumm (Taste ${keyName(this.bindings.get('mute'))})`));
+        box.append(grid, muteLabel);
+      }
       const reset = el('button', 'hud-restart', 'Standard wiederherstellen');
       reset.addEventListener('click', () => {
         this.bindings.reset();
@@ -635,7 +678,7 @@ export class Hud {
       resume.addEventListener('click', onClose);
       const buttons = el('div', 'hud-buttons');
       buttons.append(reset, resume);
-      box.append(table, el('p', 'hud-small', 'Fähigkeiten 1–4: halten zeigt die Vorschau, loslassen löst aus. Shift + Taste setzt einen Skillpunkt. R/T: Verbrauchsgüter, F/G: Beschwörerzauber (Rechtsklick auf das Feld in der Pause: tauschen). Esc: weiter spielen.'), buttons);
+      box.append(el('h2', '', 'Tastenbelegung'), table, el('p', 'hud-small', 'Fähigkeiten 1–4: halten zeigt die Vorschau, loslassen löst aus. Shift + Taste setzt einen Skillpunkt. R/T: Verbrauchsgüter, F/G: Beschwörerzauber (Rechtsklick auf das Feld in der Pause: tauschen). Esc: weiter spielen.'), buttons);
       this.overlay.append(box);
     };
     render();

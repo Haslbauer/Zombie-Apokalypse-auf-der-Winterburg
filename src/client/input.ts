@@ -26,6 +26,7 @@ export class Input {
   onSpell: (slot: number) => void = () => {};
   onShop: () => void = () => {};
   onStartWave: () => void = () => {};
+  onMute: () => void = () => {};
   /** Mausrad (deltaY > 0: herauszoomen). */
   onZoom: (deltaY: number) => void = () => {};
   /** Esc zuerst hier anbieten (z. B. Shop schließen); true = erledigt. */
@@ -100,6 +101,8 @@ export class Input {
         if (e.code === this.bindings.get('spell2')) this.onSpell(1);
         if (e.code === this.bindings.get('shop')) this.onShop();
         if (e.code === this.bindings.get('startWave')) this.onStartWave();
+        // Stumm nicht beim Tippen (z. B. Name in der Lobby)
+        if (e.code === this.bindings.get('mute') && !(e.target instanceof HTMLInputElement && e.target.type === 'text')) this.onMute();
       }
       const slot = this.abilitySlot(e.code);
       if (slot !== null && !e.repeat) {

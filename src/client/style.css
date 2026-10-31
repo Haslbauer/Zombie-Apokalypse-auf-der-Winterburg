@@ -923,6 +923,27 @@ html, body {
   gap: 4px;
   cursor: pointer;
 }
+/* Ton-Regler */
+.hud-audio {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 260px) 2.5em;
+  align-items: center;
+  gap: 4px 12px;
+  margin-bottom: 6px;
+}
+.hud-range {
+  accent-color: #7bd36a;
+  width: 100%;
+}
+.hud-range-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+.hud-check + .hud-binds,
+.hud-audio + .hud-check {
+  margin-bottom: 12px;
+}
 .hud-perf {
   position: absolute;
   top: 64px;

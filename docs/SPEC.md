@@ -274,6 +274,15 @@ Werte in `data/spells.json`, Logik in `src/sim/spells.ts`.
   - **Reinigen** (90 s): löst Festhalten und Betäubung, 2 s immun.
 - **Vorgaben und Bots:** Nahkampf Blitz + Entzünden, Fernkampf Blitz + Heilen, Kontrolle Blitz + Erschöpfen, Grimm Blitz + Zerschmettern. Bots setzen sie nach einfachen Regeln ein: Heilen/Barriere bei wenig Leben, Blitz zur Flucht, Entzünden/Erschöpfen auf große Gegner, Zerschmettern zum Erlegen, Geist für weite Wege, Teleport zu weit entfernten Aufträgen.
 
+## 9c. Ton (v2.1)
+
+- **Erzeugung:** alles synthetisiert mit Web-Audio (`src/client/audio.ts`), keine Dateien.
+- **Kanäle:** Effekte, Umgebung, Musik, Oberfläche, darüber Gesamt. Jeder hat einen Regler (Esc-Menü „Ton“), dazu Stumm (Taste M). Gespeichert in `localStorage` (`winterburg.audio`).
+- **Raumklang:** Lautstärke `1 / (1 + (d/9)²)` nach Abstand zum Zuhörer (eigener Held bzw. Kamerafokus), Stereo nach seitlichem Abstand. Oberfläche und Musik sind ortlos.
+- **Begrenzung:** höchstens 24 Stimmen, je Geräusch 4, gleiche Geräusche frühestens nach 35 ms erneut (`VoiceLimiter`).
+- **Anbindung:** Die Spielereignisse (`hit`, `swing`, `shot`, `attack`, `death`, `waveStart`, `waveCleared`, `breach`, `gold`, `levelUp`, `ping`, `spell`, `bossKill`, `courier`, `elite`, `charge`, `leap`, `parcel`, `sting`, `shop`, `gameOver`) lösen Klänge aus. Gold und Level-up gibt es nur für den eigenen Helden.
+- **Umgebung und Musik:** Sie werden jedes Bild aktualisiert: Feuer- und Bienennähe, Stöhnen naher Zombies, Krähen. Die Musik wird intensiver mit laufender Welle bzw. lebendem Boss oder Elite.
+
 ## 10. Mehrspieler und Bots
 
 - **Lobby (v2.1):** Ein Online-Raum beginnt in der Lobby (`phase: lobby`, keine Simulation). Jeder Mensch wählt einen Helden (keine doppelten) und seine Zauber und meldet sich bereit (nur mit Held). Sind alle Menschen bereit, startet nach 15 s die Partie; leere Plätze füllen Bots mit freien Helden (Wunsch-Team des Gastgebers zuerst). „Nicht bereit“, ein neuer oder gehender Spieler stoppen den Countdown. Die Bot-Stärke legt der Gastgeber fest. „Nochmal“ nach Spielende führt zurück in die Lobby. Nachrichten: `pick`, `spells`, `ready`, `difficulty`; `join` mit Platz −1 = nächster freier Platz.

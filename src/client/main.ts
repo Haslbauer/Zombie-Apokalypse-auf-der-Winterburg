@@ -19,6 +19,7 @@ import { Minimap } from './minimap';
 import { PING_STYLE } from './pingwheel';
 import { LocalSession, RemoteSession, type Session } from './session';
 import { ShopView } from './shop';
+import { sound } from './audio';
 
 const renderer = new GameRenderer(document.getElementById('game')!, gameData);
 const effects = new Effects(renderer.scene);
@@ -56,6 +57,41 @@ let difficulty: BotDifficulty = 'mittel';
 const cmd = (c: ClientCommand) => session?.send(c);
 /** Zustand und Daten für Abfragen wie „Shop offen?“ (ohne eigene Simulation im Mehrspieler). */
 const ctx = (): DataContext => ({ state: session!.state, data: gameData });
+
+// ---------- Ton ----------
+// Browser erlauben Ton erst nach einer Nutzeraktion
+const unlockAudio = () => sound.unlock();
+window.addEventListener('pointerdown', unlockAudio);
+window.addEventListener('keydown', unlockAudio);
+sound.setWorld(
+  (gameData.arena.props ?? []).filter((p) => p.look === 'firebarrel' || p.look === 'campfire').map((p) => ({ x: p.x, y: p.y })),
+  ((o) => (o ? { x: o.x, y: o.y } : null))(gameData.arena.objectives.find((o) => o.kind === 'hive')),
+);
+hud.audio = { settings: sound.settings, apply: () => sound.applySettings(true) };
+hud.onCountdownTick = (left) => {
+  if (left === 0) sound.play('go');
+  else if (left <= 5) sound.play('tick');
+};
+/** Bosse und Elites (für die Musik). */
+const BOSS_DEFS = new Set(gameData.zombies.filter((z) => z.rank === 'elite' || z.rank === 'boss').map((z) => z.id));
+/** Klang des Fernkampfgeschosses nach Aussehen. */
+const SHOT_SOUND: Record<string, string> = { stone: 'bow', volley: 'throw', hook: 'hook', star: 'magic' };
+/** Klang der Beschwörerzauber. */
+const SPELL_SOUND: Record<string, string> = {
+  blitz: 'blitz',
+  teleport: 'teleport',
+  'teleport-land': 'teleport',
+  heilen: 'heal',
+  barriere: 'shield',
+  geist: 'ghost',
+  entzuenden: 'ignite',
+  erschoepfen: 'exhaust',
+  zerschmettern: 'smite',
+  reinigen: 'cleanse',
+};
+const PING_SOUND: Record<string, string> = { here: 'pingHere', attack: 'pingAttack', danger: 'pingDanger', help: 'pingHelp', omw: 'pingOmw' };
+/** Bienen wütend bis (Spielzeit). */
+let beesAngryUntil = 0;
 const myHero = () => session?.state.heroes.find((h) => h.id === heroId);
 
 input.onCast = (slot) => cmd({ type: 'cast', slot, aim: input.aimPoint });
@@ -444,7 +480,10 @@ function handleEvents(state: GameState): void {
       case 'hit':
         renderer.flash(e.targetId);
         // Treffer an Zombies: kleine Funken
-        if (e.amount > 0 && state.zombies.some((z) => z.id === e.targetId)) effects.sparks(e.pos, 0xffc070, 4);
+        if (e.amount > 0 && state.zombies.some((z) => z.id === e.targetId)) {
+          effects.sparks(e.pos, 0xffc070, 4);
+          sound.play('hit', e.pos, 0.8);
+        } else if (e.amount > 0 && state.heroes.some((h) => h.id === e.targetId)) sound.play('heroHit', e.pos, e.targetId === heroId ? 1 : 0.6);
         break;
       case 'attack':
         {
@@ -452,6 +491,7 @@ function handleEvents(state: GameState): void {
           const zt = state.zombies.find((z) => z.id === e.id);
           const zd = zt ? gameData.zombies.find((d) => d.id === zt.defId) : undefined;
           renderer.zombieAttack(e.id, zd?.attackCooldown);
+          if (zt) sound.play('zombieAttack', zt.pos, 0.7);
         }
         break;
       case 'objectiveHit':
@@ -460,12 +500,18 @@ function handleEvents(state: GameState): void {
       case 'sting': {
         const obj = state.objectives.find((o) => o.id === e.objectiveId);
         const to = renderer.unitPosition(e.targetId);
-        if (obj && to) effects.sting(obj.pos, to, state.time < obj.aggroUntil);
+        if (obj && to) {
+          effects.sting(obj.pos, to, state.time < obj.aggroUntil);
+          sound.play('sting', to, 0.6);
+        }
         break;
       }
       case 'swing': {
         const h = state.heroes.find((x) => x.id === e.id);
-        if (h) effects.swing(h.pos, e.facing, h.radius + e.range, e.arc);
+        if (h) {
+          effects.swing(h.pos, e.facing, h.radius + e.range, e.arc);
+          sound.play('swing', h.pos, e.id === heroId ? 1 : 0.7);
+        }
         renderer.heroAction(e.id, 'attack', attackTime(state, e.id));
         break;
       }
@@ -477,6 +523,7 @@ function handleEvents(state: GameState): void {
           const look = gameData.heroes.find((d) => d.id === h.defId)?.attack.look ?? '';
           const color = ({ stone: 0xc8f0a0, hook: 0xd8c8a8, star: 0x9fe3ff, volley: 0xff9a4a } as Record<string, number>)[look] ?? 0xffe066;
           effects.flash({ x: h.pos.x + Math.cos(h.facing) * 0.7, y: h.pos.y + Math.sin(h.facing) * 0.7 }, 1.3, color);
+          sound.play(SHOT_SOUND[look] ?? 'bow', h.pos, e.id === heroId ? 1 : 0.7);
         }
         break;
       }
@@ -485,6 +532,7 @@ function handleEvents(state: GameState): void {
         break;
       case 'shop':
         if (e.action === 'use') renderer.heroAction(e.heroId, 'use');
+        else if (e.heroId === heroId) sound.play(e.action === 'buy' ? 'buy' : 'gold');
         break;
       case 'effect':
         abilityEffect(e);
@@ -497,6 +545,7 @@ function handleEvents(state: GameState): void {
           // Wellenbonus ohne Ort: über dem eigenen Helden anzeigen
           const at = e.pos ?? state.heroes.find((h) => h.id === heroId)?.pos;
           if (at) effects.floatingText(at, `+${e.amount}`, '#ffd166', e.pos ? 1.8 : 2.6);
+          sound.play('gold', undefined, 0.6);
         }
         break;
       case 'shopDenied':
@@ -505,14 +554,17 @@ function handleEvents(state: GameState): void {
       case 'elite':
         hud.message(`Elite: ${gameData.zombies.find((z) => z.id === e.defId)?.name}!`);
         renderer.zombieScream(e.zombieId);
+        sound.play('roar', state.zombies.find((z) => z.id === e.zombieId)?.pos);
         break;
       case 'charge': {
         renderer.zombieScream(e.zombieId);
         const def = gameData.zombies.find((z) => state.zombies.some((x) => x.id === e.zombieId && x.defId === z.id));
         effects.line(e.from, e.to, 1.6, 0xff3b30, Number(def?.special?.windup ?? 0.6));
+        sound.play('roar', e.from);
         break;
       }
       case 'bossKill': {
+        sound.play('bossKill');
         const boss = gameData.zombies.find((z) => z.id === e.defId)?.name ?? 'Boss';
         const killer = state.heroes.find((h) => h.id === e.killerId);
         const who = !killer ? 'Das Team' : killer.id === heroId ? 'Du' : (playerNames()?.get(killer.id) ?? gameData.heroes.find((d) => d.id === killer.defId)?.name ?? '?');
@@ -527,16 +579,20 @@ function handleEvents(state: GameState): void {
         // Paketwurf des Postboten: Landeplatz warnen, Paket fliegt im Bogen
         effects.warning(e.to, e.radius, 0xc8a060, e.windup + 0.2);
         effects.lob(e.from, e.to, e.windup);
+        sound.play('whoosh', e.from);
         break;
       case 'leap':
         // Höllensprung: Landeplatz warnen, Dämon schreit
         effects.warning(e.to, e.radius, 0xb04dff, e.windup + 0.45);
         renderer.zombieScream(e.zombieId);
+        sound.play('roar', e.from);
         break;
       case 'spell':
         spellEffect(e);
+        if (SPELL_SOUND[e.spellId]) sound.play(SPELL_SOUND[e.spellId], e.spellId === 'teleport-land' ? e.to : e.from, e.heroId === heroId ? 1 : 0.7);
         break;
       case 'courier':
+        if (e.phase !== 'escaped') sound.play(e.phase === 'arrive' ? 'courier' : 'bossKill');
         if (e.phase === 'arrive') hud.message(`Zombie-Postbote im Gelände! Er bleibt, bis ihr ihn besiegt: ${e.gold} Gold für jeden, der mitkämpft`);
         else if (e.phase === 'caught') hud.message(`Paket erbeutet: +${e.gold} Gold für alle Beteiligten!`);
         else hud.message('Der Postbote ist entkommen');
@@ -561,6 +617,7 @@ function handleEvents(state: GameState): void {
         const heroName = gameData.heroes.find((d) => d.id === h?.defId)?.name ?? '?';
         const who = e.heroId === heroId ? 'Du' : (playerNames()?.get(e.heroId) ?? heroName);
         hud.addPing(`${who}: ${style.label}`, style.color);
+        sound.play(PING_SOUND[e.kind] ?? 'pingHere');
         break;
       }
       case 'levelUp':
@@ -568,13 +625,16 @@ function handleEvents(state: GameState): void {
           const h = state.heroes.find((x) => x.id === heroId);
           if (h) effects.ring(h.pos, 2.5, 0xffd166, 0.7);
           hud.message(`Level ${e.level}!`);
+          sound.play('levelUp');
         }
         break;
       case 'breach':
         hud.message('Durchbruch!');
+        sound.play('breach');
         break;
       case 'beesAngry':
         hud.message('Die Bienen sind wütend!');
+        beesAngryUntil = state.time + 8;
         break;
       case 'objectiveDestroyed':
         if (state.gameOver) break;
@@ -592,17 +652,22 @@ function handleEvents(state: GameState): void {
         break;
       case 'death':
         renderer.zombieDie(e.id);
+        if (state.heroes.some((h) => h.id === e.id)) sound.play('heroHit', e.pos);
+        else sound.play('zombieDeath', e.pos, 0.8);
         if (e.id !== heroId) effects.deathPuff(e.pos);
         else hud.message('Gefallen!');
         break;
       case 'waveStart':
         hud.message(`Welle ${e.number}!`);
+        sound.play('waveStart');
         hornetsAnnounced = false;
         break;
       case 'waveCleared':
         hud.message(`Welle ${e.number} geschafft`);
+        sound.play('waveCleared');
         break;
       case 'gameOver':
+        sound.play(e.victory ? 'victory' : 'defeat');
         hud.showGameOver(
           state,
           e.reason,
@@ -650,6 +715,15 @@ renderer.renderer.setAnimationLoop((now) => {
     shop.update(me, def.attack.type, (id) => buildPlan(ctx(), me, id));
     minimap.update(dt, state, heroId, viewCorners());
     if (session instanceof RemoteSession) hud.setPing(session.rtt);
+    // Ton: Zuhörer am eigenen Helden bzw. am Kamerafokus
+    const near: { x: number; y: number }[] = [];
+    let boss = false;
+    for (const z of state.zombies) {
+      if (z.hp <= 0) continue;
+      if (BOSS_DEFS.has(z.defId)) boss = true;
+      if (near.length < 24 && Math.hypot(z.pos.x - focus.x, z.pos.y - focus.y) < 18) near.push(z.pos);
+    }
+    sound.update(dt, { listener: focus, zombies: near, wave: state.wave.phase === 'wave', boss, beesAngry: state.time < beesAngryUntil });
   }
 
   effects.update(dt);
@@ -688,6 +762,10 @@ for (const [name, height] of Object.entries(MODELS)) {
 }
 
 input.onStartWave = () => cmd({ type: 'startWave' });
+input.onMute = () => {
+  sound.toggleMute();
+  hud.message(sound.settings.muted ? 'Ton aus' : 'Ton an');
+};
 input.onZoom = (d) => renderer.cam.zoom(d);
 hud.startWaveBtn.addEventListener('click', input.onStartWave);
 

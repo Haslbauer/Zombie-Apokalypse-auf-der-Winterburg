@@ -81,10 +81,26 @@ Beim Entwickeln (`npm run dev`) leitet Vite den Mehrspieler an einen laufenden `
 | N | Welle sofort starten (in der Pause) |
 | Rechtsklick | Ping an alle: kurz = „Hier!“, halten und ziehen = Ping-Rad (oben Angriff, rechts Bin unterwegs, unten Hilfe, links Gefahr). Auch auf der Minimap. Bots folgen den Pings (siehe unten). |
 | Tab (halten) | Anzeigetafel: Kills, Bosse, Assists, Gold und Level aller Helden |
+| M | Ton an/aus |
 | Mausrad | Kamera heran- bzw. herauszoomen |
 | Esc | Pause und Tastenbelegung (alle Tasten frei belegbar); online läuft das Spiel weiter |
 
 Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bogen beim Nahkampf, einen Pfeil beim Fernkampf.
+
+## Ton
+
+Alle Geräusche und die Musik entstehen im Browser (Web-Audio, `src/client/audio.ts`): Oszillatoren, Rauschen, Filter und Hüllkurven, jedes Mal leicht anders. Es gibt keine Tondateien und damit keine Lizenzfragen. Der Ton startet beim ersten Klick bzw. Tastendruck, weil Browser das so verlangen.
+
+- **Kampf:** Hiebe, Bogen, Wurf, Enterhaken, Magie, Treffer, Zombie-Bisse, Stöhnen und Todesröcheln, Schreie der Elites, Sprung und Paketwurf.
+- **Spielablauf:** Horn zum Wellenstart, Akkord für „Welle geschafft“, Alarm bei Durchbruch, Fanfare für den Postboten, Boss erlegt, Sieg und Niederlage.
+- **Oberfläche:** Gold, Level-up, Shop, Pings (je Art ein Ton), Countdown in der Lobby.
+- **Zauber:** je Beschwörerzauber ein eigener Klang.
+- **Umgebung:** Nachtwind, Knistern an Feuerfässern und Feuerstelle, Bienensummen am Stock (wütend lauter), Krähen.
+- **Musik:** düsterer Bordun mit Moll-Akkorden; in der Welle mit Trommeln und schneller, bei Bossen dichter.
+
+Geräusche werden mit dem Abstand zum eigenen Helden leiser und links/rechts verteilt. Es laufen höchstens 24 Geräusche gleichzeitig, damit viele Zombies nicht übersteuern.
+
+**Einstellungen:** Im Esc-Menü unter „Ton“ gibt es Regler für Gesamt, Effekte, Umgebung, Musik und Oberfläche sowie „Stumm“ (Taste M, frei belegbar). Die Werte bleiben im Browser gespeichert.
 
 ## Karte
 
