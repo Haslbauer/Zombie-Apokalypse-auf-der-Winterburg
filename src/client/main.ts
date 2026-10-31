@@ -353,7 +353,10 @@ renderer.renderer.setAnimationLoop((now) => {
 
 // Animierte Modelle laden (Name → Höhe in Metern); bis dahin (oder bei einem Fehler) bleiben die einfachen Figuren.
 const MODELS: Record<string, number> = {
-  zombie: 1.75,
+  'zombie-basic': 1.75,
+  'zombie-arm': 1.75,
+  'zombie-ribcage': 1.6,
+  'zombie-chubby': 1.75,
   rotschopf: 1.8,
   schlaeferin: 1.8,
   libero: 1.8,

@@ -1,0 +1,35 @@
+{
+  "base": "zombie-ribcage.gltf",
+  "clips": {
+    "walk": {
+      "clip": "Walk"
+    },
+    "run": {
+      "clip": "Run"
+    },
+    "idle": {
+      "clip": "Idle"
+    },
+    "crawl": {
+      "clip": "Crawl"
+    },
+    "attack": {
+      "clip": "Jump"
+    },
+    "attack2": {
+      "clip": "Jump"
+    },
+    "death": {
+      "clip": "Death"
+    },
+    "hit": {
+      "clip": "HitReact"
+    },
+    "scream": {
+      "clip": "Jump"
+    }
+  },
+  "textureSize": 512,
+  "simplifyRatio": 1,
+  "output": "public/models/zombie-ribcage.glb"
+}

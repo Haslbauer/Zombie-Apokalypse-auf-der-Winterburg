@@ -1,0 +1,38 @@
+{
+  "base": "zombie-basic.gltf",
+  "clips": {
+    "walk": {
+      "clip": "Walk"
+    },
+    "run": {
+      "clip": "Run_Arms"
+    },
+    "idle": {
+      "clip": "Idle"
+    },
+    "crawl": {
+      "clip": "Crawl"
+    },
+    "attack": {
+      "clip": "Punch"
+    },
+    "attack2": {
+      "clip": "Idle_Attack"
+    },
+    "attack3": {
+      "clip": "Run_Attack"
+    },
+    "death": {
+      "clip": "Death"
+    },
+    "hit": {
+      "clip": "HitReact"
+    },
+    "scream": {
+      "clip": "Jump"
+    }
+  },
+  "textureSize": 512,
+  "simplifyRatio": 1,
+  "output": "public/models/zombie-basic.glb"
+}

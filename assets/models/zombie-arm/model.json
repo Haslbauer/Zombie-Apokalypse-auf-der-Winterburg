@@ -1,0 +1,32 @@
+{
+  "base": "zombie-arm.gltf",
+  "clips": {
+    "walk": {
+      "clip": "Walk"
+    },
+    "run": {
+      "clip": "Run_Arms"
+    },
+    "idle": {
+      "clip": "Idle"
+    },
+    "attack": {
+      "clip": "Run_Attack"
+    },
+    "attack2": {
+      "clip": "Punch"
+    },
+    "death": {
+      "clip": "Death"
+    },
+    "hit": {
+      "clip": "HitReact"
+    },
+    "scream": {
+      "clip": "Jump"
+    }
+  },
+  "textureSize": 512,
+  "simplifyRatio": 1,
+  "output": "public/models/zombie-arm.glb"
+}

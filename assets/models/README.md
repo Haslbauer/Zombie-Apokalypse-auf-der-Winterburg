@@ -2,7 +2,7 @@
 
 Quellen:
 - [Mixamo](https://www.mixamo.com) (Adobe): Zombie und die fünf Menschen-Helden. Figuren und Animationen von Mixamo dürfen laut Adobe lizenzfrei in eigenen Projekten und Spielen verwendet werden (nicht als Rohdateien weiterverkauft).
-- [Quaternius](https://quaternius.com), Lizenz CC0 (gemeinfrei): Schäferhund (`chupa`, aus dem Zombie Apocalypse Kit), Ratte (`rat`) und Wespe (`wasp`, aus den Animated Animals).
+- [Quaternius](https://quaternius.com), Lizenz CC0 (gemeinfrei): vier Zombies (`zombie-basic`, `zombie-arm`, `zombie-ribcage`, `zombie-chubby`), Schäferhund (`chupa`, aus dem Zombie Apocalypse Kit), Ratte (`rat`) und Wespe (`wasp`, aus den Animated Animals).
 
 ## Aufbau
 
@@ -21,7 +21,10 @@ Voraussetzung lokal: `npx playwright install chromium`.
 
 Neben FBX gehen auch glTF-Dateien. Enthält eine Datei mehrere Animationen (Quaternius), wählt `"clip": "Run"` eine davon aus; ohne `file` gilt die Figur-Datei (`base`). `simplifyRatio: 1` lässt Low-Poly-Netze unverändert. Ein Clip kann mehrfach dieselbe Datei nutzen. `idleFrom` erzeugt den Clip `idle` aus dem ersten Bild einer Datei. Pfade wie `../shared/pill.fbx` verweisen auf gemeinsame Animationen.
 
-## zombie
+## zombie (Mixamo, nicht mehr im Spiel)
+
+Die Mixamo-Zombies wurden durch die Quaternius-Zombies ersetzt. Dateien und GLB bleiben als Vorlage erhalten, das Spiel lädt sie nicht mehr.
+
 
 | Clip | Datei | Verwendung |
 |---|---|---|
@@ -47,6 +50,17 @@ Alle fünf Menschen-Helden haben einen eigenen Ordner, damit jeder später eine 
 | gaertnerin | run | shared/pistol-idle | draw-arrow | firing-rifle | shared/toss-grenade | drinking | melee-down |
 
 Die Helden tragen noch Mixamos Mocap-Anzug. Das Spiel ersetzt die Textur durch die Heldenfarbe (`paint` in `HERO_LOOKS`, `src/client/units.ts`) und hängt Requisiten an Hand und Kopf (Hammer, Stab, Enterhaken, Schleuder, Hüte). Für eine eigene Figur in Mixamo die Figur wählen, dieselben Animationen „With Skin“ laden, die FBX im Ordner ersetzen, `paint` entfernen, `npm run models`.
+
+## Zombies (Quaternius)
+
+Alle vier haben dieselben Clip-Namen: walk, run, idle, crawl (nicht Arm), attack, attack2, death, hit, scream. Requisiten hängen am Unterarm (`LowerArmR`, die Figuren haben keinen Handknochen) bzw. am Kopf (`Head`).
+
+| Modell | Spiel |
+|---|---|
+| zombie-basic | Walker (2 von 3), Kriecher (Crawl), Postbote (Mütze, Paket) |
+| zombie-ribcage | Walker (1 von 3) |
+| zombie-arm | Runner (einarmig, rennt mit vorgestrecktem Arm) |
+| zombie-chubby | Brute (1,25-fach), Schlächter (1,45-fach, rötlich, Hackbeil) |
 
 ## chupa, rat, wasp (Quaternius)
 

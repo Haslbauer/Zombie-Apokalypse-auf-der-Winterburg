@@ -37,7 +37,8 @@ type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sun
  * Textur (Werte über 1 hellen auf – die Mixamo-Figur trägt einen schwarzen Anzug).
  */
 interface ModelLook {
-  model: string;
+  /** Modellname; bei mehreren wählt die Einheits-Id eine Variante. */
+  model: string | string[];
   move: string;
   /** Schnellere Variante ab fastAbove m/s (z. B. schnelles Kriechen). */
   moveFast?: string;
@@ -53,17 +54,24 @@ interface ModelLook {
   props?: Prop[];
   /** Kopfknochen für Hüte und Krone (Mixamo: mixamorigHead). */
   headBone?: string;
+  /** Knochen für Requisiten in der Hand (Mixamo: mixamorigRightHand) und Abstand entlang des Knochens in Metern. */
+  handBone?: string;
+  handOffset?: number;
+  /** Hut höher bzw. tiefer setzen (große Comic-Köpfe), in Metern. */
+  headOffset?: number;
   /** Schwebehöhe über dem Boden (Hornissen). */
   lift?: number;
 }
 
+/** Zombies: Quaternius-Figuren (CC0) mit Requisiten am Unterarm, dazu Tiere. */
+const Q = { headBone: 'Head', handBone: 'LowerArmR', handOffset: 0.3, headOffset: 0.42 } as const;
 const ZOMBIE_LOOKS: Record<string, ModelLook> = {
-  walker: { model: 'zombie', move: 'walk', idle: 'idle', refSpeed: 1.4, scale: 1, tint: [2.1, 2.5, 1.9], attacks: ['attack'] },
-  runner: { model: 'zombie', move: 'run', idle: 'idle', refSpeed: 3.6, scale: 0.95, tint: [2.5, 2.6, 2.2], attacks: ['bite', 'bite2', 'bite3'] },
-  crawler: { model: 'zombie', move: 'crawl', moveFast: 'crawlFast', fastAbove: 1.2, refSpeed: 0.8, scale: 1, tint: [1.9, 2.2, 1.7], attacks: ['bite', 'bite3'] },
-  brute: { model: 'zombie', move: 'walk', idle: 'idle', refSpeed: 1.6, scale: 1.35, tint: [1.6, 1.9, 1.4], attacks: ['attack'] },
-  butcher: { model: 'zombie', move: 'walk', idle: 'idle', refSpeed: 1.7, scale: 1.5, tint: [2.6, 1.3, 1.2], attacks: ['attack'], props: ['cleaver'] },
-  postman: { model: 'zombie', move: 'walk', moveFast: 'run', fastAbove: 3, idle: 'idle', refSpeed: 2.4, scale: 1, tint: [1.3, 1.7, 3.2], attacks: ['attack'], props: ['parcel', 'cap'] },
+  walker: { model: ['zombie-basic', 'zombie-basic', 'zombie-ribcage'], move: 'walk', idle: 'idle', refSpeed: 1.4, scale: 1, tint: [1, 1, 1], attacks: ['attack', 'attack2'] },
+  runner: { model: 'zombie-arm', move: 'run', idle: 'idle', refSpeed: 3.8, scale: 0.95, tint: [1, 1, 1], attacks: ['attack', 'attack2'] },
+  crawler: { model: 'zombie-basic', move: 'crawl', refSpeed: 0.8, scale: 1, tint: [0.85, 1, 0.8], attacks: [] },
+  brute: { model: 'zombie-chubby', move: 'walk', idle: 'idle', refSpeed: 1.4, scale: 1.25, tint: [1, 1, 1], attacks: ['attack', 'attack2'] },
+  butcher: { model: 'zombie-chubby', move: 'walk', idle: 'idle', refSpeed: 1.6, scale: 1.45, tint: [1.35, 0.8, 0.6], attacks: ['attack', 'attack2'], props: ['cleaver'], ...Q },
+  postman: { model: 'zombie-basic', move: 'walk', moveFast: 'run', fastAbove: 3, idle: 'idle', refSpeed: 2.4, scale: 1, tint: [0.75, 0.9, 1.5], attacks: ['attack'], props: ['parcel', 'cap'], ...Q },
   rat: { model: 'rat', move: 'run', idle: 'idle', refSpeed: 5, scale: 1.2, tint: [1.8, 1.7, 1.6], attacks: ['attack', 'attack2'] },
   ratking: { model: 'rat', move: 'walk', idle: 'idle', refSpeed: 1.2, scale: 2.6, tint: [1.4, 1.1, 0.8], attacks: ['attack', 'attack2'], props: ['crown'], headBone: 'Head' },
   hornet: { model: 'wasp', move: 'fly', idle: 'fly', refSpeed: 4.5, scale: 1.6, tint: [1, 1, 1], attacks: ['attack'], lift: 0.9 },
@@ -239,10 +247,12 @@ export class UnitView {
     inst.root.updateMatrixWorld(true);
     for (const prop of look.props ?? []) {
       const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap';
-      const bone = inst.root.getObjectByName(head ? (look.headBone ?? 'mixamorigHead') : 'mixamorigRightHand');
+      const bone = inst.root.getObjectByName(head ? (look.headBone ?? 'mixamorigHead') : (look.handBone ?? 'mixamorigRightHand'));
       if (!bone) continue;
       const mesh = this.propMesh(prop);
-      mesh.scale.setScalar(1 / bone.getWorldScale(new THREE.Vector3()).x);
+      const k = bone.getWorldScale(new THREE.Vector3()).x;
+      mesh.scale.setScalar(look.scale / k);
+      mesh.position.y = ((head ? look.headOffset : look.handOffset) ?? 0) * look.scale / k;
       bone.add(mesh);
     }
     this.anim = { inst, look, loop: null, loopName: '', once: null, attackIndex: 0, dead: false };
@@ -288,8 +298,8 @@ export class UnitView {
         add(new THREE.BoxGeometry(0.31, 0.04, 0.05), 0xe8d8a8, 0, 0.12, 0.1);
         break;
       case 'cap':
-        add(new THREE.CylinderGeometry(0.12, 0.12, 0.08, 12), 0x1f3f7a, 0, 0.18, 0.01);
-        add(new THREE.BoxGeometry(0.14, 0.02, 0.1), 0x1f3f7a, 0, 0.15, 0.11);
+        add(new THREE.CylinderGeometry(0.24, 0.24, 0.14, 12), 0x1f3f7a, 0, 0.05, 0);
+        add(new THREE.BoxGeometry(0.28, 0.03, 0.2), 0x1f3f7a, 0, 0, 0.26);
         break;
       case 'crown':
         // Der Kopfknochen der Ratte zeigt zur Schnauze: Krone hinter die Ohren, aufgerichtet
@@ -609,6 +619,11 @@ export class UnitView {
   }
 }
 
+/** Modell einer Einheit; bei Varianten entscheidet die Id (stabil über die ganze Partie). */
+function modelName(look: ModelLook, id: number): string {
+  return Array.isArray(look.model) ? look.model[id % look.model.length] : look.model;
+}
+
 /** Erkennungsmerkmal der einfachen Heldenfigur (ohne Modell). */
 function heroFigure(heroId: string): string | undefined {
   return { rotschopf: 'hammer', schlaeferin: 'staff', libero: 'ball', pirat: 'pirate', gaertnerin: 'gardener' }[heroId];
@@ -617,7 +632,7 @@ function heroFigure(heroId: string): string | undefined {
 /** Held mit Ring: grün für den eigenen Helden, blau für Bots. Mit Modell, sobald eins geladen ist. */
 export function heroView(h: Hero, def: HeroDef, isPlayer: boolean, models: Map<string, RiggedModel>): UnitView {
   const look = HERO_LOOKS[def.id];
-  const model = look ? models.get(look.model) : undefined;
+  const model = look ? models.get(modelName(look, h.id)) : undefined;
   const animated = !!model;
   const figure = animated ? `h:${def.id}` : def.figure;
   const height = def.figure === 'dog' ? 1.1 : animated ? 1.8 * look.scale : UNIT_HEIGHT;
@@ -631,8 +646,8 @@ export function heroView(h: Hero, def: HeroDef, isPlayer: boolean, models: Map<s
 export function zombieView(z: Zombie, def: ZombieDef, models: Map<string, RiggedModel>): UnitView {
   const elite = def.rank === 'elite' || def.rank === 'boss';
   const look = ZOMBIE_LOOKS[def.figure];
-  const model = look ? models.get(look.model) : undefined;
-  const height = model && look.model === 'zombie' && def.figure !== 'crawler' ? 1.75 * look.scale : zombieHeight(def.figure, z.radius);
+  const model = look ? models.get(modelName(look, z.id)) : undefined;
+  const height = model && modelName(look, z.id).startsWith('zombie') && def.figure !== 'crawler' ? 1.75 * look.scale : zombieHeight(def.figure, z.radius);
   const view = new UnitView(z.radius, def.color, elite ? 0xff9f1c : 0xff453a, height, `z:${def.figure}`, model);
   view.bar.visible = elite;
   if (elite) view.bar.scale.set(1.6, 1.4, 1);

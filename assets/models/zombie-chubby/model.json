@@ -1,0 +1,35 @@
+{
+  "base": "zombie-chubby.gltf",
+  "clips": {
+    "walk": {
+      "clip": "Walk"
+    },
+    "run": {
+      "clip": "Run"
+    },
+    "idle": {
+      "clip": "Idle"
+    },
+    "crawl": {
+      "clip": "Crawl"
+    },
+    "attack": {
+      "clip": "Punch"
+    },
+    "attack2": {
+      "clip": "Idle_Attack"
+    },
+    "death": {
+      "clip": "Death"
+    },
+    "hit": {
+      "clip": "HitReact"
+    },
+    "scream": {
+      "clip": "Jump"
+    }
+  },
+  "textureSize": 512,
+  "simplifyRatio": 1,
+  "output": "public/models/zombie-chubby.glb"
+}
