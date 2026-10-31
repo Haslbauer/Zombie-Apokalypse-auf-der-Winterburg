@@ -14,7 +14,7 @@ npm install
 npm run dev
 ```
 
-Dann http://localhost:5173 öffnen. Weitere Befehle: `npm test` (Simulationstests), `npm run typecheck`, `npm run build`.
+Dann http://localhost:5173 öffnen. Weitere Befehle: `npm test` (Simulationstests), `npm run typecheck`, `npm run build`, `npm run models` (3D-Modelle aus `assets/models/` umwandeln, siehe dortige README).
 
 ## Steuerung (wie in Supervive)
 
@@ -28,6 +28,7 @@ Dann http://localhost:5173 öffnen. Weitere Befehle: `npm test` (Simulationstest
 | R T | Verbrauchsgüter benutzen (Heiltrank, Energiedrink) |
 | B | Shop (nur in der Pause im Innenhof) |
 | N | Welle sofort starten (in der Pause) |
+| Mausrad | Kamera heran- bzw. herauszoomen |
 | Esc | Pause und Tastenbelegung (alle Tasten frei belegbar) |
 
 Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bogen beim Nahkampf, einen Pfeil beim Fernkampf.

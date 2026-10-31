@@ -24,6 +24,8 @@ export class Input {
   onUse: (slot: number) => void = () => {};
   onShop: () => void = () => {};
   onStartWave: () => void = () => {};
+  /** Mausrad (deltaY > 0: herauszoomen). */
+  onZoom: (deltaY: number) => void = () => {};
   /** Esc zuerst hier anbieten (z. B. Shop schließen); true = erledigt. */
   onEscape: () => boolean = () => false;
 
@@ -33,6 +35,14 @@ export class Input {
   ) {
     const canvas = renderer.canvas;
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    canvas.addEventListener(
+      'wheel',
+      (e) => {
+        e.preventDefault();
+        this.onZoom(e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY);
+      },
+      { passive: false },
+    );
     canvas.addEventListener('pointerdown', (e) => {
       if (!this.capture) this.pressed.add(`Mouse${e.button}`);
     });

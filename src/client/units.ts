@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { Hero, HeroDef, Unit, Zombie, ZombieDef } from '../sim/types';
+import { instantiate, type ModelInstance, type RiggedModel } from './models';
 import type { Snapshot } from './renderer';
 
 const UNIT_HEIGHT = 1.6;
@@ -27,6 +28,21 @@ function iconMaterial(text: string, color: string): THREE.SpriteMaterial {
   }
   return material;
 }
+
+/**
+ * Aussehen der menschlichen Zombies mit dem Mixamo-Modell. refSpeed: Tempo, bei
+ * dem die Animation normal schnell läuft. tint multipliziert die Textur (Werte
+ * über 1 hellen auf – die aktuelle Mixamo-Figur trägt einen schwarzen Anzug).
+ */
+const ZOMBIE_LOOKS: Record<string, { clip: string; refSpeed: number; scale: number; tint: [number, number, number]; attack: string; cleaver?: boolean }> = {
+  walker: { clip: 'walk', refSpeed: 1.4, scale: 1, tint: [2.1, 2.5, 1.9], attack: 'attack' },
+  runner: { clip: 'run', refSpeed: 3.6, scale: 0.95, tint: [2.5, 2.6, 2.2], attack: 'bite' },
+  crawler: { clip: 'crawl', refSpeed: 0.8, scale: 1, tint: [1.9, 2.2, 1.7], attack: 'bite' },
+  brute: { clip: 'walk', refSpeed: 1.6, scale: 1.35, tint: [1.6, 1.9, 1.4], attack: 'attack' },
+  butcher: { clip: 'walk', refSpeed: 1.7, scale: 1.5, tint: [2.6, 1.3, 1.2], attack: 'attack', cleaver: true },
+};
+/** So lange dauert ein Angriff in der Darstellung (Sekunden). */
+const ATTACK_ANIM = 0.9;
 
 const ICONS = {
   sleep: ['Zzz', '#9fc9ff'],
@@ -64,7 +80,9 @@ export class UnitView {
   readonly group = new THREE.Group();
   /** Dreht sich mit der Blickrichtung. */
   readonly body = new THREE.Group();
-  private readonly materials: THREE.MeshLambertMaterial[] = [];
+  private readonly materials: (THREE.Material & { color: THREE.Color })[] = [];
+  /** Animiertes Modell (menschliche Zombies). */
+  private anim: { inst: ModelInstance; move: THREE.AnimationAction; attack: string; refSpeed: number; attackLeft: number } | null = null;
   private readonly baseColors: THREE.Color[] = [];
   private readonly barFill: THREE.Mesh;
   readonly bar = new THREE.Group();
@@ -74,10 +92,12 @@ export class UnitView {
   private flash = 0;
   readonly height: number;
 
-  constructor(radius: number, color: string, barColor: number, height = UNIT_HEIGHT, figure?: string) {
+  constructor(radius: number, color: string, barColor: number, height = UNIT_HEIGHT, figure?: string, model?: RiggedModel | null) {
     this.height = height;
     this.group.add(this.body);
-    if (figure === 'dog') this.buildDog(color);
+    const look = figure?.startsWith('z:') ? ZOMBIE_LOOKS[figure.slice(2)] : undefined;
+    if (look && model) this.buildFromModel(model, look);
+    else if (figure === 'dog') this.buildDog(color);
     else if (figure?.startsWith('z:')) this.buildZombie(figure.slice(2), radius, color, height);
     else this.buildPerson(radius, color, height, figure);
 
@@ -155,6 +175,59 @@ export class UnitView {
         this.mesh(new THREE.TorusGeometry(radius * 0.92, 0.05, 6, 16), 0x2c5fa8, 0, height - radius * 0.6).rotation.x = Math.PI / 2;
         break;
     }
+  }
+
+  /** Zombie aus dem Mixamo-Modell mit Animationen (assets/models/zombie). */
+  private buildFromModel(model: RiggedModel, look: (typeof ZOMBIE_LOOKS)[string]): void {
+    const inst = instantiate(model, look.scale, look.tint);
+    this.body.add(inst.root);
+    for (const m of inst.materials) {
+      this.materials.push(m);
+      this.baseColors.push(m.color.clone());
+    }
+    if (look.cleaver) {
+      // Fleischerbeil in der rechten Hand
+      const hand = inst.root.getObjectByName('mixamorigRightHand');
+      const cleaver = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.32, 0.18).translate(0, 0.18, 0.05), this.lambert(0xb0b0b0));
+      if (hand) {
+        cleaver.scale.setScalar(1 / (model.scale * look.scale));
+        hand.add(cleaver);
+      }
+    }
+    const move = inst.actions.get(look.clip)!;
+    move.play();
+    move.time = Math.random() * move.getClip().duration; // nicht alle im Gleichschritt
+    this.anim = { inst, move, attack: look.attack, refSpeed: look.refSpeed, attackLeft: 0 };
+  }
+
+  /** Animation fortschreiben: Lauftempo folgt der echten Geschwindigkeit, schlafend/betäubt steht alles still. */
+  animate(dt: number, speed: number, frozen: boolean): void {
+    const a = this.anim;
+    if (!a) return;
+    if (a.attackLeft > 0) {
+      a.attackLeft -= dt;
+      if (a.attackLeft <= 0) {
+        a.inst.actions.get(a.attack)?.fadeOut(0.15);
+        a.move.reset().fadeIn(0.15).play();
+      }
+    }
+    a.move.timeScale = frozen ? 0 : speed < 0.05 ? 0.2 : Math.min(2.2, Math.max(0.35, speed / a.refSpeed));
+    a.inst.mixer.update(frozen ? 0 : dt);
+  }
+
+  /** Angriff einmal abspielen, danach zurück zur Laufbewegung. */
+  playAttack(): void {
+    const a = this.anim;
+    if (!a || a.attackLeft > 0) return;
+    const action = a.inst.actions.get(a.attack);
+    if (!action) return;
+    action.reset();
+    action.setLoop(THREE.LoopOnce, 1);
+    action.clampWhenFinished = true;
+    action.timeScale = action.getClip().duration / ATTACK_ANIM;
+    action.fadeIn(0.1).play();
+    a.move.fadeOut(0.1);
+    a.attackLeft = ATTACK_ANIM;
   }
 
   /** Zombies und Ratten nach den Referenzbildern in assets/reference/gegner/. */
@@ -348,9 +421,11 @@ export function heroView(h: Hero, def: HeroDef, isPlayer = true): UnitView {
   return view;
 }
 
-export function zombieView(z: Zombie, def: ZombieDef): UnitView {
+export function zombieView(z: Zombie, def: ZombieDef, model?: RiggedModel | null): UnitView {
   const elite = def.rank === 'elite' || def.rank === 'boss';
-  const view = new UnitView(z.radius, def.color, elite ? 0xff9f1c : 0xff453a, zombieHeight(def.figure, z.radius), `z:${def.figure}`);
+  const look = ZOMBIE_LOOKS[def.figure];
+  const height = model && look && def.figure !== 'crawler' ? 1.75 * look.scale : zombieHeight(def.figure, z.radius);
+  const view = new UnitView(z.radius, def.color, elite ? 0xff9f1c : 0xff453a, height, `z:${def.figure}`, model);
   view.bar.visible = elite;
   if (elite) view.bar.scale.set(1.6, 1.4, 1);
   return view;

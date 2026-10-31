@@ -8,6 +8,7 @@ import { Effects } from './effects';
 import { Hud } from './hud';
 import { Input } from './input';
 import { Keybindings } from './keybindings';
+import { loadRiggedModel } from './models';
 import { GameRenderer, type Snapshot } from './renderer';
 import { ShopView } from './shop';
 
@@ -27,6 +28,9 @@ const startWave = Math.max(1, Number(params.get('wave')) || 1);
 /** Entwicklermodus: ?bots=4 – vier Bots spielen allein (Zuschauen, Kamera von oben). */
 const spectate = params.get('bots') === '4';
 const spectateDifficulty = (params.get('difficulty') ?? 'mittel') as BotDifficulty;
+/** Entwicklermodus: ?zoom=12 holt die Kamera näher heran (Standard 34). */
+const zoom = Number(params.get('zoom')) || 0;
+if (zoom > 0) renderer.cam.setDistance(zoom);
 
 let sim: Simulation | null = null;
 let heroId = 0;
@@ -191,6 +195,9 @@ function handleEvents(state: GameState): void {
       case 'hit':
         renderer.flash(e.targetId);
         break;
+      case 'attack':
+        renderer.zombieAttack(e.id);
+        break;
       case 'objectiveHit':
         renderer.flashObjective(e.objectiveId);
         break;
@@ -317,7 +324,13 @@ renderer.renderer.setAnimationLoop((now) => {
   renderer.render();
 });
 
+// Animiertes Zombie-Modell laden; bis dahin (oder bei einem Fehler) bleiben die einfachen Figuren.
+loadRiggedModel('models/zombie.glb')
+  .then((m) => (renderer.zombieModel = m))
+  .catch((err) => console.warn('Zombie-Modell nicht geladen:', err));
+
 input.onStartWave = () => pending.push({ heroId, type: 'startWave' });
+input.onZoom = (d) => renderer.cam.zoom(d);
 hud.startWaveBtn.addEventListener('click', input.onStartWave);
 
 if (spectate) startGame(null, defaultTeam(gameData.bots, null), spectateDifficulty);

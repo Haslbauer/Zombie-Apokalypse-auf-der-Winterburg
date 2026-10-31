@@ -1,11 +1,12 @@
 import * as THREE from 'three';
 import { hasBuff, shieldAmount } from '../sim/status';
-import type { AbilityDef, AttackDef, GameData, GameState, Hero, Zombie } from '../sim/types';
+import { type AbilityDef, type AttackDef, DT, type GameData, type GameState, type Hero, type Zombie } from '../sim/types';
 import type { Vec2 } from '../sim/vec';
 import { GameCamera } from './camera';
 import { buildMap } from './map';
 import { ObjectiveView } from './objectives';
 import { AbilityPreview } from './preview';
+import type { RiggedModel } from './models';
 import { heroView, UnitView, zombieView } from './units';
 import { WorldView } from './world';
 
@@ -26,6 +27,8 @@ export class GameRenderer {
   private readonly raycaster = new THREE.Raycaster();
   private readonly groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   private aimIndicator: THREE.Mesh | null = null;
+  /** Animiertes Zombie-Modell; bis es geladen ist, erscheinen die einfachen Figuren. */
+  zombieModel: RiggedModel | null = null;
   /** Held des Spielers (grüner Ring); Bots bekommen einen blauen Ring. null = nur Bots. */
   playerId: number | null = null;
   private readonly objectives = new Map<string, ObjectiveView>();
@@ -112,8 +115,11 @@ export class GameRenderer {
     }
     for (const z of state.zombies) {
       const def = this.data.zombies.find((d) => d.id === z.defId)!;
-      const view = upsert(z, () => zombieView(z, def));
+      const view = upsert(z, () => zombieView(z, def, this.zombieModel));
       view.showStatus(z, state.time, z.hp / z.maxHp < revealBelow);
+      const p = prev.get(z.id);
+      const speed = p ? Math.hypot(z.pos.x - p.x, z.pos.y - p.y) / DT : 0;
+      view.animate(dt, speed, state.time < z.st.sleepUntil || state.time < z.st.stunUntil || state.gameOver);
     }
     for (const [id, view] of this.units) {
       if (!seen.has(id)) {
@@ -188,6 +194,11 @@ export class GameRenderer {
     this.aimIndicator.position.z = pos.y;
     this.aimIndicator.rotation.y = -facing;
     (this.aimIndicator.material as THREE.MeshBasicMaterial).opacity = ready ? 0.42 : 0.18;
+  }
+
+  /** Angriffsanimation eines Zombies. */
+  zombieAttack(id: number): void {
+    this.units.get(id)?.playAttack();
   }
 
   /** Treffer-Aufblitzen einer Einheit. */

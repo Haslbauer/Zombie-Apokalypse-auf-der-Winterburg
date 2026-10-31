@@ -1,0 +1,14 @@
+{
+  "//": "Mixamo-Zombie: Figur und Textur aus 'base', jede Datei liefert eine Animation (Clipname → Datei). inPlace: Vorwärtsbewegung der Hüfte entfernen.",
+  "base": "walk.fbx",
+  "clips": {
+    "walk": { "file": "walk.fbx", "inPlace": true },
+    "run": { "file": "run.fbx", "inPlace": true },
+    "crawl": { "file": "crawl.fbx", "inPlace": true },
+    "attack": { "file": "attack.fbx", "inPlace": true },
+    "bite": { "file": "bite.fbx", "inPlace": true }
+  },
+  "textureSize": 1024,
+  "simplifyRatio": 0.35,
+  "output": "public/models/zombie.glb"
+}

@@ -224,7 +224,7 @@ export class Hud {
   /** Kurzbeschreibung der Steuerung mit der aktuellen Belegung. */
   private controlsText(): string {
     const k = (a: Parameters<Keybindings['get']>[0]) => `<b>${keyName(this.bindings.get(a))}</b>`;
-    return `${k('up')}${k('left')}${k('down')}${k('right')} laufen · <b>Maus</b> zielen · ${k('attack')} angreifen · ${k('ability1')}–${k('ability4')} Fähigkeiten (halten = Vorschau) · <b>Shift</b>+Taste steigern · <b>Esc</b> Menü`;
+    return `${k('up')}${k('left')}${k('down')}${k('right')} laufen · <b>Maus</b> zielen · ${k('attack')} angreifen · ${k('ability1')}–${k('ability4')} Fähigkeiten (halten = Vorschau) · <b>Shift</b>+Taste steigern · <b>Mausrad</b> zoomen · <b>Esc</b> Menü`;
   }
 
   private updateHelp(): void {

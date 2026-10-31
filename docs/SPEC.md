@@ -40,6 +40,8 @@ Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Ha
 
 - Client: TypeScript (oder JavaScript), Three.js mit fester Schrägkamera (Vorschlag: ca. 55° Neigung, kein Drehen), Build mit Vite. 3D-Modelle als glTF.
 - Grafik: stilisiert nach LoL-Vorbild (kräftige Farben, handgemalt wirkende Texturen, umgesetzt als Low-Poly). Modelle und Animationen für Helden, Zombies und Garten aus frei lizenzierten Paketen (z. B. CC0-Sammlungen), Lizenzen prüfen. Neben dem Mehrspieler ist das der größte Aufwand.
+- Umgesetzt: Zombies sind animierte Mixamo-Figuren (Gehen, Rennen, Kriechen, Angriff, Beißen). Pipeline: FBX-Originale in `assets/models/<name>/`, `npm run models` erzeugt kompakte GLB-Dateien in `public/models/` (Details in `assets/models/README.md`). Helden, Ratten und Hornissen sind vorerst einfache Formen.
+- Kamera: feste Neigung, Zoom mit dem Mausrad (10–50 m Abstand)
 - Server: Node.js mit Colyseus (oder `ws`), server-autoritativ, 20 Ticks pro Sekunde
 - Simulation strikt vom Rendering trennen. Die Spiellogik (Bewegung, Kampf, Zombies, Bots, Wellen) läuft tickbasiert in einem eigenen Modul ohne Browser-Abhängigkeit.
   - Singleplayer: Simulation läuft lokal im Browser, dazu 3 Bots
