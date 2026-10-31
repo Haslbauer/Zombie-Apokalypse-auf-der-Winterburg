@@ -87,9 +87,9 @@
     "gold": 1,
     "figure": "rat",
     "targets": {
-      "bed": 0.45,
+      "bed": 0.6,
       "hive": 0.2,
-      "heart": 0.35
+      "heart": 0.2
     },
     "provokeOnly": true,
     "small": true
