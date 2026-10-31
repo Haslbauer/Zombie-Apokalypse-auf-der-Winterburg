@@ -8,4 +8,3 @@ Konzeptbilder des Auftraggebers als Vorlage für Modelle und Porträts.
 | `rotschopf.jpg` | Rotschopf | Rote Locken, Kriegshammer, Schutzbrille, Beinschienen |
 | `schlaeferin.jpg` | Schläferin | Magierin mit Kristallstab, Sternenmantel, Schmetterling |
 | `gaertnerin.jpg` | Gärtnerin | Grummelige Frau mit Heckenschere, Hut, Latzhose, Gummistiefel |
-| `chupa.jpg` | Chupa | Kampfmodus: weißer, wilder Hund mit hellbraunen Ohren |

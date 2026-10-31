@@ -99,7 +99,7 @@ Geplant sind 8 Helden, 2 Slots bleiben frei. In M3 spielbar: **Chupa, Gärtnerin
 ### Chupa
 
 - Rolle: Nahkampf-Jäger. Stark gegen Elite und Boss, heilt sich durch Beißen.
-- Optik: Chupa ist der Hund des Auftraggebers, ein kleiner, flauschiger weißer Hund nach Referenzfoto (hund.jpg, in assets/reference/ ablegen). Kampfmodus siehe `assets/reference/helden/chupa.jpg`: wild, gesträubtes Fell, gefletschte Zähne, leuchtende Augen. Cremeweißes Fell, hellbraune Flecken an den Ohren, rosa Nase, dunkle Augen, buschige Rute über dem Rücken, kleines dunkles Geschirr. Stilisiert. Die Wirkung soll süß und klein sein, im Kampf aber wild (Vorschlag: Fell sträubt sich und die Augen leuchten bei Fähigkeiten).
+- Optik: Chupa ist der Hund des Auftraggebers, ein kleiner, flauschiger weißer Hund (Referenzbilder nicht im Repo). Kampfmodus: wild, gesträubtes Fell, gefletschte Zähne, leuchtende Augen. Cremeweißes Fell, hellbraune Flecken an den Ohren, rosa Nase, dunkle Augen, buschige Rute über dem Rücken, kleines dunkles Geschirr. Stilisiert. Die Wirkung soll süß und klein sein, im Kampf aber wild (Vorschlag: Fell sträubt sich und die Augen leuchten bei Fähigkeiten).
 - Fähigkeiten (eigene Namen und Werte, Grundidee: ein Jäger, der verwundete Beute aufspürt und festhält):
   - Passiv Wittern: Zombies unter 50 % Leben sind durch Wände hindurch sichtbar. Der Hund heilt sich beim Beißen stärker, je weniger Leben er selbst hat.
   - Q Sprungbiss: Sprung in Zielrichtung, beißt den ersten getroffenen Zombie und heilt sich um einen Teil des Schadens.
@@ -254,7 +254,7 @@ Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
 
 ## 11. Karte
 
-Grundlage ist die Skizze auf dem Lageplan (`assets/reference/karte-skizze.jpg`). Umgesetzt in `data/map.json`, 1 Spieleinheit = 1 Meter, Norden oben.
+Grundlage ist eine Skizze auf dem Lageplan (nicht im Repo). Umgesetzt in `data/map.json`, 1 Spieleinheit = 1 Meter, Norden oben.
 
 - Garten ca. 66 x 75 m (echte Maße aus dem Lageplan). Rundherum 10 m **Gelände** (Karte von −10 bis 76 bzw. 85, `minX`/`minY` in `data/map.json`), dahinter Wald als Kulisse. Ein Zaun umschließt den Garten; offen sind nur die **Tore** im Westen (beim Bienenstock), Süden (Heckenlücke) und Osten (Zuwegung).
 - Haus in U-Form (ca. 21 x 24 m) mit Westflügel, Ostflügel und Südblock. Das Haus selbst ist nicht begehbar.
