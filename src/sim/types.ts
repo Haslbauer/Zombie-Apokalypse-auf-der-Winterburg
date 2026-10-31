@@ -308,6 +308,10 @@ export interface SlowZone {
 }
 
 export interface BeesDef {
+  /** Bestäubung: Jedes intakte Beet heilt den Stock um so viel Leben pro Sekunde. */
+  pollenHeal?: number;
+  /** Ohne intakte Beete verliert der Stock so viel Leben pro Sekunde (die Bienen hungern). */
+  starve?: number;
   damage: number;
   /** Sekunden zwischen zwei Stichen. */
   interval: number;

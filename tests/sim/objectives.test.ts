@@ -146,3 +146,43 @@ describe('Ziele: Herz und Bienenstock', () => {
     expect(z.objectiveId).toBe('heart');
   });
 });
+
+describe('Bienen und Beete', () => {
+  function beeSim() {
+    const sim = makeSim('rotschopf', 1, testData(noWaves));
+    sim.state.heroes[0].pos = { x: 10, y: 70 };
+    const hive = sim.state.objectives.find((o) => o.kind === 'hive')!;
+    const beds = sim.state.objectives.filter((o) => o.kind === 'bed');
+    return { sim, hive, beds };
+  }
+
+  it('Bestäubung: intakte Beete heilen den Stock', () => {
+    const { sim, hive, beds } = beeSim();
+    hive.hp = hive.maxHp / 2;
+    const before = hive.hp;
+    run(sim, 20 * 10);
+    const heal = sim.data.arena.objectives.find((o) => o.kind === 'hive')!.bees!.pollenHeal!;
+    expect(hive.hp - before).toBeCloseTo(heal * beds.length * 10, 0);
+  });
+
+  it('ohne Beete hungern die Bienen: der Stock verliert langsam Leben', () => {
+    const { sim, hive, beds } = beeSim();
+    for (const b of beds) damageObjective(sim, b, 1e9);
+    const before = hive.hp;
+    run(sim, 20 * 10);
+    const starve = sim.data.arena.objectives.find((o) => o.kind === 'hive')!.bees!.starve!;
+    expect(before - hive.hp).toBeCloseTo(starve * 10, 0);
+    expect(hive.destroyed).toBe(false); // langsam: mehrere Wellen
+  });
+
+  it('nach der Ernte wachsen angefressene Beete nur mit Bienen wieder voll auf', () => {
+    const { sim, hive, beds } = beeSim();
+    beds[0].hp = beds[0].maxHp / 2;
+    harvest(sim);
+    expect(beds[0].hp).toBe(beds[0].maxHp);
+    damageObjective(sim, hive, 1e9);
+    beds[0].hp = beds[0].maxHp / 2;
+    harvest(sim);
+    expect(beds[0].hp).toBe(beds[0].maxHp / 2);
+  });
+});

@@ -53,8 +53,9 @@ export function damageObjective(ctx: SimContext, obj: Objective, amount: number)
 
 /**
  * Nach einer überstandenen Welle: Intakte Hochbeete ernten (anteilig nach
- * Leben) und füllen den Lebensmittelvorrat auf; zerstörte wachsen nach,
- * solange der Bienenstock steht.
+ * Leben) und füllen den Lebensmittelvorrat auf. Solange die Bienen leben,
+ * wachsen geerntete Beete wieder voll auf und zerstörte nach regrowWaves
+ * Wellen nach; ohne Bienen bleibt alles, wie es ist.
  */
 export function harvest(ctx: SimContext): void {
   const { state } = ctx;
@@ -77,6 +78,8 @@ export function harvest(ctx: SimContext): void {
       continue;
     }
     total += (def.harvest ?? 0) * (obj.hp / obj.maxHp);
+    // Nach der Ernte wachsen angefressene Beete nur mit Bienen wieder voll auf
+    if (hiveAlive && def.harvest) obj.hp = obj.maxHp;
   }
   if (food && total > 0) {
     const gained = Math.min(total, food.maxHp - food.hp);
@@ -95,6 +98,17 @@ export function updateObjectives(ctx: SimContext): void {
     obj.hp = Math.min(obj.maxHp, obj.hp + regen * DT);
 
     if (!def.bees) continue;
+    // Bestäubung: Jedes intakte Beet nährt die Bienen; ohne Beete hungern sie
+    const beds = state.objectives.filter((o) => o.kind === 'bed' && !o.destroyed).length;
+    if (beds > 0) obj.hp = Math.min(obj.maxHp, obj.hp + (def.bees.pollenHeal ?? 0) * beds * DT);
+    else if (def.bees.starve) {
+      obj.hp -= def.bees.starve * DT;
+      if (obj.hp <= 0) {
+        obj.hp = 0.001;
+        damageObjective(ctx, obj, 1); // zerstört (gleicher Weg wie Schaden, mit Ereignis)
+        continue;
+      }
+    }
     obj.stingTimer -= DT;
     if (obj.stingTimer > 0) continue;
     obj.stingTimer += def.bees.interval;

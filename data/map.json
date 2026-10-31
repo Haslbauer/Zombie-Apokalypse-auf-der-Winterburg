@@ -67,13 +67,15 @@
       "radius": 1.8,
       "hp": 1000,
       "regen": 0,
-      "pauseRegen": 5,
+      "pauseRegen": 0,
       "loseOnDestroy": false,
       "bees": {
         "damage": 10,
         "interval": 0.5,
         "range": 6,
-        "aggroDuration": 6
+        "aggroDuration": 6,
+        "pollenHeal": 0.8,
+        "starve": 1.5
       },
       "kind": "hive"
     },

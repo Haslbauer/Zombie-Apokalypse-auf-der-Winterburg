@@ -803,8 +803,10 @@ export class Hud {
       const intact = beds.filter((b) => !b.destroyed).length;
       // Ohne Bienenstock wachsen zerstörte Beete nicht mehr nach
       const hiveLost = state.objectives.some((o) => o.kind === 'hive' && o.destroyed);
-      this.beds.textContent = `Beete ${intact}/${beds.length}${hiveLost ? ' · wachsen nicht nach' : ''}`;
-      this.beds.classList.toggle('withered', hiveLost);
+      // Ohne Beete kein Pollen: Die Bienen hungern und der Stock verliert Leben
+      const starving = !hiveLost && intact === 0;
+      this.beds.textContent = `Beete ${intact}/${beds.length}${hiveLost ? ' · wachsen nicht nach' : starving ? ' · Bienen hungern' : ''}`;
+      this.beds.classList.toggle('withered', hiveLost || starving);
       this.beds.classList.toggle('angry', beds.some((b) => !b.destroyed && b.hp < b.maxHp));
     }
 

@@ -234,7 +234,7 @@ export class ObjectiveView {
   }
 
   /** Bienen und Kristall animieren, Lebensbalken nachführen. */
-  update(obj: Objective, time: number, angry: boolean, camera: THREE.Camera, dt: number): void {
+  update(obj: Objective, time: number, angry: boolean, camera: THREE.Camera, dt: number, beds: { x: number; y: number }[] = []): void {
     this.bar.quaternion.copy(camera.quaternion);
     this.barFill.scale.x = Math.max(0.001, obj.hp / obj.maxHp);
     this.bar.visible = !obj.destroyed;
@@ -250,7 +250,19 @@ export class ObjectiveView {
       const radius = angry ? 3 : 1.7;
       this.bees.forEach((bee, i) => {
         bee.visible = !obj.destroyed;
-        const a = time * speed * (1 + (i % 3) * 0.25) + (i * Math.PI * 2) / BEE_COUNT;
+        // Jede dritte Biene pendelt (wenn nicht wütend) zu einem Beet und zurück
+        if (!angry && beds.length > 0 && i % 3 === 0) {
+          const bed = beds[(i / 3) % beds.length | 0];
+          const t = (time * 0.12 + i * 0.37) % 1;
+          const k = t < 0.5 ? t * 2 : 2 - t * 2; // hin und zurück
+          const dx = bed.x - this.def.x;
+          const dz = bed.y - this.def.y;
+          bee.position.set(dx * k + Math.sin(time * 3 + i) * 0.3, 1.4 + Math.sin(k * Math.PI) * 1.2, dz * k + Math.cos(time * 2.5 + i) * 0.3);
+          return;
+        }
+        // Ohne Beete: träge, hungrige Bienen
+        const slow = beds.length === 0 ? 0.4 : 1;
+        const a = time * speed * slow * (1 + (i % 3) * 0.25) + (i * Math.PI * 2) / BEE_COUNT;
         const r = radius + Math.sin(time * 2 + i) * 0.4;
         bee.position.set(Math.cos(a) * r, 1 + ((i * 0.37) % 1) + Math.sin(time * 3 + i) * 0.2, Math.sin(a) * r);
       });

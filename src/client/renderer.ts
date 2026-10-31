@@ -213,8 +213,10 @@ export class GameRenderer {
       }
     }
 
+    // Bienen fliegen zu den intakten Beeten (Bestäubung)
+    const beds = state.objectives.filter((o) => o.kind === 'bed' && !o.destroyed).map((o) => o.pos);
     for (const obj of state.objectives) {
-      this.objectives.get(obj.id)?.update(obj, state.time, state.time < obj.aggroUntil, camera, dt);
+      this.objectives.get(obj.id)?.update(obj, state.time, state.time < obj.aggroUntil, camera, dt, beds);
     }
     this.world.sync(state, prev, alpha, time);
     this.mapAnimation.update(time, state.heroes.filter((h) => h.alive).map((h) => h.pos));

@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.9)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v2.0)
 
 Stand: 31.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v2.0: Figuren stehen auf dem Boden, Angriffe synchron zum Treffer, Bienen-/Beete-Kreislauf, Postbote ab Welle 6 ohne Zeitlimit, Landschaft überarbeitet.
 Änderungen v1.9: Karte mit mehr Details (Ruine, Stacheldraht, Barrikaden, Feuerstellen, Hochbeete, Bruchsteinwege, Gras), Nordeingang zum Innenhof (ersetzt das Rattenloch), Lager weichen aus. Beschwörerzauber wie in LoL (zwei pro Held, vor dem Spiel gewählt, Tasten F/G), siehe Abschnitt 9b.
 Änderungen v1.8: Figuren laufen sichtbar (ein Skelett pro Figur), Schuss-Animationen mit sichtbaren Geschossen, Grafikstufen und Leistungsanzeige, kleinere Zustandspakete, geduldigerer Herzschlag mit Trennungsgrund.
 Änderungen v1.7: Neue Mixamo-Figuren für Helden und Zombies, schwere Gegner größer und mit Leucht-Ring, neuer Elite Dämon, Boss-Zähler mit Kill-, Assist- und Erstes-Blut-Gold (Anzeigetafel auf Tab), Bots folgen Pings, Rattenloch zum Innenhof, verdorrte Beete, Nachtstimmung mit vielen Details.
@@ -212,6 +213,7 @@ Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `
 - Der **Lebensmittelvorrat** (früher „Herz“) im Innenhof hat einen gut sichtbaren Lebensbalken (5500). Fällt er auf 0, ist das Spiel verloren: „Der Lebensmittelvorrat ist geplündert“.
 - Ein Durchbruch (Zombie erreicht den Vorrat) ist keine sofortige Niederlage. Die Zombies brauchen Zeit zum Plündern, und die Helden können sie wegkämpfen. Ohne Gegenwehr führt der Durchbruch aber zur Niederlage.
 - Der Vorrat regeneriert **nicht** von selbst. Keine Reparatur im Shop.
+- **Bienen und Beete (v2.0):** Die Bienen bestäuben die Beete und heilen den Stock dabei: je intaktem Beet 0,8 Leben/s (`bees.pollenHeal`). Sind alle Beete zerstört, hungern die Bienen und der Stock verliert 1,5 Leben/s (`bees.starve`, rund 11 Minuten bis zum Tod, also mehrere Wellen); die Kopfleiste zeigt „Bienen hungern“. Nach der Ernte wachsen angefressene Beete nur mit Bienen wieder voll auf, zerstörte nach 2 Wellen.
 - **Ernte:** Nach jeder überstandenen Welle ernten die sechs Hochbeete und füllen den Vorrat auf, jedes Beet 80 bei vollem Leben, angefressene anteilig weniger. Ein zerstörtes Beet bringt nichts und wächst nach 2 Wellen mit vollem Leben nach, aber nur, solange der Bienenstock steht (ohne Bienen keine Bestäubung). Zerstörte Beete sind keine Niederlage.
 - Der **Bienenstock** (1000 Leben) wird von Hornissen und einem Teil der Ratten angegriffen. Normalerweise stechen die Bienen nur Gegner in der Nähe. Sobald der Stock Schaden bekommt, werden sie für einige Sekunden wütend und stechen alle in der Nähe, auch Helden. Ein zerstörter Stock ist keine Niederlage, die Bienen sind dann aber weg und zerstörte Beete wachsen nicht mehr nach.
 - Gefallene Helden respawnen nach einem Timer, der mit der Welle wächst (5 s + 1 s pro Welle), im Innenhof und müssen von dort durch den Durchgang nach draußen.
