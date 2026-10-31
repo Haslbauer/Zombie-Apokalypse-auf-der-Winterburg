@@ -182,6 +182,12 @@ function abilityEffect(e: Extract<GameEvent, { type: 'effect' }>): void {
   }
 }
 
+/** Angriffstakt eines Helden in Sekunden (Länge der Angriffsanimation). */
+function attackTime(state: GameState, id: number): number {
+  const h = state.heroes.find((x) => x.id === id);
+  return h && h.attackTimer > 0 ? h.attackTimer : 0.9;
+}
+
 /** Einmal pro Welle melden, wenn Hornissen auftauchen. */
 let hornetsAnnounced = false;
 
@@ -210,8 +216,18 @@ function handleEvents(state: GameState): void {
       case 'swing': {
         const h = state.heroes.find((x) => x.id === e.id);
         if (h) effects.swing(h.pos, e.facing, h.radius + e.range, e.arc);
+        renderer.heroAction(e.id, 'attack', attackTime(state, e.id));
         break;
       }
+      case 'shot':
+        renderer.heroAction(e.id, 'attack', attackTime(state, e.id));
+        break;
+      case 'cast':
+        renderer.heroAction(e.heroId, 'ability', e.slot);
+        break;
+      case 'shop':
+        if (e.action === 'use') renderer.heroAction(e.heroId, 'use');
+        break;
       case 'effect':
         abilityEffect(e);
         break;
@@ -230,8 +246,10 @@ function handleEvents(state: GameState): void {
         break;
       case 'elite':
         hud.message(`Elite: ${gameData.zombies.find((z) => z.id === e.defId)?.name}!`);
+        renderer.zombieScream(e.zombieId);
         break;
       case 'charge': {
+        renderer.zombieScream(e.zombieId);
         const def = gameData.zombies.find((z) => state.zombies.some((x) => x.id === e.zombieId && x.defId === z.id));
         effects.line(e.from, e.to, 1.6, 0xff3b30, Number(def?.special?.windup ?? 0.6));
         break;
@@ -262,6 +280,7 @@ function handleEvents(state: GameState): void {
         if (e.id === heroId) hud.message('Zurück im Kampf!');
         break;
       case 'death':
+        renderer.zombieDie(e.id);
         if (e.id !== heroId) effects.deathPuff(e.pos);
         else hud.message('Gefallen!');
         break;
@@ -324,10 +343,15 @@ renderer.renderer.setAnimationLoop((now) => {
   renderer.render();
 });
 
-// Animiertes Zombie-Modell laden; bis dahin (oder bei einem Fehler) bleiben die einfachen Figuren.
+// Animierte Modelle laden; bis dahin (oder bei einem Fehler) bleiben die einfachen Figuren.
 loadRiggedModel('models/zombie.glb')
   .then((m) => (renderer.zombieModel = m))
   .catch((err) => console.warn('Zombie-Modell nicht geladen:', err));
+for (const id of ['rotschopf', 'schlaeferin', 'libero', 'pirat', 'gaertnerin']) {
+  loadRiggedModel(`models/${id}.glb`, 1.8)
+    .then((m) => renderer.heroModels.set(id, m))
+    .catch((err) => console.warn(`Modell ${id} nicht geladen:`, err));
+}
 
 input.onStartWave = () => pending.push({ heroId, type: 'startWave' });
 input.onZoom = (d) => renderer.cam.zoom(d);

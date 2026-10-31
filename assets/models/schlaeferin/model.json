@@ -1,0 +1,40 @@
+{
+  "base": "cast-spell.fbx",
+  "clips": {
+    "run": {
+      "file": "sprint.fbx"
+    },
+    "attack": {
+      "file": "magic-1h-03.fbx"
+    },
+    "attack2": {
+      "file": "magic-1h-02.fbx"
+    },
+    "attack3": {
+      "file": "cast-spell.fbx"
+    },
+    "ability1": {
+      "file": "magic-1h-02.fbx"
+    },
+    "ability2": {
+      "file": "yawn.fbx"
+    },
+    "ability3": {
+      "file": "../shared/laying.fbx"
+    },
+    "ability4": {
+      "file": "magic-2h-01.fbx"
+    },
+    "use": {
+      "file": "../shared/pill.fbx"
+    },
+    "down": {
+      "file": "../shared/laying.fbx"
+    }
+  },
+  "inPlace": true,
+  "textureSize": 1024,
+  "simplifyRatio": 0.35,
+  "output": "public/models/schlaeferin.glb",
+  "idleFrom": "cast-spell.fbx"
+}

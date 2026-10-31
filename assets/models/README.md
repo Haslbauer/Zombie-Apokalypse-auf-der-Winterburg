@@ -17,16 +17,37 @@ assets/models/<name>/
 
 Voraussetzung lokal: `npx playwright install chromium`.
 
+Ein Clip kann mehrfach dieselbe Datei nutzen. `idleFrom` erzeugt den Clip `idle` aus dem ersten Bild einer Datei. Pfade wie `../shared/pill.fbx` verweisen auf gemeinsame Animationen.
+
 ## zombie
 
 | Clip | Datei | Verwendung |
 |---|---|---|
 | walk | walk.fbx | Walker, Brute, Schlächter |
-| run | run.fbx | Runner |
-| crawl | crawl.fbx | Kriecher |
+| run, run2 | running.fbx, run.fbx | Runner |
+| crawl, crawlFast | crawl.fbx, crawl-fast.fbx | Kriecher (schnell ab 1,2 m/s) |
+| idle | idle.fbx | Stehen (am Ziel, betäubt) |
 | attack | attack.fbx | Zuschlagen (Walker, Brute, Schlächter) |
-| bite | bite.fbx | Beißen (Runner, Kriecher) |
+| bite, bite2, bite3 | bite.fbx, neck-bite.fbx, biting2.fbx | Beißen, zufällige Variante (Runner, Kriecher) |
+| death, death2 | death.fbx, dying.fbx | Sterben; die Leiche bleibt 2,5 s liegen und versinkt |
+| scream | scream.fbx | Elite-Auftritt, Ausholen des Schlächters |
 
-Ergebnis: ca. 1 MB, ca. 9.000 Dreiecke (Original ca. 18.000).
+## Helden
 
-**Hinweis:** Die aktuellen Dateien nutzen Mixamos Standardfigur im schwarzen Motion-Capture-Anzug. Für einen echten Zombie-Look in Mixamo eine Zombie-Figur wählen (unter „Characters“), dieselben Animationen mit „With Skin“ herunterladen und die FBX-Dateien hier ersetzen, danach `npm run models`. Das Spiel färbt die Figur je Typ ein (`ZOMBIE_LOOKS` in `src/client/units.ts`); bei einer neuen Figur sollten die Farbwerte (`tint`) auf 1 zurückgesetzt werden.
+Alle fünf Menschen-Helden haben einen eigenen Ordner, damit jeder später eine eigene Figur bekommen kann. Gemeinsam: `use` (shared/pill.fbx, Trank benutzen) und `down` (shared/laying.fbx, gefallen bis zum Respawn). Linksklick spielt `attack` im Angriffstakt, die Fähigkeiten 1–4 spielen `ability1`–`ability4` (bei `ability3b` zufällig eine von beiden).
+
+| Held | run | idle | attack | ability1 | ability2 | ability3 | ability4 |
+|---|---|---|---|---|---|---|---|
+| rotschopf | run | 1. Bild slash | slash | turn180 | casting | jump-attack / mutant-jump | flex |
+| schlaeferin | sprint | 1. Bild cast-spell | magic-1h-03, magic-1h-02, cast-spell | magic-1h-02 | yawn | laying (hält, solange Powernap läuft) | magic-2h-01 |
+| libero | running | 1. Bild goalie-throw | goalie-throw | pass | scoop | pass | throw-in |
+| pirat | running | shared/pistol-idle | throw-grenade | shared/toss-grenade | grenade-throw | jumping | grenade-throw |
+| gaertnerin | run | shared/pistol-idle | draw-arrow | firing-rifle | shared/toss-grenade | drinking | melee-down |
+
+Die Helden tragen noch Mixamos Mocap-Anzug. Das Spiel ersetzt die Textur durch die Heldenfarbe (`paint` in `HERO_LOOKS`, `src/client/units.ts`) und hängt Requisiten an Hand und Kopf (Hammer, Stab, Enterhaken, Schleuder, Hüte). Für eine eigene Figur in Mixamo die Figur wählen, dieselben Animationen „With Skin“ laden, die FBX im Ordner ersetzen, `paint` entfernen, `npm run models`.
+
+Chupa bleibt vorerst die einfache Hundefigur (Mixamo hat keine Vierbeiner).
+
+Ergebnis: je Modell ca. 1–1,4 MB, ca. 9.000 Dreiecke. Die Originale in `assets/models/` sind zusammen gut 200 MB groß.
+
+**Hinweis Zombie:** Auch der Zombie nutzt die Standardfigur. Für einen echten Zombie-Look in Mixamo eine Zombie-Figur wählen, dieselben Animationen mit „With Skin“ herunterladen und die FBX-Dateien ersetzen, danach `npm run models`. Bei einer neuen Figur die Farbwerte (`tint` in `ZOMBIE_LOOKS`) auf 1 zurücksetzen.

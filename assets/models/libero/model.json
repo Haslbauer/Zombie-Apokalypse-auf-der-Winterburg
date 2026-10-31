@@ -1,0 +1,34 @@
+{
+  "base": "goalie-throw.fbx",
+  "clips": {
+    "run": {
+      "file": "running.fbx"
+    },
+    "attack": {
+      "file": "goalie-throw.fbx"
+    },
+    "ability1": {
+      "file": "pass.fbx"
+    },
+    "ability2": {
+      "file": "scoop.fbx"
+    },
+    "ability3": {
+      "file": "pass.fbx"
+    },
+    "ability4": {
+      "file": "throw-in.fbx"
+    },
+    "use": {
+      "file": "../shared/pill.fbx"
+    },
+    "down": {
+      "file": "../shared/laying.fbx"
+    }
+  },
+  "inPlace": true,
+  "textureSize": 1024,
+  "simplifyRatio": 0.35,
+  "output": "public/models/libero.glb",
+  "idleFrom": "goalie-throw.fbx"
+}

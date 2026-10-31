@@ -35,9 +35,12 @@ export class Input {
   ) {
     const canvas = renderer.canvas;
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-    canvas.addEventListener(
+    // Am ganzen Fenster, damit es auch über Helden-, Team- und Kopfleiste zoomt;
+    // nur Menüs, die selbst scrollen (Shop, Start, Pause), behalten das Mausrad.
+    window.addEventListener(
       'wheel',
       (e) => {
+        if ((e.target as HTMLElement).closest?.('.shop, .hud-overlay')) return;
         e.preventDefault();
         this.onZoom(e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY);
       },

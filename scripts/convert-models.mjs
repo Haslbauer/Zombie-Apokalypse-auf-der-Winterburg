@@ -7,8 +7,8 @@
  *      Keyframes ausdünnen).
  * Aufruf: npm run models [name …]
  */
-import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, extname, join, resolve } from 'node:path';
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { NodeIO } from '@gltf-transform/core';
 import { dedup, prune, resample, simplify, weld } from '@gltf-transform/functions';
@@ -22,7 +22,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const modelsDir = join(root, 'assets/models');
 const names = process.argv.slice(2).length
   ? process.argv.slice(2)
-  : readdirSync(modelsDir).filter((d) => statSync(join(modelsDir, d)).isDirectory());
+  : readdirSync(modelsDir).filter((d) => statSync(join(modelsDir, d)).isDirectory() && existsSync(join(modelsDir, d, 'model.json')));
 
 const TYPES = { '.js': 'text/javascript', '.fbx': 'application/octet-stream', '.html': 'text/html' };
 
@@ -34,13 +34,23 @@ import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 
 window.convert = async (cfg) => {
   const loader = new FBXLoader();
-  const base = await loader.loadAsync('/model/' + cfg.base);
+  const cache = new Map();
+  const load = async (file) => {
+    if (!cache.has(file)) cache.set(file, await loader.loadAsync('/files/' + file));
+    return cache.get(file);
+  };
+  const base = await load(cfg.base);
   const clips = [];
-  for (const [name, c] of Object.entries(cfg.clips)) {
-    const obj = c.file === cfg.base ? base : await loader.loadAsync('/model/' + c.file);
-    const clip = obj.animations[0].clone();
+  const entries = Object.entries(cfg.clips);
+  if (cfg.idleFrom) entries.push(['idle', { file: cfg.idleFrom, firstFrame: true }]);
+  for (const [name, c] of entries) {
+    const obj = await load(c.file);
+    if (!obj.animations.length) throw new Error('Keine Animation in ' + c.file);
+    let clip = obj.animations[0].clone();
+    // Stand-Pose: nur das erste Bild der Animation
+    if (c.firstFrame) clip = THREE.AnimationUtils.subclip(clip, 'idle', 0, 1, 30);
     clip.name = name;
-    if (c.inPlace) {
+    if (c.inPlace ?? cfg.inPlace) {
       // Hüfte: waagerechte Bewegung entfernen, Höhe behalten
       for (const t of clip.tracks) {
         if (!/Hips\\.position$/.test(t.name)) continue;
@@ -89,12 +99,17 @@ try {
     const cfg = JSON.parse(readFileSync(join(dir, 'model.json'), 'utf8'));
     const page = await browser.newPage();
     page.on('pageerror', (e) => console.error('Browser:', e.message));
+    // Dateipfade relativ zu assets/models, damit auch gemeinsame Dateien (../shared/…) gehen
+    const rel = (f) => relative(modelsDir, join(dir, f)).split('\\').join('/');
+    cfg.base = rel(cfg.base);
+    if (cfg.idleFrom) cfg.idleFrom = rel(cfg.idleFrom);
+    for (const c of Object.values(cfg.clips)) c.file = rel(c.file);
     await page.route('http://models.local/**', async (route) => {
-      const path = new URL(route.request().url()).pathname;
+      const path = decodeURIComponent(new URL(route.request().url()).pathname);
       let file = null;
       if (path === '/') return route.fulfill({ contentType: 'text/html', body: `<script type="importmap">{"imports":{"three":"/three/build/three.module.js","three/addons/":"/three/examples/jsm/"}}</script><script type="module">${BROWSER_CODE}</script>` });
       if (path.startsWith('/three/')) file = join(root, 'node_modules', path);
-      if (path.startsWith('/model/')) file = join(dir, path.slice('/model/'.length));
+      if (path.startsWith('/files/')) file = join(modelsDir, path.slice('/files/'.length));
       if (!file) return route.fulfill({ status: 404, body: '' });
       route.fulfill({ contentType: TYPES[extname(file)] ?? 'application/octet-stream', body: readFileSync(file) });
     });

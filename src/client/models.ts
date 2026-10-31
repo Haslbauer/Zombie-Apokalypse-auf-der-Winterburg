@@ -39,13 +39,21 @@ export interface ModelInstance {
   materials: (THREE.Material & { color: THREE.Color })[];
 }
 
-export function instantiate(model: RiggedModel, scale = 1, tint?: [number, number, number]): ModelInstance {
+/**
+ * Eigene Kopie eines Modells. tint multipliziert die Texturfarbe; paint
+ * ersetzt die Textur durch eine Farbe (der dunkle Mocap-Anzug der Helden).
+ */
+export function instantiate(model: RiggedModel, scale = 1, tint?: [number, number, number], paint?: THREE.ColorRepresentation): ModelInstance {
   const inner = cloneSkinned(model.scene);
   const materials: ModelInstance['materials'] = [];
   inner.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh) return;
     const mat = (mesh.material as THREE.MeshStandardMaterial).clone();
+    if (paint !== undefined) {
+      mat.map = null;
+      mat.color.set(paint);
+    }
     if (tint) mat.color.multiply(new THREE.Color().setRGB(tint[0], tint[1], tint[2]));
     mat.roughness = 0.9;
     mat.metalness = 0;

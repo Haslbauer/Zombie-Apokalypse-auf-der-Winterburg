@@ -1,0 +1,36 @@
+{
+  "base": "draw-arrow.fbx",
+  "clips": {
+    "run": {
+      "file": "run.fbx"
+    },
+    "idle": {
+      "file": "../shared/pistol-idle.fbx"
+    },
+    "attack": {
+      "file": "draw-arrow.fbx"
+    },
+    "ability1": {
+      "file": "firing-rifle.fbx"
+    },
+    "ability2": {
+      "file": "../shared/toss-grenade.fbx"
+    },
+    "ability3": {
+      "file": "drinking.fbx"
+    },
+    "ability4": {
+      "file": "melee-down.fbx"
+    },
+    "use": {
+      "file": "../shared/pill.fbx"
+    },
+    "down": {
+      "file": "../shared/laying.fbx"
+    }
+  },
+  "inPlace": true,
+  "textureSize": 1024,
+  "simplifyRatio": 0.35,
+  "output": "public/models/gaertnerin.glb"
+}

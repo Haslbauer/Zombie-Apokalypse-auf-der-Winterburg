@@ -29,20 +29,49 @@ function iconMaterial(text: string, color: string): THREE.SpriteMaterial {
   return material;
 }
 
+type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat';
+
 /**
- * Aussehen der menschlichen Zombies mit dem Mixamo-Modell. refSpeed: Tempo, bei
- * dem die Animation normal schnell läuft. tint multipliziert die Textur (Werte
+ * Aussehen einer animierten Figur (Mixamo-Modell). move: Lauf-Clip, refSpeed:
+ * Tempo, bei dem er normal schnell läuft. tint multipliziert die Textur (Werte
  * über 1 hellen auf – die aktuelle Mixamo-Figur trägt einen schwarzen Anzug).
  */
-const ZOMBIE_LOOKS: Record<string, { clip: string; refSpeed: number; scale: number; tint: [number, number, number]; attack: string; cleaver?: boolean }> = {
-  walker: { clip: 'walk', refSpeed: 1.4, scale: 1, tint: [2.1, 2.5, 1.9], attack: 'attack' },
-  runner: { clip: 'run', refSpeed: 3.6, scale: 0.95, tint: [2.5, 2.6, 2.2], attack: 'bite' },
-  crawler: { clip: 'crawl', refSpeed: 0.8, scale: 1, tint: [1.9, 2.2, 1.7], attack: 'bite' },
-  brute: { clip: 'walk', refSpeed: 1.6, scale: 1.35, tint: [1.6, 1.9, 1.4], attack: 'attack' },
-  butcher: { clip: 'walk', refSpeed: 1.7, scale: 1.5, tint: [2.6, 1.3, 1.2], attack: 'attack', cleaver: true },
+interface ModelLook {
+  move: string;
+  /** Schnellere Variante ab fastAbove m/s (z. B. schnelles Kriechen). */
+  moveFast?: string;
+  fastAbove?: number;
+  idle?: string;
+  refSpeed: number;
+  scale: number;
+  tint: [number, number, number];
+  /** Textur durch die Einheitenfarbe ersetzen (Helden im dunklen Mocap-Anzug). */
+  paint?: boolean;
+  /** Angriffs-Clips, abwechselnd bzw. zufällig. */
+  attacks: string[];
+  props?: Prop[];
+}
+
+const ZOMBIE_LOOKS: Record<string, ModelLook> = {
+  walker: { move: 'walk', idle: 'idle', refSpeed: 1.4, scale: 1, tint: [2.1, 2.5, 1.9], attacks: ['attack'] },
+  runner: { move: 'run', idle: 'idle', refSpeed: 3.6, scale: 0.95, tint: [2.5, 2.6, 2.2], attacks: ['bite', 'bite2', 'bite3'] },
+  crawler: { move: 'crawl', moveFast: 'crawlFast', fastAbove: 1.2, refSpeed: 0.8, scale: 1, tint: [1.9, 2.2, 1.7], attacks: ['bite', 'bite3'] },
+  brute: { move: 'walk', idle: 'idle', refSpeed: 1.6, scale: 1.35, tint: [1.6, 1.9, 1.4], attacks: ['attack'] },
+  butcher: { move: 'walk', idle: 'idle', refSpeed: 1.7, scale: 1.5, tint: [2.6, 1.3, 1.2], attacks: ['attack'], props: ['cleaver'] },
 };
-/** So lange dauert ein Angriff in der Darstellung (Sekunden). */
-const ATTACK_ANIM = 0.9;
+
+/** Helden mit Mixamo-Modell (assets/models/<held>). */
+const HERO_LOOKS: Record<string, ModelLook> = {
+  rotschopf: { move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], paint: true, attacks: ['attack'], props: ['hammer'] },
+  schlaeferin: { move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1, tint: [1, 1, 1], paint: true, attacks: ['attack', 'attack2', 'attack3'], props: ['staff'] },
+  libero: { move: 'run', idle: 'idle', refSpeed: 5.6, scale: 1.03, tint: [1, 1, 1], paint: true, attacks: ['attack'] },
+  pirat: { move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], paint: true, attacks: ['attack'], props: ['hook', 'tricorn'] },
+  gaertnerin: { move: 'run', idle: 'idle', refSpeed: 5.3, scale: 0.97, tint: [1, 1, 1], paint: true, attacks: ['attack'], props: ['sling', 'sunhat'] },
+};
+
+/** Höchstdauer einer Angriffs- bzw. Fähigkeitsanimation in der Darstellung (Sekunden). */
+export const ATTACK_ANIM = 0.9;
+const ABILITY_ANIM = 1.2;
 
 const ICONS = {
   sleep: ['Zzz', '#9fc9ff'],
@@ -81,8 +110,17 @@ export class UnitView {
   /** Dreht sich mit der Blickrichtung. */
   readonly body = new THREE.Group();
   private readonly materials: (THREE.Material & { color: THREE.Color })[] = [];
-  /** Animiertes Modell (menschliche Zombies). */
-  private anim: { inst: ModelInstance; move: THREE.AnimationAction; attack: string; refSpeed: number; attackLeft: number } | null = null;
+  /** Animiertes Modell (Helden und menschliche Zombies). */
+  private anim: {
+    inst: ModelInstance;
+    look: ModelLook;
+    loop: THREE.AnimationAction | null;
+    loopName: string;
+    once: { action: THREE.AnimationAction; left: number } | null;
+    attackIndex: number;
+    /** Gestorben: nach der Sterbe-Animation liegen bleiben. */
+    dead: boolean;
+  } | null = null;
   private readonly baseColors: THREE.Color[] = [];
   private readonly barFill: THREE.Mesh;
   readonly bar = new THREE.Group();
@@ -95,8 +133,9 @@ export class UnitView {
   constructor(radius: number, color: string, barColor: number, height = UNIT_HEIGHT, figure?: string, model?: RiggedModel | null) {
     this.height = height;
     this.group.add(this.body);
-    const look = figure?.startsWith('z:') ? ZOMBIE_LOOKS[figure.slice(2)] : undefined;
-    if (look && model) this.buildFromModel(model, look);
+    const look = figure?.startsWith('z:') ? ZOMBIE_LOOKS[figure.slice(2)] : figure?.startsWith('h:') ? HERO_LOOKS[figure.slice(2)] : undefined;
+    if (look && model) this.buildFromModel(model, look, color);
+    else if (figure?.startsWith('h:')) this.buildPerson(radius, color, height, figure.slice(2) === 'chupa' ? undefined : heroFigure(figure.slice(2)));
     else if (figure === 'dog') this.buildDog(color);
     else if (figure?.startsWith('z:')) this.buildZombie(figure.slice(2), radius, color, height);
     else this.buildPerson(radius, color, height, figure);
@@ -177,57 +216,171 @@ export class UnitView {
     }
   }
 
-  /** Zombie aus dem Mixamo-Modell mit Animationen (assets/models/zombie). */
-  private buildFromModel(model: RiggedModel, look: (typeof ZOMBIE_LOOKS)[string]): void {
-    const inst = instantiate(model, look.scale, look.tint);
+  /** Figur aus einem Mixamo-Modell mit Animationen (assets/models/). */
+  private buildFromModel(model: RiggedModel, look: ModelLook, color: string): void {
+    const inst = instantiate(model, look.scale, look.tint, look.paint ? color : undefined);
     this.body.add(inst.root);
     for (const m of inst.materials) {
       this.materials.push(m);
       this.baseColors.push(m.color.clone());
     }
-    if (look.cleaver) {
-      // Fleischerbeil in der rechten Hand
-      const hand = inst.root.getObjectByName('mixamorigRightHand');
-      const cleaver = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.32, 0.18).translate(0, 0.18, 0.05), this.lambert(0xb0b0b0));
-      if (hand) {
-        cleaver.scale.setScalar(1 / (model.scale * look.scale));
-        hand.add(cleaver);
-      }
+    const k = 1 / (model.scale * look.scale); // Knochen liegen im Maßstab des Modells
+    for (const prop of look.props ?? []) {
+      const head = prop === 'tricorn' || prop === 'sunhat';
+      const bone = inst.root.getObjectByName(head ? 'mixamorigHead' : 'mixamorigRightHand');
+      if (!bone) continue;
+      const mesh = this.propMesh(prop);
+      mesh.scale.setScalar(k);
+      bone.add(mesh);
     }
-    const move = inst.actions.get(look.clip)!;
-    move.play();
-    move.time = Math.random() * move.getClip().duration; // nicht alle im Gleichschritt
-    this.anim = { inst, move, attack: look.attack, refSpeed: look.refSpeed, attackLeft: 0 };
+    this.anim = { inst, look, loop: null, loopName: '', once: null, attackIndex: 0, dead: false };
+    this.setLoop(look.idle ?? look.move);
+    if (this.anim.loop) this.anim.loop.time = Math.random() * this.anim.loop.getClip().duration; // nicht alle im Gleichschritt
   }
 
-  /** Animation fortschreiben: Lauftempo folgt der echten Geschwindigkeit, schlafend/betäubt steht alles still. */
-  animate(dt: number, speed: number, frozen: boolean): void {
-    const a = this.anim;
-    if (!a) return;
-    if (a.attackLeft > 0) {
-      a.attackLeft -= dt;
-      if (a.attackLeft <= 0) {
-        a.inst.actions.get(a.attack)?.fadeOut(0.15);
-        a.move.reset().fadeIn(0.15).play();
-      }
+  /** Requisiten an Hand bzw. Kopf (Koordinaten in Metern am Knochen). */
+  private propMesh(prop: Prop): THREE.Object3D {
+    const g = new THREE.Group();
+    const add = (geo: THREE.BufferGeometry, color: number, x: number, y: number, z: number, emissive = 0) => {
+      const m = new THREE.Mesh(geo, this.lambert(color));
+      if (emissive) (m.material as THREE.MeshLambertMaterial).emissive.set(emissive);
+      m.position.set(x, y, z);
+      m.castShadow = true;
+      g.add(m);
+      return m;
+    };
+    switch (prop) {
+      case 'cleaver':
+        add(new THREE.BoxGeometry(0.06, 0.32, 0.18), 0xb0b0b0, 0, 0.18, 0.05);
+        break;
+      case 'hammer':
+        add(new THREE.CylinderGeometry(0.03, 0.03, 1.1, 6), 0x5a3a20, 0, 0.35, 0);
+        add(new THREE.BoxGeometry(0.22, 0.4, 0.22), 0x9a9a9a, 0, 0.9, 0);
+        break;
+      case 'staff':
+        add(new THREE.CylinderGeometry(0.025, 0.025, 1.6, 6), 0x6b4a2b, 0, 0.3, 0);
+        add(new THREE.OctahedronGeometry(0.09, 0), 0x9fe3ff, 0, 1.15, 0, 0x3aa0ff);
+        break;
+      case 'hook':
+        add(new THREE.TorusGeometry(0.09, 0.02, 6, 10, Math.PI * 1.4), 0x8c8c8c, 0, 0.12, 0);
+        break;
+      case 'sling':
+        add(new THREE.TorusGeometry(0.06, 0.012, 5, 8), 0x7a5632, 0, 0.1, 0);
+        break;
+      case 'tricorn':
+        add(new THREE.CylinderGeometry(0.17, 0.17, 0.03, 3), 0x1f1a16, 0, 0.17, 0.02);
+        add(new THREE.CylinderGeometry(0.09, 0.11, 0.1, 10), 0x1f1a16, 0, 0.22, 0.02);
+        break;
+      case 'sunhat':
+        add(new THREE.CylinderGeometry(0.2, 0.2, 0.02, 16), 0x8a7a55, 0, 0.17, 0.02);
+        add(new THREE.CylinderGeometry(0.09, 0.11, 0.1, 12), 0x8a7a55, 0, 0.22, 0.02);
+        break;
     }
-    a.move.timeScale = frozen ? 0 : speed < 0.05 ? 0.2 : Math.min(2.2, Math.max(0.35, speed / a.refSpeed));
-    a.inst.mixer.update(frozen ? 0 : dt);
+    return g;
   }
 
-  /** Angriff einmal abspielen, danach zurück zur Laufbewegung. */
-  playAttack(): void {
+  /** Dauerhafte Animation wechseln (weich überblenden). */
+  private setLoop(name: string, timeScale = 1): void {
+    const a = this.anim!;
+    const next = a.inst.actions.get(name);
+    if (!next) return;
+    next.timeScale = timeScale;
+    if (a.loopName === name) return;
+    next.reset();
+    next.setLoop(THREE.LoopRepeat, Infinity);
+    next.play();
+    if (a.loop && !a.once) next.crossFadeFrom(a.loop, 0.2, false);
+    else if (a.loop) a.loop.stop();
+    a.loop = next;
+    a.loopName = name;
+  }
+
+  /** Einmal-Animation (Angriff, Fähigkeit, Schrei, Tod); duration in Sekunden. */
+  playOnce(name: string, duration: number): void {
     const a = this.anim;
-    if (!a || a.attackLeft > 0) return;
-    const action = a.inst.actions.get(a.attack);
-    if (!action) return;
+    const action = a?.inst.actions.get(name);
+    if (!a || !action || a.dead) return;
+    a.once?.action.fadeOut(0.08);
     action.reset();
     action.setLoop(THREE.LoopOnce, 1);
     action.clampWhenFinished = true;
-    action.timeScale = action.getClip().duration / ATTACK_ANIM;
-    action.fadeIn(0.1).play();
-    a.move.fadeOut(0.1);
-    a.attackLeft = ATTACK_ANIM;
+    action.timeScale = action.getClip().duration / Math.max(0.1, duration);
+    action.fadeIn(0.08).play();
+    a.loop?.fadeOut(0.08);
+    a.once = { action, left: duration };
+  }
+
+  /** Hat die Figur eine Animation dieses Namens? */
+  hasClip(name: string): boolean {
+    return !!this.anim?.inst.actions.has(name);
+  }
+
+  /** Standardangriff: nächster Clip der Reihe (bei Zombies zufällig). */
+  playAttack(duration = ATTACK_ANIM, random = false): void {
+    const a = this.anim;
+    if (!a || (a.once && a.once.left > 0.15)) return;
+    const list = a.look.attacks;
+    const name = random ? list[Math.floor(Math.random() * list.length)] : list[a.attackIndex++ % list.length];
+    this.playOnce(name, Math.min(ATTACK_ANIM, duration));
+  }
+
+  /** Fähigkeit (slot 0–3); lange Clips werden auf höchstens 1,2 s gerafft. */
+  playAbility(slot: number): void {
+    const a = this.anim;
+    if (!a) return;
+    let name = `ability${slot + 1}`;
+    if (this.hasClip(`${name}b`) && Math.random() < 0.5) name += 'b';
+    const clip = a.inst.actions.get(name)?.getClip();
+    if (clip) this.playOnce(name, Math.min(ABILITY_ANIM, Math.max(0.6, clip.duration)));
+  }
+
+  /** Sterben: Sterbe-Animation, danach liegen bleiben. */
+  die(): void {
+    const a = this.anim;
+    if (!a || a.dead) return;
+    const name = this.hasClip('death2') && Math.random() < 0.5 ? 'death2' : 'death';
+    this.playOnce(name, 1.6);
+    a.dead = true;
+    this.bar.visible = false;
+    this.icon.visible = false;
+    this.ring.visible = false;
+  }
+
+  /**
+   * Animation fortschreiben: Laufen nach Tempo, sonst Stehen. hold hält eine
+   * Animation dauerhaft (z. B. „down“ für gefallene Helden, Powernap).
+   */
+  animate(dt: number, speed: number, frozen: boolean, hold?: string): void {
+    const a = this.anim;
+    if (!a) return;
+    if (a.once) {
+      a.once.left -= dt;
+      if (a.once.left <= 0 && !a.dead) {
+        a.once.action.fadeOut(0.15);
+        a.once = null;
+        a.loop?.reset().fadeIn(0.15).play();
+      }
+    }
+    if (!a.dead) {
+      const look = a.look;
+      if (hold && this.hasClip(hold)) this.setLoop(hold);
+      else if (speed < 0.15 && look.idle) this.setLoop(look.idle);
+      else {
+        const fast = look.moveFast && speed > (look.fastAbove ?? Infinity);
+        const scale = frozen ? 0 : speed < 0.05 ? 0.25 : Math.min(2.2, Math.max(0.35, speed / look.refSpeed));
+        this.setLoop(fast ? look.moveFast! : look.move, scale);
+      }
+    }
+    a.inst.mixer.update(frozen && !a.dead ? 0 : dt);
+  }
+
+  /** Figur aus einem animierten Modell? */
+  get isAnimated(): boolean {
+    return !!this.anim;
+  }
+
+  get isDying(): boolean {
+    return !!this.anim?.dead;
   }
 
   /** Zombies und Ratten nach den Referenzbildern in assets/reference/gegner/. */
@@ -412,9 +565,17 @@ export class UnitView {
   }
 }
 
-/** Held mit Ring: grün für den eigenen Helden, blau für Bots. */
-export function heroView(h: Hero, def: HeroDef, isPlayer = true): UnitView {
-  const view = new UnitView(h.radius, def.color, isPlayer ? 0x4cd964 : 0x5aa9ff, def.figure === 'dog' ? 1.1 : UNIT_HEIGHT, def.figure);
+/** Erkennungsmerkmal der einfachen Heldenfigur (ohne Modell). */
+function heroFigure(heroId: string): string | undefined {
+  return { rotschopf: 'hammer', schlaeferin: 'staff', libero: 'ball', pirat: 'pirate', gaertnerin: 'gardener' }[heroId];
+}
+
+/** Held mit Ring: grün für den eigenen Helden, blau für Bots. Mit Modell, sobald eins geladen ist. */
+export function heroView(h: Hero, def: HeroDef, isPlayer = true, model?: RiggedModel | null): UnitView {
+  const animated = !!model && !!HERO_LOOKS[def.id];
+  const figure = def.figure === 'dog' ? 'dog' : animated ? `h:${def.id}` : def.figure;
+  const height = def.figure === 'dog' ? 1.1 : animated ? 1.8 * HERO_LOOKS[def.id].scale : UNIT_HEIGHT;
+  const view = new UnitView(h.radius, def.color, isPlayer ? 0x4cd964 : 0x5aa9ff, height, figure, animated ? model : null);
   view.bar.visible = true;
   (view.ring.material as THREE.MeshBasicMaterial).color.set(isPlayer ? 0x4cd964 : 0x5aa9ff);
   view.ring.visible = true;

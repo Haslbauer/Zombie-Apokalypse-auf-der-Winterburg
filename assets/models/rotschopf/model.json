@@ -1,0 +1,37 @@
+{
+  "base": "slash.fbx",
+  "clips": {
+    "run": {
+      "file": "run.fbx"
+    },
+    "attack": {
+      "file": "slash.fbx"
+    },
+    "ability1": {
+      "file": "turn180.fbx"
+    },
+    "ability2": {
+      "file": "casting.fbx"
+    },
+    "ability3": {
+      "file": "jump-attack.fbx"
+    },
+    "ability3b": {
+      "file": "mutant-jump.fbx"
+    },
+    "ability4": {
+      "file": "flex.fbx"
+    },
+    "use": {
+      "file": "../shared/pill.fbx"
+    },
+    "down": {
+      "file": "../shared/laying.fbx"
+    }
+  },
+  "inPlace": true,
+  "textureSize": 1024,
+  "simplifyRatio": 0.35,
+  "output": "public/models/rotschopf.glb",
+  "idleFrom": "slash.fbx"
+}

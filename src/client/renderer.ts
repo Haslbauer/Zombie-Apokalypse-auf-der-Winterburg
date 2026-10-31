@@ -7,7 +7,10 @@ import { buildMap } from './map';
 import { ObjectiveView } from './objectives';
 import { AbilityPreview } from './preview';
 import type { RiggedModel } from './models';
-import { heroView, UnitView, zombieView } from './units';
+import { ATTACK_ANIM, heroView, UnitView, zombieView } from './units';
+
+/** So lange bleibt ein toter Zombie liegen (s), die letzte Sekunde versinkt er. */
+const CORPSE_TIME = 2.5;
 import { WorldView } from './world';
 
 /** Position und Blickrichtung eines Objekts im vorherigen Tick (für Interpolation). */
@@ -29,6 +32,10 @@ export class GameRenderer {
   private aimIndicator: THREE.Mesh | null = null;
   /** Animiertes Zombie-Modell; bis es geladen ist, erscheinen die einfachen Figuren. */
   zombieModel: RiggedModel | null = null;
+  /** Animierte Heldenmodelle nach Helden-ID (fehlende: einfache Figur). */
+  readonly heroModels = new Map<string, RiggedModel>();
+  /** Gestorbene Zombies: Leiche bleibt liegen und versinkt (Restzeit in s). */
+  private readonly corpses = new Map<UnitView, number>();
   /** Held des Spielers (grüner Ring); Bots bekommen einen blauen Ring. null = nur Bots. */
   playerId: number | null = null;
   private readonly objectives = new Map<string, ObjectiveView>();
@@ -77,11 +84,12 @@ export class GameRenderer {
 
   /** Alle Einheiten entfernen (neues Spiel). */
   reset(): void {
-    for (const v of this.units.values()) {
+    for (const v of [...this.units.values(), ...this.corpses.keys()]) {
       this.scene.remove(v.group);
       v.dispose();
     }
     this.units.clear();
+    this.corpses.clear();
     this.world.reset();
     this.preview.hide();
   }
@@ -107,11 +115,23 @@ export class GameRenderer {
     const revealBelow = chupa ? (this.data.heroes.find((d) => d.id === 'chupa')?.passive.values.revealBelow ?? 0) : 0;
 
     for (const h of state.heroes) {
-      if (!h.alive) continue;
+      // Gefallene Helden mit Modell liegen bis zum Respawn am Boden, sonst verschwinden sie.
+      if (!h.alive && !this.units.get(h.id)?.isAnimated) continue;
       const def = this.data.heroes.find((d) => d.id === h.defId)!;
       const lift = h.dash ? Math.sin((h.dash.elapsed / h.dash.duration) * Math.PI) * h.dash.height : 0;
-      const view = upsert(h, () => heroView(h, def, h.id === this.playerId), lift);
+      const view = upsert(h, () => heroView(h, def, h.id === this.playerId, this.heroModels.get(def.id)), lift);
+      const p = prev.get(h.id);
+      const speed = p && h.alive ? Math.hypot(h.pos.x - p.x, h.pos.y - p.y) / DT : 0;
+      if (!h.alive) {
+        view.bar.visible = false;
+        view.ring.visible = false;
+        view.animate(dt, 0, false, 'down');
+        continue;
+      }
+      view.ring.visible = true;
       view.showHero(h, shieldAmount(h), hasBuff(h, 'invisible'));
+      const hold = h.channel?.tag === 'nap' ? 'ability3' : undefined;
+      view.animate(dt, speed, state.gameOver, hold);
     }
     for (const z of state.zombies) {
       const def = this.data.zombies.find((d) => d.id === z.defId)!;
@@ -123,9 +143,24 @@ export class GameRenderer {
     }
     for (const [id, view] of this.units) {
       if (!seen.has(id)) {
+        this.units.delete(id);
+        if (view.isDying) this.corpses.set(view, CORPSE_TIME);
+        else {
+          this.scene.remove(view.group);
+          view.dispose();
+        }
+      }
+    }
+    for (const [view, left] of this.corpses) {
+      const t = left - dt;
+      view.animate(dt, 0, false);
+      // In der letzten Sekunde im Boden versinken
+      if (t < 1) view.group.position.y = -(1 - Math.max(0, t)) * 1.2;
+      if (t > 0) this.corpses.set(view, t);
+      else {
+        this.corpses.delete(view);
         this.scene.remove(view.group);
         view.dispose();
-        this.units.delete(id);
       }
     }
 
@@ -196,9 +231,28 @@ export class GameRenderer {
     (this.aimIndicator.material as THREE.MeshBasicMaterial).opacity = ready ? 0.42 : 0.18;
   }
 
-  /** Angriffsanimation eines Zombies. */
+  /** Angriffsanimation eines Zombies (zufällige Variante). */
   zombieAttack(id: number): void {
-    this.units.get(id)?.playAttack();
+    this.units.get(id)?.playAttack(ATTACK_ANIM, true);
+  }
+
+  /** Heldenanimation: Standardangriff (duration = Angriffstakt), Fähigkeit (slot) oder Trank benutzen. */
+  heroAction(id: number, action: 'attack' | 'ability' | 'use', value = 0): void {
+    const view = this.units.get(id);
+    if (!view) return;
+    if (action === 'attack') view.playAttack(value);
+    else if (action === 'ability') view.playAbility(value);
+    else view.playOnce('use', 0.9);
+  }
+
+  /** Zombie stirbt: Sterbe-Animation, die Leiche bleibt kurz liegen. */
+  zombieDie(id: number): void {
+    this.units.get(id)?.die();
+  }
+
+  /** Schrei (Elite-Auftritt, Ausholen des Schlächters). */
+  zombieScream(id: number): void {
+    this.units.get(id)?.playOnce('scream', 1.0);
   }
 
   /** Treffer-Aufblitzen einer Einheit. */

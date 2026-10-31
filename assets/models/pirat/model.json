@@ -1,0 +1,36 @@
+{
+  "base": "throw-grenade.fbx",
+  "clips": {
+    "run": {
+      "file": "running.fbx"
+    },
+    "idle": {
+      "file": "../shared/pistol-idle.fbx"
+    },
+    "attack": {
+      "file": "throw-grenade.fbx"
+    },
+    "ability1": {
+      "file": "../shared/toss-grenade.fbx"
+    },
+    "ability2": {
+      "file": "grenade-throw.fbx"
+    },
+    "ability3": {
+      "file": "jumping.fbx"
+    },
+    "ability4": {
+      "file": "grenade-throw.fbx"
+    },
+    "use": {
+      "file": "../shared/pill.fbx"
+    },
+    "down": {
+      "file": "../shared/laying.fbx"
+    }
+  },
+  "inPlace": true,
+  "textureSize": 1024,
+  "simplifyRatio": 0.35,
+  "output": "public/models/pirat.glb"
+}
