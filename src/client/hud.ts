@@ -19,7 +19,7 @@ export class Hud {
   readonly startWaveBtn = el('button', 'hud-start-wave');
   private readonly team = el('div', 'hud-team');
   private readonly beds = el('div', 'hud-objective');
-  private teamRows = new Map<number, { row: HTMLElement; hp: HTMLElement; level: HTMLElement; status: HTMLElement }>();
+  private teamRows = new Map<number, { row: HTMLElement; hp: HTMLElement; level: HTMLElement; status: HTMLElement; bosses: HTMLElement }>();
   private readonly kills = el('div', 'hud-kills');
   private readonly objectiveBars = new Map<string, { fill: HTMLElement; box: HTMLElement }>();
   private readonly respawn = el('div', 'hud-respawn');
@@ -50,6 +50,8 @@ export class Hud {
   private readonly overlay = el('div', 'hud-overlay');
   private readonly invite = el('div', 'hud-invite');
   private readonly pingLog = el('div', 'hud-ping-log');
+  private readonly scoreboard = el('div', 'hud-scoreboard');
+  private scoreKey = '';
   private readonly connection = el('div', 'hud-connection');
   private readonly latency = el('span', 'hud-latency');
   private bannerTimer = 0;
@@ -88,7 +90,7 @@ export class Hud {
     this.shopHint.style.display = 'none';
     root.append(this.shopHint, this.team);
     this.updateHelp();
-    root.append(this.top, this.bottom, this.banner, this.respawn, this.help, this.invite, this.pingLog, this.connection, this.overlay, this.tooltip);
+    root.append(this.top, this.bottom, this.banner, this.respawn, this.help, this.invite, this.pingLog, this.scoreboard, this.connection, this.overlay, this.tooltip);
     this.connection.style.display = 'none';
     this.invite.style.display = 'none';
     this.showInGame(false);
@@ -96,6 +98,7 @@ export class Hud {
 
   private showInGame(visible: boolean): void {
     for (const e of [this.top, this.bottom, this.help, this.team]) e.style.display = visible ? '' : 'none';
+    if (!visible) this.scoreboard.style.display = 'none';
     if (!visible) this.respawn.style.display = 'none';
   }
 
@@ -251,6 +254,40 @@ export class Hud {
     setTimeout(() => line.remove(), 4000);
   }
 
+  /**
+   * Anzeigetafel (Taste halten): pro Held Kills, Bosse, Assists, verdientes
+   * Gold und Level. names: Menschen im Raum (Mehrspieler).
+   */
+  showScoreboard(visible: boolean, state?: GameState, playerId = -1, names?: Map<number, string>): void {
+    this.scoreboard.style.display = visible ? '' : 'none';
+    if (!visible || !state) return;
+    const rows = state.heroes.map((h) => {
+      const def = this.data.heroes.find((d) => d.id === h.defId)!;
+      const who = h.id === playerId ? 'Du' : (names?.get(h.id) ?? (h.bot || names ? 'Bot' : 'Mitspieler'));
+      const s = h.score ?? { kills: 0, bosses: 0, assists: 0, gold: 0 };
+      return { id: h.id, def, who, s, level: h.level };
+    });
+    const key = JSON.stringify(rows.map((r) => [r.id, r.who, r.s, r.level]));
+    if (key === this.scoreKey) return;
+    this.scoreKey = key;
+    const table = el('table', '');
+    const head = el('tr', '');
+    for (const t of ['Held', '', 'Kills', 'Bosse', 'Assists', 'Gold', 'Lv']) head.append(el('th', '', t));
+    table.append(head);
+    for (const r of rows) {
+      const tr = el('tr', '');
+      if (r.id === playerId) tr.classList.add('me');
+      const img = el('img', 'hud-score-portrait');
+      img.src = `portraits/${r.def.id}.jpg`;
+      const name = el('td', 'hud-score-name');
+      name.append(img, el('span', '', r.def.name));
+      tr.append(name, el('td', 'hud-score-who', r.who));
+      for (const v of [r.s.kills, r.s.bosses, r.s.assists, r.s.gold, r.level]) tr.append(el('td', '', String(v)));
+      table.append(tr);
+    }
+    this.scoreboard.replaceChildren(el('h3', '', `Welle ${state.wave.number} · ${state.kills} Kills`), table);
+  }
+
   /** Laufzeit zum Server (ms) neben dem Raum-Code; grün, gelb, rot je nach Wert. */
   setPing(ms: number | null): void {
     const text = ms === null ? '' : `${Math.round(ms)} ms`;
@@ -304,7 +341,9 @@ export class Hud {
       info.append(name, status, bar);
       row.append(img, info);
       this.team.append(row);
-      this.teamRows.set(h.id, { row, hp, level, status });
+      const bosses = el('span', 'hud-team-bosses');
+      level.before(bosses);
+      this.teamRows.set(h.id, { row, hp, level, status, bosses });
     }
   }
 
@@ -564,6 +603,8 @@ export class Hud {
       if (!r) continue;
       r.hp.style.width = `${(100 * t.hp) / t.maxHp}%`;
       r.level.textContent = `Lv ${t.level}`;
+      const b = t.score?.bosses ?? 0;
+      r.bosses.textContent = b ? `☠ ${b}` : '';
       r.row.classList.toggle('dead', !t.alive);
       if (!t.alive && !state.gameOver) r.status.dataset.respawn = `† ${Math.ceil(t.respawnAt - state.time)} s`;
       else delete r.status.dataset.respawn;

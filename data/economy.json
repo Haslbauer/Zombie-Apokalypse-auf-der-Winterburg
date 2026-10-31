@@ -5,5 +5,6 @@
   "goldShareRange": 15,
   "shopRange": 6,
   "sellFactor": 0.7,
-  "inventorySlots": 6
+  "inventorySlots": 6,
+  "boss": { "gold": 100, "goldPerWave": 15, "assistShare": 0.5, "firstBlood": 150, "assistWindow": 10 }
 }

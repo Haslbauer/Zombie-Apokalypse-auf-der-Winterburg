@@ -133,6 +133,7 @@ export class Simulation implements SimContext {
         lastCombatAt: -100,
         counters: {},
         gold: data.economy.startGold,
+        score: { kills: 0, bosses: 0, assists: 0, gold: 0 },
         inventory: Array<string | null>(data.economy.inventorySlots).fill(null),
         consumables: [null, null],
       };

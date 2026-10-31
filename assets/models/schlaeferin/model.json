@@ -1,5 +1,5 @@
 {
-  "base": "cast-spell.fbx",
+  "base": "figur.fbx",
   "clips": {
     "run": {
       "file": "sprint.fbx"
@@ -36,5 +36,6 @@
   "textureSize": 1024,
   "simplifyRatio": 0.35,
   "output": "public/models/schlaeferin.glb",
-  "idleFrom": "cast-spell.fbx"
+  "idleFrom": "cast-spell.fbx",
+  "normalSize": 512
 }

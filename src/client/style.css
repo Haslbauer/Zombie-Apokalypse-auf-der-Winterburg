@@ -831,3 +831,68 @@ html, body {
     bottom: 145px;
   }
 }
+
+/* Boss-Zähler in der Teamleiste und Anzeigetafel (Tab) */
+.hud-team-bosses {
+  margin-left: 6px;
+  color: #ff8a7a;
+  font-size: 11px;
+}
+.hud-scoreboard {
+  position: absolute;
+  left: 50%;
+  top: 90px;
+  transform: translateX(-50%);
+  padding: 12px 16px;
+  background: rgba(12, 16, 22, 0.92);
+  border: 1px solid #4f5a7a;
+  border-radius: 10px;
+  pointer-events: none;
+  min-width: min(520px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+}
+.hud-scoreboard h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  color: #ffd166;
+}
+.hud-scoreboard table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.hud-scoreboard th {
+  text-align: right;
+  font-weight: 600;
+  opacity: 0.7;
+  padding: 2px 6px;
+}
+.hud-scoreboard td {
+  text-align: right;
+  padding: 3px 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.hud-scoreboard th:first-child,
+.hud-scoreboard td.hud-score-name,
+.hud-scoreboard td.hud-score-who {
+  text-align: left;
+}
+.hud-scoreboard tr.me td {
+  color: #8ff0a4;
+}
+.hud-score-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.hud-score-portrait {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+.hud-score-who {
+  opacity: 0.7;
+  font-size: 11px;
+}

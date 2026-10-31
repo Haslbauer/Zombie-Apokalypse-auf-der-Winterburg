@@ -45,6 +45,28 @@ window.convert = async (cfg) => {
     if (!cache.has(file)) cache.set(file, await loadFile(file));
     return cache.get(file);
   };
+  // Animation einer anderen Mixamo-Figur auf die Basisfigur übertragen:
+  // Knochennamen angleichen (mixamorig1: …), nur die Hüfte darf sich
+  // verschieben (sonst bekäme die Figur die Knochenlängen der anderen),
+  // und deren Weg wird auf die Beinlänge der Basisfigur umgerechnet.
+  const bare = (n) => n.replace(/^mixamorig\d*:?/, '');
+  const bonesOf = (o) => { const m = new Map(); o.traverse((b) => { if (b.isBone) m.set(bare(b.name), b); }); return m; };
+  const retarget = (clip, src, dst) => {
+    const sb = bonesOf(src), db = bonesOf(dst);
+    const sh = sb.get('Hips'), dh = db.get('Hips');
+    const k = sh && dh && Math.abs(sh.position.y) > 1e-3 ? dh.position.y / sh.position.y : 1;
+    clip.tracks = clip.tracks.filter((t) => {
+      const dot = t.name.lastIndexOf('.');
+      const bone = db.get(bare(t.name.slice(0, dot)));
+      if (!bone) return false;
+      const prop = t.name.slice(dot + 1);
+      t.name = bone.name + '.' + prop;
+      if (prop !== 'position') return true;
+      if (bare(bone.name) !== 'Hips') return false;
+      for (let i = 0; i < t.values.length; i++) t.values[i] *= k;
+      return true;
+    });
+  };
   const clips = [];
   const entries = Object.entries(cfg.clips);
   if (cfg.idleFrom) entries.push(['idle', { file: cfg.idleFrom, firstFrame: true }]);
@@ -71,6 +93,7 @@ window.convert = async (cfg) => {
     }
     // Skalierungs-Spuren braucht niemand
     clip.tracks = clip.tracks.filter((t) => !t.name.endsWith('.scale'));
+    if (obj !== base) retarget(clip, obj, base);
     clips.push(clip);
   }
   let triangles = 0;
@@ -79,17 +102,48 @@ window.convert = async (cfg) => {
     triangles += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3;
     const mats = Array.isArray(o.material) ? o.material : [o.material];
     for (const m of mats) {
-      if (!m.map || !m.map.image) continue;
-      const img = m.map.image;
-      const size = Math.min(cfg.textureSize, img.width || cfg.textureSize);
-      const canvas = document.createElement('canvas');
-      canvas.width = canvas.height = size;
-      canvas.getContext('2d').drawImage(img, 0, 0, size, size);
-      const tex = new THREE.CanvasTexture(canvas);
-      tex.flipY = m.map.flipY;
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.userData.mimeType = 'image/jpeg';
-      m.map = tex;
+      // Nur Farb- und Normalen-Textur behalten, beide verkleinert; Glanz-,
+      // Höhen- und sonstige Karten fallen weg (die Dateien blieben sonst riesig).
+      for (const key of ['specularMap', 'bumpMap', 'aoMap', 'emissiveMap', 'roughnessMap', 'metalnessMap', 'displacementMap', 'lightMap']) {
+        if (m[key]) m[key] = null;
+      }
+      for (const key of ['map', 'normalMap']) {
+        const t = m[key];
+        if (!t || !t.image) continue;
+        const img = t.image;
+        const max = key === 'map' ? cfg.textureSize : cfg.normalSize ?? 0;
+        if (!max) { m[key] = null; continue; }
+        let size = Math.min(max, img.width || max);
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, size, size);
+        // Durchsichtige Teile (Haare, Wimpern) brauchen den Alphakanal und
+        // damit PNG; das nur, wenn die Textur wirklich Transparenz enthält.
+        let alpha = false;
+        if (key === 'map') {
+          const px = ctx.getImageData(0, 0, size, size).data;
+          for (let i = 3; i < px.length; i += 4) if (px[i] < 250) { alpha = true; break; }
+        }
+        if (alpha && size > 512) {
+          // PNG ist groß: halbe Auflösung reicht für Haare
+          const small = document.createElement('canvas');
+          small.width = small.height = 512;
+          small.getContext('2d').drawImage(canvas, 0, 0, 512, 512);
+          canvas.width = canvas.height = size = 512;
+          ctx.drawImage(small, 0, 0);
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.flipY = t.flipY;
+        tex.wrapS = t.wrapS;
+        tex.wrapT = t.wrapT;
+        if (key === 'map') tex.colorSpace = THREE.SRGBColorSpace;
+        tex.userData.mimeType = alpha ? 'image/png' : 'image/jpeg';
+        if (key === 'map' && !alpha) m.transparent = false;
+        if (alpha) { m.transparent = false; m.alphaTest = 0.5; }
+        m[key] = tex;
+      }
+      m.needsUpdate = true;
     }
   });
   base.animations = clips;

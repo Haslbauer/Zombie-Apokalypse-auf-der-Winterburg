@@ -418,6 +418,17 @@ function handleEvents(state: GameState): void {
         effects.line(e.from, e.to, 1.6, 0xff3b30, Number(def?.special?.windup ?? 0.6));
         break;
       }
+      case 'bossKill': {
+        const boss = gameData.zombies.find((z) => z.id === e.defId)?.name ?? 'Boss';
+        const killer = state.heroes.find((h) => h.id === e.killerId);
+        const who = !killer ? 'Das Team' : killer.id === heroId ? 'Du' : (playerNames()?.get(killer.id) ?? gameData.heroes.find((d) => d.id === killer.defId)?.name ?? '?');
+        const verb = killer?.id === heroId ? 'hast' : 'hat';
+        const extra = e.firstBlood ? ' · Erstes Blut!' : '';
+        if (killer) hud.message(`${who} ${verb} ${boss} erlegt! +${e.gold} Gold${extra}`);
+        hud.addPing(`☠ ${who}: ${boss}${e.assists.length ? ` (+${e.assists.length} Assist${e.assists.length > 1 ? 's' : ''})` : ''}`, '#ff8a7a');
+        if (e.assists.includes(heroId)) hud.addPing(`Assist: +${e.assistGold} Gold`, '#ffd166');
+        break;
+      }
       case 'courier':
         if (e.phase === 'arrive') hud.message(`Zombie-Postbote im Gelände! Besiegt ihn im Team: ${e.gold} Gold für alle`);
         else if (e.phase === 'caught') hud.message(`Paket erbeutet: +${e.gold} Gold für alle!`);
@@ -511,6 +522,7 @@ renderer.renderer.setAnimationLoop((now) => {
     renderer.showPreview(slot !== null && me.alive && me.ranks[slot] > 0 ? def.abilities[slot] : null, me, input.aimPoint);
     renderer.cam.follow(focus.x, focus.y, dt);
     hud.update(state, heroId, dt, (s) => canRankUp(ctx(), me, s));
+    hud.showScoreboard(input.isDown('scoreboard'), state, heroId, playerNames());
     const shopReason = state.gameOver ? 'Spiel vorbei' : shopClosedReason(ctx(), me);
     if (shop.open && shopReason) {
       shop.hide();
@@ -528,10 +540,14 @@ renderer.renderer.setAnimationLoop((now) => {
 
 // Animierte Modelle laden (Name → Höhe in Metern); bis dahin (oder bei einem Fehler) bleiben die einfachen Figuren.
 const MODELS: Record<string, number> = {
-  'zombie-basic': 1.75,
-  'zombie-arm': 1.75,
-  'zombie-ribcage': 1.6,
-  'zombie-chubby': 1.75,
+  'zombie-cop': 1.8,
+  'zombie-girl': 1.7,
+  'zombie-parasite': 1.75,
+  'zombie-skeleton': 1.8,
+  'zombie-war': 1.8,
+  'zombie-pumpkin': 1.75,
+  'zombie-warrok': 1.75,
+  'zombie-demon': 1.8,
   rotschopf: 1.8,
   schlaeferin: 1.8,
   libero: 1.8,

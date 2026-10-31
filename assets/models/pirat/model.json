@@ -1,5 +1,5 @@
 {
-  "base": "throw-grenade.fbx",
+  "base": "figur.fbx",
   "clips": {
     "run": {
       "file": "running.fbx"
@@ -32,5 +32,6 @@
   "inPlace": true,
   "textureSize": 1024,
   "simplifyRatio": 0.35,
-  "output": "public/models/pirat.glb"
+  "output": "public/models/pirat.glb",
+  "normalSize": 512
 }

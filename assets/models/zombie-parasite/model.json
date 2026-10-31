@@ -1,0 +1,42 @@
+{
+  "base": "figur.fbx",
+  "clips": {
+    "walk": {
+      "file": "../zombie/walk.fbx"
+    },
+    "run": {
+      "file": "../zombie/running.fbx"
+    },
+    "run2": {
+      "file": "../zombie/run.fbx"
+    },
+    "attack": {
+      "file": "../zombie/attack.fbx"
+    },
+    "bite": {
+      "file": "../zombie/bite.fbx"
+    },
+    "bite2": {
+      "file": "../zombie/neck-bite.fbx"
+    },
+    "bite3": {
+      "file": "../zombie/biting2.fbx"
+    },
+    "idle": {
+      "file": "../zombie/idle.fbx"
+    },
+    "death": {
+      "file": "../zombie/death.fbx"
+    },
+    "death2": {
+      "file": "../zombie/dying.fbx"
+    },
+    "scream": {
+      "file": "../zombie/scream.fbx"
+    }
+  },
+  "inPlace": true,
+  "textureSize": 1024,
+  "simplifyRatio": 0.35,
+  "output": "public/models/zombie-parasite.glb"
+}

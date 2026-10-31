@@ -173,6 +173,22 @@ export interface EconomyDef {
   shopRange: number;
   sellFactor: number;
   inventorySlots: number;
+  /**
+   * Bosse (Elites, Postbote, große Neutrale) wie in LoL: Der letzte Treffer
+   * bringt gold + goldPerWave × Welle, jeder andere Held, der in den letzten
+   * assistWindow Sekunden Schaden gemacht hat, den Anteil assistShare.
+   * Der erste Boss der Partie bringt zusätzlich firstBlood.
+   */
+  boss: { gold: number; goldPerWave: number; assistShare: number; firstBlood: number; assistWindow: number };
+}
+
+/** Punktestand eines Helden (Anzeigetafel). */
+export interface HeroScore {
+  kills: number;
+  bosses: number;
+  assists: number;
+  /** Insgesamt verdientes Gold. */
+  gold: number;
 }
 
 export interface WaveMixEntry {
@@ -500,6 +516,7 @@ export interface Hero extends Unit {
   counters: Record<string, number>;
   ball?: Ball;
   gold: number;
+  score: HeroScore;
   /** Waffen und Items (Item-Ids), null = frei. */
   inventory: (string | null)[];
   /** Verbrauchsgüter auf R und T. */
@@ -561,6 +578,8 @@ export interface Zombie extends Unit {
   courier?: { wp: number; dir: number; leaveAt: number };
   /** Neutrale: Lager (oder null beim Postboten), Platz, zu dem er zurückkehrt, und ob er gerade heimkehrt. */
   neutral?: { campId: string | null; home: Vec2; returning: boolean };
+  /** Bosse: Helden, die Schaden gemacht haben, mit Zeitpunkt des letzten Treffers (für Assists). */
+  contrib?: { id: number; t: number }[];
 }
 
 /** Fläche mit Wirkung über Zeit (Dornen, Rauch, Hecke, Block). */
@@ -670,6 +689,7 @@ export type GameEvent =
   | { type: 'harvest'; amount: number }
   | { type: 'regrow'; objectiveId: string }
   | { type: 'gold'; heroId: number; amount: number; pos?: Vec2 }
+  | { type: 'bossKill'; zombieId: number; defId: string; killerId: number | null; assists: number[]; gold: number; assistGold: number; firstBlood: boolean }
   | { type: 'shop'; heroId: number; action: 'buy' | 'sell' | 'use'; itemId: string }
   | { type: 'shopDenied'; heroId: number; reason: string }
   | { type: 'elite'; zombieId: number; defId: string }
@@ -702,6 +722,8 @@ export interface GameState {
   gameOver: boolean;
   /** Ereignisse des letzten Ticks (für Effekte im Client). */
   events: GameEvent[];
+  /** Wurde schon ein Boss erlegt? (Erstes Blut gibt es nur einmal.) */
+  firstBlood?: boolean;
   /** Neutrale Lager: wann ein geleertes Lager wiederkommt (null: besetzt). */
   camps: { id: string; respawnAt: number | null }[];
 }

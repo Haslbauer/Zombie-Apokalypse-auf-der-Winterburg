@@ -1,5 +1,5 @@
 {
-  "base": "goalie-throw.fbx",
+  "base": "figur.fbx",
   "clips": {
     "run": {
       "file": "running.fbx"
@@ -30,5 +30,6 @@
   "textureSize": 1024,
   "simplifyRatio": 0.35,
   "output": "public/models/libero.glb",
-  "idleFrom": "goalie-throw.fbx"
+  "idleFrom": "goalie-throw.fbx",
+  "normalSize": 512
 }

@@ -1,7 +1,7 @@
 import type { SimContext } from './context';
 import { shotBlocked } from './grid';
 import { kitOf } from './heroes/index';
-import { awardGold } from './economy';
+import { awardBoss, awardGold } from './economy';
 import { itemStats } from './items';
 import { awardXp, heroDamage } from './progression';
 import { absorbWithShield, buffSum } from './status';
@@ -42,6 +42,7 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
       // Gereizt: Ratten und Hornissen beißen zurück
       target.st.provokedBy = source.id;
       target.st.provokedUntil = state.time + PROVOKE_TIME;
+      noteContribution(ctx, target, source);
     }
     if (state.time < target.st.sleepUntil) {
       amount *= SLEEP_BONUS;
@@ -69,8 +70,33 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
     state.kills++;
     awardXp(ctx, target);
     awardGold(ctx, target);
+    // Kill-Zähler: wer den letzten Treffer gesetzt hat (ohne Quelle: wer zuletzt beteiligt war)
+    const killer = source ?? lastContributor(ctx, target);
+    if (killer) killer.score.kills++;
+    if (target.contrib) awardBoss(ctx, target, killer);
   }
   return dealt;
+}
+
+/** Ist dieser Zombie ein Boss (Elite, Postbote, große Neutrale)? */
+export function isBoss(ctx: SimContext, z: Zombie): boolean {
+  const rank = ctx.zombieDefs.get(z.defId)?.rank;
+  return rank === 'elite' || rank === 'boss';
+}
+
+/** Bosse merken sich, wer ihnen wann Schaden gemacht hat. */
+function noteContribution(ctx: SimContext, z: Zombie, h: Hero): void {
+  if (!isBoss(ctx, z)) return;
+  z.contrib ??= [];
+  const entry = z.contrib.find((c) => c.id === h.id);
+  if (entry) entry.t = ctx.state.time;
+  else z.contrib.push({ id: h.id, t: ctx.state.time });
+}
+
+function lastContributor(ctx: SimContext, z: Zombie): Hero | undefined {
+  const window = ctx.data.economy.boss.assistWindow;
+  const last = (z.contrib ?? []).filter((c) => ctx.state.time - c.t <= window).sort((a, b) => b.t - a.t)[0];
+  return last ? ctx.state.heroes.find((h) => h.id === last.id) : undefined;
 }
 
 /** Schaden eines Helden mit Level-Wachstum und Buffs. */

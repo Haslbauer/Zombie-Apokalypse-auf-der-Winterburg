@@ -63,31 +63,48 @@ interface ModelLook {
   lift?: number;
 }
 
-/** Zombies: Quaternius-Figuren (CC0) mit Requisiten am Unterarm, dazu Tiere. */
-const Q = { headBone: 'Head', handBone: 'LowerArmR', handOffset: 0.3, headOffset: 0.42 } as const;
+/**
+ * Zombies: Mixamo-Figuren mit den gemeinsamen Zombie-Animationen
+ * (assets/models/zombie), dazu Tiere (Quaternius). Schwere Gegner sind
+ * deutlich größer und tragen einen leuchtenden Ring (ELITE_COLORS).
+ */
+const Z = { idle: 'idle', attacks: ['attack', 'bite', 'bite3'] } as const;
 const ZOMBIE_LOOKS: Record<string, ModelLook> = {
-  walker: { model: ['zombie-basic', 'zombie-basic', 'zombie-ribcage'], move: 'walk', idle: 'idle', refSpeed: 1.4, scale: 1, tint: [1, 1, 1], attacks: ['attack', 'attack2'] },
-  runner: { model: 'zombie-arm', move: 'run', idle: 'idle', refSpeed: 3.8, scale: 0.95, tint: [1, 1, 1], attacks: ['attack', 'attack2'] },
-  crawler: { model: 'zombie-basic', move: 'crawl', refSpeed: 0.8, scale: 1, tint: [0.85, 1, 0.8], attacks: [] },
-  brute: { model: 'zombie-chubby', move: 'walk', idle: 'idle', refSpeed: 1.4, scale: 1.25, tint: [1, 1, 1], attacks: ['attack', 'attack2'] },
-  butcher: { model: 'zombie-chubby', move: 'walk', idle: 'idle', refSpeed: 1.6, scale: 1.45, tint: [1.35, 0.8, 0.6], attacks: ['attack', 'attack2'], props: ['cleaver'], ...Q },
-  postman: { model: 'zombie-basic', move: 'walk', moveFast: 'run', fastAbove: 3, idle: 'idle', refSpeed: 2.4, scale: 1, tint: [0.75, 0.9, 1.5], attacks: ['attack'], props: ['parcel', 'cap'], ...Q },
+  // Polizisten-Zombies sind die häufigsten (2 von 3)
+  walker: { model: ['zombie-cop', 'zombie-cop', 'zombie-girl'], move: 'walk', refSpeed: 1.4, scale: 1, tint: [1, 1, 1], ...Z, attacks: [...Z.attacks] },
+  runner: { model: ['zombie-parasite', 'zombie-skeleton'], move: 'run', moveFast: 'run2', fastAbove: 4.5, refSpeed: 3.8, scale: 1, tint: [1, 1, 1], ...Z, attacks: [...Z.attacks] },
+  crawler: { model: 'zombie-girl', move: 'crawl', moveFast: 'crawlFast', fastAbove: 1.6, refSpeed: 0.8, scale: 1, tint: [0.85, 0.95, 0.8], attacks: [] },
+  brute: { model: 'zombie-pumpkin', move: 'walk', refSpeed: 1.2, scale: 1.5, tint: [1, 1, 1], ...Z, attacks: ['attack', 'bite'] },
+  butcher: { model: 'zombie-warrok', move: 'walk', refSpeed: 1.1, scale: 1.9, tint: [1.15, 0.9, 0.85], ...Z, attacks: ['attack', 'bite'], props: ['cleaver'], handOffset: 0.08 },
+  postman: { model: 'zombie-war', move: 'walk', moveFast: 'run', fastAbove: 3, refSpeed: 2.4, scale: 1.05, tint: [1, 1, 1], ...Z, attacks: [...Z.attacks], props: ['parcel', 'cap'] },
+  demon: { model: 'zombie-demon', move: 'walk', moveFast: 'run', fastAbove: 3, refSpeed: 2.2, scale: 1.35, tint: [1, 1, 1], ...Z, attacks: ['attack', 'bite'] },
   spider: { model: 'spider', move: 'walk', idle: 'idle', refSpeed: 3.5, scale: 1, tint: [0.75, 0.85, 0.6], attacks: ['attack', 'attack2'] },
   bigspider: { model: 'spider', move: 'walk', idle: 'idle', refSpeed: 3.2, scale: 2.2, tint: [0.6, 0.75, 0.5], attacks: ['attack', 'attack2'] },
   toad: { model: 'frog', move: 'walk', idle: 'idle', refSpeed: 1.6, scale: 2.6, tint: [0.62, 0.62, 0.5], attacks: ['attack'] },
   rat: { model: 'rat', move: 'run', idle: 'idle', refSpeed: 5, scale: 1.2, tint: [1.8, 1.7, 1.6], attacks: ['attack', 'attack2'] },
-  ratking: { model: 'rat', move: 'walk', idle: 'idle', refSpeed: 1.2, scale: 2.6, tint: [1.4, 1.1, 0.8], attacks: ['attack', 'attack2'], props: ['crown'], headBone: 'Head' },
+  ratking: { model: 'rat', move: 'walk', idle: 'idle', refSpeed: 1.2, scale: 3, tint: [1.4, 1.1, 0.8], attacks: ['attack', 'attack2'], props: ['crown'], headBone: 'Head' },
   hornet: { model: 'wasp', move: 'fly', idle: 'fly', refSpeed: 4.5, scale: 1.6, tint: [1, 1, 1], attacks: ['attack'], lift: 0.9 },
 };
 
-/** Helden mit Modell (assets/models/<held>): Grimm ist ein Schäferhund (Quaternius), die übrigen Mixamo-Figuren. */
+/** Leuchtfarbe der schweren Gegner (Boden-Ring, Augen, Namensschild). */
+export const ELITE_COLORS: Record<string, number> = {
+  butcher: 0xff2a1a,
+  demon: 0xb04dff,
+  ratking: 0xffc93c,
+  postman: 0xffd166,
+  brute: 0xff8a1c,
+  bigspider: 0x9be564,
+  toad: 0x7fd6a0,
+};
+
+/** Helden mit Modell (assets/models/<held>): Grimm ist ein Schäferhund (Quaternius), die übrigen Mixamo-Figuren mit eigenen Texturen. */
 const HERO_LOOKS: Record<string, ModelLook> = {
   grimm: { model: 'grimm', move: 'run', idle: 'idle', refSpeed: 6.5, scale: 1, tint: [1.25, 1.2, 1.15], attacks: ['attack'] },
-  rotschopf: { model: 'rotschopf', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], paint: true, attacks: ['attack'], props: ['hammer'] },
-  schlaeferin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1, tint: [1, 1, 1], paint: true, attacks: ['attack', 'attack2', 'attack3'], props: ['staff'] },
-  libero: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.6, scale: 1.03, tint: [1, 1, 1], paint: true, attacks: ['attack'] },
-  pirat: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], paint: true, attacks: ['attack'], props: ['hook', 'tricorn'] },
-  gaertnerin: { model: 'gaertnerin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 0.97, tint: [1, 1, 1], paint: true, attacks: ['attack'], props: ['sling', 'sunhat'] },
+  rotschopf: { model: 'rotschopf', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.08, tint: [1, 1, 1], attacks: ['attack'], props: ['hammer'] },
+  schlaeferin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1, tint: [1, 1, 1], attacks: ['attack', 'attack2', 'attack3'], props: ['staff'] },
+  libero: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.6, scale: 1.02, tint: [1, 1, 1], attacks: ['attack'] },
+  pirat: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], attacks: ['attack'], props: ['hook'] },
+  gaertnerin: { model: 'gaertnerin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 0.98, tint: [1, 1, 1], attacks: ['attack'] },
 };
 
 /** Höchstdauer einer Angriffs- bzw. Fähigkeitsanimation in der Darstellung (Sekunden). */
@@ -101,6 +118,26 @@ const ICONS = {
   fear: ['!', '#c77dff'],
   rooted: ['⊗', '#d9a066'],
 } as const;
+
+/** Namensschild (breiter Text) über schweren Gegnern. */
+function labelSprite(text: string, color: string): THREE.Sprite {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 96;
+  const g = canvas.getContext('2d')!;
+  g.font = 'bold 56px system-ui, sans-serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.lineWidth = 10;
+  g.strokeStyle = 'rgba(0,0,0,0.8)';
+  g.strokeText(text, 256, 50);
+  g.fillStyle = color;
+  g.fillText(text, 256, 50);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), depthTest: false, transparent: true }));
+  s.scale.set(2.4, 0.45, 1);
+  s.renderOrder = 10;
+  return s;
+}
 
 /** Text-Sprite (z. B. „+8“ Gold), aus dem gleichen Cache wie die Symbole. */
 export function textSprite(text: string, color: string): THREE.Sprite {
@@ -123,7 +160,15 @@ function zombieHeight(figure: string, radius: number): number {
     case 'rat':
       return 0.45;
     case 'ratking':
-      return 1.2;
+      return 1.3;
+    case 'brute':
+      return 2.6;
+    case 'butcher':
+      return 3.3;
+    case 'demon':
+      return 2.4;
+    case 'postman':
+      return 1.85;
     case 'crawler':
       return 0.6;
     case 'hornet':
@@ -158,10 +203,12 @@ export class UnitView {
   private shield: THREE.Mesh | null = null;
   private flash = 0;
   readonly height: number;
+  private hero = false;
 
   constructor(radius: number, color: string, barColor: number, height = UNIT_HEIGHT, figure?: string, model?: RiggedModel | null) {
     this.height = height;
     this.group.add(this.body);
+    this.hero = !!figure?.startsWith('h:');
     const look = figure?.startsWith('z:') ? ZOMBIE_LOOKS[figure.slice(2)] : figure?.startsWith('h:') ? HERO_LOOKS[figure.slice(2)] : undefined;
     if (look && model) this.buildFromModel(model, look, color);
     else if (figure?.startsWith('h:')) this.buildPerson(radius, color, height, figure.slice(2) === 'grimm' ? undefined : heroFigure(figure.slice(2)));
@@ -247,7 +294,9 @@ export class UnitView {
 
   /** Figur aus einem Mixamo-Modell mit Animationen (assets/models/). */
   private buildFromModel(model: RiggedModel, look: ModelLook, color: string): void {
-    const inst = instantiate(model, look.scale, look.tint, look.paint ? color : undefined);
+    // Helden bekommen ein Randlicht in ihrer Farbe (bei Nacht gut sichtbar)
+    const rim = this.hero ? { color, strength: 0.55 } : undefined;
+    const inst = instantiate(model, look.scale, look.tint, look.paint ? color : undefined, rim);
     inst.root.position.y = look.lift ?? 0;
     this.body.add(inst.root);
     for (const m of inst.materials) {
@@ -612,6 +661,42 @@ export class UnitView {
     if (tint !== null) this.materials.forEach((m) => m.color.lerp(new THREE.Color(tint), 0.35));
   }
 
+  /**
+   * Schwerer Gegner: leuchtender Boden-Ring in seiner Farbe, glühende Augen
+   * und ein Namensschild über dem (größeren) Lebensbalken.
+   */
+  markElite(color: number, name: string): void {
+    this.ring.visible = true;
+    const mat = this.ring.material as THREE.MeshBasicMaterial;
+    mat.color.set(color);
+    // weicher Lichtschein auf dem Boden
+    const r = (this.ring.geometry as THREE.RingGeometry).parameters.outerRadius;
+    const glow = new THREE.Mesh(
+      new THREE.CircleGeometry(r * 1.6, 32).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending }),
+    );
+    glow.position.y = 0.02;
+    this.group.add(glow);
+    const label = labelSprite(name, `#${color.toString(16).padStart(6, '0')}`);
+    label.position.y = this.bar.position.y + 0.42;
+    this.group.add(label);
+    this.addEyes(color);
+  }
+
+  /** Glühende Augen am Kopfknochen der Mixamo-Figuren. */
+  addEyes(color: number): void {
+    const head = this.anim?.inst.root.getObjectByName('mixamorigHead');
+    if (!head) return;
+    this.anim!.inst.root.updateMatrixWorld(true);
+    const k = head.getWorldScale(new THREE.Vector3()).x;
+    const mat = new THREE.MeshBasicMaterial({ color, toneMapped: false });
+    for (const side of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.022 / k, 6, 4), mat);
+      eye.position.set((side * 0.034) / k, 0.085 / k, 0.085 / k);
+      head.add(eye);
+    }
+  }
+
   /** Postbote (Sidequest): goldener Ring, auch durch Wände sichtbar. */
   markCourier(): void {
     this.ring.visible = true;
@@ -689,5 +774,9 @@ export function zombieView(z: Zombie, def: ZombieDef, models: Map<string, Rigged
   const view = new UnitView(z.radius, def.color, elite ? 0xff9f1c : 0xff453a, height, `z:${def.figure}`, model);
   view.bar.visible = elite;
   if (elite) view.bar.scale.set(1.6, 1.4, 1);
+  const glow = ELITE_COLORS[def.figure];
+  if (elite && glow !== undefined && !z.neutral) view.markElite(glow, def.name);
+  else if (glow !== undefined) view.addEyes(glow);
+  else if (model && def.figure !== 'crawler') view.addEyes(0xff3b1f);
   return view;
 }

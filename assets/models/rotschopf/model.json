@@ -1,5 +1,5 @@
 {
-  "base": "slash.fbx",
+  "base": "figur.fbx",
   "clips": {
     "run": {
       "file": "run.fbx"
@@ -31,7 +31,8 @@
   },
   "inPlace": true,
   "textureSize": 1024,
-  "simplifyRatio": 0.35,
+  "simplifyRatio": 0.25,
   "output": "public/models/rotschopf.glb",
-  "idleFrom": "slash.fbx"
+  "idleFrom": "slash.fbx",
+  "normalSize": 512
 }

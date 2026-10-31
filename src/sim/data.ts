@@ -223,6 +223,9 @@ export function parseGameData(raw: {
   });
   const eco: any = raw.economy;
   for (const k of ['startGold', 'waveBonusBase', 'waveBonusPerWave', 'goldShareRange', 'shopRange', 'sellFactor']) num(eco, k, 'economy');
+  const boss = (eco as { boss?: Record<string, unknown> }).boss;
+  if (!boss || typeof boss !== 'object') throw new Error('economy.boss fehlt');
+  for (const k of ['gold', 'goldPerWave', 'assistShare', 'firstBlood', 'assistWindow']) num(boss, k, 'economy.boss');
   num(eco, 'inventorySlots', 'economy', 1);
 
   const bots: any = raw.bots;

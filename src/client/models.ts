@@ -40,25 +40,54 @@ export interface ModelInstance {
 }
 
 /**
- * Eigene Kopie eines Modells. tint multipliziert die Texturfarbe; paint
- * ersetzt die Textur durch eine Farbe (der dunkle Mocap-Anzug der Helden).
+ * Randlicht (Fresnel): Kanten, die vom Betrachter weg zeigen, leuchten in
+ * einer Farbe. So bleiben Figuren auch bei Nacht gut zu erkennen.
  */
-export function instantiate(model: RiggedModel, scale = 1, tint?: [number, number, number], paint?: THREE.ColorRepresentation): ModelInstance {
+function addRimLight(mat: THREE.MeshStandardMaterial, color: THREE.ColorRepresentation, strength: number): void {
+  const uniforms = { rimColor: { value: new THREE.Color(color).multiplyScalar(strength) } };
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.rimColor = uniforms.rimColor;
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform vec3 rimColor;')
+      .replace(
+        '#include <emissivemap_fragment>',
+        '#include <emissivemap_fragment>\n  float rimK = 1.0 - clamp(dot(normal, normalize(vViewPosition)), 0.0, 1.0);\n  totalEmissiveRadiance += rimColor * pow(rimK, 2.2);',
+      );
+  };
+  mat.customProgramCacheKey = () => 'rim';
+}
+
+/**
+ * Eigene Kopie eines Modells. tint multipliziert die Texturfarbe; paint
+ * ersetzt die Textur durch eine Farbe; rim gibt ein farbiges Randlicht.
+ */
+export function instantiate(
+  model: RiggedModel,
+  scale = 1,
+  tint?: [number, number, number],
+  paint?: THREE.ColorRepresentation,
+  rim?: { color: THREE.ColorRepresentation; strength: number },
+): ModelInstance {
   const inner = cloneSkinned(model.scene);
   const materials: ModelInstance['materials'] = [];
-  inner.traverse((o) => {
-    const mesh = o as THREE.Mesh;
-    if (!mesh.isMesh) return;
-    const mat = (mesh.material as THREE.MeshStandardMaterial).clone();
+  const copy = (source: THREE.Material): THREE.MeshStandardMaterial => {
+    const mat = (source as THREE.MeshStandardMaterial).clone();
     if (paint !== undefined) {
       mat.map = null;
       mat.color.set(paint);
     }
     if (tint) mat.color.multiply(new THREE.Color().setRGB(tint[0], tint[1], tint[2]));
-    mat.roughness = 0.9;
+    mat.roughness = 0.85;
     mat.metalness = 0;
-    mesh.material = mat;
+    if (rim) addRimLight(mat, rim.color, rim.strength);
     materials.push(mat);
+    return mat;
+  };
+  inner.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    // Figuren mit mehreren Materialien (z. B. Haut, Kleidung, Haare)
+    mesh.material = Array.isArray(mesh.material) ? mesh.material.map(copy) : copy(mesh.material);
   });
   inner.scale.setScalar(model.scale * scale);
   // Mixamo-Figuren schauen nach +z, die Simulation nach +x

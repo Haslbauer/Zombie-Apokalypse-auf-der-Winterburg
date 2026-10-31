@@ -32,8 +32,39 @@ export function awardWaveBonus(ctx: SimContext, wave: number): void {
   for (const h of ctx.state.heroes) giveGold(ctx, h, eco.waveBonusBase + eco.waveBonusPerWave * wave);
 }
 
+/**
+ * Boss erlegt (wie in LoL): Der Held mit dem letzten Treffer bekommt das
+ * Boss-Gold, alle anderen, die in den letzten Sekunden Schaden gemacht haben,
+ * einen Anteil (Assist). Der erste Boss der Partie bringt „Erstes Blut“.
+ * Das normale Kill-Gold (awardGold) kommt zusätzlich.
+ */
+export function awardBoss(ctx: SimContext, z: Zombie, killer: Hero | undefined): void {
+  const { state } = ctx;
+  const cfg = ctx.data.economy.boss;
+  const base = cfg.gold + cfg.goldPerWave * Math.max(1, state.wave.number);
+  const firstBlood = !state.firstBlood && !!killer;
+  if (firstBlood) state.firstBlood = true;
+  const gold = killer ? base + (firstBlood ? cfg.firstBlood : 0) : 0;
+  const assistGold = Math.round(base * cfg.assistShare);
+  const assists: number[] = [];
+  for (const c of z.contrib ?? []) {
+    if (c.id === killer?.id || state.time - c.t > cfg.assistWindow) continue;
+    const h = state.heroes.find((x) => x.id === c.id);
+    if (!h) continue;
+    assists.push(h.id);
+    h.score.assists++;
+    giveGold(ctx, h, assistGold, h.alive ? z.pos : undefined);
+  }
+  if (killer) {
+    killer.score.bosses++;
+    giveGold(ctx, killer, gold, z.pos);
+  }
+  state.events.push({ type: 'bossKill', zombieId: z.id, defId: z.defId, killerId: killer?.id ?? null, assists, gold, assistGold, firstBlood });
+}
+
 function giveGold(ctx: SimContext, h: Hero, amount: number, pos?: { x: number; y: number }): void {
   h.gold += amount;
+  h.score.gold += amount;
   ctx.state.events.push({ type: 'gold', heroId: h.id, amount, pos: pos ? { ...pos } : undefined });
 }
 

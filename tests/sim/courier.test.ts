@@ -81,7 +81,10 @@ describe('Sidequest Zombie-Postbote', () => {
     const gold = courierGold(sim, def);
     const before = [a.gold, b.gold];
     applyDamage(sim, z, z.hp + 1, a);
-    expect(a.gold).toBe(before[0] + gold);
+    // a hat ihn erlegt: dazu Boss-Gold (Kill + Erstes Blut, siehe bosses.test.ts)
+    const boss = sim.state.events.find((e) => e.type === 'bossKill');
+    expect(boss).toMatchObject({ killerId: a.id });
+    expect(a.gold).toBe(before[0] + gold + (boss?.type === 'bossKill' ? boss.gold : 0));
     expect(b.gold).toBe(before[1] + gold);
     expect(sim.state.events).toContainEqual(expect.objectContaining({ type: 'courier', phase: 'caught', gold }));
   });

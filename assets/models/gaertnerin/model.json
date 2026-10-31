@@ -1,5 +1,5 @@
 {
-  "base": "draw-arrow.fbx",
+  "base": "figur.fbx",
   "clips": {
     "run": {
       "file": "run.fbx"
@@ -32,5 +32,6 @@
   "inPlace": true,
   "textureSize": 1024,
   "simplifyRatio": 0.35,
-  "output": "public/models/gaertnerin.glb"
+  "output": "public/models/gaertnerin.glb",
+  "normalSize": 512
 }
