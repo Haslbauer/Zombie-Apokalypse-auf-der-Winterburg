@@ -1,0 +1,16 @@
+# Render-Blueprint (kostenloser Tarif): https://render.com → New → Blueprint → dieses Repo.
+# Der Gratis-Dienst schläft nach etwa 15 Minuten ohne Besucher; der erste Aufruf
+# danach dauert rund eine Minute (das Spiel zeigt dann „Server wacht auf …“).
+services:
+  - type: web
+    name: zombie-apokalypse
+    runtime: node
+    plan: free
+    region: frankfurt
+    # Entwicklungswerkzeuge (Vite, TypeScript) werden zum Bauen gebraucht
+    buildCommand: npm ci --include=dev && npx vite build
+    startCommand: node --import tsx server/main.ts
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"

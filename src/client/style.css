@@ -787,3 +787,47 @@ html, body {
   pointer-events: auto;
   cursor: crosshair;
 }
+/* ---------- Netz ---------- */
+.hud-latency {
+  font-size: 12px;
+  opacity: 0.85;
+}
+.hud-latency[data-quality='good'] {
+  color: #8ef0a0;
+}
+.hud-latency[data-quality='ok'] {
+  color: #ffd166;
+}
+.hud-latency[data-quality='bad'] {
+  color: #ff7a6b;
+}
+.hud-connection {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 22px;
+  background: rgba(15, 22, 17, 0.9);
+  border: 2px solid #ffd166;
+  border-radius: 10px;
+  font-size: 18px;
+  z-index: 15;
+}
+/* Schmale Fenster: Minimap und Ping-Protokoll kleiner, damit sie die Heldenleiste nicht verdecken */
+@media (max-width: 1250px) {
+  .hud-minimap {
+    transform: scale(0.7);
+    transform-origin: bottom right;
+  }
+  .hud-ping-log {
+    bottom: 180px;
+  }
+}
+@media (max-width: 1000px) {
+  .hud-minimap {
+    transform: scale(0.55);
+  }
+  .hud-ping-log {
+    bottom: 145px;
+  }
+}

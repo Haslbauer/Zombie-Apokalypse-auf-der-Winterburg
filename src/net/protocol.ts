@@ -1,36 +1,120 @@
 /**
  * Netzprotokoll für den Mehrspieler (JSON über WebSocket). Läuft ohne Browser:
- * Server und Client nutzen dieselben Typen und dieselbe Kodierung.
+ * Server und Client nutzen dieselben Typen, dieselbe Kodierung und dieselbe Prüfung.
  *
  * Der Server schickt 20× pro Sekunde einen Schnappschuss des Spielzustands.
  * Zombies gehen als kompakte Zahlenreihen übers Netz, alles andere als
- * gerundetes JSON. Ereignisse zwischen zwei Schnappschüssen werden gesammelt.
+ * gerundetes JSON. Ereignisse zwischen zwei Schnappschüssen werden gesammelt,
+ * damit keines verloren geht. Eingaben tragen eine laufende Nummer (seq); der
+ * Server bestätigt die zuletzt angewendete (ack), damit der Client die eigene
+ * Bewegung vorhersagen und abgleichen kann.
  */
-import type { BotDifficulty, Command, GameEvent, GameState, Hero, Zombie } from '../sim/types';
+import { type BotDifficulty, type Command, type GameEvent, type GameState, type Hero, type HeroInput, PING_KINDS, type Zombie } from '../sim/types';
 
-/** Raum: wer welchen Helden steuert. */
+/** Raum: wer welchen Helden steuert. reserved: Platz wartet auf einen Spieler, der kurz weg ist. */
 export interface RoomInfo {
   code: string;
   difficulty: BotDifficulty;
-  slots: { heroId: number; defId: string; human: boolean; name: string | null }[];
+  slots: { heroId: number; defId: string; human: boolean; reserved: boolean; name: string | null }[];
 }
 
-/** Befehl ohne heroId: Der Server setzt den Helden der Verbindung ein. */
-export type ClientCommand = Command extends infer C ? (C extends { heroId: number } ? Omit<C, 'heroId'> : never) : never;
+/** Befehl ohne heroId: Der Server setzt den Helden der Verbindung ein. Eingaben gehen als eigene Nachricht. */
+export type ClientCommand = Command extends infer C ? (C extends { heroId: number; type: infer T } ? (T extends 'input' ? never : Omit<C, 'heroId'>) : never) : never;
 
 export type ClientMessage =
   | { t: 'create'; heroes: string[]; difficulty: BotDifficulty; name: string }
   | { t: 'info'; room: string }
   | { t: 'join'; room: string; slot: number; name: string }
+  /** Nach einem Verbindungsabbruch: denselben Platz mit dem Token zurückholen. */
+  | { t: 'resume'; room: string; token: string; name: string }
+  /** Eingabe für einen Tick (WASD, Maus) mit laufender Nummer. */
+  | ({ t: 'input'; seq: number } & HeroInput)
   | { t: 'cmd'; cmd: ClientCommand }
-  | { t: 'restart' };
+  | { t: 'restart' }
+  /** Laufzeitmessung: Der Server schickt ts unverändert zurück. */
+  | { t: 'ping'; ts: number };
 
 export type ServerMessage =
+  /** Nach dem Verbinden: Kennung des gebauten Spiels (null im Entwicklungsmodus). */
+  | { t: 'hello'; build: string | null }
   | { t: 'info'; room: RoomInfo }
-  | { t: 'joined'; room: RoomInfo; heroId: number }
+  | { t: 'joined'; room: RoomInfo; heroId: number; token: string }
   | { t: 'room'; room: RoomInfo }
-  | { t: 'state'; s: Snapshot }
-  | { t: 'error'; msg: string };
+  /** ack: zuletzt angewendete Eingabe dieses Spielers. */
+  | { t: 'state'; s: Snapshot; ack: number }
+  | { t: 'pong'; ts: number }
+  | { t: 'error'; msg: string }
+  /** Server fährt herunter (z. B. Neustart). */
+  | { t: 'bye'; msg: string };
+
+/** Größte erlaubte Nachricht vom Client (Bytes). */
+export const MAX_CLIENT_MESSAGE = 4096;
+
+const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+const vec = (v: unknown): v is { x: number; y: number } => !!v && typeof v === 'object' && finite((v as { x: unknown }).x) && finite((v as { y: unknown }).y);
+const int = (v: unknown, min: number, max: number): v is number => Number.isInteger(v) && (v as number) >= min && (v as number) <= max;
+const str = (v: unknown, max: number): v is string => typeof v === 'string' && v.length <= max;
+
+/** Befehl prüfen: nur bekannte Arten mit gültigen Feldern (sonst null). */
+function parseCommand(c: unknown): ClientCommand | null {
+  if (!c || typeof c !== 'object') return null;
+  const o = c as Record<string, unknown>;
+  switch (o.type) {
+    case 'cast':
+      return int(o.slot, 0, 3) && vec(o.aim) ? { type: 'cast', slot: o.slot, aim: { x: o.aim.x, y: o.aim.y } } : null;
+    case 'levelUp':
+      return int(o.slot, 0, 3) ? { type: 'levelUp', slot: o.slot } : null;
+    case 'buy':
+      return str(o.itemId, 40) ? { type: 'buy', itemId: o.itemId } : null;
+    case 'sell':
+      return int(o.slot, 0, 5) ? { type: 'sell', slot: o.slot, consumable: o.consumable === true } : null;
+    case 'use':
+      return int(o.slot, 0, 1) ? { type: 'use', slot: o.slot } : null;
+    case 'startWave':
+      return { type: 'startWave' };
+    case 'ping':
+      return PING_KINDS.includes(o.kind as never) && vec(o.pos) ? { type: 'ping', kind: o.kind as (typeof PING_KINDS)[number], pos: { x: o.pos.x, y: o.pos.y } } : null;
+    default:
+      return null;
+  }
+}
+
+/** Nachricht vom Client prüfen (Server). Ungültiges ergibt null und wird ignoriert. */
+export function parseClientMessage(raw: string): ClientMessage | null {
+  if (raw.length > MAX_CLIENT_MESSAGE) return null;
+  let m: Record<string, unknown>;
+  try {
+    m = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (!m || typeof m !== 'object') return null;
+  const name = str(m.name, 64) ? m.name : '';
+  switch (m.t) {
+    case 'create':
+      if (!Array.isArray(m.heroes) || m.heroes.length > 4 || !m.heroes.every((h) => str(h, 32))) return null;
+      return { t: 'create', heroes: m.heroes as string[], difficulty: m.difficulty as BotDifficulty, name };
+    case 'info':
+      return str(m.room, 8) ? { t: 'info', room: m.room } : null;
+    case 'join':
+      return str(m.room, 8) && int(m.slot, 0, 3) ? { t: 'join', room: m.room, slot: m.slot, name } : null;
+    case 'resume':
+      return str(m.room, 8) && str(m.token, 64) ? { t: 'resume', room: m.room, token: m.token, name } : null;
+    case 'input':
+      if (!int(m.seq, 0, Number.MAX_SAFE_INTEGER) || !vec(m.move) || !vec(m.aim)) return null;
+      return { t: 'input', seq: m.seq, move: { x: m.move.x, y: m.move.y }, aim: { x: m.aim.x, y: m.aim.y }, attack: m.attack === true };
+    case 'cmd': {
+      const cmd = parseCommand(m.cmd);
+      return cmd ? { t: 'cmd', cmd } : null;
+    }
+    case 'restart':
+      return { t: 'restart' };
+    case 'ping':
+      return finite(m.ts) ? { t: 'ping', ts: m.ts } : null;
+    default:
+      return null;
+  }
+}
 
 /** Zombie als Zahlenreihe: Id, Typ-Index, x, y, Blick, Leben, max. Leben, Zustände, Merkmale. */
 type ZombieTuple = [number, number, number, number, number, number, number, number, number];
@@ -55,7 +139,11 @@ const r2 = (v: number) => Math.round(v * 100) / 100;
 /** Zahlen auf 2 Nachkommastellen runden (spart rund ein Drittel der Daten). */
 const round = (_key: string, v: unknown) => (typeof v === 'number' && !Number.isInteger(v) ? r2(v) : v);
 
-/** Server: Zustand plus gesammelte Ereignisse in einen Schnappschuss packen. zombieTypes: Typ-Ids in fester Reihenfolge. */
+/**
+ * Server: Zustand plus gesammelte Ereignisse als Schnappschuss-JSON (ohne
+ * Hülle; stateMessage setzt je Spieler die Bestätigung davor). zombieTypes:
+ * Typ-Ids in fester Reihenfolge.
+ */
 export function encodeSnapshot(state: GameState, events: GameEvent[], zombieTypes: string[]): string {
   const t = state.time;
   const zombies = state.zombies.map((z): ZombieTuple => {
@@ -87,7 +175,12 @@ export function encodeSnapshot(state: GameState, events: GameEvent[], zombieType
     events,
     camps: state.camps,
   };
-  return JSON.stringify({ t: 'state', s: snap } satisfies ServerMessage, round);
+  return JSON.stringify(snap, round);
+}
+
+/** Zustandsnachricht für einen Spieler: gemeinsamer Schnappschuss plus dessen ack (ohne erneutes Kodieren). */
+export function stateMessage(snapshotJson: string, ack: number): string {
+  return `{"t":"state","ack":${ack},"s":${snapshotJson}}`;
 }
 
 /** Client: Schnappschuss wieder in einen Spielzustand für Darstellung und HUD verwandeln. */

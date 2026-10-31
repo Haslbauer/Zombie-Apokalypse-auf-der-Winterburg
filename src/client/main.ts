@@ -183,45 +183,93 @@ async function joinRoom(code: string, error?: string): Promise<void> {
   }
 }
 
+/** Zuletzt eingegebener Spielername (im Browser gemerkt). */
+function savedName(): string {
+  try {
+    return localStorage.getItem('playerName') ?? '';
+  } catch {
+    return '';
+  }
+}
+
+/** Token zum Wiederverbinden je Raum, nur für diesen Tab (nach Neuladen derselbe Held). */
+const tokenKey = (code: string) => `winterburg.token.${code}`;
+function storedToken(code: string): string | null {
+  try {
+    return sessionStorage.getItem(tokenKey(code));
+  } catch {
+    return null;
+  }
+}
+function storeToken(code: string, token: string | null): void {
+  try {
+    if (token) sessionStorage.setItem(tokenKey(code), token);
+    else sessionStorage.removeItem(tokenKey(code));
+  } catch {
+    // ohne Speicher: Wiederverbinden klappt nur ohne Neuladen
+  }
+}
+
 function connect(first: Parameters<typeof RemoteSession.connect>[0], heroes: string[]): void {
   session?.close();
   session = null;
   hud.showNotice('Verbinde …', 'Verbindung zum Spielserver wird aufgebaut.', leaveOnline);
-  RemoteSession.connect(first, placeholder(heroes)).then(
-    (remote) => {
-      let started = false;
-      remote.onRoom = (room: RoomInfo) => {
-        if (remote.heroId < 0) return; // erst nach der Beitrittsbestätigung
-        difficulty = room.difficulty;
-        if (!started) {
-          started = true;
-          session = remote;
-          heroId = remote.heroId;
-          const link = `${location.origin}${location.pathname}?room=${room.code}`;
-          history.replaceState(null, '', `?room=${room.code}`);
-          begin(true);
-          hud.setInvite(room.code, link);
-        } else hud.buildTeam(remote.state, heroId, difficulty, playerNames());
-      };
-      remote.onError = (msg) => {
-        if (!started) {
-          remote.close();
-          const code = new URLSearchParams(location.search).get('room');
-          if (code) void joinRoom(code, msg);
-          else hud.showNotice('Fehler', msg, leaveOnline);
-        } else hud.message(msg);
-      };
-      remote.onClose = () => {
-        if (session === remote) {
-          session = null;
-          minimap.visible = false;
-          hud.setInvite(null);
-          hud.showNotice('Verbindung getrennt', 'Die Verbindung zum Spielserver ist abgebrochen. Über den Einladungslink kommst du zurück.', leaveOnline);
-        }
-      };
-    },
-    () => hud.showNotice('Server nicht erreichbar', 'Für den Mehrspieler muss der Spielserver laufen (npm run server).', leaveOnline),
-  );
+  const remote = RemoteSession.connect(first, placeholder(heroes));
+  let started = false;
+  remote.onRoom = (room: RoomInfo) => {
+    if (remote.heroId < 0) return; // erst nach der Beitrittsbestätigung
+    difficulty = room.difficulty;
+    storeToken(room.code, remote.token);
+    if (!started) {
+      started = true;
+      // Platzhalter mit den Helden des Raums, bis der erste Zustand da ist (wichtig nach dem Neuladen)
+      remote.state = placeholder(room.slots.map((sl) => sl.defId));
+      session = remote;
+      heroId = remote.heroId;
+      const link = `${location.origin}${location.pathname}?room=${room.code}`;
+      const query = new URLSearchParams(location.search);
+      query.set('room', room.code);
+      history.replaceState(null, '', `?${query}`);
+      begin(true);
+      hud.setInvite(room.code, link);
+    } else hud.buildTeam(remote.state, heroId, difficulty, playerNames());
+  };
+  remote.onError = (msg) => {
+    if (started) {
+      hud.message(msg);
+      return;
+    }
+    remote.close();
+    const code = new URLSearchParams(location.search).get('room');
+    if (first.t === 'resume' && code) {
+      // Alter Platz nicht mehr frei: normal beitreten
+      storeToken(code, null);
+      void joinRoom(code);
+    } else if (code) void joinRoom(code, msg);
+    else hud.showNotice('Fehler', msg, leaveOnline);
+  };
+  remote.onStatus = (status, msg) => {
+    if (status === 'online') hud.setConnection(null);
+    else if (status === 'waking') hud.showNotice('Verbinde …', 'Der Spielserver antwortet noch nicht. Kostenlose Server schlafen manchmal und brauchen beim ersten Aufruf etwa eine Minute – es wird weiter versucht.', leaveOnline);
+    else if (status === 'reconnecting') hud.setConnection('Verbindung wird wiederhergestellt …');
+    else {
+      hud.setConnection(null);
+      if (session === remote || !started) {
+        session = null;
+        minimap.visible = false;
+        hud.setInvite(null);
+        hud.showNotice(
+          started ? 'Verbindung getrennt' : 'Server nicht erreichbar',
+          started ? `${msg ?? ''} Über den Einladungslink kommst du zurück.` : 'Der Spielserver antwortet nicht. Läuft er (npm run server bzw. npm run share)?',
+          leaveOnline,
+        );
+      }
+    }
+  };
+  remote.onVersionMismatch = () => {
+    remote.close();
+    hud.showNotice('Neue Version', 'Das Spiel wurde aktualisiert. Bitte die Seite neu laden.', () => location.reload());
+  };
 }
 
 /** Mehrspieler verlassen: zurück zur Heldenwahl. */
@@ -446,8 +494,8 @@ renderer.renderer.setAnimationLoop((now) => {
 
   const hero = myHero();
   if (session && hero) {
-    // Eine Eingabe pro Frame; zuschauen: keine eigenen Befehle
-    if (!spectate) cmd({ type: 'input', ...input.read() });
+    // Eingabe jedes Bild aktualisieren; zuschauen: keine eigenen Befehle
+    if (!spectate) session.setInput(input.read());
     const alpha = session.frame(dt, handleEvents);
     const state = session.state;
     const me = myHero() ?? hero;
@@ -467,6 +515,7 @@ renderer.renderer.setAnimationLoop((now) => {
     hud.setShopHint(!shopReason && !shop.open && !session.paused);
     shop.update(me, def.attack.type, (id) => buildPlan(ctx(), me, id));
     minimap.update(dt, state, heroId, viewCorners());
+    if (session instanceof RemoteSession) hud.setPing(session.rtt);
   }
 
   effects.update(dt);
@@ -500,7 +549,26 @@ input.onStartWave = () => cmd({ type: 'startWave' });
 input.onZoom = (d) => renderer.cam.zoom(d);
 hud.startWaveBtn.addEventListener('click', input.onStartWave);
 
+// Entwicklermodus ?debug: Zugriff für Tests (z. B. Messung der Vorhersage im Browser)
+if (params.has('debug')) {
+  Object.assign(window, {
+    winterburg: {
+      heroPosition: () => renderer.unitPosition(heroId),
+      serverPosition: () => (session instanceof RemoteSession ? session.serverHero()?.pos : myHero()?.pos) ?? null,
+      rtt: () => (session instanceof RemoteSession ? session.rtt : null),
+      heroId: () => heroId,
+      drop: () => (session instanceof RemoteSession ? session.dropConnection() : undefined),
+    },
+  });
+}
+
 const roomCode = params.get('room');
 if (spectate) startGame(null, defaultTeam(gameData.bots, null), spectateDifficulty);
-else if (roomCode) void joinRoom(roomCode.toUpperCase());
+else if (roomCode) {
+  // Neu geladen: mit dem gespeicherten Token denselben Helden zurückholen, sonst Platz wählen
+  const code = roomCode.toUpperCase();
+  const token = storedToken(code);
+  if (token) connect({ t: 'resume', room: code, token, name: savedName() }, gameData.heroes.slice(0, 4).map((h) => h.id));
+  else void joinRoom(code);
+}
 else hud.showStart(pickHero);

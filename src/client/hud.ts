@@ -50,6 +50,8 @@ export class Hud {
   private readonly overlay = el('div', 'hud-overlay');
   private readonly invite = el('div', 'hud-invite');
   private readonly pingLog = el('div', 'hud-ping-log');
+  private readonly connection = el('div', 'hud-connection');
+  private readonly latency = el('span', 'hud-latency');
   private bannerTimer = 0;
 
   constructor(
@@ -86,7 +88,8 @@ export class Hud {
     this.shopHint.style.display = 'none';
     root.append(this.shopHint, this.team);
     this.updateHelp();
-    root.append(this.top, this.bottom, this.banner, this.respawn, this.help, this.invite, this.pingLog, this.overlay, this.tooltip);
+    root.append(this.top, this.bottom, this.banner, this.respawn, this.help, this.invite, this.pingLog, this.connection, this.overlay, this.tooltip);
+    this.connection.style.display = 'none';
     this.invite.style.display = 'none';
     this.showInGame(false);
   }
@@ -212,8 +215,9 @@ export class Hud {
       btn.dataset.slot = String(i);
       const img = el('img', 'hud-hero-portrait');
       img.src = `portraits/${def.id}.jpg`;
-      btn.append(img, el('strong', '', def.name), el('small', 'hud-role', def.role), el('span', 'hud-hero-desc', slot.human ? `Spielt: ${slot.name}` : 'Bot – übernehmen'));
-      if (slot.human) btn.disabled = true;
+      const label = slot.human ? `Spielt: ${slot.name}` : slot.reserved ? `Reserviert für ${slot.name ?? 'einen Spieler'}` : 'Bot – übernehmen';
+      btn.append(img, el('strong', '', def.name), el('small', 'hud-role', def.role), el('span', 'hud-hero-desc', label));
+      if (slot.human || slot.reserved) btn.disabled = true;
       else btn.addEventListener('click', () => onPick(i, name.value));
       row.append(btn);
     });
@@ -247,6 +251,20 @@ export class Hud {
     setTimeout(() => line.remove(), 4000);
   }
 
+  /** Laufzeit zum Server (ms) neben dem Raum-Code; grün, gelb, rot je nach Wert. */
+  setPing(ms: number | null): void {
+    const text = ms === null ? '' : `${Math.round(ms)} ms`;
+    if (this.latency.textContent === text) return;
+    this.latency.textContent = text;
+    this.latency.dataset.quality = ms === null ? '' : ms < 80 ? 'good' : ms < 160 ? 'ok' : 'bad';
+  }
+
+  /** Hinweis während eines Verbindungsabbruchs (null blendet aus). */
+  setConnection(text: string | null): void {
+    this.connection.textContent = text ?? '';
+    this.connection.style.display = text ? '' : 'none';
+  }
+
   /** Einladung im Spiel: Raum-Code und Link zum Kopieren (null blendet aus). */
   setInvite(code: string | null, link = ''): void {
     this.invite.replaceChildren();
@@ -260,7 +278,7 @@ export class Hud {
       );
       setTimeout(() => (copy.textContent = 'Link kopieren'), 2000);
     });
-    this.invite.append(el('span', '', `Raum ${code}`), copy);
+    this.invite.append(el('span', '', `Raum ${code}`), this.latency, copy);
   }
 
   /** Teamleiste links: Porträt, Name, Mensch/Bot, Level, Leben, Respawn. names: Menschen im Raum nach Helden-Id (Mehrspieler). */

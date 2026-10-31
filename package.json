@@ -11,8 +11,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.sim.json --noEmit && tsc -p tsconfig.server.json --noEmit && tsc -p tests/tsconfig.json --noEmit",
     "balance": "BALANCE=1 vitest run tests/balance --silent=false",
     "models": "node scripts/convert-models.mjs",
-    "server": "tsx server/main.ts",
-    "start": "npm run build && npm run server"
+    "server": "node --import tsx server/main.ts",
+    "start": "npm run build && npm run server",
+    "share": "node scripts/share.mjs"
   },
   "dependencies": {
     "three": "^0.187.0",

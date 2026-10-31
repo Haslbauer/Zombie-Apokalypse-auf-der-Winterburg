@@ -19,6 +19,19 @@ const FIELD_TICKS = 5;
 /** Zombies, die in diesem Abstand um ein Ziel stehen, können es angreifen (Saatradius der Felder). */
 const OBJECTIVE_SEED = 0.9;
 
+/** Karte samt Zielen als Hindernisse (für Kollision und Schüsse); auch die Vorhersage im Client nutzt sie. */
+export function collisionArena(data: GameData): ArenaDef {
+  // Ziele (Herz, Bienenstock) sind feste Hindernisse für Laufen und Schüsse.
+  return {
+    ...data.arena,
+    obstacles: [
+      ...data.arena.obstacles,
+      // Niedrige Ziele (Hochbeete) lassen Schüsse durch.
+      ...data.arena.objectives.map((o) => ({ ...objectiveShape(o), blocksShots: o.kind !== 'bed' })),
+    ],
+  };
+}
+
 export interface SimulationOptions {
   seed: number;
   /** Helden-Ids aus heroes.json, ein Eintrag pro Slot. */
@@ -45,15 +58,7 @@ export class Simulation implements SimContext {
   private readonly neighbors: Zombie[] = [];
 
   constructor(readonly data: GameData, options: SimulationOptions) {
-    // Ziele (Herz, Bienenstock) sind feste Hindernisse für Laufen und Schüsse.
-    this.arena = {
-      ...data.arena,
-      obstacles: [
-        ...data.arena.obstacles,
-        // Niedrige Ziele (Hochbeete) lassen Schüsse durch.
-        ...data.arena.objectives.map((o) => ({ ...objectiveShape(o), blocksShots: o.kind !== 'bed' })),
-      ],
-    };
+    this.arena = collisionArena(data);
     this.grid = new Grid(this.arena);
     this.heroDefs = new Map(data.heroes.map((h) => [h.id, h]));
     this.zombieDefs = new Map(data.zombies.map((z) => [z.id, z]));

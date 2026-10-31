@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.4)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.5)
 
 Stand: 31.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v1.5: Netzcode mit Bewegungsvorhersage, Jitter-Puffer, Wiederverbinden, Absicherung; kostenlose Bereitstellung (Tunnel, Render, Docker).
 Änderungen v1.4: Minimap und Pings mit der rechten Maustaste (Ping-Rad wie in LoL).
 Änderungen v1.3: M6 Mehrspieler: Node-Server mit Räumen, Beitritt per Link, Bots auf freien Plätzen, Docker.
 Änderungen v1.2: Heldennamen Grimm (Hund), Hagedorn (Gärtnerin), Rauchbart (Pirat), Spike (Libero), Ragnar (Rotschopf), Somnia (Schläferin). Die internen IDs bleiben (`gaertnerin`, `pirat`, `libero`, `rotschopf`, `schlaeferin`, `grimm`).
@@ -248,7 +249,15 @@ Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
   - Beitreten: Der Link zeigt die vier Plätze; ein Bot-Platz lässt sich übernehmen (Level, Gold, Items bleiben). Verlässt ein Mensch den Raum, übernimmt wieder ein Bot. Leere Räume stehen still und werden nach 5 Minuten geschlossen.
   - Netz: Der Server simuliert mit 20 Ticks/s und schickt jedem Spieler 20× pro Sekunde den Zustand (Zombies als kompakte Zahlenreihen, Ereignisse gesammelt, WebSocket-Kompression). Gemessen rund 3 KB/s pro Spieler zu Beginn. Der Client blendet zwischen zwei Zuständen weich über und schickt Eingaben höchstens 20× pro Sekunde. Befehle steuern nur den eigenen Helden.
   - Im Mehrspieler gibt es keine Pause (Esc öffnet nur die Tastenbelegung). „Nochmal“ nach Game Over startet die Partie für alle neu.
-  - Noch offen: Vorhersage der eigenen Bewegung im Client (bei hohem Ping spürbar), Heldenwechsel in der Pause, Hosting bei einem Anbieter.
+  - **Netzcode (v1.5):**
+    - Eingaben mit laufender Nummer (`seq`), genau eine pro Server-Tick angewendet (fehlt eine, gilt die letzte weiter), Bestätigung (`ack`) im Zustand.
+    - Der Client sagt die eigene Bewegung mit derselben Formel voraus (`moveHero` in `src/sim/hero.ts`, `src/client/prediction.ts`), wendet unbestätigte Eingaben auf die Server-Position erneut an und gleicht Abweichungen weich aus (über 2 m sofort). Keine Vorhersage im Sprung, beim Kanalisieren, betäubt oder festgehalten.
+    - Jitter-Puffer (`src/client/snapshots.ts`): Darstellung 2 Ticks hinter dem neuesten Zustand nach Server-Tick; jedes Ereignis genau einmal.
+    - Gegendruck: Bei vollem Sendepuffer lässt der Server Zustände aus und liefert die Ereignisse mit dem nächsten nach.
+    - Wiederverbinden: Token je Spieler (im Tab gespeichert), Platz 2 Minuten reserviert, automatische Wiederholung (0,5–8 s), auch nach Neuladen. Erster Verbindungsaufbau wird bis 90 s wiederholt („Server wacht auf …“).
+    - Herzschlag (WebSocket-Ping alle 5 s), Laufzeitanzeige im HUD, Nachrichten geprüft (`parseClientMessage`), höchstens 4 KB und 60 pro Sekunde, Build-Kennung (`version.json`) gegen veraltete Seiten.
+  - **Serverumgebung:** vorkomprimierte Auslieferung (Brotli/gzip), Cache-Header, Sicherheits-Header, `/health`, sauberes Herunterfahren (SIGTERM), Docker zweistufig ohne root mit Gesundheitsprüfung. Kostenlos betreiben: `npm run share` (eigener Rechner plus Cloudflare-Tunnel mit HTTPS) oder Render-Gratis-Tarif (`render.yaml`).
+  - Noch offen: Heldenwechsel in der Pause.
 - Join in laufender Partie: Der Mensch übernimmt den Bot-Slot samt Level, Gold und Items. Heldenwechsel nur in der Pausenphase (Vorschlag).
 - Schwierigkeit ist fest und hängt nicht von der Zahl der Menschen ab.
 - Bot-KI ist klassische Spiel-KI, kein Sprachmodell. Umgesetzt in M5 (`src/sim/bots/`, Werte in `data/bots.json`):
@@ -289,7 +298,7 @@ Garten mit Haus, Hecken und Zugängen. Umgesetzt in `data/map.json`, 1 Spieleinh
 3. M3: Level, XP, Skillpunkte, 6 Helden (Grimm, Gärtnerin, Pirat, Libero, Rotschopf, Schläferin) mit Fähigkeiten auf 1–4
 4. M4: Gold, Shop, Waffen und Items, Elite-Zombies, Ratten und Kriecher
 5. M5: Bots (Singleplayer mit 3 Bots), Balancing für 4 Helden
-6. M6: Server und Mehrspieler (Raum, Join per Link, Bot-Ersatz) – umgesetzt bis auf die Bewegungsvorhersage
+6. M6: Server und Mehrspieler (Raum, Join per Link, Bot-Ersatz) – umgesetzt
 7. M7: Weitere Helden (Taucher, Imker, zwei freie Slots), Boss, Balancing, Feinschliff
 
 ## 13. Offene Fragen

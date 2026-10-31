@@ -1,7 +1,10 @@
 import { gameData } from '../gameData';
 import { decodeSnapshot, type ClientCommand, type ClientMessage, type RoomInfo, type ServerMessage } from '../net/protocol';
 import { Simulation, type SimulationOptions } from '../sim/game';
-import { type Command, DT, type GameState } from '../sim/types';
+import { face } from '../sim/movement';
+import { type Command, DT, type GameState, type HeroInput } from '../sim/types';
+import { Prediction } from './prediction';
+import { SnapshotBuffer } from './snapshots';
 import type { Snapshot } from './renderer';
 
 /**
@@ -15,7 +18,9 @@ export interface Session {
   readonly online: boolean;
   /** Positionen vor dem letzten Schritt (für weiche Bewegung zwischen zwei Zuständen). */
   readonly prev: Map<number, Snapshot>;
-  /** Befehl des Spielers (Fähigkeit, Kauf, Eingabe …). */
+  /** Aktuelle Eingabe (WASD, Maus); gilt, bis eine neue kommt. */
+  setInput(input: HeroInput): void;
+  /** Einmaliger Befehl des Spielers (Fähigkeit, Kauf, Ping …). */
   send(cmd: ClientCommand): void;
   /**
    * Ein Bild weiter: Simulation bzw. neue Zustände verarbeiten. onStep läuft
@@ -55,13 +60,15 @@ export class LocalSession implements Session {
     return this.sim.state;
   }
 
+  setInput(input: HeroInput): void {
+    if (this.heroId >= 0) this.input = { heroId: this.heroId, type: 'input', ...input };
+  }
+
   send(cmd: ClientCommand): void {
     if (this.paused) return;
     // Zuschauen: nur „Welle starten“
     if (this.heroId < 0 && cmd.type !== 'startWave') return;
-    const full = { ...cmd, heroId: this.heroId } as Command;
-    if (full.type === 'input') this.input = full;
-    else this.pending.push(full);
+    this.pending.push({ ...cmd, heroId: this.heroId } as Command);
   }
 
   frame(dt: number, onStep: (state: GameState) => void): number {
@@ -88,12 +95,30 @@ export function serverUrl(): string {
   return `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;
 }
 
-/** Eingaben höchstens so oft schicken (Sekunden): einmal pro Server-Tick. */
-const INPUT_INTERVAL = DT;
+/** Kennung dieses Builds (von Vite eingesetzt; im Entwicklungsmodus null). */
+declare const __BUILD_ID__: string | null;
+export const BUILD_ID: string | null = typeof __BUILD_ID__ === 'undefined' ? null : __BUILD_ID__;
+
+/** Laufzeitmessung alle … s. */
+const PING_INTERVAL = 2;
+/** Wartezeiten beim Wiederverbinden (s); danach alle 8 s. */
+const RECONNECT_STEPS = [0.5, 1, 2, 4, 8];
+/** So lange wird es nach einem Abbruch versucht (s), solange der Platz reserviert ist … */
+const RECONNECT_FOR = 120;
+/** … bzw. beim ersten Verbindungsaufbau (kostenlose Server brauchen nach dem Schlafen bis zu einer Minute). */
+const CONNECT_FOR = 90;
+
+/** waking: erster Verbindungsaufbau dauert (Server startet), reconnecting: nach einem Abbruch. */
+export type ConnectionStatus = 'online' | 'waking' | 'reconnecting' | 'lost';
 
 /**
- * Mehrspieler: Der Server rechnet, der Client zeigt die Zustände an und
- * schickt Eingaben. Zwischen zwei Zuständen (50 ms) wird weich überblendet.
+ * Mehrspieler: Der Server rechnet, der Client zeigt die Zustände an.
+ * - Eingaben gehen 20× pro Sekunde mit laufender Nummer raus; die eigene
+ *   Bewegung wird sofort vorhergesagt und mit dem Server abgeglichen.
+ * - Alle anderen Einheiten werden 2 Ticks (100 ms) hinter dem neuesten
+ *   Zustand gezeigt, zwischen zwei Zuständen nach Server-Tick (Jitter-Puffer).
+ * - Bricht die Verbindung ab, verbindet sich die Sitzung selbst neu und holt
+ *   mit dem Token denselben Helden zurück.
  */
 export class RemoteSession implements Session {
   readonly online = true;
@@ -101,37 +126,46 @@ export class RemoteSession implements Session {
   paused = false;
   heroId = -1;
   room: RoomInfo | null = null;
+  /** Token zum Wiederverbinden (vom Server beim Beitritt). */
+  token: string | null = null;
+  /** Gemessene Laufzeit hin und zurück (ms), null bis zur ersten Messung. */
+  rtt: number | null = null;
   state: GameState;
-  private queue: GameState[] = [];
-  private sinceState = 0;
-  private sinceInput = 0;
-  private lastInput = '';
-  private readonly zombieTypes = gameData.zombies.map((z) => z.id);
   /** Raum-Infos (beigetreten, Mitspieler kommen und gehen). */
   onRoom: (room: RoomInfo) => void = () => {};
   onError: (msg: string) => void = () => {};
-  onClose: () => void = () => {};
+  /** Verbindung: online, wird wiederhergestellt, endgültig verloren (msg: Grund). */
+  onStatus: (status: ConnectionStatus, msg?: string) => void = () => {};
+  /** Server hat einen anderen Build als diese Seite. */
+  onVersionMismatch: () => void = () => {};
 
-  private constructor(
-    private readonly ws: WebSocket,
-    initial: GameState,
-  ) {
+  private ws: WebSocket;
+  private readonly snapshots = new SnapshotBuffer();
+  private readonly prediction = new Prediction(gameData);
+  private input: HeroInput = { move: { x: 0, y: 0 }, aim: { x: 0, y: 0 }, attack: false };
+  private seq = 0;
+  private sinceInput = 0;
+  private sincePing = PING_INTERVAL;
+  private closed = false;
+  private reconnecting = false;
+  private reconnectStart = 0;
+  private attempts = 0;
+  private timer = 0;
+  private name = '';
+  /** Erste Nachricht (anlegen, beitreten, wiederverbinden) für Wiederholungen vor dem Beitritt. */
+  private readonly first: ClientMessage;
+  private readonly zombieTypes = gameData.zombies.map((z) => z.id);
+
+  private constructor(first: ClientMessage, initial: GameState) {
     this.state = initial;
-    ws.addEventListener('message', (e) => this.receive(JSON.parse(String(e.data)) as ServerMessage));
-    ws.addEventListener('close', () => this.onClose());
+    this.first = first;
+    if ('name' in first) this.name = first.name;
+    this.ws = this.open(first);
   }
 
-  /** Verbindung aufbauen; erste Nachricht schicken, sobald sie steht. */
-  static connect(first: ClientMessage, placeholder: GameState): Promise<RemoteSession> {
-    return new Promise((resolve, reject) => {
-      const ws = new WebSocket(serverUrl());
-      const session = new RemoteSession(ws, placeholder);
-      ws.addEventListener('open', () => {
-        ws.send(JSON.stringify(first));
-        resolve(session);
-      });
-      ws.addEventListener('error', () => reject(new Error('Server nicht erreichbar')));
-    });
+  /** Verbindung aufbauen; die erste Nachricht geht raus, sobald sie steht. */
+  static connect(first: ClientMessage, placeholder: GameState): RemoteSession {
+    return new RemoteSession(first, placeholder);
   }
 
   /** Raum-Infos abfragen, ohne beizutreten. */
@@ -141,6 +175,7 @@ export class RemoteSession implements Session {
       ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'info', room: code } satisfies ClientMessage)));
       ws.addEventListener('message', (e) => {
         const msg = JSON.parse(String(e.data)) as ServerMessage;
+        if (msg.t === 'hello') return;
         ws.close();
         if (msg.t === 'info') resolve(msg.room);
         else reject(new Error(msg.t === 'error' ? msg.msg : 'Unerwartete Antwort'));
@@ -149,58 +184,160 @@ export class RemoteSession implements Session {
     });
   }
 
+  private open(first: ClientMessage): WebSocket {
+    const ws = new WebSocket(serverUrl());
+    ws.addEventListener('open', () => ws.send(JSON.stringify(first)));
+    ws.addEventListener('message', (e) => this.receive(JSON.parse(String(e.data)) as ServerMessage));
+    ws.addEventListener('close', () => {
+      if (ws === this.ws && !this.closed) this.scheduleReconnect();
+    });
+    return ws;
+  }
+
+  /**
+   * Verbindung weg oder (noch) nicht zustande gekommen: mit wachsenden Pausen
+   * neu versuchen. Nach dem Beitritt mit dem Token (derselbe Held), vorher mit
+   * der ersten Nachricht.
+   */
+  private scheduleReconnect(): void {
+    const joined = this.heroId >= 0;
+    if (!this.reconnecting) {
+      this.reconnecting = true;
+      this.reconnectStart = performance.now();
+      this.attempts = 0;
+      this.onStatus(joined ? 'reconnecting' : 'waking');
+    }
+    if ((performance.now() - this.reconnectStart) / 1000 > (joined ? RECONNECT_FOR : CONNECT_FOR)) {
+      this.closed = true;
+      this.onStatus('lost', joined ? 'Die Verbindung zum Spielserver ist abgebrochen.' : 'Server nicht erreichbar');
+      return;
+    }
+    const wait = RECONNECT_STEPS[Math.min(this.attempts++, RECONNECT_STEPS.length - 1)];
+    window.clearTimeout(this.timer);
+    this.timer = window.setTimeout(() => {
+      if (this.closed) return;
+      const msg: ClientMessage = joined && this.room && this.token ? { t: 'resume', room: this.room.code, token: this.token, name: this.name } : this.first;
+      this.ws = this.open(msg);
+    }, wait * 1000);
+  }
+
   private receive(msg: ServerMessage): void {
     switch (msg.t) {
-      case 'joined':
+      case 'hello':
+        if (msg.build && BUILD_ID && msg.build !== BUILD_ID) this.onVersionMismatch();
+        break;
+      case 'joined': {
         this.heroId = msg.heroId;
+        this.token = msg.token;
         this.room = msg.room;
+        this.prediction.reset();
+        if (this.reconnecting) {
+          this.reconnecting = false;
+          this.onStatus('online');
+        }
         this.onRoom(msg.room);
         break;
+      }
       case 'room':
         this.room = msg.room;
         this.onRoom(msg.room);
         break;
-      case 'state':
-        this.queue.push(decodeSnapshot(msg.s, this.zombieTypes, (id) => gameData.zombies.find((z) => z.id === id)?.radius ?? 0.4));
+      case 'state': {
+        const state = decodeSnapshot(msg.s, this.zombieTypes, (id) => gameData.zombies.find((z) => z.id === id)?.radius ?? 0.4);
+        this.snapshots.push(state);
+        const me = state.heroes.find((h) => h.id === this.heroId);
+        if (me) this.prediction.reconcile(state, me, msg.ack);
+        break;
+      }
+      case 'pong':
+        this.rtt = performance.now() - msg.ts;
         break;
       case 'error':
-        this.onError(msg.msg);
+        // Wiederverbinden gescheitert (Platz weg): endgültig
+        if (this.reconnecting && this.heroId >= 0) {
+          this.closed = true;
+          this.ws.close();
+          this.onStatus('lost', msg.msg);
+        } else this.onError(msg.msg);
+        break;
+      case 'bye':
+        // Server startet neu: wie ein Abbruch behandeln (die Sitzung versucht es weiter)
         break;
     }
+  }
+
+  private sendRaw(msg: ClientMessage): void {
+    if (this.ws.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(msg));
+  }
+
+  setInput(input: HeroInput): void {
+    this.input = input;
   }
 
   send(cmd: ClientCommand): void {
-    if (this.ws.readyState !== WebSocket.OPEN) return;
-    if (cmd.type === 'input') {
-      // Eingaben gebündelt: nur bei Änderung oder einmal pro Tick
-      const text = JSON.stringify(cmd);
-      const due = text !== this.lastInput ? this.sinceInput >= INPUT_INTERVAL : this.sinceInput >= 0.5;
-      if (!due) return;
-      this.lastInput = text;
-      this.sinceInput = 0;
-    }
-    this.ws.send(JSON.stringify({ t: 'cmd', cmd } satisfies ClientMessage));
+    this.sendRaw({ t: 'cmd', cmd });
   }
 
   restart(): void {
-    this.ws.send(JSON.stringify({ t: 'restart' } satisfies ClientMessage));
+    this.sendRaw({ t: 'restart' });
   }
 
   frame(dt: number, onStep: (state: GameState) => void): number {
-    this.sinceInput += dt;
-    this.sinceState += dt;
-    // Kommen mehrere Zustände auf einmal (Ruckler im Netz), alle Ereignisse abspielen
-    for (const next of this.queue) {
-      remember(this.prev, this.state);
-      this.state = next;
-      this.sinceState = 0;
-      onStep(next);
+    if (this.ws.readyState === WebSocket.OPEN && this.heroId >= 0) {
+      // Eingaben im Server-Takt, jede mit eigener Nummer; die Bewegung sofort vorhersagen
+      this.sinceInput += dt;
+      // Bei sehr niedriger Bildrate alle fälligen Eingaben nachschicken (höchstens 10 = 0,5 s)
+      let n = 0;
+      while (this.sinceInput >= DT && n++ < 10) {
+        this.sinceInput -= DT;
+        this.seq++;
+        this.sendRaw({ t: 'input', seq: this.seq, ...this.input });
+        this.prediction.apply(this.seq, this.input.move);
+      }
+      if (n > 10) this.sinceInput = 0;
+      this.sincePing += dt;
+      if (this.sincePing >= PING_INTERVAL) {
+        this.sincePing = 0;
+        this.sendRaw({ t: 'ping', ts: performance.now() });
+      }
     }
-    this.queue = [];
-    return Math.min(1, this.sinceState / DT);
+    return this.present(dt, onStep);
+  }
+
+  /** Zustände aus dem Jitter-Puffer darstellen; der eigene Held kommt aus der Vorhersage. */
+  private present(dt: number, onStep: (state: GameState) => void): number {
+    const frame = this.snapshots.advance(dt, onStep);
+    if (!frame) return 1;
+    const { from, to, alpha } = frame;
+    remember(this.prev, from);
+    // Eigener Held: vorhergesagte Position, Blick sofort zur Maus
+    const predicted = this.prediction.display(dt);
+    this.state = { ...to, heroes: to.heroes.map((h) => (h.id === this.heroId ? { ...h, pos: predicted ?? h.pos } : h)) };
+    const me = this.state.heroes.find((h) => h.id === this.heroId);
+    if (me) {
+      if (predicted) this.prev.set(me.id, { x: predicted.x, y: predicted.y, facing: me.facing });
+      if (me.alive && !me.dash) {
+        face(me, this.input.aim);
+        const p = this.prev.get(me.id);
+        if (p) p.facing = me.facing;
+      }
+    }
+    return alpha;
+  }
+
+  /** Nur für Tests (?debug): Verbindung hart trennen, als wäre das Netz weg. */
+  dropConnection(): void {
+    this.ws.close();
+  }
+
+  /** Eigener Held im neuesten Zustand vom Server (ohne Vorhersage). */
+  serverHero(): GameState['heroes'][number] | undefined {
+    return this.snapshots.newest?.heroes.find((h) => h.id === this.heroId);
   }
 
   close(): void {
+    this.closed = true;
+    window.clearTimeout(this.timer);
     this.ws.close();
   }
 }

@@ -18,18 +18,23 @@ Dann http://localhost:5173 öffnen. Weitere Befehle: `npm test` (Simulationstest
 
 ## Mehrspieler
 
-Bis zu vier Spieler, freie Plätze spielen Bots. Der Server rechnet das Spiel (samt Bots) und liefert es auch aus.
+Bis zu vier Spieler, freie Plätze spielen Bots. Der Server rechnet das Spiel (samt Bots) und liefert es auch aus. Alles kostenlos.
+
+### Mit Freunden spielen (vom eigenen Rechner)
 
 ```bash
-npm run build
-npm run server
+npm run share
 ```
 
-Dann http://localhost:3000 öffnen, Helden wählen, **„Online mit Freunden“**. Oben rechts steht der Raum-Code mit **„Link kopieren“**. Wer den Link öffnet, übernimmt einen Bot-Platz samt Level, Gold und Items; wer geht, wird wieder durch einen Bot ersetzt. Leere Räume halten 5 Minuten (Rückkehr über denselben Link).
+Baut das Spiel, startet den Server und öffnet einen kostenlosen Cloudflare-Tunnel. Angezeigt wird ein Link `https://….trycloudflare.com` – den an die Freunde schicken. HTTPS kommt von Cloudflare, am Router muss nichts eingestellt werden. Der Link gilt, solange das Fenster offen ist. Einmalig `cloudflared` installieren (Windows: `winget install --id Cloudflare.cloudflared`, macOS: `brew install cloudflared`); ohne zeigt `npm run share` die Adressen fürs eigene WLAN.
 
-- **Im selben WLAN:** Die anderen öffnen `http://<IP-des-Rechners>:3000/?room=CODE` (IP z. B. mit `ipconfig` bzw. `ip addr`). Eventuell muss die Firewall Port 3000 erlauben.
-- **Über das Internet, von zu Hause:** einen Tunnel starten, z. B. `cloudflared tunnel --url http://localhost:3000` oder `ngrok http 3000`, und dessen Adresse weitergeben.
-- **Dauerhaft im Internet:** Docker-Image bauen und bei einem Anbieter (Fly.io, Render, Railway, eigener Server) starten:
+Im Spiel: Helden wählen, **„Online mit Freunden“**. Oben rechts stehen Raum-Code, Ping (ms) und **„Link kopieren“**. Wer den Link öffnet, übernimmt einen Bot-Platz samt Level, Gold und Items.
+
+### Dauerhafter Link (Render, Gratis-Tarif)
+
+Bei [render.com](https://render.com) mit GitHub anmelden, **New → Blueprint**, dieses Repo wählen – `render.yaml` erledigt den Rest (Region Frankfurt). Der Gratis-Dienst schläft nach rund 15 Minuten ohne Besucher; der erste Aufruf danach dauert etwa eine Minute, das Spiel zeigt dann „Server wacht auf …“ und versucht es weiter. Laufende Räume gehen beim Einschlafen verloren. (Stand der Anbieterbedingungen kann sich ändern.)
+
+### Eigener Server (Docker)
 
 ```bash
 docker build -t winterburg .
@@ -39,7 +44,18 @@ docker build -t winterburg .
 docker run -p 3000:3000 winterburg
 ```
 
-Port über `PORT` (Standard 3000). Beim Entwickeln (`npm run dev`) leitet Vite den Mehrspieler an einen laufenden `npm run server` weiter.
+Im Internet hinter HTTPS betreiben (z. B. Caddy oder ein Tunnel), denn Browser verlangen dort `wss://`. Einstellungen: `PORT` (3000), `HOST` (0.0.0.0), `MAX_ROOMS` (200). `/health` meldet Build, Räume und Spieler.
+
+### Was der Netzcode tut
+
+- **Eigene Bewegung ohne Verzögerung:** Der Client sagt die eigene Bewegung voraus und gleicht sie mit dem Server ab (getestet mit 300 ms Laufzeit: Der Held läuft sofort los, am Ende stimmen Bild und Server auf den Zentimeter).
+- **Gleichmäßige Bewegung der anderen:** Zustände 20× pro Sekunde, Darstellung 100 ms im Puffer gegen Netzschwankungen.
+- **Nichts geht verloren:** Ereignisse (Treffer, Gold, Pings …) werden gesammelt und auch bei voller Leitung nachgeliefert.
+- **Verbindungsabbruch:** Ein Bot springt ein, der Platz bleibt 2 Minuten reserviert, der Client verbindet sich selbst neu und bekommt denselben Helden zurück – auch nach dem Neuladen der Seite.
+- **Absicherung:** Nachrichten werden geprüft, begrenzt (Größe, Anzahl pro Sekunde), tote Verbindungen per Herzschlag erkannt. Nach einem Update meldet die alte Seite „Neue Version – bitte neu laden“.
+- **Klein:** Komprimierte Zustände (rund 3 KB/s pro Spieler zu Beginn), das Spiel selbst wird vorkomprimiert ausgeliefert (JavaScript 845 KB → 187 KB).
+
+Beim Entwickeln (`npm run dev`) leitet Vite den Mehrspieler an einen laufenden `npm run server` weiter. Zum Testen schlechter Leitungen: `LAG_MS=150 npm run server` (künstliche Verzögerung je Richtung).
 
 ## Steuerung (wie in Supervive)
 
@@ -55,7 +71,7 @@ Port über `PORT` (Standard 3000). Beim Entwickeln (`npm run dev`) leitet Vite d
 | N | Welle sofort starten (in der Pause) |
 | Rechtsklick | Ping an alle: kurz = „Hier!“, halten und ziehen = Ping-Rad (oben Angriff, rechts Bin unterwegs, unten Hilfe, links Gefahr). Auch auf der Minimap. |
 | Mausrad | Kamera heran- bzw. herauszoomen |
-| Esc | Pause und Tastenbelegung (alle Tasten frei belegbar) |
+| Esc | Pause und Tastenbelegung (alle Tasten frei belegbar); online läuft das Spiel weiter |
 
 Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bogen beim Nahkampf, einen Pfeil beim Fernkampf.
 
@@ -108,5 +124,5 @@ Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.
 3. M3: Level, XP, Skillpunkte, 6 Helden mit Fähigkeiten ✅
 4. M4: Gold, Shop, Waffen und Items, Elite-Zombies ✅
 5. M5: Bots (Singleplayer mit 3 Bots) ✅
-6. M6: Server und Mehrspieler ✅ (Vorhersage der eigenen Bewegung folgt)
+6. M6: Server und Mehrspieler ✅
 7. M7: Weitere Helden, Boss, Balancing, Feinschliff

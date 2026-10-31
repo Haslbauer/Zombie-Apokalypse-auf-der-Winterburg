@@ -70,6 +70,18 @@ function ping(ctx: SimContext, h: Hero, kind: unknown, pos: unknown): void {
   ctx.state.events.push({ type: 'ping', heroId: h.id, kind: kind as PingKind, pos: at });
 }
 
+/**
+ * Einen Tick in Laufrichtung move (Länge ≤ 1) gehen: Tempo aus Held, Buffs,
+ * Items und Helden-Fähigkeit. Hindernisse löst die Simulation danach auf.
+ * Der Mehrspieler-Client nutzt dieselbe Formel für die Vorhersage.
+ */
+export function moveHero(ctx: SimContext, h: Hero, move: Vec2): void {
+  const kit = kitOf(h.defId);
+  const speed = h.speed * (1 + buffSum(h, 'haste') + itemStats(ctx, h).moveSpeed) * (kit.moveSpeedFactor?.(ctx, h) ?? 1);
+  h.pos.x += move.x * speed * DT;
+  h.pos.y += move.y * speed * DT;
+}
+
 /** Laufen mit WASD, Blick zur Maus, Angriff nur auf Tastendruck (kein Auto-Attack). */
 export function updateHero(ctx: SimContext, h: Hero): void {
   if (!h.alive) return;
@@ -102,11 +114,7 @@ export function updateHero(ctx: SimContext, h: Hero): void {
     if (h.channel) return;
   }
 
-  if (!hasBuff(h, 'rooted')) {
-    const speed = h.speed * (1 + buffSum(h, 'haste') + items.moveSpeed) * (kit.moveSpeedFactor?.(ctx, h) ?? 1);
-    h.pos.x += move.x * speed * DT;
-    h.pos.y += move.y * speed * DT;
-  }
+  if (!hasBuff(h, 'rooted')) moveHero(ctx, h, move);
   face(h, aim);
 
   if (attack && h.attackTimer <= 0) {
