@@ -7,15 +7,18 @@ import type { BotDifficulty } from '../../src/sim/types';
 /**
  * Balancing: vier Bots spielen allein. Nur mit BALANCE=1 (npm run balance).
  * Optional: BALANCE_SEEDS=5, BALANCE_DIFF=mittel, BALANCE_MAXWAVE=30,
- * BALANCE_AFK=1 (ein Held bleibt untätig im Innenhof stehen, die anderen drei spielen).
+ * BALANCE_AFK=1 (ein Held bleibt untätig im Innenhof stehen, die anderen drei spielen),
+ * BALANCE_TEAM=held,held,… (feste Zusammenstellung, z. B. ohne Tank).
  */
 const afk = process.env.BALANCE_AFK === '1';
 const seeds = Number(process.env.BALANCE_SEEDS ?? 4);
 const diffs = (process.env.BALANCE_DIFF?.split(',') ?? ['leicht', 'mittel', 'schwer']) as BotDifficulty[];
 const maxWave = Number(process.env.BALANCE_MAXWAVE ?? 30);
+/** Feste Teamzusammenstellung, z. B. BALANCE_TEAM=rotschopf,grimm,pirat,gaertnerin (sonst ausgewogen). */
+const fixedTeam = process.env.BALANCE_TEAM?.split(',');
 
 function play(difficulty: BotDifficulty, seed: number) {
-  const team = defaultTeam(gameData.bots, null);
+  const team = fixedTeam ?? defaultTeam(gameData.bots, null);
   const sim = new Simulation(gameData, { seed, heroes: team, bots: team.map((_, i) => (afk && i === 0 ? null : difficulty)) });
   let deaths = 0;
   let breaches = 0;

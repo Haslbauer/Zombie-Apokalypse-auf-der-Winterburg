@@ -154,7 +154,10 @@ export class GameRenderer {
       if (!h.alive && !this.units.get(h.id)?.isAnimated) continue;
       const def = this.data.heroes.find((d) => d.id === h.defId)!;
       const lift = h.dash ? Math.sin((h.dash.elapsed / h.dash.duration) * Math.PI) * h.dash.height : 0;
-      const view = upsert(h, () => heroView(h, def, h.id === this.playerId, this.models), lift);
+      if (h.benched) continue;
+      const myTeam = state.heroes.find((x) => x.id === this.playerId)?.team;
+      const enemy = !!state.pvp && myTeam !== undefined && h.team !== myTeam;
+      const view = upsert(h, () => heroView(h, def, h.id === this.playerId, this.models, enemy), lift);
       const speed = h.alive ? view.measureSpeed(dt) : 0;
       if (!h.alive) {
         // Menschen liegen (down), Grimm spielt seine Sterbe-Animation und bleibt liegen

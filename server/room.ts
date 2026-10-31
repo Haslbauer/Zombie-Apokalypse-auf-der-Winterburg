@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { gameData } from '../src/gameData';
-import { encodeSnapshot, slowKey, stateMessage, type ClientCommand, type RoomInfo } from '../src/net/protocol';
+import { encodeSnapshot, slowKey, stateMessage, type ClientCommand, type GameMode, type RoomInfo } from '../src/net/protocol';
 import { createBot } from '../src/sim/bots/brain';
 import { defaultTeam, fillTeam } from '../src/sim/bots/team';
 import { validSpells } from '../src/sim/spells';
@@ -47,6 +47,8 @@ interface Slot {
   pick: string | null;
   spells: [string, string] | null;
   ready: boolean;
+  /** PvP: Team (0 = Nord, 1 = Süd). */
+  team: number;
 }
 
 /** So lange läuft der Countdown, wenn alle bereit sind (ms). */
@@ -63,6 +65,8 @@ export class Room {
   private readonly slots: Slot[];
   /** Lobby (Sammeln, Heldenwahl, Bereit) oder laufendes Spiel. */
   phase: 'lobby' | 'playing' = 'lobby';
+  /** Spielmodus: Koop gegen Zombies oder PvP. */
+  mode: GameMode = 'koop';
   /** Countdown bis zum Start (ms-Zeitstempel), null = warten, bis alle bereit sind. */
   startsAt: number | null = null;
   /** Bot-Stärke (der Gastgeber kann sie in der Lobby ändern). */
@@ -81,7 +85,8 @@ export class Room {
     skipLobby = false,
   ) {
     this.difficulty = difficulty;
-    this.slots = [0, 1, 2, 3].map(() => ({ player: null, token: null, reservedUntil: null, name: null, inputs: [], last: null, ack: 0, commands: [], backlog: [], pick: null, spells: null, ready: false }));
+    this.slots = [0, 1, 2, 3].map(() => ({ player: null, token: null, reservedUntil: null, name: null, inputs: [], last: null, ack: 0, commands: [], backlog: [], pick: null, spells: null, ready: false, team: 0 }));
+    this.slots.forEach((s, i) => (s.team = i % 2));
     this.slots.forEach((s, i) => (s.pick = skipLobby ? (heroes[i] ?? null) : null));
     this.newSim();
     if (skipLobby) this.phase = 'playing';
@@ -111,8 +116,10 @@ export class Room {
     this.sim = new Simulation(gameData, {
       seed: (Math.random() * 2 ** 31) | 0,
       heroes: this.team(),
-      bots: this.slots.map((s) => (s.player ? null : this.difficulty)),
+      bots: this.slots.map((s) => (s.player || this.mode === 'pvp' ? null : this.difficulty)),
       spells: this.slots.map((s) => (s.player ? s.spells : null)),
+      // PvP: nur Plätze mit Spielern nehmen teil (keine Bots)
+      pvp: this.mode === 'pvp' ? { teams: this.slots.map((s) => (s.player ? s.team : -1)) } : undefined,
     });
     for (const s of this.slots) {
       s.inputs = [];
@@ -129,6 +136,7 @@ export class Room {
       code: this.code,
       difficulty: this.difficulty,
       phase: this.phase,
+      mode: this.mode,
       startsIn: lobby && this.startsAt !== null ? Math.max(0, (this.startsAt - now) / 1000) : null,
       slots: this.slots.map((s, i) => {
         const h = this.sim.state.heroes[i];
@@ -141,6 +149,7 @@ export class Room {
           name: s.player || reserved ? s.name : null,
           ready: s.ready,
           spells: s.spells,
+          team: s.team,
         };
       }),
     };
@@ -178,6 +187,25 @@ export class Room {
   }
 
   /** Bot-Stärke (nur der Gastgeber auf Platz 0, nur in der Lobby). */
+  /** Lobby: Spielmodus (nur Gastgeber). */
+  setMode(player: Player, mode: GameMode, now: number): void {
+    if (this.phase !== 'lobby' || this.slotOf(player) !== 0 || this.mode === mode) return;
+    this.mode = mode;
+    for (const s of this.slots) s.ready = false;
+    this.updateCountdown(now);
+    this.broadcastRoom(now);
+  }
+
+  /** Lobby: eigenes Team im PvP. */
+  setTeam(player: Player, team: number, now: number): void {
+    const s = this.slots[this.slotOf(player)];
+    if (!s || this.phase !== 'lobby' || (team !== 0 && team !== 1)) return;
+    s.team = team;
+    s.ready = false;
+    this.updateCountdown(now);
+    this.broadcastRoom(now);
+  }
+
   setDifficulty(player: Player, difficulty: BotDifficulty, now: number): void {
     if (this.phase !== 'lobby' || this.slotOf(player) !== 0) return;
     this.difficulty = difficulty;
@@ -188,7 +216,9 @@ export class Room {
   private updateCountdown(now: number): void {
     if (this.phase !== 'lobby') return;
     const humans = this.slots.filter((s) => s.player);
-    const all = humans.length > 0 && humans.every((s) => s.ready && s.pick);
+    // PvP: auf beiden Seiten mindestens ein Spieler
+    const sides = this.mode !== 'pvp' || (humans.some((s) => s.team === 0) && humans.some((s) => s.team === 1));
+    const all = humans.length > 0 && sides && humans.every((s) => s.ready && s.pick);
     if (all && this.startsAt === null) this.startsAt = now + LOBBY_COUNTDOWN_MS;
     if (!all) this.startsAt = null;
   }
@@ -230,6 +260,8 @@ export class Room {
     if (s.player) return 'Der Platz ist schon besetzt';
     const reserved = s.reservedUntil !== null && now < s.reservedUntil;
     if (reserved && token !== s.token) return 'Der Platz ist für einen Spieler reserviert, der gleich zurückkommt';
+    // Laufendes PvP: kein Einstieg (keine Bot-Plätze), außer beim Wiederverbinden
+    if (this.phase === 'playing' && this.mode === 'pvp' && !(token && token === s.token)) return 'Hier läuft gerade ein PvP-Kampf – warte auf die nächste Runde';
     // Beim Wiederverbinden ohne Namen den bisherigen behalten
     if (token && token === s.token && s.name && /^Spieler \d$/.test(player.name)) player.name = s.name;
     s.player = player;

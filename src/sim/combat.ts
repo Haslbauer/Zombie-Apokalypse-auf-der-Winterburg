@@ -6,6 +6,7 @@ import { itemStats } from './items';
 import { awardXp, heroDamage } from './progression';
 import { roleDamageFactor } from './roles';
 import { applyTeamBuff } from './bossabilities';
+import { avatarHero, pvpKill } from './pvp';
 import { noteDeath, noteKill, statsOf } from './stats';
 import { absorbWithShield, buffSum } from './status';
 import { DT, type Hero, type Projectile, type Zombie } from './types';
@@ -30,6 +31,16 @@ export function edgeDistance(a: { pos: { x: number; y: number }; radius: number 
 export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: number, source?: Hero): number {
   if (target.hp <= 0 || amount <= 0) return 0;
   const { state } = ctx;
+  // PvP: Schaden am Stellvertreter geht an den Helden (nur Gegner)
+  if (!('alive' in target) && target.avatarOf !== undefined) {
+    const victim = avatarHero(ctx, target);
+    if (!victim || !victim.alive || (source && source.team === victim.team)) return 0;
+    return applyDamage(ctx, victim, amount, source);
+  }
+  if ('alive' in target && source && state.pvp) {
+    if (source.team === target.team) return 0;
+    amount *= (source.handicap ?? 1) / (target.handicap ?? 1);
+  }
   if (source) source.lastCombatAt = state.time;
   // Rollen: Tank nimmt weniger Schaden, Schaden-Rolle trifft Bosse härter
   amount *= roleDamageFactor(ctx, target, source);
@@ -77,6 +88,7 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
     target.channel = null;
     target.input = { move: { x: 0, y: 0 }, aim: target.input.aim, attack: false };
     target.respawnAt = state.time + respawn.base + respawn.perWave * (state.wave.number - 1);
+    if (state.pvp) pvpKill(ctx, target, source);
   } else {
     state.kills++;
     // Wer hat ihn erlegt (letzter Treffer; ohne Quelle: wer zuletzt beteiligt war), wer hat mitgekämpft?

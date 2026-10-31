@@ -292,6 +292,8 @@ function connect(first: Parameters<typeof RemoteSession.connect>[0], heroes: str
           remote.lobby({ t: 'ready', ready });
         },
         difficulty: (d) => remote.lobby({ t: 'difficulty', difficulty: d }),
+        mode: (mode) => remote.lobby({ t: 'mode', mode }),
+        team: (team) => remote.lobby({ t: 'team', team }),
         leave: leaveOnline,
       });
       return;
@@ -694,10 +696,24 @@ function handleEvents(state: GameState): void {
         hud.message(`Welle ${e.number} geschafft`);
         sound.play('waveCleared');
         break;
-      case 'gameOver':
-        sound.play(e.victory ? 'victory' : 'defeat');
+      case 'pvpKill': {
+        const name = (id: number | null) => {
+          if (id === null) return 'Die Umgebung';
+          if (id === heroId) return 'Du';
+          const h = state.heroes.find((x) => x.id === id);
+          return playerNames()?.get(id) ?? gameData.heroes.find((d) => d.id === h?.defId)?.name ?? '?';
+        };
+        const victim = name(e.victimId);
+        hud.addPing(`⚔ ${name(e.killerId)} → ${victim === 'Du' ? 'dich' : victim} · Nord ${e.score[0]} : ${e.score[1]} Süd`, e.killerId === heroId ? '#4cd964' : e.victimId === heroId ? '#ff6b5a' : '#ffd166');
+        if (e.killerId === heroId) sound.play('bossKill');
+        break;
+      }
+      case 'gameOver': {
+        // PvP: Sieg, wenn das eigene Team gewonnen hat
+        const end = state.pvp && e.winnerTeam !== undefined ? { ...e, victory: myHero()?.team === e.winnerTeam } : e;
+        sound.play(end.victory ? 'victory' : 'defeat');
         // Endstatistik: Podest, Auszeichnungen, Rangliste; kurzer Klang für den MVP
-        hud.showGameOver(state, e, spectate ? -1 : heroId, playerNames(), () => {
+        hud.showGameOver(state, end, spectate ? -1 : heroId, playerNames(), () => {
           if (session instanceof RemoteSession) {
             // Online: zurück in die Lobby (der Server schickt die Raum-Info)
             session.restart();
@@ -705,6 +721,7 @@ function handleEvents(state: GameState): void {
         });
         setTimeout(() => sound.play('levelUp'), 900);
         break;
+      }
     }
   }
 }

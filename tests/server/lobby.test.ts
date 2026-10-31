@@ -258,6 +258,30 @@ describe('Netzprotokoll', () => {
       return { ...t, host, guest, code, room: t.lobby.rooms.get(code)! };
     }
 
+    it('PvP: Gastgeber wählt den Modus, jeder sein Team; Start erst mit beiden Seiten; keine Bots', () => {
+      const { host, guest, room, advance, lobby } = lobbyRoom();
+      guest.send({ t: 'mode', mode: 'pvp' });
+      expect(room.mode).toBe('koop'); // nur der Gastgeber
+      host.send({ t: 'mode', mode: 'pvp' });
+      expect(host.last('room')!.room.mode).toBe('pvp');
+      guest.send({ t: 'pick', heroId: 'grimm' });
+      host.send({ t: 'team', team: 0 });
+      guest.send({ t: 'team', team: 0 });
+      host.send({ t: 'ready', ready: true });
+      guest.send({ t: 'ready', ready: true });
+      // beide in Nord: kein Countdown
+      expect(host.last('room')!.room.startsIn).toBeNull();
+      guest.send({ t: 'team', team: 1 });
+      guest.send({ t: 'ready', ready: true });
+      expect(host.last('room')!.room.startsIn).toBeCloseTo(15, 0);
+      advance(16_000);
+      lobby.tick();
+      const st = room.sim.state;
+      expect(st.pvp?.teams).toEqual([0, 1, -1, -1]);
+      expect(st.heroes.filter((h) => h.bot)).toHaveLength(0);
+      expect(st.heroes[2].benched).toBe(true);
+    });
+
     it('Raum beginnt in der Lobby; Gastgeber hat seinen Helden, Gast noch keinen; keine Simulation', () => {
       const { lobby, host, room } = lobbyRoom();
       const info = host.last('room')!.room;

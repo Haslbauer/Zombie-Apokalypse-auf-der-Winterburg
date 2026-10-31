@@ -203,6 +203,8 @@ export interface ItemDef {
 }
 
 export interface EconomyDef {
+  /** PvP-Modus: Kills zum Sieg, Gold/EP pro Kill und Sekunde, Wiederbelebung, Startplätze je Team. */
+  pvp?: { killsToWin: number; killGold: number; goldPerSecond: number; xpPerSecond: number; killXp: number; respawn: number; startGold: number; spawns: { x: number; y: number }[] };
   roles?: RolesDef;
   plague?: PlagueDef;
   startGold: number;
@@ -749,6 +751,12 @@ export interface Hero extends Unit {
   score: HeroScore;
   /** Endstatistik (nur Server/lokal, nicht in den Schnappschüssen). */
   stats?: HeroStats;
+  /** PvP: Team 0 oder 1. */
+  team?: number;
+  /** PvP: Platz ohne Spieler (Held nimmt nicht teil). */
+  benched?: boolean;
+  /** PvP: Ausgleich für das kleinere Team (Schaden ×, erlittener Schaden ÷). */
+  handicap?: number;
   /** Seuche (Bossfähigkeiten): Stapel und Ablauf (Spielzeit). */
   plague?: { stacks: number; until: number } | null;
   /** Welle, in der der Held zuletzt Schaden an Zombies gemacht hat (Wellenbonus nur für Aktive). */
@@ -835,6 +843,8 @@ export interface Zombie extends Unit {
   st: ZombieStatus;
   /** Richtung beim Torkeln (geblendet). */
   wander: number;
+  /** PvP: unsichtbarer Stellvertreter dieses Helden (Ziel für Fähigkeiten des anderen Teams). */
+  avatarOf?: number;
   /** Spielzeit beim Erscheinen (Wut der Bosse). */
   bornAt?: number;
   /** Bossfähigkeiten: Abklingzeiten und laufende Ausführung (Warnung an points). */
@@ -982,6 +992,7 @@ export type GameEvent =
   | { type: 'charge'; zombieId: number; from: Vec2; to: Vec2 }
   | { type: 'bossCast'; zombieId: number; kind: BossAbilityDef['kind']; name: string; points: Vec2[]; radius: number; windup: number }
   | { type: 'bossHit'; zombieId: number; kind: BossAbilityDef['kind']; points: Vec2[]; radius: number }
+  | { type: 'pvpKill'; killerId: number | null; victimId: number; score: [number, number] }
   | { type: 'teamBuff'; defId: string; name: string; icon: string; duration: number }
   | { type: 'parcel'; zombieId: number; from: Vec2; to: Vec2; radius: number; windup: number }
   | { type: 'leap'; zombieId: number; from: Vec2; to: Vec2; radius: number; windup: number }
@@ -992,7 +1003,7 @@ export type GameEvent =
   | { type: 'status'; zombieId: number; status: 'sleep' | 'stun' | 'fear' | 'blind' | 'root' | 'mark' | 'wake' }
   | { type: 'land'; heroId: number; pos: Vec2; tag: string }
   | { type: 'effect'; kind: string; pos: Vec2; radius: number; facing?: number; arc?: number; heroId?: number }
-  | { type: 'gameOver'; wave: number; reason: string; victory?: boolean; stats?: FinalHeroStats[]; team?: TeamStats };
+  | { type: 'gameOver'; wave: number; reason: string; victory?: boolean; stats?: FinalHeroStats[]; team?: TeamStats; winnerTeam?: number };
 
 export interface GameState {
   tick: number;
@@ -1012,6 +1023,8 @@ export interface GameState {
   events: GameEvent[];
   /** Gewonnen (letzte Welle überstanden)? */
   victory?: boolean;
+  /** PvP-Modus: Teams je Platz (−1 = leer), Punktestand, Kills zum Sieg, Gewinner. */
+  pvp?: { teams: number[]; score: [number, number]; killsToWin: number; winner?: number };
   /** Erwischte Postboten (Endstatistik). */
   couriersCaught?: number;
   /** Wurde schon ein Boss erlegt? (Erstes Blut gibt es nur einmal.) */

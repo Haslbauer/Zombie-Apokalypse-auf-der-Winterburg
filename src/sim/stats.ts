@@ -80,6 +80,7 @@ const r1 = (v: number) => Math.round(v * 10) / 10;
 export function finalStats(ctx: DataContext): FinalHeroStats[] {
   const w = { ...DEFAULT_MVP, ...(ctx.data.economy.rewards.mvp ?? {}) };
   return ctx.state.heroes
+    .filter((h) => !h.benched)
     .map((h) => {
       const s = statsOf(h);
       const stats: HeroStats = { ...s, damage: Math.round(s.damage), damageTaken: Math.round(s.damageTaken), healing: Math.round(s.healing), killsPerWave: [...s.killsPerWave] };
@@ -107,10 +108,10 @@ export function teamStats(ctx: DataContext): TeamStats {
 }
 
 /** Spiel beenden (Sieg oder Niederlage) und die Endstatistik mitschicken. */
-export function endGame(ctx: DataContext, reason: string, victory: boolean): void {
+export function endGame(ctx: DataContext, reason: string, victory: boolean, winnerTeam?: number): void {
   const { state } = ctx;
   if (state.gameOver) return;
   state.gameOver = true;
   if (victory) state.victory = true;
-  state.events.push({ type: 'gameOver', wave: state.wave.number, reason, victory: victory || undefined, stats: finalStats(ctx), team: teamStats(ctx) });
+  state.events.push({ type: 'gameOver', wave: state.wave.number, reason, victory: victory || undefined, stats: finalStats(ctx), team: teamStats(ctx), winnerTeam });
 }

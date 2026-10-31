@@ -17,12 +17,16 @@ import { type BotDifficulty, type Command, type GameEvent, type GameState, type 
  * In der Lobby ist defId der gewählte Held ('' = noch keiner, frei = Bot beim
  * Start), heroId −1; startsIn: Sekunden bis zum Start (null = warten auf alle).
  */
+export type GameMode = 'koop' | 'pvp';
+
 export interface RoomInfo {
   code: string;
   difficulty: BotDifficulty;
   phase: 'lobby' | 'playing';
+  /** Spielmodus: Koop gegen Zombies oder PvP (Helden gegeneinander). */
+  mode: GameMode;
   startsIn: number | null;
-  slots: { heroId: number; defId: string; human: boolean; reserved: boolean; name: string | null; ready: boolean; spells: [string, string] | null }[];
+  slots: { heroId: number; defId: string; human: boolean; reserved: boolean; name: string | null; ready: boolean; spells: [string, string] | null; team: number }[];
 }
 
 /** Befehl ohne heroId: Der Server setzt den Helden der Verbindung ein. Eingaben gehen als eigene Nachricht. */
@@ -43,6 +47,9 @@ export type ClientMessage =
   | { t: 'spells'; spells: [string, string] }
   | { t: 'ready'; ready: boolean }
   | { t: 'difficulty'; difficulty: BotDifficulty }
+  /** Lobby: Spielmodus (nur Gastgeber), eigenes Team im PvP (0 = Nord, 1 = Süd). */
+  | { t: 'mode'; mode: GameMode }
+  | { t: 'team'; team: number }
   /** Laufzeitmessung: Der Server schickt ts unverändert zurück. */
   | { t: 'ping'; ts: number };
 
@@ -124,6 +131,10 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return { t: 'ready', ready: m.ready === true };
     case 'difficulty':
       return ['leicht', 'mittel', 'schwer'].includes(m.difficulty as string) ? { t: 'difficulty', difficulty: m.difficulty as BotDifficulty } : null;
+    case 'mode':
+      return m.mode === 'koop' || m.mode === 'pvp' ? { t: 'mode', mode: m.mode } : null;
+    case 'team':
+      return m.team === 0 || m.team === 1 ? { t: 'team', team: m.team } : null;
     case 'resume':
       return str(m.room, 8) && str(m.token, 64) ? { t: 'resume', room: m.room, token: m.token, name } : null;
     case 'input':
@@ -192,7 +203,8 @@ const round = (_key: string, v: unknown) => (typeof v === 'number' && !Number.is
  */
 export function encodeSnapshot(state: GameState, events: GameEvent[], zombieTypes: string[], full = true): string {
   const t = state.time;
-  const zombies = state.zombies.map((z): ZombieTuple => {
+  // PvP-Stellvertreter bleiben auf dem Server
+  const zombies = state.zombies.filter((z) => z.avatarOf === undefined).map((z): ZombieTuple => {
     const st = z.st;
     const bits =
       (t < st.sleepUntil ? ST_SLEEP : 0) |
@@ -232,6 +244,7 @@ export function encodeSnapshot(state: GameState, events: GameEvent[], zombieType
     delayed: [],
     wave: { ...state.wave, queue: state.wave.queue.length },
     kills: state.kills,
+    pvp: state.pvp,
     gameOver: state.gameOver,
     events,
     camps: state.camps,

@@ -300,6 +300,8 @@ export class Hud {
       spells: (spells: [string, string]) => void;
       ready: (ready: boolean) => void;
       difficulty: (d: BotDifficulty) => void;
+      mode: (mode: 'koop' | 'pvp') => void;
+      team: (team: number) => void;
       leave: () => void;
     },
   ): void {
@@ -319,7 +321,29 @@ export class Hud {
       setTimeout(() => (copy.textContent = 'Link kopieren'), 2000);
     });
     head.append(el('h1', '', `Lobby ${room.code}`), copy);
-    box.append(head, el('p', 'hud-small', 'Schick den Link an deine Freunde. Jeder wählt einen Helden und klickt „Bereit“. Freie Plätze spielen Bots.'));
+    const pvp = room.mode === 'pvp';
+    // Spielmodus (Gastgeber): Koop gegen Zombies oder PvP
+    const modeRow = el('div', 'hud-difficulty hud-mode');
+    modeRow.append(el('span', '', 'Modus:'));
+    for (const [m, label] of [['koop', 'Koop gegen Zombies'], ['pvp', 'PvP: Helden gegeneinander']] as const) {
+      const b = el('button', 'hud-diff', label);
+      b.dataset.mode = m;
+      b.classList.toggle('active', room.mode === m);
+      b.disabled = mySlot !== 0;
+      b.addEventListener('click', () => on.mode(m));
+      modeRow.append(b);
+    }
+    box.append(
+      head,
+      modeRow,
+      el(
+        'p',
+        'hud-small',
+        pvp
+          ? 'PvP: Jeder wählt Held und Team (Nord oder Süd) – 1:1, 1:2, 2:2 oder 1:3. Das Team mit zuerst 10 Kills gewinnt; das kleinere Team bekommt einen Ausgleich. Leere Plätze bleiben leer.'
+          : 'Schick den Link an deine Freunde. Jeder wählt einen Helden und klickt „Bereit“. Freie Plätze spielen Bots.',
+      ),
+    );
 
     // Vier Plätze
     const slots = el('div', 'hud-heroes hud-lobby-slots');
@@ -331,15 +355,33 @@ export class Hud {
       const img = el('img', 'hud-hero-portrait');
       if (def) img.src = `portraits/${def.id}.jpg`;
       else img.classList.add('empty');
-      const who = s.human || s.reserved ? (s.name ?? 'Spieler') : 'Frei – spielt ein Bot';
+      const who = s.human || s.reserved ? (s.name ?? 'Spieler') : pvp ? 'Frei' : 'Frei – spielt ein Bot';
+      if (pvp && (s.human || s.reserved)) card.classList.add(s.team === 0 ? 'team-nord' : 'team-sued');
       const status = !s.human && !s.reserved ? '' : s.ready ? '✔ Bereit' : def ? 'Wählt noch …' : 'Wählt einen Helden …';
       const spells = (s.spells ?? []).map((id) => this.data.spells.spells.find((x) => x.id === id)?.icon ?? '').join(' ');
-      card.append(img, el('strong', '', def?.name ?? '—'), def ? this.roleTag(def.id) : el('span', ''), el('small', 'hud-role', who), el('span', 'hud-hero-desc', `${status}${spells ? ` · ${spells}` : ''}`));
+      card.append(img, el('strong', '', def?.name ?? '—'), def ? this.roleTag(def.id) : el('span', ''), el('small', 'hud-role', pvp && (s.human || s.reserved) ? `${who} · ${s.team === 0 ? 'Nord' : 'Süd'}` : who), el('span', 'hud-hero-desc', `${status}${spells ? ` · ${spells}` : ''}`));
       slots.append(card);
     });
     const humanPicks = room.slots.filter((s) => (s.human || s.reserved) && s.defId).map((s) => s.defId);
     const botSlots = room.slots.filter((s) => !s.human && !s.reserved).length;
-    box.append(slots, this.roleCheck(humanPicks, botSlots));
+    box.append(slots);
+    if (pvp) {
+      // Team wählen
+      const teamRow = el('div', 'hud-difficulty hud-team-pick');
+      teamRow.append(el('span', '', 'Dein Team:'));
+      for (const [t, label] of [[0, 'Nord'], [1, 'Süd']] as const) {
+        const b = el('button', `hud-diff team-${t === 0 ? 'nord' : 'sued'}`, label);
+        b.dataset.team = String(t);
+        b.classList.toggle('active', me?.team === t);
+        b.addEventListener('click', () => on.team(t));
+        teamRow.append(b);
+      }
+      const humans = room.slots.filter((s) => s.human);
+      const n = humans.filter((s) => s.team === 0).length;
+      const sd = humans.filter((s) => s.team === 1).length;
+      teamRow.append(el('span', 'hud-small', `Aufstellung ${n} : ${sd}${n === 0 || sd === 0 ? ' – beide Teams brauchen mindestens einen Spieler' : ''}`));
+      box.append(teamRow);
+    } else box.append(this.roleCheck(humanPicks, botSlots));
 
     // Heldenwahl
     const taken = new Map(room.slots.filter((s, i) => i !== mySlot && (s.human || s.reserved) && s.defId).map((s) => [s.defId, s.name ?? 'Spieler']));
@@ -368,6 +410,7 @@ export class Hud {
     const foot = el('div', 'hud-buttons hud-lobby-foot');
     const diffRow = el('div', 'hud-difficulty');
     diffRow.append(el('span', '', 'Bot-Stärke:'));
+    if (pvp) diffRow.style.display = 'none';
     for (const d of ['leicht', 'mittel', 'schwer'] as BotDifficulty[]) {
       const b = el('button', 'hud-diff', d);
       b.classList.toggle('active', d === room.difficulty);
@@ -744,16 +787,21 @@ export class Hud {
     // 1. Kopf
     box.append(el('h1', '', victory ? 'Sieg!' : 'Niederlage'), el('h2', '', end.reason));
     const teamRow = el('div', 'hud-stats-team');
-    const teamItems: [string, HTMLElement | string][] = [
+    const pvpScore = state.pvp?.score;
+    const teamItems: [string, HTMLElement | string][] = pvpScore
+      ? [['Spielzeit', formatClock(team.time)], ['Nord', `${pvpScore[0]}`], ['Süd', `${pvpScore[1]}`]]
+      : [
       ['Welle', `${team.wave}${victory ? ' ✔' : ''}`],
       ['Spielzeit', formatClock(team.time)],
       ['Zombies', num(team.kills)],
       ['Bosse', num(team.bosses)],
       ['Postboten', num(team.couriers)],
     ];
-    if (team.beds > 0) teamItems.push(['Beete', `${team.bedsAlive}/${team.beds}`]);
-    teamItems.push(['Vorrat', `${team.food} %`]);
-    if (team.hive !== null) teamItems.push(['Bienenstock', `${team.hive} %`]);
+    if (!pvpScore) {
+      if (team.beds > 0) teamItems.push(['Beete', `${team.bedsAlive}/${team.beds}`]);
+      teamItems.push(['Vorrat', `${team.food} %`]);
+      if (team.hive !== null) teamItems.push(['Bienenstock', `${team.hive} %`]);
+    }
     for (const [label, value] of teamItems) {
       const item = el('div', 'hud-stats-team-item');
       const v = el('b', '');
@@ -763,7 +811,7 @@ export class Hud {
     }
     box.append(teamRow);
     // Speedrun: Bestzeit nur bei Sieg (im Browser gespeichert)
-    if (victory) {
+    if (victory && !state.pvp) {
       const { previous, isNew } = recordVictory(team.time, stats.map((r) => r.defId));
       this.bestTime = loadBestTime();
       const line = el('div', `hud-besttime${isNew ? ' new' : ''}`);
@@ -1299,16 +1347,23 @@ export class Hud {
 
   update(state: GameState, heroId: number, dt: number, canRankUp: (slot: number) => boolean = () => false): void {
     const w = state.wave;
-    this.waveLabel.textContent = `Welle ${w.number}`;
-    this.waveInfo.textContent =
-      w.phase === 'pause'
+    const pvp = state.pvp;
+    this.waveLabel.textContent = pvp ? 'PvP' : `Welle ${w.number}`;
+    this.waveInfo.textContent = pvp
+      ? `Nord ${pvp.score[0]} : ${pvp.score[1]} Süd · Sieg bei ${pvp.killsToWin}`
+      : w.phase === 'pause'
         ? `Nächste Welle in ${Math.ceil(w.timer)} s`
         : `Zombies übrig: ${w.queue.length + state.zombies.filter((z) => !z.neutral).length}`;
     this.startWaveBtn.textContent = `Jetzt starten (${keyName(this.bindings.get('startWave'))})`;
-    this.startWaveBtn.style.display = w.phase === 'pause' && !state.gameOver ? '' : 'none';
+    this.startWaveBtn.style.display = w.phase === 'pause' && !state.gameOver && !pvp ? '' : 'none';
+    // PvP: keine Ziele (Vorrat, Stock, Beete) in der Kopfleiste
+    for (const { box } of this.objectiveBars.values()) box.style.display = pvp ? 'none' : '';
+    this.beds.style.display = pvp ? 'none' : '';
     for (const t of state.heroes) {
       const r = this.teamRows.get(t.id);
       if (!r) continue;
+      r.row.style.display = t.benched ? 'none' : '';
+      if (pvp) r.row.dataset.team = t.team === 0 ? 'nord' : 'sued';
       r.hp.style.width = `${(100 * t.hp) / t.maxHp}%`;
       r.level.textContent = `Lv ${t.level}`;
       const b = t.score?.bosses ?? 0;

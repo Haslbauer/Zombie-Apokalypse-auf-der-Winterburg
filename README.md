@@ -48,6 +48,16 @@ docker run -p 3000:3000 winterburg
 
 Im Internet hinter HTTPS betreiben (z. B. Caddy oder ein Tunnel), denn Browser verlangen dort `wss://`. Einstellungen: `PORT` (3000), `HOST` (0.0.0.0), `MAX_ROOMS` (200). `/health` meldet Build, Räume und Spieler.
 
+### PvP-Modus
+
+In der Lobby stellt der Gastgeber den Modus auf **PvP: Helden gegeneinander**. Jeder wählt Held und Team (**Nord** oder **Süd**), möglich sind 1:1, 1:2, 2:2 und 1:3.
+- **Start:** Das Spiel startet, wenn beide Seiten mindestens einen Spieler haben und alle bereit sind. Leere Plätze bleiben leer, es gibt keine Bots und keine Zombies.
+- **Sieg:** Das Team, das zuerst **10 Kills** hat, gewinnt.
+- **Belohnung:** Ein Kill bringt 250 Gold und Erfahrung. Dazu gibt es laufend Gold und Erfahrung, und der Shop ist an der eigenen Basis jederzeit offen.
+- **Wiederbeleben:** Wer fällt, kommt nach 6 s an der eigenen Basis zurück.
+- **Ausgleich:** Das kleinere Team macht mehr Schaden und nimmt weniger, nach der Wurzel des Größenverhältnisses. Bei 1:3 ist das Faktor 1,73.
+- **Fähigkeiten:** Alle Fähigkeiten, Zauber und Angriffe treffen nur Gegner, nie Mitspieler.
+
 ### Lobby
 
 „Online mit Freunden“ öffnet eine **Lobby**: Oben stehen Raum-Code und „Link kopieren“. Wer den Link öffnet, gibt seinen Namen ein und landet ebenfalls in der Lobby. Jeder wählt einen Helden (vergebene sind ausgegraut) und seine Beschwörerzauber und klickt **„Bereit“**. Sind alle bereit, startet das Spiel nach **15 Sekunden**; „Nicht bereit“ oder ein neuer Spieler halten den Countdown an. Freie Plätze spielen Bots, die Bot-Stärke wählt der Gastgeber. Nach Spielende führt „Nochmal“ zurück in die Lobby. Wer später kommt, übernimmt einen Bot im laufenden Spiel.

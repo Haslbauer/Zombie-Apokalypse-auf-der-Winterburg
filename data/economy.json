@@ -47,5 +47,24 @@
     "dpsPerStack": 5,
     "duration": 8,
     "maxStacks": 10
+  },
+  "pvp": {
+    "killsToWin": 10,
+    "killGold": 250,
+    "goldPerSecond": 3,
+    "xpPerSecond": 6,
+    "killXp": 120,
+    "respawn": 6,
+    "startGold": 800,
+    "spawns": [
+      {
+        "x": 33.5,
+        "y": 20.5
+      },
+      {
+        "x": 37.25,
+        "y": 76
+      }
+    ]
   }
 }

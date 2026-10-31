@@ -70,7 +70,7 @@ export function awardBoss(ctx: SimContext, z: Zombie, killer: Hero | undefined):
   state.events.push({ type: 'bossKill', zombieId: z.id, defId: z.defId, killerId: killer?.id ?? null, assists, gold, assistGold, firstBlood });
 }
 
-function giveGold(ctx: SimContext, h: Hero, amount: number, pos?: { x: number; y: number }): void {
+export function giveGold(ctx: SimContext, h: Hero, amount: number, pos?: { x: number; y: number }): void {
   h.gold += amount;
   h.score.gold += amount;
   ctx.state.events.push({ type: 'gold', heroId: h.id, amount, pos: pos ? { ...pos } : undefined });
@@ -79,6 +79,12 @@ function giveGold(ctx: SimContext, h: Hero, amount: number, pos?: { x: number; y
 /** Einkaufen nur in der Pause und nur im Innenhof (Umkreis um das Herz). Gibt den Grund zurück, wenn nicht. */
 export function shopClosedReason(ctx: DataContext, h: Hero): string | null {
   if (!h.alive) return 'Gefallene Helden können nicht einkaufen';
+  // PvP: jederzeit an der eigenen Basis
+  const pvp = ctx.data.economy.pvp;
+  if (ctx.state.pvp && pvp) {
+    const base = pvp.spawns[h.team ?? 0];
+    return dist(h.pos, base) <= ctx.data.economy.shopRange + 2 ? null : 'Einkaufen nur an der eigenen Basis';
+  }
   if (ctx.state.wave.phase !== 'pause') return 'Der Shop hat nur in der Pause geöffnet';
   const heart = ctx.state.objectives.find((o) => o.id === 'heart');
   if (heart && dist(h.pos, heart.pos) > ctx.data.economy.shopRange) return 'Einkaufen nur im Innenhof beim Herz';

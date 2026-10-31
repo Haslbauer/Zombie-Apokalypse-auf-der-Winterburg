@@ -1,3 +1,4 @@
+import type { Vec2 } from './vec';
 import { updateProjectiles } from './combat';
 import type { SimContext } from './context';
 import { arenaBounds, brushAt, Grid, resolveObstacles } from './grid';
@@ -15,6 +16,7 @@ import { updateWaves } from './waves';
 import { updateZombies } from './zombies';
 import { defaultSpells, updateSpells, validSpells } from './spells';
 import { emptyStats } from './stats';
+import { applyAvatarStatus, asTeam, createAvatars, handicapFor, perTeam, syncAvatars, updatePvp } from './pvp';
 import { updateRoles } from './roles';
 
 /** Das Distanzfeld zu den Helden wird alle so viele Ticks neu berechnet. */
@@ -47,6 +49,8 @@ export interface SimulationOptions {
   bots?: (BotDifficulty | null)[];
   /** Pro Slot: gewählte Beschwörerzauber (sonst die Vorgabe der Rolle). */
   spells?: ([string, string] | null | undefined)[];
+  /** PvP-Modus: Team je Platz (0 = Nord, 1 = Süd, −1 = Platz bleibt leer). */
+  pvp?: { teams: number[]; killsToWin?: number };
 }
 
 /**
@@ -159,7 +163,72 @@ export class Simulation implements SimContext {
       kitOf(defId).init?.(this, hero);
       for (let l = 1; l < (options.startLevel ?? 1); l++) levelUp(this, hero);
     });
+    if (options.pvp) this.setupPvp(options.pvp);
     this.state.events = [];
+  }
+
+  /** PvP: Teams, Startplätze, Ausgleich, Stellvertreter; keine Wellen. */
+  private setupPvp(opt: NonNullable<SimulationOptions['pvp']>): void {
+    const cfg = this.data.economy.pvp;
+    const teams = this.state.heroes.map((_, i) => opt.teams[i] ?? -1);
+    this.state.pvp = { teams, score: [0, 0], killsToWin: opt.killsToWin ?? cfg?.killsToWin ?? 10 };
+    for (const h of this.state.heroes) {
+      const team = teams[h.slot];
+      if (team !== 0 && team !== 1) {
+        h.benched = true;
+        h.alive = false;
+        h.hp = 0;
+        h.respawnAt = Infinity;
+        continue;
+      }
+      h.team = team;
+      h.handicap = handicapFor(teams, team);
+      if (cfg) h.gold = cfg.startGold;
+      h.pos = this.pvpSpawn(h);
+      h.facing = team === 0 ? Math.PI / 2 : -Math.PI / 2;
+    }
+    // Stellvertreter brauchen einen Typ (Fähigkeiten lesen Werte wie Radius oder Rang)
+    this.zombieDefs.set('avatar', { id: 'avatar', name: 'Held', color: '#ffffff', hp: 1, speed: 0, radius: 0.5, damage: 0, attackRange: 0, attackCooldown: 1, aggroRange: 0, xp: 0, gold: 0, figure: 'walker', targets: {} } as GameData['zombies'][number]);
+    createAvatars(this);
+  }
+
+  /** Startplatz eines Helden im PvP (Team-Basis, nebeneinander). */
+  private pvpSpawn(h: Hero): Vec2 {
+    const spawns = this.data.economy.pvp?.spawns ?? [this.data.arena.heroStart, this.data.arena.heroStart];
+    const base = spawns[h.team ?? 0];
+    const mates = this.state.heroes.filter((x) => x.team === h.team && !x.benched);
+    const i = Math.max(0, mates.indexOf(h));
+    const p = { x: base.x + (i - (mates.length - 1) / 2) * 1.5, y: base.y };
+    resolveObstacles(p, h.radius, this.arena);
+    return p;
+  }
+
+  /** Ein PvP-Tick: Helden handeln je Team nur gegen die Stellvertreter des anderen Teams. */
+  private stepPvp(commands: readonly Command[]): void {
+    const state = this.state;
+    syncAvatars(this);
+    const heroes = state.heroes.filter((h) => !h.benched);
+    const botCmds = heroes.filter((h) => h.bot && h.alive).flatMap((h) => asTeam(this, h, () => botCommands(this, h)));
+    const all = [...commands, ...botCmds];
+    for (const team of [0, 1]) {
+      const mine = all.filter((c) => state.heroes.find((h) => h.id === c.heroId)?.team === team);
+      const anyHero = heroes.find((h) => h.team === team);
+      if (mine.length && anyHero) asTeam(this, anyHero, () => applyInputs(this, mine));
+    }
+    for (const h of heroes) {
+      if (!h.alive && state.time >= h.respawnAt) this.respawn(h);
+      asTeam(this, h, () => updateHero(this, h));
+      h.brush = h.alive ? brushAt(this.arena, h.pos) : -1;
+      syncAvatars(this);
+    }
+    updateSpells(this);
+    updateRoles(this);
+    perTeam(this, 'projectiles', () => updateProjectiles(this));
+    perTeam(this, 'zones', () => updateZones(this));
+    perTeam(this, 'delayed', () => updateDelayed(this));
+    applyAvatarStatus(this);
+    updatePvp(this);
+    syncAvatars(this);
   }
 
   /** Distanzfelder zu jedem Ziel und zu jeder Zielgruppe (nur intakte Mitglieder). */
@@ -186,6 +255,10 @@ export class Simulation implements SimContext {
     if (state.gameOver) return;
     state.tick++;
     state.time += DT;
+    if (state.pvp) {
+      this.stepPvp(commands);
+      return;
+    }
 
     const botCmds = state.heroes.filter((h) => h.bot).flatMap((h) => botCommands(this, h));
     applyInputs(this, botCmds.length > 0 ? [...commands, ...botCmds] : commands);
@@ -218,13 +291,14 @@ export class Simulation implements SimContext {
   /** Gefallenen Helden im Innenhof wiederbeleben. */
   private respawn(h: Hero): void {
     const start = this.data.arena.heroStart;
+    if (h.benched) return;
     h.alive = true;
     h.hp = h.maxHp;
     h.attackTimer = 0;
     h.buffs = [];
     h.dash = null;
     h.channel = null;
-    h.pos = { x: start.x + h.slot * 1.5, y: start.y };
+    h.pos = this.state.pvp ? this.pvpSpawn(h) : { x: start.x + h.slot * 1.5, y: start.y };
     resolveObstacles(h.pos, h.radius, this.arena);
     kitOf(h.defId).onRespawn?.(this, h);
     this.state.events.push({ type: 'respawn', id: h.id });

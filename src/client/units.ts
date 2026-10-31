@@ -857,15 +857,17 @@ function heroFigure(heroId: string): string | undefined {
 }
 
 /** Held mit Ring: grün für den eigenen Helden, blau für Bots. Mit Modell, sobald eins geladen ist. */
-export function heroView(h: Hero, def: HeroDef, isPlayer: boolean, models: Map<string, RiggedModel>): UnitView {
+export function heroView(h: Hero, def: HeroDef, isPlayer: boolean, models: Map<string, RiggedModel>, enemy = false): UnitView {
   const look = HERO_LOOKS[def.id];
   const model = look ? models.get(modelName(look, h.id)) : undefined;
   const animated = !!model;
   const figure = animated ? `h:${def.id}` : def.figure;
   const height = def.figure === 'dog' ? 1.1 : animated ? 1.8 * look.scale : UNIT_HEIGHT;
-  const view = new UnitView(h.radius, def.color, isPlayer ? 0x4cd964 : 0x5aa9ff, height, figure, animated ? model : null);
+  // PvP-Gegner: roter Balken und Ring
+  const color = isPlayer ? 0x4cd964 : enemy ? 0xff4a3d : 0x5aa9ff;
+  const view = new UnitView(h.radius, def.color, color, height, figure, animated ? model : null);
   view.bar.visible = true;
-  (view.ring.material as THREE.MeshBasicMaterial).color.set(isPlayer ? 0x4cd964 : 0x5aa9ff);
+  (view.ring.material as THREE.MeshBasicMaterial).color.set(color);
   view.ring.visible = true;
   // Schwacher Lichtkreis (Laterne), damit Helden bei Nacht gut zu sehen sind
   view.group.add(groundGlow(0xffc070, isPlayer ? 7 : 5, isPlayer ? 0.32 : 0.22));
