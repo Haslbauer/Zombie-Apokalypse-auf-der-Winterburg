@@ -72,15 +72,15 @@ describe('Bots', () => {
   });
 
   it('kauft in der Pause im Innenhof das erste Item seiner Liste', () => {
-    const { sim, h, data } = botSim('chupa');
+    const { sim, h, data } = botSim('grimm');
     h.pos = { x: 31.3, y: 37 };
     run(sim, 20 * 10);
-    const first = data.bots.heroes.chupa.buy[0];
+    const first = data.bots.heroes.grimm.buy[0];
     expect(h.consumables.some((c) => c?.itemId === first)).toBe(true);
     // genug Gold für die erste Waffe
     h.gold = 1000;
     run(sim, 20 * 3);
-    expect(h.inventory).toContain(data.bots.heroes.chupa.buy[1]);
+    expect(h.inventory).toContain(data.bots.heroes.grimm.buy[1]);
   });
 
   it('zieht sich bei wenig Leben in den Innenhof zurück und trinkt einen Heiltrank', () => {

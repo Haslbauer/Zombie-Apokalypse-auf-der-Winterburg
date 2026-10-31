@@ -108,9 +108,9 @@ export class GameRenderer {
       return view;
     };
 
-    // Chupa wittert verwundete Zombies (unter revealBelow) auch hinter Wänden.
-    const chupa = state.heroes.find((h) => h.alive && h.defId === 'chupa');
-    const revealBelow = chupa ? (this.data.heroes.find((d) => d.id === 'chupa')?.passive.values.revealBelow ?? 0) : 0;
+    // Grimm wittert verwundete Zombies (unter revealBelow) auch hinter Wänden.
+    const grimm = state.heroes.find((h) => h.alive && h.defId === 'grimm');
+    const revealBelow = grimm ? (this.data.heroes.find((d) => d.id === 'grimm')?.passive.values.revealBelow ?? 0) : 0;
 
     for (const h of state.heroes) {
       // Gefallene Helden mit Modell liegen bis zum Respawn am Boden, sonst verschwinden sie.
@@ -121,7 +121,7 @@ export class GameRenderer {
       const p = prev.get(h.id);
       const speed = p && h.alive ? Math.hypot(h.pos.x - p.x, h.pos.y - p.y) / DT : 0;
       if (!h.alive) {
-        // Menschen liegen (down), Chupa spielt seine Sterbe-Animation und bleibt liegen
+        // Menschen liegen (down), Grimm spielt seine Sterbe-Animation und bleibt liegen
         if (view.hasClip('down')) view.animate(dt, 0, false, 'down');
         else {
           view.die();

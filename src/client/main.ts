@@ -368,7 +368,7 @@ const MODELS: Record<string, number> = {
   libero: 1.8,
   pirat: 1.8,
   gaertnerin: 1.8,
-  chupa: 0.95,
+  grimm: 0.95,
   rat: 0.3,
   spider: 0.35,
   frog: 0.35,

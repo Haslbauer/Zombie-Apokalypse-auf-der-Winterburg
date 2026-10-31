@@ -3,7 +3,7 @@
 Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die Winterburg (Haus und Vorgärten) gegen Zombiewellen – Schrägkamera von oben, WASD + Maus, Level, Gold, Shop und KI-Bots für freie Slots.
 
 - Spezifikation: [docs/SPEC.md](docs/SPEC.md)
-- Referenzbilder (z. B. `hund.jpg` für Chupa, Satellitenbild der Karte): `assets/reference/`
+- Referenzbilder (z. B. `hund.jpg` für Grimm, Satellitenbild der Karte): `assets/reference/`
 
 ## Starten
 
@@ -35,7 +35,7 @@ Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bog
 
 ## Karte
 
-Die Winterburg nach einer Skizze des Lageplans: U-förmiges Haus mit dem **Lebensmittelvorrat** im Innenhof (nur über einen schmalen Durchgang erreichbar). Zombies kommen aus dem **Bunker**, durch die **Heckenlücke Süd**, den **Hang Ost** hinauf und aus dem **Nordwesten**. Zombies plündern den Vorrat, **Ratten** fressen die **Hochbeete** (deren Ernte füllt den Vorrat nach jeder Welle auf), **Hornissen** greifen den **Bienenstock** an. Ist der Vorrat leer, ist das Spiel verloren.
+Die Winterburg: U-förmiges Haus mit dem **Lebensmittelvorrat** im Innenhof (nur über einen schmalen Durchgang erreichbar). Zombies kommen aus dem **Bunker**, durch die **Heckenlücke Süd**, den **Hang Ost** hinauf und aus dem **Nordwesten**. Zombies plündern den Vorrat, **Ratten** fressen die **Hochbeete** (deren Ernte füllt den Vorrat nach jeder Welle auf), **Hornissen** greifen den **Bienenstock** an. Ist der Vorrat leer, ist das Spiel verloren.
 
 Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben, `?level=6` startet auf Level 6, `?wave=5` mit Welle 5 (kombinierbar: `?wave=5&level=8`), `?bots=4` lässt vier Bots allein spielen (Zuschauen, optional `&difficulty=schwer`).
 
@@ -57,12 +57,12 @@ Gold gibt es für Kills und jede überstandene Welle. In der Pause im Innenhof �
 
 | Held | Rolle | Fähigkeiten (1–4) |
 |---|---|---|
-| Chupa | Nahkampf-Jäger | Sprungbiss, Fährte, Heulen, Hetzjagd |
-| Gärtnerin | Fernkampf, ausdauernd | Schleuderschuss, Saat, Kräutertee, Mein Garten! |
-| Pirat | Kontrolle | Qualmstoß, Rauchwolke, Nebelschritt, Dicke Luft |
-| Libero | Fernkampf, Support | Aufschlag, Block, Zuspiel, Schmetterball |
-| Rotschopf | Nahkampf, Berserker | Wuchtschlag, Wutanfall, Ungezielter Sprung, Amok |
-| Schläferin | Kontrolle | Berührung, Gähnen, Powernap, Gute Nacht |
+| Grimm (Hund) | Nahkampf-Jäger | Sprungbiss, Fährte, Heulen, Hetzjagd |
+| Hagedorn (Gärtnerin) | Fernkampf, ausdauernd | Schleuderschuss, Saat, Kräutertee, Mein Garten! |
+| Rauchbart (Pirat) | Kontrolle | Qualmstoß, Rauchwolke, Nebelschritt, Dicke Luft |
+| Spike (Libero) | Fernkampf, Support | Aufschlag, Block, Zuspiel, Schmetterball |
+| Ragnar (Rotschopf) | Nahkampf, Berserker | Wuchtschlag, Wutanfall, Ungezielter Sprung, Amok |
+| Somnia (Schläferin) | Kontrolle | Berührung, Gähnen, Powernap, Gute Nacht |
 
 Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.
 

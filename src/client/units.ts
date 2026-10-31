@@ -80,9 +80,9 @@ const ZOMBIE_LOOKS: Record<string, ModelLook> = {
   hornet: { model: 'wasp', move: 'fly', idle: 'fly', refSpeed: 4.5, scale: 1.6, tint: [1, 1, 1], attacks: ['attack'], lift: 0.9 },
 };
 
-/** Helden mit Modell (assets/models/<held>): Chupa ist ein Schäferhund (Quaternius), die übrigen Mixamo-Figuren. */
+/** Helden mit Modell (assets/models/<held>): Grimm ist ein Schäferhund (Quaternius), die übrigen Mixamo-Figuren. */
 const HERO_LOOKS: Record<string, ModelLook> = {
-  chupa: { model: 'chupa', move: 'run', idle: 'idle', refSpeed: 6.5, scale: 1, tint: [1.25, 1.2, 1.15], attacks: ['attack'] },
+  grimm: { model: 'grimm', move: 'run', idle: 'idle', refSpeed: 6.5, scale: 1, tint: [1.25, 1.2, 1.15], attacks: ['attack'] },
   rotschopf: { model: 'rotschopf', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], paint: true, attacks: ['attack'], props: ['hammer'] },
   schlaeferin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1, tint: [1, 1, 1], paint: true, attacks: ['attack', 'attack2', 'attack3'], props: ['staff'] },
   libero: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.6, scale: 1.03, tint: [1, 1, 1], paint: true, attacks: ['attack'] },
@@ -164,7 +164,7 @@ export class UnitView {
     this.group.add(this.body);
     const look = figure?.startsWith('z:') ? ZOMBIE_LOOKS[figure.slice(2)] : figure?.startsWith('h:') ? HERO_LOOKS[figure.slice(2)] : undefined;
     if (look && model) this.buildFromModel(model, look, color);
-    else if (figure?.startsWith('h:')) this.buildPerson(radius, color, height, figure.slice(2) === 'chupa' ? undefined : heroFigure(figure.slice(2)));
+    else if (figure?.startsWith('h:')) this.buildPerson(radius, color, height, figure.slice(2) === 'grimm' ? undefined : heroFigure(figure.slice(2)));
     else if (figure === 'dog') this.buildDog(color);
     else if (figure?.startsWith('z:')) this.buildZombie(figure.slice(2), radius, color, height);
     else this.buildPerson(radius, color, height, figure);
@@ -554,7 +554,7 @@ export class UnitView {
     else for (const side of [-1, 1]) eyeGlow(0.22, headY + 0.03, side * 0.07, 0xf0f0d0);
   }
 
-  /** Chupa: kleiner, flauschiger weißer Hund mit hellbraunen Ohren und buschiger Rute. */
+  /** Grimm: kleiner, flauschiger weißer Hund mit hellbraunen Ohren und buschiger Rute. */
   private buildDog(color: string): void {
     const fur = new THREE.Color(color);
     const body = this.mesh(new THREE.CapsuleGeometry(0.28, 0.5, 4, 10), fur, 0, 0.45);
@@ -600,7 +600,7 @@ export class UnitView {
     else if (time < st.blindUntil) icon = 'blind';
     this.icon.visible = icon !== null;
     if (icon) this.icon.material = iconMaterial(ICONS[icon][0], ICONS[icon][1]);
-    // Markiert (Fährte) oder für Chupa gewittert: Ring, durch Wände sichtbar
+    // Markiert (Fährte) oder für Grimm gewittert: Ring, durch Wände sichtbar
     const marked = time < st.markedUntil;
     this.ring.visible = marked || reveal;
     const ringMat = this.ring.material as THREE.MeshBasicMaterial;

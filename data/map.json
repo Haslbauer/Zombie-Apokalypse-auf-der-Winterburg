@@ -1,5 +1,5 @@
 {
-  "//": "Winterburg nach einer Skizze des Lageplans (nicht im Repo). 1 Einheit = 1 m, x nach Osten, y nach Süden. Rechtecke: Mittelpunkt x/y, Breite w, Höhe h. Der Garten liegt bei 0–66 × 0–75; außen herum 10 m Gelände (minX/minY negativ), dort liegen die Spawnpunkte. Zombies kommen durch die Tore im Westen, Süden und Osten, nur der Bunker liegt im Garten (Tür nach Norden).",
+  "//": "Winterburg. 1 Einheit = 1 m, x nach Osten, y nach Süden. Rechtecke: Mittelpunkt x/y, Breite w, Höhe h. Der Garten liegt bei 0–66 × 0–75; außen herum 10 m Gelände (minX/minY negativ), dort liegen die Spawnpunkte. Zombies kommen durch die Tore im Westen, Süden und Osten, nur der Bunker liegt im Garten (Tür nach Norden).",
   "minX": -10,
   "minY": -10,
   "width": 76,

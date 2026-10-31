@@ -1,9 +1,9 @@
 [
   {
-    "id": "chupa",
-    "name": "Chupa",
+    "id": "grimm",
+    "name": "Grimm",
     "role": "Nahkampf-Jäger",
-    "description": "Kleiner, flauschiger Hund – im Kampf ein wilder Jäger, der verwundete Beute aufspürt und festhält.",
+    "description": "Wilder weißer Höllenhund – spürt verwundete Beute auf und lässt sie nicht mehr los.",
     "color": "#f3eee2",
     "figure": "dog",
     "hp": 560,
@@ -23,7 +23,7 @@
     },
     "passive": {
       "name": "Wittern",
-      "description": "Zombies unter 50 % Leben leuchten auf. Bisse heilen Chupa, umso stärker, je weniger Leben Chupa hat.",
+      "description": "Zombies unter 50 % Leben leuchten auf. Bisse heilen Grimm, umso stärker, je weniger Leben Grimm hat.",
       "values": {
         "lifesteal": 0.12,
         "lowHpBonus": 1,
@@ -58,7 +58,7 @@
       {
         "id": "faehrte",
         "name": "Fährte",
-        "description": "Markiert verwundete Zombies in der Nähe. Zu ihnen hin läuft Chupa schneller und beißt schneller.",
+        "description": "Markiert verwundete Zombies in der Nähe. Zu ihnen hin läuft Grimm schneller und beißt schneller.",
         "shape": "self",
         "range": 0,
         "radius": 10,
@@ -105,7 +105,7 @@
       {
         "id": "hetzjagd",
         "name": "Hetzjagd",
-        "description": "Langer Sprung zu einem Zombie (Elite und Boss bevorzugt). Chupa hält ihn fest, beißt ihn pro Sekunde und heilt sich dabei.",
+        "description": "Langer Sprung zu einem Zombie (Elite und Boss bevorzugt). Grimm hält ihn fest, beißt ihn pro Sekunde und heilt sich dabei.",
         "shape": "target",
         "range": 10,
         "cooldown": [
@@ -131,9 +131,9 @@
   },
   {
     "id": "gaertnerin",
-    "name": "Gärtnerin",
+    "name": "Hagedorn",
     "role": "Fernkampf, ausdauernd",
-    "description": "Grummelige Gärtnerin mit Steinschleuder. Pflanzen werden zu kleinen Geschütztürmen.",
+    "description": "Grummelige alte Gärtnerin mit Steinschleuder. Ihre Pflanzen werden zu kleinen Geschütztürmen.",
     "color": "#7a8f4a",
     "figure": "gardener",
     "hp": 540,
@@ -268,7 +268,7 @@
   },
   {
     "id": "pirat",
-    "name": "Pirat",
+    "name": "Rauchbart",
     "role": "Kontrolle",
     "description": "Rauchiger Pirat mit Enterhaken. Nimmt Zombies mit Qualm die Sicht.",
     "color": "#4a3a2a",
@@ -387,7 +387,7 @@
   },
   {
     "id": "libero",
-    "name": "Libero",
+    "name": "Spike",
     "role": "Fernkampf, Support",
     "description": "Volleyballer mit leuchtendem Runenball. Der Ball bleibt auf dem Feld liegen.",
     "color": "#c0392b",
@@ -513,9 +513,9 @@
   },
   {
     "id": "rotschopf",
-    "name": "Rotschopf",
+    "name": "Ragnar",
     "role": "Nahkampf, Berserker",
-    "description": "Wilder Rotschopf mit riesigem Kriegshammer – stark und unberechenbar.",
+    "description": "Rothaariger Berserker mit riesigem Kriegshammer – stark und unberechenbar.",
     "color": "#d35400",
     "figure": "hammer",
     "hp": 640,
@@ -648,7 +648,7 @@
   },
   {
     "id": "schlaeferin",
-    "name": "Schläferin",
+    "name": "Somnia",
     "role": "Kontrolle",
     "description": "Magierin mit Kristallstab. Schickt Zombies mit Sternenstaub in tiefen Schlaf.",
     "color": "#3b4fa0",

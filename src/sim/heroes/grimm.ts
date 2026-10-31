@@ -5,14 +5,14 @@ import type { Hero, Zombie } from '../types';
 import { dist } from '../vec';
 import { type HeroKit, passive } from './kit';
 
-/** Biss-Heilung: stärker, je weniger Leben Chupa hat (Passiv Wittern). */
+/** Biss-Heilung: stärker, je weniger Leben Grimm hat (Passiv Wittern). */
 function bite(ctx: Parameters<HeroKit['cast']>[0], h: Hero, z: Zombie, base: number, healShare: number): void {
   const dealt = heroHit(ctx, h, z, base);
   h.hp = Math.min(h.maxHp, h.hp + dealt * healShare * (1 + passive(ctx, h, 'lowHpBonus') * (1 - h.hp / h.maxHp)));
 }
 
-/** Chupa – kleiner weißer Hund, Nahkampf-Jäger. */
-export const chupa: HeroKit = {
+/** Grimm – kleiner weißer Hund, Nahkampf-Jäger. */
+export const grimm: HeroKit = {
   cast(ctx, h, slot, target, aim) {
     const ability = ctx.heroDefs.get(h.defId)!.abilities[slot];
     const t = ctx.state.time;

@@ -2,7 +2,7 @@
 
 Quellen:
 - [Mixamo](https://www.mixamo.com) (Adobe): Zombie und die fünf Menschen-Helden. Figuren und Animationen von Mixamo dürfen laut Adobe lizenzfrei in eigenen Projekten und Spielen verwendet werden (nicht als Rohdateien weiterverkauft).
-- [Quaternius](https://quaternius.com), Lizenz CC0 (gemeinfrei): vier Zombies (`zombie-basic`, `zombie-arm`, `zombie-ribcage`, `zombie-chubby`), Schäferhund (`chupa`, aus dem Zombie Apocalypse Kit), Ratte (`rat`), Wespe (`wasp`), Spinne (`spider`) und Frosch (`frog`, als Riesen-Zombiekröte), aus den Animated Animals.
+- [Quaternius](https://quaternius.com), Lizenz CC0 (gemeinfrei): vier Zombies (`zombie-basic`, `zombie-arm`, `zombie-ribcage`, `zombie-chubby`), Schäferhund (`grimm`, aus dem Zombie Apocalypse Kit), Ratte (`rat`), Wespe (`wasp`), Spinne (`spider`) und Frosch (`frog`, als Riesen-Zombiekröte), aus den Animated Animals.
 
 ## Aufbau
 
@@ -62,11 +62,11 @@ Alle vier haben dieselben Clip-Namen: walk, run, idle, crawl (nicht Arm), attack
 | zombie-arm | Runner (einarmig, rennt mit vorgestrecktem Arm) |
 | zombie-chubby | Brute (1,25-fach), Schlächter (1,45-fach, rötlich, Hackbeil) |
 
-## chupa, rat, wasp (Quaternius)
+## grimm, rat, wasp (Quaternius)
 
 | Modell | Clips | Verwendung |
 |---|---|---|
-| chupa (german-shepherd.gltf) | run, walk, idle, attack, ability1 Run_Jump, ability2 Idle_2_HeadLow, ability3 Idle_2, ability4 Attack, use Eating, death | Chupa; stirbt mit `death` und bleibt bis zum Respawn liegen |
+| grimm (german-shepherd.gltf) | run, walk, idle, attack, ability1 Run_Jump, ability2 Idle_2_HeadLow, ability3 Idle_2, ability4 Attack, use Eating, death | Grimm; stirbt mit `death` und bleibt bis zum Respawn liegen |
 | rat (rat.fbx) | run, walk, idle, attack, attack2 (Sprung), death | Ratte, Rattenkönig (2,6-fach, mit Krone am Knochen `Head`) |
 | wasp (wasp.fbx) | fly, attack, death | Hornisse (schwebt 0,9 m über dem Boden) |
 

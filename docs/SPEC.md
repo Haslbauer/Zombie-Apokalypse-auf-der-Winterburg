@@ -1,13 +1,14 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.1)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.2)
 
 Stand: 31.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v1.2: Heldennamen Grimm (Hund), Hagedorn (Gärtnerin), Rauchbart (Pirat), Spike (Libero), Ragnar (Rotschopf), Somnia (Schläferin). Die internen IDs bleiben (`gaertnerin`, `pirat`, `libero`, `rotschopf`, `schlaeferin`, `grimm`).
 Änderungen v1.1: Karte um 10 m Gelände erweitert, Zombies kommen von außen durch Tore (West, Süd, Ost), Bunkertür nach Norden. Hornissen ab Welle 1 in wachsenden Schwärmen, mehr Zombies aus Nordwest. Ohne Bienenstock wachsen Beete nicht mehr nach. Sidequests: Zombie-Postbote als Team-Ziel, neutrale Lager (Fledermäuse, Spinnen, Kröte).
 Änderungen v1.0: Items kombinierbar wie in LoL (Grundteile, Aufbau, fertige Items; Bauteile werden verbraucht und angerechnet). Animierte Modelle für alle Helden, Zombies, Ratten und Hornissen.
 Änderungen v0.9: Herz wird Lebensmittelvorrat (kein Selbstheilen, Ernte der Hochbeete füllt ihn auf). Zombies gehen auf Helden und Vorrat, Ratten auf Hochbeete und Bienenstock, neue Hornissen auf den Bienenstock. Neuer Spawnpunkt Nordwest. Elites langsamer mehr, Wellen neu abgestimmt.
 Änderungen v0.8: M5 umgesetzt. Bots in drei Stärken, ausgewogenes Team, Wellen für 4 Helden neu abgestimmt, Pausen 25 s (erste 20 s) mit „Welle starten“ (N).
 Änderungen v0.7: M4 umgesetzt. Gold, Shop (Pause + Innenhof), Waffen als Werte-Items, Inventar und Verbrauchsgüter auf R/T. Neue Gegner Kriecher und Ratten, Elites Rattenkönig und Schlächter.
-Änderungen v0.6: M3 umgesetzt. Level- und Skillregeln konkret, sechs Helden im Spiel (Chupa, Gärtnerin, Pirat, Libero, Rotschopf, Schläferin), Linksklick-Angriff je Held, Passive für Pirat, Libero und Schläferin (Mondlicht). Fähigkeiten steigern mit Shift + Taste. Gegnerbilder in assets/reference/gegner/, Ratte als Minion-Vorlage.
+Änderungen v0.6: M3 umgesetzt. Level- und Skillregeln konkret, sechs Helden im Spiel (Grimm, Gärtnerin, Pirat, Libero, Rotschopf, Schläferin), Linksklick-Angriff je Held, Passive für Pirat, Libero und Schläferin (Mondlicht). Fähigkeiten steigern mit Shift + Taste. Gegnerbilder in assets/reference/gegner/, Ratte als Minion-Vorlage.
 Änderungen v0.5: Optik der Helden nach den Referenzbildern in assets/reference/helden/ (Libero ist ein Mann mit Runen-Volleyball, die Schläferin eine Magierin mit Kristallstab).
 Änderungen v0.4: Karte nach der Skizze (echte Maße, U-Haus mit Innenhof als Herz der Base, Bunker als Zombie-Spawn, Heckenlücke Süd, Hang Ost, Bienenstock als zweites Ziel). Helden-Spawn im Innenhof, tote Helden respawnen.
 Änderungen v0.3: Steuerung wie in Supervive (WASD laufen, Maus zielt, Angriff Richtung Mauszeiger, kein Auto-Attack, keine Zielauswahl). Fähigkeiten auf 1–4, Items auf R und T, alle Tasten frei belegbar. Nahkampf-Reichweite 2,5 m im 120°-Bogen.
@@ -42,7 +43,7 @@ Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Ha
 
 - Client: TypeScript (oder JavaScript), Three.js mit fester Schrägkamera (Vorschlag: ca. 55° Neigung, kein Drehen), Build mit Vite. 3D-Modelle als glTF.
 - Grafik: stilisiert nach LoL-Vorbild (kräftige Farben, handgemalt wirkende Texturen, umgesetzt als Low-Poly). Modelle und Animationen für Helden, Zombies und Garten aus frei lizenzierten Paketen (z. B. CC0-Sammlungen), Lizenzen prüfen. Neben dem Mehrspieler ist das der größte Aufwand.
-- Umgesetzt: Die Zombies sind vier Comic-Zombies von Quaternius (CC0): Walker, Runner (einarmig), Kriecher, Brute und Schlächter (dick, Schlächter mit Hackbeil), Postbote (mit Mütze und Paket). Die fünf Menschen-Helden sind animierte Mixamo-Figuren. Zombies: Gehen, Rennen, Kriechen, Stehen, Schlagen, Sterben (Leiche versinkt), Sprung als Schrei. Helden: Laufen, Stehen, Angriff, je eine Animation pro Fähigkeit, Trank benutzen, am Boden liegen bis zum Respawn. Pipeline: FBX-Originale in `assets/models/<name>/`, `npm run models` erzeugt kompakte GLB-Dateien in `public/models/` (Details in `assets/models/README.md`). Chupa (Schäferhund), Ratten, Rattenkönig und Hornissen sind animierte CC0-Modelle von Quaternius. Mausrad zoomt (10–50 m), auch über den Leisten.
+- Umgesetzt: Die Zombies sind vier Comic-Zombies von Quaternius (CC0): Walker, Runner (einarmig), Kriecher, Brute und Schlächter (dick, Schlächter mit Hackbeil), Postbote (mit Mütze und Paket). Die fünf Menschen-Helden sind animierte Mixamo-Figuren. Zombies: Gehen, Rennen, Kriechen, Stehen, Schlagen, Sterben (Leiche versinkt), Sprung als Schrei. Helden: Laufen, Stehen, Angriff, je eine Animation pro Fähigkeit, Trank benutzen, am Boden liegen bis zum Respawn. Pipeline: FBX-Originale in `assets/models/<name>/`, `npm run models` erzeugt kompakte GLB-Dateien in `public/models/` (Details in `assets/models/README.md`). Grimm (Schäferhund), Ratten, Rattenkönig und Hornissen sind animierte CC0-Modelle von Quaternius. Mausrad zoomt (10–50 m), auch über den Leisten.
 - Kamera: feste Neigung, Zoom mit dem Mausrad (10–50 m Abstand)
 - Server: Node.js mit Colyseus (oder `ws`), server-autoritativ, 20 Ticks pro Sekunde
 - Simulation strikt vom Rendering trennen. Die Spiellogik (Bewegung, Kampf, Zombies, Bots, Wellen) läuft tickbasiert in einem eigenen Modul ohne Browser-Abhängigkeit.
@@ -74,11 +75,11 @@ Umgesetzt in M3, Zahlen in `data/progression.json` und `data/heroes.json`:
 
 ## 6. Helden
 
-Geplant sind 8 Helden, 2 Slots bleiben frei. In M3 spielbar: **Chupa, Gärtnerin, Pirat, Libero, Rotschopf und Schläferin**. Taucher und Imker folgen in M7. Spalten Q/W/E/R entsprechen den Tasten 1/2/3/4. Werte stehen in `data/heroes.json`, der Code in `src/sim/heroes/`.
+Geplant sind 8 Helden, 2 Slots bleiben frei. In M3 spielbar: **Grimm, Gärtnerin, Pirat, Libero, Rotschopf und Schläferin**. Taucher und Imker folgen in M7. Spalten Q/W/E/R entsprechen den Tasten 1/2/3/4. Werte stehen in `data/heroes.json`, der Code in `src/sim/heroes/`.
 
 | Held | Linksklick |
 |---|---|
-| Chupa | Biss (Nahkampf, 2 m, 90°) |
+| Grimm | Biss (Nahkampf, 2 m, 90°) |
 | Gärtnerin | Steinschleuder (8 m) |
 | Pirat | Enterhaken-Wurf (6 m) |
 | Libero | Pritschen, kleiner Ballschuss (7 m) |
@@ -94,12 +95,12 @@ Geplant sind 8 Helden, 2 Slots bleiben frei. In M3 spielbar: **Chupa, Gärtnerin
 | Gärtnerin | Fernkampf, ausdauernd | Schleuderschuss | Saat | Kräutertee | Mein Garten! |
 | Rotschopf | Nahkampf, Berserker | Wuchtschlag | Wutanfall | Ungezielter Sprung | Amok |
 | Schläferin | Kontrolle | Berührung | Gähnen | Powernap | Gute Nacht |
-| Chupa | Nahkampf, Jäger | Sprungbiss | Fährte | Heulen | Hetzjagd |
+| Grimm | Nahkampf, Jäger | Sprungbiss | Fährte | Heulen | Hetzjagd |
 
-### Chupa
+### Grimm (Hund)
 
 - Rolle: Nahkampf-Jäger. Stark gegen Elite und Boss, heilt sich durch Beißen.
-- Optik: Chupa ist der Hund des Auftraggebers, ein kleiner, flauschiger weißer Hund (Referenzbilder nicht im Repo). Kampfmodus: wild, gesträubtes Fell, gefletschte Zähne, leuchtende Augen. Cremeweißes Fell, hellbraune Flecken an den Ohren, rosa Nase, dunkle Augen, buschige Rute über dem Rücken, kleines dunkles Geschirr. Stilisiert. Die Wirkung soll süß und klein sein, im Kampf aber wild (Vorschlag: Fell sträubt sich und die Augen leuchten bei Fähigkeiten).
+- Optik: ein kleiner, flauschiger weißer Hund. Kampfmodus: wild, gesträubtes Fell, gefletschte Zähne, leuchtende Augen. Cremeweißes Fell, hellbraune Flecken an den Ohren, rosa Nase, dunkle Augen, buschige Rute über dem Rücken, kleines dunkles Geschirr. Stilisiert. Die Wirkung soll süß und klein sein, im Kampf aber wild (Vorschlag: Fell sträubt sich und die Augen leuchten bei Fähigkeiten).
 - Fähigkeiten (eigene Namen und Werte, Grundidee: ein Jäger, der verwundete Beute aufspürt und festhält):
   - Passiv Wittern: Zombies unter 50 % Leben sind durch Wände hindurch sichtbar. Der Hund heilt sich beim Beißen stärker, je weniger Leben er selbst hat.
   - Q Sprungbiss: Sprung in Zielrichtung, beißt den ersten getroffenen Zombie und heilt sich um einen Teil des Schadens.
@@ -112,7 +113,7 @@ Geplant sind 8 Helden, 2 Slots bleiben frei. In M3 spielbar: **Chupa, Gärtnerin
 
 Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren Platzhalter-Archetypen (Brecher, Schütze, Fallensteller, Sanitäter) entfallen, die persönlichen Helden ersetzen sie. Zufall (z. B. beim Rotschopf) wird immer vom Server gewürfelt.
 
-### Libero (Volleyball)
+### Spike (Libero, Volleyball)
 - Rolle: Fernkampf, Kontrolle und Support. Optik (`assets/reference/helden/libero.jpg`): Mann mit braunen Locken und Bart, Ledermütze, ärmelloses Lederhemd mit goldener Palme, Knieschoner, bandagierte Hände, leuchtender Volleyball mit Runen und Funken. Spielgefühl: ein Held mit einem Ball, der liegen bleibt (Orianna in LoL).
 - Der Ball ist ein Objekt auf der Karte. Fähigkeiten gehen vom Ball aus oder bewegen ihn.
 - Passiv Ballgefühl: Der Ball kehrt zurück, wenn er mehr als 15 m entfernt ist. Mit Ball in der Hand läuft Libero 10 % schneller. Einen liegenden Ball hebt er im Vorbeilaufen auf.
@@ -121,7 +122,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - E Zuspiel: Ball zu einem Mitspieler oder Bot, gibt ihm einen Schild (ohne Mitspieler an sich selbst)
 - R Schmetterball: Ball springt hoch und schlägt nieder, Flächenschaden mit Betäubung
 
-### Pirat (Rauch-Held, Platzhaltername Qualm)
+### Rauchbart (Pirat, Rauch-Held)
 - Rolle: Kontrolle. Optik (`assets/reference/helden/pirat.jpg`): bärtiger Pirat mit Dreispitz, Kopftuch, Lederweste, Gurten, Enterhaken und Seil. Spielgefühl: Rauchgranate, die Gegnern die Sicht nimmt (Graves in LoL).
 - Linksklick: Enterhaken-Wurf. Passiv Pulverdampf: Jeder 4. Treffer hüllt den Zombie in Rauch (kurz geblendet).
 - Rauch-Regel: Zombies im Rauch sehen nur wenige Meter weit, verlieren ihr Ziel, torkeln und treffen oft daneben.
@@ -129,7 +130,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - W Rauchwolke: Granate, die Wolke bleibt ca. 5 s und verlangsamt Zombies darin
 - E Nebelschritt: Sprung in eine eigene Rauchwolke, dort kurz unsichtbar. Ohne Wolke ein kurzer Sprung ohne Unsichtbarkeit.
 - R Dicke Luft: große Wolke, Zombies sind 3 s betäubt und danach 5 s blind
-### Gärtnerin
+### Hagedorn (Gärtnerin)
 - Rolle: Fernkampf, ausdauernd. Optik (`assets/reference/helden/gaertnerin.jpg`): ältere, grummelige Frau mit Stoffhut, Karohemd, Latzhose, Gummistiefeln, Arbeitshandschuhen, Werkzeuggürtel und großer Heckenschere. Spielgefühl: Pflanzen als kleine Geschütztürme (Zyra in LoL).
 - Linksklick: Steinschleuder (die Heckenschere ist Optik)
 - Passiv Sturschädel: regeneriert langsam Leben und wird zäher, je länger sie im Kampf bleibt
@@ -138,7 +139,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - E Kräutertee: heilt sie und Verbündete im Umkreis über Zeit
 - R Mein Garten!: Dornenhecke wächst als Ring (ca. 8 s), hält Zombies zurück und verursacht Schaden. Kann einen Zugang kurz sperren.
 
-### Rotschopf
+### Ragnar (Rotschopf)
 - Rolle: Nahkämpfer, stark und unberechenbar. Optik (`assets/reference/helden/rotschopf.jpg`): rote Locken und Bart, kräftig, wild, Schutzbrille auf der Stirn, Beinschienen, riesiger Kriegshammer. Spielgefühl: Berserker (Olaf in LoL).
 - Passiv Jähzorn: je mehr Schaden er einsteckt, desto schneller greift er an
 - Q Wuchtschlag: Schlag mit zufälligem Zusatzeffekt (Betäubung, doppelter Schaden oder Rückstoß)
@@ -146,7 +147,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - E Ungezielter Sprung: Sprung mit kleiner Zufallsabweichung, hoher Schaden
 - R Amok: kurz unaufhaltsam (immun gegen Betäubung und Rückstoß), doppelter Schaden
 
-### Schläferin
+### Somnia (Schläferin)
 - Rolle: Kontrolle. Optik (`assets/reference/helden/schlaeferin.jpg`): Magierin mit braunem Haar, Kristallstab, blau-grünem Sternenmantel mit Mondmotiven, Mondanhänger, Schmetterling, Sternenstaub-Wirbel. Superkraft: sofortiger Schlaf. Spielgefühl: Schlaf-Fähigkeiten (Lillia und Zoe in LoL).
 - Schlaf-Regel: Ein schlafender Zombie ist ausgeschaltet und wacht bei Schaden auf. Der erste Treffer auf einen Schlafenden macht Bonusschaden. Elite schlafen kürzer, Boss sind immun.
 - Passiv Mondlicht (ersetzt „Sprinterin“): Ihre Treffer machen Zombies schläfrig (langsamer). Nach 3 Treffern innerhalb von 4 s schläft der Zombie kurz ein.
@@ -184,7 +185,7 @@ Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `
 - **Elites** alle 5 Wellen (⌊Welle/5⌋ Stück, abwechselnd), mit immer sichtbarem Lebensbalken und Ankündigung:
   - **Rattenkönig:** große Ratte mit Krone, ruft alle 8 s vier Ratten herbei
   - **Schlächter:** großer Zombie mit Schürze und Beil. Holt alle 8 s aus (rote Warnlinie) und stürmt auf einen Helden in bis zu 8 m. Wer getroffen wird, nimmt Schaden, wird zurückgestoßen und 0,75 s betäubt.
-  - Elites schlafen nur halb so lang. Chupas Hetzjagd bevorzugt sie.
+  - Elites schlafen nur halb so lang. Grimms Hetzjagd bevorzugt sie.
 - Kontrolle auf Helden (festgehalten, betäubt) wirkt nicht, solange der Held unaufhaltsam ist (Rotschopf: Amok)
 - Später: Spitter (Fernkampf), Boss
 - Verhalten: Zombies greifen Helden an, die in Reichweite sind. Sonst laufen sie zum Haus. Pfadfindung um Hindernisse.
@@ -254,9 +255,9 @@ Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
 
 ## 11. Karte
 
-Grundlage ist eine Skizze auf dem Lageplan (nicht im Repo). Umgesetzt in `data/map.json`, 1 Spieleinheit = 1 Meter, Norden oben.
+Garten mit Haus, Hecken und Zugängen. Umgesetzt in `data/map.json`, 1 Spieleinheit = 1 Meter, Norden oben.
 
-- Garten ca. 66 x 75 m (echte Maße aus dem Lageplan). Rundherum 10 m **Gelände** (Karte von −10 bis 76 bzw. 85, `minX`/`minY` in `data/map.json`), dahinter Wald als Kulisse. Ein Zaun umschließt den Garten; offen sind nur die **Tore** im Westen (beim Bienenstock), Süden (Heckenlücke) und Osten (Zuwegung).
+- Garten ca. 66 x 75 m. Rundherum 10 m **Gelände** (Karte von −10 bis 76 bzw. 85, `minX`/`minY` in `data/map.json`), dahinter Wald als Kulisse. Ein Zaun umschließt den Garten; offen sind nur die **Tore** im Westen (beim Bienenstock), Süden (Heckenlücke) und Osten (Zuwegung).
 - Haus in U-Form (ca. 21 x 24 m) mit Westflügel, Ostflügel und Südblock. Das Haus selbst ist nicht begehbar.
 - **Innenhof = Lebensmittelvorrat der Winterburg.** Dort stehen Kisten, Fässer und Säcke. Der Hof ist nur über einen schmalen Durchgang (ca. 2,7 m) von Süden zwischen Westflügel und Südblock erreichbar: die wichtigste Engstelle.
 - Helden starten im Innenhof und erscheinen dort nach dem Tod wieder.
@@ -266,7 +267,7 @@ Grundlage ist eine Skizze auf dem Lageplan (nicht im Repo). Umgesetzt in `data/m
   1. **Bunker** unten links im Garten, der einzige Spawn im Garten: Zombies kommen aus der Bunkertür (Nordseite)
   2. **Süd:** im Gelände vor der Heckenlücke, durch das Südtor
   3. **Ost:** am Ende der Zuwegung; die Zombies laufen den Hang hinauf und sind dort langsamer (halbes Tempo)
-  4. **Nordwest** (beim Studentenwohnheim) im Gelände vor dem Westtor: 85 % der Hornissen (sie fliegen über den Zaun) und ebenso oft Zombies wie Ost. Liegt nah an Bienenstock und Hochbeeten.
+  4. **Nordwest** im Gelände vor dem Westtor: 85 % der Hornissen (sie fliegen über den Zaun) und ebenso oft Zombies wie Ost. Liegt nah an Bienenstock und Hochbeeten.
 - Hecken im Norden, Osten und Süden, Zäune an der Zuwegung und zum Nachbargrundstück (nordöstlich, nicht begehbar), Bäume als Hindernisse
 - Spawnpunkte haben Gewichte (wie oft dort Zombies erscheinen), alles in `data/map.json`
 - Grafikstil: stilisiert, Low-Poly (siehe Abschnitt 3)
@@ -275,7 +276,7 @@ Grundlage ist eine Skizze auf dem Lageplan (nicht im Repo). Umgesetzt in `data/m
 
 1. M1: Offline-Prototyp. Eine Arena, ein Held (zwei Testhelden: Nah- und Fernkampf), Steuerung wie in Supervive, Zombies in Wellen, Nahkampf und Schuss.
 2. M2: Karte Winterburg mit Haus (Lebensbalken), Garten, Hindernissen und den drei Zugängen
-3. M3: Level, XP, Skillpunkte, 6 Helden (Chupa, Gärtnerin, Pirat, Libero, Rotschopf, Schläferin) mit Fähigkeiten auf 1–4
+3. M3: Level, XP, Skillpunkte, 6 Helden (Grimm, Gärtnerin, Pirat, Libero, Rotschopf, Schläferin) mit Fähigkeiten auf 1–4
 4. M4: Gold, Shop, Waffen und Items, Elite-Zombies, Ratten und Kriecher
 5. M5: Bots (Singleplayer mit 3 Bots), Balancing für 4 Helden
 6. M6: Server und Mehrspieler (Raum, Join per Link, Bot-Ersatz)

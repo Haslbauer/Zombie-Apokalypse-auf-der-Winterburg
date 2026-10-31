@@ -1,6 +1,6 @@
 # Heldenbilder (Referenz)
 
-Konzeptbilder des Auftraggebers als Vorlage für Modelle und Porträts.
+Konzeptbilder als Vorlage für Modelle und Porträts.
 
 | Datei | Held | Zeigt |
 |---|---|---|

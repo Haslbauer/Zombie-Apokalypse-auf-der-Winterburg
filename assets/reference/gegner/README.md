@@ -1,6 +1,6 @@
 # Gegnerbilder (Referenz)
 
-Konzeptbilder des Auftraggebers für Zombies und Minions.
+Konzeptbilder für Zombies und Minions.
 
 | Datei | Zeigt |
 |---|---|

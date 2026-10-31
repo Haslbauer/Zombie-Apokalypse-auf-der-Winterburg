@@ -3,9 +3,9 @@ import { hasBuff, isFeared, isMarked, isRooted } from '../../../src/sim/status';
 import { dist } from '../../../src/sim/vec';
 import { heroSim, run } from '../helpers';
 
-describe('Chupa', () => {
+describe('Grimm', () => {
   it('Sprungbiss: springt zum ersten Zombie auf der Bahn, beißt und heilt', () => {
-    const { sim, h, zombie, cast } = heroSim('chupa');
+    const { sim, h, zombie, cast } = heroSim('grimm');
     h.hp = 200;
     const z = zombie(h.pos.x + 4, h.pos.y);
     cast(0, { x: h.pos.x + 6, y: h.pos.y });
@@ -16,7 +16,7 @@ describe('Chupa', () => {
   });
 
   it('Fährte markiert nur verwundete Zombies', () => {
-    const { sim, h, zombie, cast, east } = heroSim('chupa');
+    const { sim, h, zombie, cast, east } = heroSim('grimm');
     const hurt = zombie(h.pos.x + 3, h.pos.y, 'walker', 1000);
     hurt.hp = 300;
     const healthy = zombie(h.pos.x - 3, h.pos.y);
@@ -26,7 +26,7 @@ describe('Chupa', () => {
   });
 
   it('Heulen: erst Schadensreduktion, dann fliehen die Zombies', () => {
-    const { sim, h, zombie, cast, east, value } = heroSim('chupa');
+    const { sim, h, zombie, cast, east, value } = heroSim('grimm');
     const z = zombie(h.pos.x + 3, h.pos.y);
     z.speed = 1.8;
     cast(2, east);
@@ -37,7 +37,7 @@ describe('Chupa', () => {
   });
 
   it('Hetzjagd: ohne Ziel nichts, mit Ziel festhalten und beißen', () => {
-    const { sim, h, zombie, cast, east } = heroSim('chupa');
+    const { sim, h, zombie, cast, east } = heroSim('grimm');
     cast(3, east);
     expect(h.cooldowns[3]).toBe(0);
     const z = zombie(h.pos.x + 7, h.pos.y);
@@ -55,7 +55,7 @@ describe('Chupa', () => {
   });
 
   it('Wittern: Bisse heilen', () => {
-    const { h, zombie, attack } = heroSim('chupa');
+    const { h, zombie, attack } = heroSim('grimm');
     h.hp = 100;
     const z = zombie(h.pos.x + 1.2, h.pos.y);
     attack(z.pos);

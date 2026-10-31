@@ -20,7 +20,7 @@
     }
   },
   "heroes": {
-    "chupa": {
+    "grimm": {
       "role": "melee",
       "skillOrder": [
         0,
