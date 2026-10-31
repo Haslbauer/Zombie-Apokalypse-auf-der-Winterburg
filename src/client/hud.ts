@@ -1,5 +1,6 @@
 import { rankValue } from '../sim/abilities';
 import { defaultTeam } from '../sim/bots/team';
+import { type Quality, QUALITY_LABELS, type QualitySetting } from './quality';
 import type { BotDifficulty, GameData, GameState, Hero, HeroDef } from '../sim/types';
 import type { RoomInfo } from '../net/protocol';
 import { type Action, ACTIONS, type Keybindings, keyName } from './keybindings';
@@ -51,6 +52,9 @@ export class Hud {
   private readonly invite = el('div', 'hud-invite');
   private readonly pingLog = el('div', 'hud-ping-log');
   private readonly scoreboard = el('div', 'hud-scoreboard');
+  private readonly perf = el('div', 'hud-perf');
+  /** Grafik-Einstellung (setzt main.ts). */
+  quality: Quality | null = null;
   private scoreKey = '';
   private readonly connection = el('div', 'hud-connection');
   private readonly latency = el('span', 'hud-latency');
@@ -90,7 +94,7 @@ export class Hud {
     this.shopHint.style.display = 'none';
     root.append(this.shopHint, this.team);
     this.updateHelp();
-    root.append(this.top, this.bottom, this.banner, this.respawn, this.help, this.invite, this.pingLog, this.scoreboard, this.connection, this.overlay, this.tooltip);
+    root.append(this.top, this.bottom, this.banner, this.respawn, this.help, this.invite, this.pingLog, this.scoreboard, this.perf, this.connection, this.overlay, this.tooltip);
     this.connection.style.display = 'none';
     this.invite.style.display = 'none';
     this.showInGame(false);
@@ -288,6 +292,14 @@ export class Hud {
     this.scoreboard.replaceChildren(el('h3', '', `Welle ${state.wave.number} · ${state.kills} Kills`), table);
   }
 
+  /** Leistungsanzeige oben rechts: Bildrate, Qualitätsstufe, Ping. */
+  setPerf(visible: boolean, fps: number, level: string, ping: number | null): void {
+    this.perf.style.display = visible ? '' : 'none';
+    if (!visible) return;
+    const text = `${Math.round(fps)} fps · ${level}${ping !== null ? ` · ${Math.round(ping)} ms` : ''}`;
+    if (this.perf.textContent !== text) this.perf.textContent = text;
+  }
+
   /** Laufzeit zum Server (ms) neben dem Raum-Code; grün, gelb, rot je nach Wert. */
   setPing(ms: number | null): void {
     const text = ms === null ? '' : `${Math.round(ms)} ms`;
@@ -425,6 +437,28 @@ export class Hud {
           });
         });
         table.append(el('span', '', label), btn);
+      }
+      // Grafik: Qualität und Leistungsanzeige
+      const q = this.quality;
+      if (q) {
+        box.append(el('h2', '', 'Grafik'));
+        const row = el('div', 'hud-graphics');
+        const select = el('select', 'hud-select');
+        for (const [value, label] of Object.entries(QUALITY_LABELS)) {
+          const opt = el('option', '', label);
+          opt.value = value;
+          opt.selected = q.setting === value;
+          select.append(opt);
+        }
+        select.addEventListener('change', () => q.set(select.value as QualitySetting));
+        const perfLabel = el('label', 'hud-check');
+        const perf = el('input', '');
+        perf.type = 'checkbox';
+        perf.checked = q.showPerf;
+        perf.addEventListener('change', () => q.setShowPerf(perf.checked));
+        perfLabel.append(perf, el('span', '', ' Leistung anzeigen (fps, Ping)'));
+        row.append(el('span', '', 'Qualität'), select, perfLabel);
+        box.append(row);
       }
       const reset = el('button', 'hud-restart', 'Standard wiederherstellen');
       reset.addEventListener('click', () => {

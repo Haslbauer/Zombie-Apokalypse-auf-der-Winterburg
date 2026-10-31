@@ -32,6 +32,7 @@ import * as THREE from 'three';
 import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 window.convert = async (cfg) => {
   const cache = new Map();
@@ -97,7 +98,62 @@ window.convert = async (cfg) => {
     root.traverse((o) => { if (o.isBone && !keep.has(o)) extra.push(o); });
     for (const b of extra) b.removeFromParent();
     if (maxDiff > 1e-3) console.warn('Skelette weichen ab: ' + maxDiff.toFixed(4));
+    mergeParts(skinned);
     return skinned.length;
+  };
+
+  // Teile mit gleichem Elternknoten, gleicher Lage und gleicher Bind-Matrix zu
+  // einem Mesh mit mehreren Materialien zusammenfassen (weniger Zeichenaufrufe).
+  // Die Knochen-Indizes jedes Teils werden auf eine gemeinsame Liste umgerechnet.
+  const mergeParts = (skinned) => {
+    const same = (a, b) => a.elements.every((v, i) => Math.abs(v - b.elements[i]) < 1e-5);
+    const groups = [];
+    for (const m of skinned) {
+      const g = groups.find((x) => x[0].parent === m.parent && same(x[0].matrix, m.matrix) && same(x[0].bindMatrix, m.bindMatrix));
+      if (g) g.push(m);
+      else groups.push([m]);
+    }
+    for (const parts of groups) {
+      if (parts.length < 2) continue;
+      const bones = [];
+      const inverses = [];
+      const geos = [];
+      const mats = [];
+      for (const m of parts) {
+        const map = m.skeleton.bones.map((b, i) => {
+          let k = bones.indexOf(b);
+          if (k < 0) {
+            k = bones.length;
+            bones.push(b);
+            inverses.push(m.skeleton.boneInverses[i].clone());
+          }
+          return k;
+        });
+        const geo = m.geometry.clone();
+        for (const name of Object.keys(geo.attributes)) if (!['position', 'normal', 'uv', 'skinIndex', 'skinWeight'].includes(name)) geo.deleteAttribute(name);
+        const si = geo.attributes.skinIndex;
+        const idx = new Uint16Array(si.count * 4);
+        for (let i = 0; i < si.count; i++) for (let c = 0; c < 4; c++) idx[i * 4 + c] = map[si.getComponent(i, c)] ?? 0;
+        geo.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(idx, 4));
+        const mm = Array.isArray(m.material) ? m.material : [m.material];
+        geo.clearGroups();
+        geo.addGroup(0, geo.index ? geo.index.count : geo.attributes.position.count, mats.length);
+        mats.push(mm[0]);
+        geos.push(geo);
+      }
+      if (!geos.every((g) => Object.keys(g.attributes).sort().join() === Object.keys(geos[0].attributes).sort().join())) continue;
+      if (!geos.every((g) => !!g.index === !!geos[0].index)) continue;
+      const merged = mergeGeometries(geos, true);
+      if (!merged) continue;
+      const mesh = new THREE.SkinnedMesh(merged, mats);
+      mesh.name = parts[0].name;
+      mesh.position.copy(parts[0].position);
+      mesh.quaternion.copy(parts[0].quaternion);
+      mesh.scale.copy(parts[0].scale);
+      parts[0].parent.add(mesh);
+      mesh.bind(new THREE.Skeleton(bones, inverses), parts[0].bindMatrix);
+      for (const m of parts) m.removeFromParent();
+    }
   };
   const clips = [];
   const entries = Object.entries(cfg.clips);

@@ -4,6 +4,7 @@ import { hasBuff, shieldAmount } from '../sim/status';
 import { type AbilityDef, type AttackDef, type GameData, type GameState, type Hero, type Zombie } from '../sim/types';
 import type { Vec2 } from '../sim/vec';
 import { GameCamera } from './camera';
+import type { QualityLevel } from './quality';
 import { buildMap, type MapAnimation } from './map';
 import { ObjectiveView } from './objectives';
 import { AbilityPreview } from './preview';
@@ -41,6 +42,10 @@ export class GameRenderer {
   /** Wind in Gras und Büschen, Rauch aus den Schornsteinen. */
   private readonly mapAnimation: MapAnimation;
   private readonly fog: THREE.Fog;
+  private readonly sun: THREE.DirectionalLight;
+  private readonly frustum = new THREE.Frustum();
+  private readonly projView = new THREE.Matrix4();
+  private readonly cullSphere = new THREE.Sphere(new THREE.Vector3(), 2.5);
   private readonly lantern = new THREE.PointLight(0xffb866, 16, 12, 1.6);
   readonly preview: AbilityPreview;
   private readonly raycaster = new THREE.Raycaster();
@@ -84,6 +89,7 @@ export class GameRenderer {
     const s = Math.max(b.x1 - b.x0, b.y1 - b.y0) * 0.72;
     Object.assign(sun.shadow.camera, { left: -s, right: s, top: s, bottom: -s, near: 1, far: 130 });
     this.scene.add(sun, sun.target);
+    this.sun = sun;
 
     this.mapAnimation = buildMap(this.scene, data.arena);
     // Laterne des eigenen Helden: warmes Licht, das mitläuft
@@ -122,6 +128,8 @@ export class GameRenderer {
   /** Szene an den Spielzustand angleichen, zwischen den Ticks interpoliert. */
   sync(state: GameState, prev: Map<number, Snapshot>, alpha: number, dt: number, time: number): void {
     const camera = this.cam.camera;
+    camera.updateMatrixWorld();
+    this.frustum.setFromProjectionMatrix(this.projView.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
     const seen = new Set<number>();
     const upsert = (unit: Hero | Zombie, make: () => UnitView, lift = 0) => {
       seen.add(unit.id);
@@ -174,7 +182,13 @@ export class GameRenderer {
       view.showStatus(z, state.time, z.hp / z.maxHp < revealBelow);
       if (z.courier) view.markCourier();
       const speed = view.measureSpeed(dt);
-      view.animate(dt, speed, state.time < z.st.sleepUntil || state.time < z.st.stunUntil || state.gameOver);
+      // Sparmodus: außerhalb des Bildes nicht animieren, weit weg nur jedes zweite Bild
+      const gp = view.group.position;
+      this.cullSphere.center.set(gp.x, 1, gp.z);
+      const onScreen = view.group.visible && this.frustum.intersectsSphere(this.cullSphere);
+      const far = this.cam.distance > 0 && Math.hypot(gp.x - camera.position.x, gp.z - camera.position.z) > 38;
+      const lod = view.isDying ? 0 : !onScreen ? 2 : far ? 1 : 0;
+      view.animateLod(dt, speed, state.time < z.st.sleepUntil || state.time < z.st.stunUntil || state.gameOver, lod);
     }
     for (const [id, view] of this.units) {
       if (!seen.has(id)) {
@@ -325,6 +339,23 @@ export class GameRenderer {
     this.setRay(clientX, clientY);
     const hit = this.raycaster.ray.intersectPlane(this.groundPlane, new THREE.Vector3());
     return hit ? { x: hit.x, y: hit.z } : null;
+  }
+
+  /**
+   * Grafikqualität: Pixeldichte, Schattenauflösung (bei Niedrig keine
+   * Schatten) und Bodennebel/Feuer-Details.
+   */
+  applyQuality(level: QualityLevel): void {
+    const dpr = window.devicePixelRatio || 1;
+    this.renderer.setPixelRatio(level === 'hoch' ? Math.min(dpr, 2) : level === 'mittel' ? Math.min(dpr, 1.5) : 1);
+    const size = level === 'hoch' ? 2048 : 1024;
+    this.sun.castShadow = level !== 'niedrig';
+    if (this.sun.shadow.mapSize.x !== size) {
+      this.sun.shadow.mapSize.set(size, size);
+      this.sun.shadow.map?.dispose();
+      this.sun.shadow.map = null;
+    }
+    this.mapAnimation.setDetail(level !== 'niedrig');
   }
 
   render(): void {

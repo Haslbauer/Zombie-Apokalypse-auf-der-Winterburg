@@ -22,6 +22,8 @@ const COLORS = {
 export interface MapAnimation {
   /** heroes: Positionen der Helden (Krähen flattern auf). */
   update(time: number, heroes?: { x: number; y: number }[]): void;
+  /** Bodennebel und Rauch an/aus (Grafik Niedrig). */
+  setDetail(on: boolean): void;
 }
 
 /**
@@ -134,6 +136,10 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
       windTime.value = time;
       smokes.update(time);
       night.update(time, heroes);
+    },
+    setDetail(on) {
+      night.setDetail(on);
+      smokes.group.visible = on;
     },
   };
 }

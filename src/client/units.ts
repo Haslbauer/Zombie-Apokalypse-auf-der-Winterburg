@@ -212,6 +212,8 @@ export class UnitView {
   private hero = false;
   /** Gezeigtes Tempo (m/s), aus der Bewegung der Figur gemessen und geglättet. */
   private shownSpeed = 0;
+  private pendingDt = 0;
+  private lodTick = false;
   private lastShown: { x: number; z: number } | null = null;
 
   constructor(radius: number, color: string, barColor: number, height = UNIT_HEIGHT, figure?: string, model?: RiggedModel | null) {
@@ -459,6 +461,19 @@ export class UnitView {
    * Animation fortschreiben: Laufen nach Tempo, sonst Stehen. hold hält eine
    * Animation dauerhaft (z. B. „down“ für gefallene Helden, Powernap).
    */
+  /**
+   * Sparmodus für viele Zombies: lod 0 = jedes Bild, 1 = jedes zweite Bild,
+   * 2 = gar nicht (außerhalb des Bildes). Die Zeit wird gesammelt und beim
+   * nächsten Mal nachgeholt, damit nichts springt.
+   */
+  animateLod(dt: number, speed: number, frozen: boolean, lod: 0 | 1 | 2): void {
+    this.pendingDt += dt;
+    if (lod === 2 || (lod === 1 && (this.lodTick = !this.lodTick))) return;
+    const t = Math.min(0.25, this.pendingDt);
+    this.pendingDt = 0;
+    this.animate(t, speed, frozen);
+  }
+
   animate(dt: number, speed: number, frozen: boolean, hold?: string): void {
     const a = this.anim;
     if (!a) return;
@@ -808,6 +823,8 @@ export function zombieView(z: Zombie, def: ZombieDef, models: Map<string, Rigged
   const view = new UnitView(z.radius, def.color, elite ? 0xff9f1c : 0xff453a, height, `z:${def.figure}`, model);
   view.bar.visible = elite;
   if (elite) view.bar.scale.set(1.6, 1.4, 1);
+  // Schatten werfen nur große Gegner (spart viel Rechenzeit bei vielen Zombies)
+  if (!elite && def.figure !== 'brute') view.group.traverse((o) => (o.castShadow = false));
   const glow = ELITE_COLORS[def.figure];
   if (elite && glow !== undefined && !z.neutral) view.markElite(glow, def.name);
   else if (glow !== undefined) view.addEyes(glow);

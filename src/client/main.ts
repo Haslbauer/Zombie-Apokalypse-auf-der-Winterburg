@@ -10,6 +10,7 @@ import { canRankUp } from '../sim/progression';
 import type { BotDifficulty, GameEvent, GameState } from '../sim/types';
 import { Effects } from './effects';
 import { Hud } from './hud';
+import { Quality, QUALITY_LABELS } from './quality';
 import { Input } from './input';
 import { Keybindings } from './keybindings';
 import { loadRiggedModel } from './models';
@@ -24,6 +25,8 @@ const effects = new Effects(renderer.scene);
 const bindings = new Keybindings();
 const hudRoot = document.getElementById('hud')!;
 const hud = new Hud(hudRoot, gameData, bindings);
+const quality = new Quality();
+hud.quality = quality;
 const shop = new ShopView(hudRoot, gameData);
 const input = new Input(renderer, bindings);
 const minimap = new Minimap(hudRoot, gameData);
@@ -552,8 +555,11 @@ renderer.renderer.setAnimationLoop((now) => {
   }
 
   effects.update(dt);
+  quality.frame(dt);
+  hud.setPerf(quality.showPerf, quality.fps, QUALITY_LABELS[quality.level], session instanceof RemoteSession ? session.rtt : null);
   renderer.render();
 });
+quality.onChange((level) => renderer.applyQuality(level));
 
 // Animierte Modelle laden (Name → Höhe in Metern); bis dahin (oder bei einem Fehler) bleiben die einfachen Figuren.
 const MODELS: Record<string, number> = {

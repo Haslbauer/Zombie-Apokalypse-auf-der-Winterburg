@@ -13,6 +13,7 @@ import { Mats } from './mapdecor';
  */
 export interface NightAnimation {
   update(time: number, heroes: Vec2[]): void;
+  setDetail(on: boolean): void;
 }
 
 function rand(seed: number): () => number {
@@ -336,8 +337,14 @@ export function nightDecor(stat: THREE.Group, live: THREE.Group, arena: ArenaDef
 
   const tmp = new THREE.Vector3();
   let last = 0;
+  let detail = true;
   return {
+    setDetail(on) {
+      detail = on;
+      for (const w of wisps) w.mesh.visible = on;
+    },
     update(time, heroes) {
+      if (!detail) return;
       const dt = Math.min(0.1, Math.max(0, time - last));
       last = time;
       for (const f of flames) {
