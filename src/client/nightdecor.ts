@@ -133,6 +133,7 @@ export function nightObstacle(o: Obstacle, mats: Mats): THREE.Object3D | null {
 export function nightDecor(stat: THREE.Group, live: THREE.Group, arena: ArenaDef, mats: Mats): NightAnimation {
   const flames: { mesh: THREE.Sprite; glow: THREE.Mesh; seed: number }[] = [];
   const sparks: { s: THREE.Sprite; x: number; z: number; seed: number }[] = [];
+  const flowerSpots: { x: number; z: number; kind: number }[] = [];
   const crows: { bird: THREE.Group; home: THREE.Vector3; seed: number; fly: number }[] = [];
   const wood = mats.lambert(0x5e4429);
   const darkWood = mats.lambert(0x3b2a1c);
@@ -294,6 +295,221 @@ export function nightDecor(stat: THREE.Group, live: THREE.Group, arena: ArenaDef
           for (let i = 0; i < 5 - row; i++) g.add(part(log, rnd() < 0.5 ? wood : darkWood, -0.5 + i * 0.25 + row * 0.12, 0.12 + row * 0.22, 0));
         break;
       }
+      case 'wildflowers': {
+        // Verwilderte Blumen: Mohn, Margeriten, Lupinen, Kornblumen, ein Teil verwelkt (instanziert, siehe unten)
+        const r = p.w ?? 1.5;
+        const n = Math.round(r * r * 24);
+        for (let i = 0; i < n; i++) {
+          const a = rnd() * Math.PI * 2;
+          const d = Math.sqrt(rnd()) * r;
+          flowerSpots.push({ x: p.x + Math.cos(a) * d, z: p.y + Math.sin(a) * d * (p.h ?? 1), kind: rnd() });
+        }
+        continue;
+      }
+      case 'brokenfence': {
+        // umgestürzte, gebrochene Zaunfelder
+        const w = p.w ?? 3;
+        for (let x = -w / 2; x < w / 2; x += 1.1) {
+          const panel = new THREE.Group();
+          for (let i = 0; i < 4; i++) {
+            if (rnd() < 0.25) continue;
+            panel.add(part(new THREE.BoxGeometry(0.08, 0.9 - rnd() * 0.3, 0.04), wood, -0.4 + i * 0.27, 0.42, 0, false));
+          }
+          panel.add(part(new THREE.BoxGeometry(1.05, 0.07, 0.04), darkWood, 0, 0.6, 0.02, false));
+          panel.position.set(x + 0.5, 0, 0);
+          const fallen = rnd() < 0.6;
+          panel.rotation.set(fallen ? -1.3 - rnd() * 0.25 : (rnd() - 0.5) * 0.4, (rnd() - 0.5) * 0.3, (rnd() - 0.5) * 0.3);
+          if (fallen) panel.position.y = 0.04;
+          g.add(panel);
+        }
+        break;
+      }
+      case 'clothesline': {
+        const w = p.w ?? 4;
+        for (const x of [-w / 2, w / 2]) g.add(part(new THREE.CylinderGeometry(0.05, 0.06, 2, 5), darkWood, x, 1, 0));
+        const line = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, w, 3).rotateZ(Math.PI / 2), mats.lambert(0xbbbbbb));
+        line.position.y = 1.85;
+        g.add(line);
+        const rags = [0x8a7a6a, 0x5a6a7a, 0xa09070, 0x6a4a4a];
+        for (let x = -w / 2 + 0.6; x < w / 2 - 0.4; x += 0.7 + rnd() * 0.4) {
+          const rag = new THREE.Mesh(new THREE.PlaneGeometry(0.4 + rnd() * 0.3, 0.5 + rnd() * 0.4).translate(0, -0.3, 0), new THREE.MeshLambertMaterial({ color: rags[Math.floor(rnd() * rags.length)], side: THREE.DoubleSide }));
+          rag.position.set(x, 1.85, 0);
+          rag.rotation.set(0, (rnd() - 0.5) * 0.5, (rnd() - 0.5) * 0.3);
+          g.add(rag);
+        }
+        break;
+      }
+      case 'trashcan': {
+        const rust = mats.lambert(0x6a5a48);
+        const can = new THREE.Group();
+        can.add(part(new THREE.CylinderGeometry(0.3, 0.26, 0.85, 10, 1, true), rust, 0, 0.42, 0));
+        can.add(part(new THREE.CircleGeometry(0.26, 10).rotateX(-Math.PI / 2), mats.lambert(0x1a1612), 0, 0.01, 0, false));
+        const tipped = rnd() < 0.6;
+        if (tipped) {
+          can.rotation.z = Math.PI / 2;
+          can.position.y = 0.3;
+          for (let i = 0; i < 5; i++) g.add(part(new THREE.BoxGeometry(0.15 + rnd() * 0.2, 0.05, 0.12 + rnd() * 0.15), mats.lambert([0x6a6a5a, 0xd8d0c0, 0x4a5a3a][i % 3]), 0.6 + rnd() * 0.6, 0.03, (rnd() - 0.5) * 0.7, false));
+        }
+        g.add(can);
+        const lid = part(new THREE.CylinderGeometry(0.32, 0.32, 0.04, 10), rust, tipped ? -0.6 : 0.5, 0.03, 0.3);
+        lid.rotation.x = 0.1;
+        g.add(lid);
+        break;
+      }
+      case 'canister': {
+        for (let i = 0; i < 2; i++) {
+          const c = part(new THREE.BoxGeometry(0.28, 0.4, 0.16), mats.lambert(i ? 0x8a2a1a : 0x2a5a2a), i * 0.4, 0.2, (rnd() - 0.5) * 0.3);
+          if (rnd() < 0.5) {
+            c.rotation.z = Math.PI / 2;
+            c.position.y = 0.14;
+          }
+          g.add(c);
+        }
+        break;
+      }
+      case 'glass': {
+        const glassMat = new THREE.MeshLambertMaterial({ color: 0xc8e0f0, transparent: true, opacity: 0.55, emissive: 0x203040 });
+        for (let i = 0; i < 12; i++) {
+          const sh = new THREE.Mesh(new THREE.CircleGeometry(0.05 + rnd() * 0.08, 3).rotateX(-Math.PI / 2), glassMat);
+          sh.position.set((rnd() - 0.5) * 1.6, 0.02, (rnd() - 0.5) * 1.6);
+          sh.rotation.y = rnd() * 3;
+          g.add(sh);
+        }
+        live.add(g); // durchsichtig: nicht zusammenfassen
+        continue;
+      }
+      case 'scorch': {
+        const r = p.w ?? 1.5;
+        const scorch = new THREE.MeshLambertMaterial({ color: 0x0e0b09, transparent: true, opacity: 0.75, depthWrite: false });
+        for (let i = 0; i < 5; i++) {
+          const m = new THREE.Mesh(new THREE.CircleGeometry(r * (0.4 + rnd() * 0.5), 9).rotateX(-Math.PI / 2), scorch);
+          m.position.set((rnd() - 0.5) * r, 0.015 + i * 0.001, (rnd() - 0.5) * r);
+          m.scale.set(1, 1, 0.6 + rnd() * 0.6);
+          g.add(m);
+        }
+        for (let i = 0; i < 3; i++) {
+          const ch = part(new THREE.BoxGeometry(0.6 + rnd() * 0.5, 0.08, 0.1), mats.lambert(0x1a1410), (rnd() - 0.5) * r, 0.05, (rnd() - 0.5) * r, false);
+          ch.rotation.y = rnd() * 3;
+          g.add(ch);
+        }
+        live.add(g);
+        continue;
+      }
+      case 'puddle': {
+        const r = p.w ?? 1;
+        const water = new THREE.MeshLambertMaterial({ color: 0x1a2630, emissive: 0x0a1418, transparent: true, opacity: 0.85 });
+        const m = new THREE.Mesh(new THREE.CircleGeometry(r, 12).rotateX(-Math.PI / 2), water);
+        m.position.y = 0.018;
+        m.scale.set(1, 1, 0.6 + rnd() * 0.3);
+        g.add(m);
+        live.add(g);
+        continue;
+      }
+      case 'crates': {
+        const n = 2 + Math.floor(rnd() * 3);
+        for (let i = 0; i < n; i++) {
+          const s = 0.4 + rnd() * 0.25;
+          const c = part(new THREE.BoxGeometry(s, s, s), mats.lambert(rnd() < 0.5 ? 0x7a5a3a : 0x6a4a2a), (rnd() - 0.5) * 1.2, s / 2, (rnd() - 0.5) * 1.2);
+          c.rotation.set(rnd() < 0.3 ? 0.4 : 0, rnd() * 3, 0);
+          g.add(c);
+        }
+        break;
+      }
+      case 'papers': {
+        const paper = new THREE.MeshLambertMaterial({ color: 0xd8d0b8, side: THREE.DoubleSide });
+        for (let i = 0; i < 8; i++) {
+          const m = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.28).rotateX(-Math.PI / 2), paper);
+          m.position.set((rnd() - 0.5) * 2, 0.02 + rnd() * 0.01, (rnd() - 0.5) * 2);
+          m.rotation.set((rnd() - 0.5) * 0.3, rnd() * 3, 0);
+          g.add(m);
+        }
+        break;
+      }
+      case 'tent': {
+        // eingefallenes Zelt: Plane über schiefen Stangen
+        const cloth = new THREE.MeshLambertMaterial({ color: 0x4a5a3a, side: THREE.DoubleSide });
+        const tentGeo = new THREE.ConeGeometry(1.4, 1.3, 4, 1, true);
+        const tent = new THREE.Mesh(tentGeo, cloth);
+        tent.position.y = 0.55;
+        tent.rotation.set(0.15, Math.PI / 4, 0.2);
+        tent.scale.set(1, 0.8, 1.3);
+        tent.castShadow = true;
+        g.add(tent);
+        g.add(part(new THREE.CylinderGeometry(0.03, 0.03, 1.4, 4), darkWood, 0.3, 0.6, 0.2, false));
+        g.add(part(new THREE.BoxGeometry(0.8, 0.12, 0.5), mats.lambert(0x6a3a2a), 1.4, 0.06, 0.6));
+        break;
+      }
+      case 'tape': {
+        // Absperrband zwischen Pflöcken (gelb-schwarz)
+        const w = p.w ?? 4;
+        for (const x of [-w / 2, 0, w / 2]) g.add(part(new THREE.CylinderGeometry(0.04, 0.04, 1, 4), mats.lambert(0xd84a20), x, 0.5, 0, false));
+        const tapeTex = document.createElement('canvas');
+        tapeTex.width = 64;
+        tapeTex.height = 8;
+        const tc = tapeTex.getContext('2d')!;
+        for (let i = 0; i < 8; i++) {
+          tc.fillStyle = i % 2 ? '#111' : '#f0c020';
+          tc.fillRect(i * 8, 0, 8, 8);
+        }
+        const tm = new THREE.MeshLambertMaterial({ map: new THREE.CanvasTexture(tapeTex), side: THREE.DoubleSide });
+        for (const half of [-1, 1]) {
+          const band = new THREE.Mesh(new THREE.PlaneGeometry(w / 2, 0.08), tm);
+          band.position.set((half * w) / 4, 0.85 - rnd() * 0.15, 0);
+          band.rotation.z = (rnd() - 0.5) * 0.15;
+          g.add(band);
+        }
+        live.add(g);
+        continue;
+      }
+      case 'sign': {
+        // Warnschild „SPERRZONE“
+        const cv = document.createElement('canvas');
+        cv.width = 128;
+        cv.height = 64;
+        const c2 = cv.getContext('2d')!;
+        c2.fillStyle = '#c8b020';
+        c2.fillRect(0, 0, 128, 64);
+        c2.fillStyle = '#111';
+        c2.font = 'bold 22px sans-serif';
+        c2.textAlign = 'center';
+        c2.fillText('SPERRZONE', 64, 30);
+        c2.font = 'bold 14px sans-serif';
+        c2.fillText('BETRETEN VERBOTEN', 64, 52);
+        const board = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.55), new THREE.MeshLambertMaterial({ map: new THREE.CanvasTexture(cv), side: THREE.DoubleSide }));
+        board.position.set(0, 1.35, 0.03);
+        board.rotation.z = (rnd() - 0.5) * 0.25;
+        g.add(board);
+        g.add(part(new THREE.CylinderGeometry(0.04, 0.04, 1.5, 5), mats.lambert(0x5a5a5a), 0, 0.75, 0));
+        live.add(g);
+        continue;
+      }
+      case 'bodybag': {
+        const bag = part(new THREE.CapsuleGeometry(0.22, 1.2, 4, 8).rotateZ(Math.PI / 2), mats.lambert(0x1a1a1c), 0, 0.18, 0);
+        bag.scale.set(1, 0.7, 1);
+        g.add(bag);
+        g.add(part(new THREE.BoxGeometry(1.3, 0.02, 0.03), mats.lambert(0x8a8a8a), 0, 0.33, 0, false));
+        break;
+      }
+      case 'mailbox': {
+        const box = part(new THREE.BoxGeometry(0.4, 0.3, 0.6), mats.lambert(0xc8a020), 0.3, 0.16, 0);
+        box.rotation.set(0.2, 0.4, 1.4);
+        g.add(box);
+        const post = part(new THREE.CylinderGeometry(0.04, 0.04, 1.2, 5), darkWood, -0.3, 0.06, 0);
+        post.rotation.z = Math.PI / 2 - 0.1;
+        g.add(post);
+        break;
+      }
+      case 'dirt': {
+        // kahle Erdstelle mit ein paar Steinchen
+        const r = p.w ?? 1.5;
+        const m = new THREE.Mesh(new THREE.CircleGeometry(r, 8).rotateX(-Math.PI / 2), mats.lambert(0x3a2e22));
+        m.position.y = 0.006;
+        m.scale.set(1, 1, 0.6 + rnd() * 0.5);
+        m.rotation.y = rnd() * 3;
+        m.receiveShadow = true;
+        g.add(m);
+        break;
+      }
       case 'barricade': {
         const w = p.w ?? 2;
         // Sandsäcke unten, Kisten und schräge Bretter darüber
@@ -453,6 +669,39 @@ export function nightDecor(stat: THREE.Group, live: THREE.Group, arena: ArenaDef
     stat.add(g);
   }
 
+  // Wildblumen: Stängel und Köpfe als je ein InstancedMesh
+  const flowers = new THREE.Group();
+  if (flowerSpots.length) {
+    const stemGeo = new THREE.CylinderGeometry(0.012, 0.015, 1, 3).translate(0, 0.5, 0);
+    const headGeo = new THREE.IcosahedronGeometry(0.1, 0);
+    const stems = new THREE.InstancedMesh(stemGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), flowerSpots.length);
+    const heads = new THREE.InstancedMesh(headGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), flowerSpots.length);
+    const m4 = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const e = new THREE.Euler();
+    const col = new THREE.Color();
+    // Mohn, Margerite, Lupine, Kornblume, verwelkt
+    const palette = [0xc8281e, 0xeeeee0, 0x8a5ac8, 0x3a6ad8, 0x6a4a2a];
+    const frnd2 = rand(5);
+    flowerSpots.forEach((f, i) => {
+      const k = f.kind < 0.25 ? 0 : f.kind < 0.45 ? 1 : f.kind < 0.6 ? 2 : f.kind < 0.75 ? 3 : 4;
+      const wilted = k === 4;
+      const h = (wilted ? 0.25 : 0.35) + frnd2() * 0.3;
+      e.set((frnd2() - 0.5) * (wilted ? 1.2 : 0.3), frnd2() * 3, (frnd2() - 0.5) * (wilted ? 1.2 : 0.3));
+      q.setFromEuler(e);
+      m4.compose(new THREE.Vector3(f.x, 0, f.z), q, new THREE.Vector3(1, h, 1));
+      stems.setMatrixAt(i, m4);
+      stems.setColorAt(i, col.setHex(wilted ? 0x5a4a2a : 0x3f6a2c));
+      const top = new THREE.Vector3(0, h, 0).applyQuaternion(q).add(new THREE.Vector3(f.x, 0, f.z));
+      const s = k === 2 ? 1.4 : k === 1 ? 1.1 : 1;
+      m4.compose(top, q, new THREE.Vector3(s, k === 2 ? 2.2 : 0.7, s));
+      heads.setMatrixAt(i, m4);
+      heads.setColorAt(i, col.setHex(palette[k]));
+    });
+    flowers.add(stems, heads);
+    live.add(flowers);
+  }
+
   // Bodennebel: langsam ziehende Schwaden über dem Gelände
   const b = arenaBounds(arena);
   const fogMat = new THREE.MeshBasicMaterial({ map: fogTex(), transparent: true, opacity: 0.55, depthWrite: false, color: 0x8a96b8 });
@@ -475,6 +724,7 @@ export function nightDecor(stat: THREE.Group, live: THREE.Group, arena: ArenaDef
     setDetail(on) {
       detail = on;
       for (const w of wisps) w.mesh.visible = on;
+      flowers.visible = on;
     },
     update(time, heroes) {
       if (!detail) return;

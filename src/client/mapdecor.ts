@@ -650,41 +650,68 @@ export function decor(d: DecorDef, mats: Mats): THREE.Object3D {
     return g;
   }
   const cobbles = d.look === 'cobbles';
-  const mat = mats.textured(cobbles ? 'cobbles' : 'flagstone', 1);
-  const geo = new THREE.PlaneGeometry(d.w, d.h).rotateX(-Math.PI / 2);
-  // Textur in Weltmaßen kacheln (Bruchstein: eine Kachel ≈ 2,5 m)
-  const k = cobbles ? 0.5 : 0.4;
-  const uv = geo.attributes.uv;
-  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * d.w * k + d.x * k, uv.getY(i) * d.h * k + d.y * k);
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.position.set(d.x, 0.012, d.y);
-  mesh.receiveShadow = true;
-  if (cobbles) return mesh;
-  // Unregelmäßiger Rand: einzelne Steinplatten neben dem Weg, ein paar fehlen im Weg (Erde)
+  if (cobbles) {
+    const geo = new THREE.PlaneGeometry(d.w, d.h).rotateX(-Math.PI / 2);
+    const k = 0.5;
+    const uv = geo.attributes.uv;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * d.w * k + d.x * k, uv.getY(i) * d.h * k + d.y * k);
+    const mesh = new THREE.Mesh(geo, mats.textured('cobbles', 1));
+    mesh.position.set(d.x, 0.012, d.y);
+    mesh.receiveShadow = true;
+    return mesh;
+  }
+  // Pfad: schlammige Erdspur, darauf einzelne Trittplatten aus Bruchstein
+  // (unregelmäßig, teils verschoben oder gebrochen), Lücken mit Erde und Gras.
   const g = new THREE.Group();
-  g.add(mesh);
   const rnd = rand(d.x * 3 + d.y * 5);
-  const slab = mats.lambert(0x8f887c);
-  const dirt = mats.lambert(0x4a3a2a);
   const along = d.w >= d.h;
   const len = along ? d.w : d.h;
   const wid = along ? d.h : d.w;
-  for (let t = -len / 2; t < len / 2; t += 0.9 + rnd() * 0.8) {
-    for (const side of [-1, 1]) {
-      if (rnd() < 0.4) continue;
-      const r = 0.22 + rnd() * 0.25;
-      const off = side * (wid / 2 + r * 0.6);
-      const stone = new THREE.Mesh(new THREE.CircleGeometry(r, 5 + Math.floor(rnd() * 3)).rotateX(-Math.PI / 2), slab);
-      stone.position.set(d.x + (along ? t : off), 0.014, d.y + (along ? off : t));
-      stone.rotation.y = rnd() * 3;
-      stone.receiveShadow = true;
-      g.add(stone);
-    }
-    if (rnd() < 0.15) {
-      const hole = new THREE.Mesh(new THREE.CircleGeometry(0.25 + rnd() * 0.2, 6).rotateX(-Math.PI / 2), dirt);
-      const off = (rnd() - 0.5) * (wid - 0.6);
-      hole.position.set(d.x + (along ? t : off), 0.016, d.y + (along ? off : t));
-      g.add(hole);
+  const mud = mats.lambert(0x3e3226);
+  const mudDark = mats.lambert(0x2e261d);
+  // Erdspur mit unregelmäßigem Rand aus überlappenden Flecken
+  for (let t = -len / 2; t < len / 2; t += 0.6) {
+    const r = wid * (0.45 + rnd() * 0.25);
+    const off = (rnd() - 0.5) * wid * 0.3;
+    const blot = new THREE.Mesh(new THREE.CircleGeometry(r, 7).rotateX(-Math.PI / 2), rnd() < 0.2 ? mudDark : mud);
+    blot.position.set(d.x + (along ? t : off), 0.008 + rnd() * 0.002, d.y + (along ? off : t));
+    blot.scale.set(1, 1, 0.7 + rnd() * 0.5);
+    blot.rotation.y = rnd() * 3;
+    blot.receiveShadow = true;
+    g.add(blot);
+  }
+  // Trittplatten
+  const stones = [0x8a8378, 0x7a746a, 0x958d80, 0x6e695f].map((c) => mats.lambert(c));
+  const step = 0.55;
+  for (let t = -len / 2 + 0.3; t < len / 2 - 0.2; t += step + rnd() * 0.25) {
+    const pairs = wid > 1 ? 2 : 1;
+    for (let k = 0; k < pairs; k++) {
+      if (rnd() < 0.12) continue; // fehlende Platte
+      const r = 0.22 + rnd() * 0.16;
+      const off = pairs === 2 ? (k - 0.5) * wid * 0.45 + (rnd() - 0.5) * 0.12 : (rnd() - 0.5) * 0.2;
+      const sides = 5 + Math.floor(rnd() * 3);
+      const geo = new THREE.CylinderGeometry(r, r * 1.05, 0.06, sides);
+      // unregelmäßiger Umriss: Ecken zufällig nach innen/außen
+      const pos = geo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const f = 0.8 + ((Math.sin(i * 12.9898 + t * 78.233) * 43758.5453) % 1 + 1) % 1 * 0.35;
+        pos.setX(i, pos.getX(i) * f);
+        pos.setZ(i, pos.getZ(i) * f);
+      }
+      geo.computeVertexNormals();
+      const m = new THREE.Mesh(geo, stones[Math.floor(rnd() * stones.length)]);
+      const tilt = rnd() < 0.15 ? 0.12 : 0.03; // manche Platten stehen schief hoch
+      m.position.set(d.x + (along ? t : off), 0.03, d.y + (along ? off : t));
+      m.rotation.set((rnd() - 0.5) * tilt, rnd() * 3, (rnd() - 0.5) * tilt);
+      m.receiveShadow = true;
+      g.add(m);
+      if (rnd() < 0.08) {
+        // gebrochene Platte: Splitter daneben
+        const shard = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.35, r * 0.4, 0.05, 4), m.material as THREE.Material);
+        shard.position.set(m.position.x + 0.3, 0.025, m.position.z + 0.2);
+        shard.rotation.y = rnd() * 3;
+        g.add(shard);
+      }
     }
   }
   return g;

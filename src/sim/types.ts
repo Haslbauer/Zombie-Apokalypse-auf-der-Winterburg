@@ -404,6 +404,22 @@ export const PROP_LOOKS = [
   'birdbath',
   'cross',
   'woodstack',
+  'wildflowers',
+  'brokenfence',
+  'clothesline',
+  'trashcan',
+  'canister',
+  'glass',
+  'scorch',
+  'puddle',
+  'crates',
+  'papers',
+  'tent',
+  'tape',
+  'sign',
+  'bodybag',
+  'mailbox',
+  'dirt',
 ] as const;
 
 /** Deko-Objekt an einem Punkt; rot dreht um die Hochachse, w: Breite (Barrikade), h: Höhe (Krähen auf Zaun/Grabstein). */
