@@ -508,6 +508,12 @@ function handleEvents(state: GameState): void {
         if (e.phase === 'cleared') {
           const camp = gameData.arena.camps?.find((c) => c.id === e.campId);
           if (camp && state.heroes.some((h) => h.alive && Math.hypot(h.pos.x - camp.x, h.pos.y - camp.y) < 15)) hud.message(`${camp.name} besiegt`);
+        } else if (e.phase === 'reset') {
+          // Angreifer war unerreichbar: Lager kehrt unverwundbar heim und heilt sich
+          const camp = gameData.arena.camps?.find((c) => c.id === e.campId);
+          const name = camp?.name ?? (e.campId === 'courier' ? 'Postbote' : 'Lager');
+          const me = state.heroes.find((h) => h.id === heroId);
+          if (me && (!camp || Math.hypot(me.pos.x - camp.x, me.pos.y - camp.y) < 20)) hud.message(`${name} weicht aus und setzt sich zurück`);
         }
         break;
       case 'ping': {

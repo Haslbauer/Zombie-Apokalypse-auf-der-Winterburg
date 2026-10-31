@@ -10,6 +10,12 @@ import { spawnZombieAt } from './waves';
 const RETURN_SPEED = 1.5;
 /** Neues Ziel, wenn das bisherige weg ist: Held höchstens so weit entfernt. */
 const RETARGET_RANGE = 6;
+/**
+ * Erreicht ein Neutraler im Kampf so lange niemanden (z. B. Fernkämpfer hinter
+ * einem Zaun), setzt sich das ganze Lager zurück: Rückweg unverwundbar, am
+ * Platz voll geheilt (wie das „Ausweichen“ in LoL).
+ */
+export const RESET_AFTER = 5;
 
 /**
  * Neutrale Lager im Gelände (wie der LoL-Dschungel): zu Spielbeginn besetzt,
@@ -54,7 +60,7 @@ function spawnCamp(ctx: SimContext, camp: CampDef): void {
  * Gibt false zurück, wenn sie ruhig ist; dann darf der Postbote seine Runde laufen.
  * move läuft (mit Pfadsuche) auf einen Punkt zu.
  */
-export function updateNeutral(ctx: SimContext, z: Zombie, def: ZombieDef, speed: number, move: (to: Vec2, step: number) => void): boolean {
+export function updateNeutral(ctx: SimContext, z: Zombie, def: ZombieDef, speed: number, move: (to: Vec2, step: number, chase?: boolean) => void): boolean {
   const { state } = ctx;
   const n = z.neutral!;
   const leash = def.neutral?.leash ?? 10;
@@ -68,11 +74,19 @@ export function updateNeutral(ctx: SimContext, z: Zombie, def: ZombieDef, speed:
     if (!target && z.targetId !== null) target = heroes.find((h) => dist(h.pos, z.pos) <= RETARGET_RANGE && dist(h.pos, n.home) <= leash);
     if (target && dist(z.pos, n.home) <= leash) {
       z.targetId = target.id;
+      n.engagedAt ??= state.time;
+      // Niemanden erreicht (Angreifer unerreichbar): Lager zurücksetzen
+      // (Treffer irgendeines Lagerbewohners zählen: Hauptsache, das Lager erreicht den Angreifer)
+      if (state.time - Math.max(n.engagedAt, campLastHit(ctx, z)) > RESET_AFTER) {
+        resetCamp(ctx, z);
+        return true;
+      }
       fight(ctx, z, def, target, speed, move);
       return true;
     }
     if (z.targetId !== null || dist(z.pos, n.home) > leash) n.returning = true;
     z.targetId = null;
+    n.engagedAt = null;
   }
 
   if (n.returning) {
@@ -90,6 +104,28 @@ export function updateNeutral(ctx: SimContext, z: Zombie, def: ZombieDef, speed:
   return false;
 }
 
+/** Letzter Treffer eines Bewohners dieses Lagers (bzw. des Postboten selbst). */
+function campLastHit(ctx: SimContext, z: Zombie): number {
+  const campId = z.neutral!.campId;
+  if (campId === null) return z.neutral!.lastHitAt ?? 0;
+  let t = 0;
+  for (const m of ctx.state.zombies) if (m.neutral?.campId === campId) t = Math.max(t, m.neutral.lastHitAt ?? 0);
+  return t;
+}
+
+/** Ganzes Lager (bzw. den Postboten allein) zurückschicken: Ziel und Reizung vergessen. */
+function resetCamp(ctx: SimContext, z: Zombie): void {
+  const campId = z.neutral!.campId;
+  const mates = campId === null ? [z] : ctx.state.zombies.filter((m) => m.hp > 0 && m.neutral?.campId === campId);
+  for (const m of mates) {
+    m.neutral!.returning = true;
+    m.neutral!.engagedAt = null;
+    m.targetId = null;
+    m.st.provokedUntil = 0;
+  }
+  ctx.state.events.push({ type: 'camp', campId: campId ?? 'courier', phase: 'reset' });
+}
+
 /** Held, der diese Einheit oder jemanden aus ihrem Lager gerade gereizt hat. */
 function provoker(ctx: SimContext, z: Zombie, heroes: Hero[]): Hero | undefined {
   const { state } = ctx;
@@ -102,14 +138,15 @@ function provoker(ctx: SimContext, z: Zombie, heroes: Hero[]): Hero | undefined 
   return undefined;
 }
 
-function fight(ctx: SimContext, z: Zombie, def: ZombieDef, target: Hero, speed: number, move: (to: Vec2, step: number) => void): void {
+function fight(ctx: SimContext, z: Zombie, def: ZombieDef, target: Hero, speed: number, move: (to: Vec2, step: number, chase?: boolean) => void): void {
   if (edgeDistance(z, target) <= def.attackRange) {
     face(z, target.pos);
     if (z.attackTimer <= 0) {
       z.attackTimer = def.attackCooldown;
       ctx.state.events.push({ type: 'attack', id: z.id, targetId: target.id });
       applyDamage(ctx, target, z.damage);
+      z.neutral!.lastHitAt = ctx.state.time;
     }
   } else if (def.flying) stepToward(z, target.pos, speed * DT);
-  else move(target.pos, speed * DT);
+  else move(target.pos, speed * DT, true);
 }

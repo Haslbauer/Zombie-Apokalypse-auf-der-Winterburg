@@ -48,7 +48,8 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null, s
     if (def.special && updateElite(ctx, z, def, seen)) continue;
     if (z.neutral) {
       if (rooted) continue;
-      const busy = updateNeutral(ctx, z, def, speed, (to, step) => moveTo(ctx, z, to, null, step));
+      // Verfolgen mit dem Wegfeld zu den Helden (um Zäune herum), heimkehren geradeaus
+      const busy = updateNeutral(ctx, z, def, speed, (to, step, chase) => moveTo(ctx, z, to, chase ? heroField : null, step));
       if (!busy && z.courier) updateCourier(ctx, z, speed);
       continue;
     }

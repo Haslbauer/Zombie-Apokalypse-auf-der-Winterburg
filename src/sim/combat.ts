@@ -38,6 +38,8 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
     amount = absorbWithShield(target, amount * (1 - reduction));
     if (amount <= 0) return 0;
   } else {
+    // Heimkehrende Neutrale (zurückgesetztes Lager) sind unverwundbar
+    if (target.neutral?.returning) return 0;
     if (source) {
       // Gereizt: Ratten und Hornissen beißen zurück
       target.st.provokedBy = source.id;

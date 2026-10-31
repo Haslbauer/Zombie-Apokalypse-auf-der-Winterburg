@@ -67,4 +67,49 @@ describe('Neutrale Lager (Dschungel)', () => {
     run(sim, camp.respawn * 20 + 2);
     expect(sim.state.zombies.filter((z) => z.neutral?.campId === camp.id)).toHaveLength(camp.units.length);
   });
+
+  it('unerreichbarer Angreifer (z. B. hinter dem Zaun): Lager setzt sich zurück, unverwundbar auf dem Rückweg', () => {
+    const { sim, camps } = campSim();
+    const camp = camps.find((c) => c.id === 'spinnen-west')!;
+    const [h] = sim.state.heroes;
+    h.maxHp = h.hp = 1e6;
+    const spiders = sim.state.zombies.filter((z) => z.neutral?.campId === camp.id);
+    const big = spiders.find((z) => z.defId === 'riesenspinne')!;
+    // Der Held steht in Reichweite des Lagers, die Spinnen kommen aber nicht hin (wie hinter einem Zaun)
+    h.pos = { x: camp.x + 6, y: camp.y };
+    const speeds = spiders.map((z) => z.speed);
+    for (const z of spiders) z.speed = 0;
+    applyDamage(sim, big, 200, h);
+    run(sim, 20);
+    expect(big.targetId).toBe(h.id);
+    let reset = false;
+    for (let i = 0; i < 20 * 5; i++) {
+      sim.step();
+      if (sim.state.events.some((e) => e.type === 'camp' && e.phase === 'reset')) reset = true;
+    }
+    expect(reset).toBe(true);
+    // Die Spinne stand noch am Platz: sofort heim und voll geheilt, Ziel vergessen
+    expect(big.hp).toBe(big.maxHp);
+    expect(big.targetId).toBeNull();
+    // Auf dem Rückweg kein Schaden
+    spiders.forEach((z, i) => (z.speed = speeds[i]));
+    big.neutral!.returning = true;
+    big.pos = { x: big.pos.x + 3, y: big.pos.y };
+    expect(applyDamage(sim, big, 100, h)).toBe(0);
+    expect(big.hp).toBe(big.maxHp);
+  });
+
+  it('wer zuschlägt, bleibt im Kampf (kein Zurücksetzen, solange die Spinne trifft)', () => {
+    const { sim, camps } = campSim();
+    const camp = camps.find((c) => c.id === 'spinnen-west')!;
+    const [h] = sim.state.heroes;
+    h.maxHp = h.hp = 1e6;
+    const big = sim.state.zombies.find((z) => z.neutral?.campId === camp.id && z.defId === 'riesenspinne')!;
+    h.pos = { x: big.pos.x + big.radius + h.radius + 0.2, y: big.pos.y };
+    applyDamage(sim, big, 50, h);
+    run(sim, 20 * 10);
+    expect(big.neutral!.returning).toBe(false);
+    expect(big.targetId).toBe(h.id);
+  });
 });
+

@@ -655,7 +655,14 @@ export interface Zombie extends Unit {
   /** Postbote: nächster Wegpunkt, Laufrichtung (+1/−1) und wann er verschwindet. */
   courier?: { wp: number; dir: number; leaveAt: number };
   /** Neutrale: Lager (oder null beim Postboten), Platz, zu dem er zurückkehrt, und ob er gerade heimkehrt. */
-  neutral?: { campId: string | null; home: Vec2; returning: boolean };
+  neutral?: {
+    campId: string | null;
+    home: Vec2;
+    returning: boolean;
+    /** Kampfbeginn und letzter eigener Treffer (für das Zurücksetzen, wenn er niemanden erreicht). */
+    engagedAt?: number | null;
+    lastHitAt?: number;
+  };
   /** Bosse: Helden, die Schaden gemacht haben, mit Zeitpunkt des letzten Treffers (für Assists). */
   contrib?: { id: number; t: number }[];
 }
@@ -773,7 +780,7 @@ export type GameEvent =
   | { type: 'shopDenied'; heroId: number; reason: string }
   | { type: 'elite'; zombieId: number; defId: string }
   | { type: 'courier'; zombieId: number; phase: 'arrive' | 'caught' | 'escaped'; gold?: number }
-  | { type: 'camp'; campId: string; phase: 'spawn' | 'cleared' }
+  | { type: 'camp'; campId: string; phase: 'spawn' | 'cleared' | 'reset' }
   | { type: 'ping'; heroId: number; kind: PingKind; pos: Vec2 }
   | { type: 'charge'; zombieId: number; from: Vec2; to: Vec2 }
   | { type: 'leap'; zombieId: number; from: Vec2; to: Vec2; radius: number; windup: number }
