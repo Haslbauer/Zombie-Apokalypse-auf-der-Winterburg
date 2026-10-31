@@ -102,11 +102,26 @@ export const BUILD_ID: string | null = typeof __BUILD_ID__ === 'undefined' ? nul
 /** Laufzeitmessung alle … s. */
 const PING_INTERVAL = 2;
 /** Wartezeiten beim Wiederverbinden (s); danach alle 8 s. */
-const RECONNECT_STEPS = [0.5, 1, 2, 4, 8];
+const RECONNECT_STEPS = [0, 0.5, 1, 2, 4, 8];
 /** So lange wird es nach einem Abbruch versucht (s), solange der Platz reserviert ist … */
 const RECONNECT_FOR = 120;
 /** … bzw. beim ersten Verbindungsaufbau (kostenlose Server brauchen nach dem Schlafen bis zu einer Minute). */
 const CONNECT_FOR = 90;
+
+/** Verständlicher Grund für das Ende einer WebSocket-Verbindung. */
+function closeReason(e: CloseEvent): string {
+  if (e.reason) return e.reason;
+  switch (e.code) {
+    case 1001:
+      return 'Server oder Tunnel wurde beendet';
+    case 1006:
+      return 'Verbindung abgerissen (Netz oder Tunnel)';
+    case 1012:
+      return 'Server startet neu';
+    default:
+      return `Code ${e.code}`;
+  }
+}
 
 /** waking: erster Verbindungsaufbau dauert (Server startet), reconnecting: nach einem Abbruch. */
 export type ConnectionStatus = 'online' | 'waking' | 'reconnecting' | 'lost';
@@ -148,6 +163,8 @@ export class RemoteSession implements Session {
   private sincePing = PING_INTERVAL;
   private closed = false;
   private reconnecting = false;
+  /** Letzter entpackter Zustand (liefert fehlende, selten wechselnde Felder). */
+  private lastDecoded: GameState | null = null;
   private reconnectStart = 0;
   private attempts = 0;
   private timer = 0;
@@ -188,8 +205,8 @@ export class RemoteSession implements Session {
     const ws = new WebSocket(serverUrl());
     ws.addEventListener('open', () => ws.send(JSON.stringify(first)));
     ws.addEventListener('message', (e) => this.receive(JSON.parse(String(e.data)) as ServerMessage));
-    ws.addEventListener('close', () => {
-      if (ws === this.ws && !this.closed) this.scheduleReconnect();
+    ws.addEventListener('close', (e) => {
+      if (ws === this.ws && !this.closed) this.scheduleReconnect(closeReason(e));
     });
     return ws;
   }
@@ -199,13 +216,14 @@ export class RemoteSession implements Session {
    * neu versuchen. Nach dem Beitritt mit dem Token (derselbe Held), vorher mit
    * der ersten Nachricht.
    */
-  private scheduleReconnect(): void {
+  private scheduleReconnect(reason?: string): void {
     const joined = this.heroId >= 0;
     if (!this.reconnecting) {
       this.reconnecting = true;
       this.reconnectStart = performance.now();
       this.attempts = 0;
-      this.onStatus(joined ? 'reconnecting' : 'waking');
+      if (reason) console.warn(`Verbindung getrennt: ${reason}`);
+      this.onStatus(joined ? 'reconnecting' : 'waking', reason);
     }
     if ((performance.now() - this.reconnectStart) / 1000 > (joined ? RECONNECT_FOR : CONNECT_FOR)) {
       this.closed = true;
@@ -243,7 +261,10 @@ export class RemoteSession implements Session {
         this.onRoom(msg.room);
         break;
       case 'state': {
-        const state = decodeSnapshot(msg.s, this.zombieTypes, (id) => gameData.zombies.find((z) => z.id === id)?.radius ?? 0.4);
+        const state = decodeSnapshot(msg.s, this.zombieTypes, (id) => gameData.zombies.find((z) => z.id === id)?.radius ?? 0.4, this.lastDecoded ?? undefined);
+        // Vor dem ersten vollständigen Schnappschuss fehlen Heldendaten: abwarten
+        if (!msg.s.full && !this.lastDecoded) return;
+        this.lastDecoded = state;
         this.snapshots.push(state);
         const me = state.heroes.find((h) => h.id === this.heroId);
         if (me) this.prediction.reconcile(state, me, msg.ack);

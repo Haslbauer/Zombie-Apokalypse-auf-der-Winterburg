@@ -12,13 +12,15 @@ const DIFFICULTIES: BotDifficulty[] = ['leicht', 'mittel', 'schwer'];
 /** Nachrichten pro Sekunde und Verbindung: darüber wird ignoriert, ab dem Vielfachen getrennt. */
 export const RATE_LIMIT = 60;
 const RATE_KICK = 4 * RATE_LIMIT;
+/** Eingaben pro Sekunde (normal 20; mehr wird ignoriert, nie getrennt). */
+const INPUT_LIMIT = 60;
 
 export interface Client extends Player {
   room: Room | null;
   /** Verbindung trennen (Missbrauch, Herunterfahren). */
-  close(): void;
+  close(reason: string): void;
   /** Nachrichten im laufenden Sekundenfenster. */
-  rate: { windowStart: number; count: number };
+  rate: { windowStart: number; count: number; inputs: number };
 }
 
 export interface LobbyOptions {
@@ -41,20 +43,27 @@ export class Lobby {
     this.log = options.log ?? (() => {});
   }
 
-  connect(send: (data: string) => void, buffered: () => number = () => 0, close: () => void = () => {}): Client {
-    return { name: 'Spieler', room: null, send, buffered, close, rate: { windowStart: this.now(), count: 0 } };
+  connect(send: (data: string) => void, buffered: () => number = () => 0, close: (reason: string) => void = () => {}): Client {
+    return { name: 'Spieler', room: null, send, buffered, close, rate: { windowStart: this.now(), count: 0, inputs: 0 } };
   }
 
   message(client: Client, raw: string): void {
     // Zu viele Nachrichten: erst ignorieren, bei grobem Missbrauch trennen
     const now = this.now();
-    if (now - client.rate.windowStart >= 1000) client.rate = { windowStart: now, count: 0 };
-    if (++client.rate.count > RATE_LIMIT) {
-      if (client.rate.count > RATE_KICK) client.close();
-      return;
+    if (now - client.rate.windowStart >= 1000) client.rate = { windowStart: now, count: 0, inputs: 0 };
+    // Eingaben zählen getrennt: nach einem Ruckler schickt der Client bis zu 10
+    // auf einmal nach, das darf nicht zum Rauswurf führen (der Raum puffert ohnehin nur wenige)
+    if (raw.startsWith('{"t":"input"')) {
+      if (++client.rate.inputs > INPUT_LIMIT) return;
     }
     const msg = parseClientMessage(raw);
     if (!msg) return;
+    if (msg.t !== 'input') {
+      if (++client.rate.count > RATE_LIMIT) {
+        if (client.rate.count > RATE_KICK) client.close('Zu viele Nachrichten');
+        return;
+      }
+    }
     switch (msg.t) {
       case 'create':
         this.create(client, msg.heroes, msg.difficulty, msg.name);

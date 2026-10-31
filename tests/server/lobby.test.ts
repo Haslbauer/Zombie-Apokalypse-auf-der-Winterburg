@@ -159,6 +159,33 @@ describe('Server: Räume', () => {
     expect(guest.io.closed).toBe(true);
   });
 
+  it('nachgeschickte Eingaben nach einem Ruckler führen nicht zur Trennung', () => {
+    const { host } = twoPlayers();
+    // Ruckler: 10 Eingaben auf einmal, das mehrere Male in einer Sekunde, plus normale Nachrichten
+    let seq = 0;
+    for (let burst = 0; burst < 30; burst++) for (let i = 0; i < 10; i++) host.send({ t: 'input', seq: ++seq, move: { x: 1, y: 0 }, aim: { x: 0, y: 0 }, attack: false });
+    for (let i = 0; i < 20; i++) host.send({ t: 'ping', ts: i });
+    expect(host.io.closed).toBe(false);
+    expect(host.last('pong')).toBeTruthy();
+  });
+
+  it('Schnappschuss ohne selten wechselnde Felder: Client übernimmt sie vom letzten Zustand', () => {
+    const sim = new Simulation(gameData, { seed: 1, heroes: ['rotschopf', 'pirat'], bots: [null, 'mittel'] });
+    for (let i = 0; i < 20 * 10; i++) sim.step();
+    sim.state.heroes[0].inventory[0] = 'laufschuhe';
+    const radius = (id: string) => gameData.zombies.find((d) => d.id === id)!.radius;
+    const full = decodeSnapshot(JSON.parse(encodeSnapshot(sim.state, [], ZOMBIE_TYPES, true)), ZOMBIE_TYPES, radius);
+    sim.step();
+    const partialText = encodeSnapshot(sim.state, [], ZOMBIE_TYPES, false);
+    expect(partialText.length).toBeLessThan(encodeSnapshot(sim.state, [], ZOMBIE_TYPES, true).length);
+    expect(partialText).not.toContain('laufschuhe');
+    const next = decodeSnapshot(JSON.parse(partialText), ZOMBIE_TYPES, radius, full);
+    expect(next.heroes[0].inventory[0]).toBe('laufschuhe');
+    expect(next.heroes[0].level).toBe(sim.state.heroes[0].level);
+    expect(next.heroes[0].pos.x).toBeCloseTo(sim.state.heroes[0].pos.x, 1);
+    expect(next.objectives[0].maxHp).toBe(sim.state.objectives[0].maxHp);
+  });
+
   it('leere Räume stehen still und werden nach 5 Minuten geschlossen', () => {
     const { lobby, player, advance } = setup();
     const host = player();

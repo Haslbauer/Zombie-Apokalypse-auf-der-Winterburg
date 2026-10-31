@@ -258,7 +258,7 @@ function connect(first: Parameters<typeof RemoteSession.connect>[0], heroes: str
   remote.onStatus = (status, msg) => {
     if (status === 'online') hud.setConnection(null);
     else if (status === 'waking') hud.showNotice('Verbinde …', 'Der Spielserver antwortet noch nicht. Kostenlose Server schlafen manchmal und brauchen beim ersten Aufruf etwa eine Minute – es wird weiter versucht.', leaveOnline);
-    else if (status === 'reconnecting') hud.setConnection('Verbindung wird wiederhergestellt …');
+    else if (status === 'reconnecting') hud.setConnection(`Verbindung wird wiederhergestellt …${msg ? ` (${msg})` : ''}`);
     else {
       hud.setConnection(null);
       if (session === remote || !started) {

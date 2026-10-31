@@ -53,9 +53,12 @@ Im Internet hinter HTTPS betreiben (z. B. Caddy oder ein Tunnel), denn Browser v
 - **Eigene Bewegung ohne Verzögerung:** Der Client sagt die eigene Bewegung voraus und gleicht sie mit dem Server ab (getestet mit 300 ms Laufzeit: Der Held läuft sofort los, am Ende stimmen Bild und Server auf den Zentimeter).
 - **Gleichmäßige Bewegung der anderen:** Zustände 20× pro Sekunde, Darstellung 100 ms im Puffer gegen Netzschwankungen.
 - **Nichts geht verloren:** Ereignisse (Treffer, Gold, Pings …) werden gesammelt und auch bei voller Leitung nachgeliefert.
-- **Verbindungsabbruch:** Ein Bot springt ein, der Platz bleibt 2 Minuten reserviert, der Client verbindet sich selbst neu und bekommt denselben Helden zurück – auch nach dem Neuladen der Seite.
-- **Absicherung:** Nachrichten werden geprüft, begrenzt (Größe, Anzahl pro Sekunde), tote Verbindungen per Herzschlag erkannt. Nach einem Update meldet die alte Seite „Neue Version – bitte neu laden“.
-- **Klein:** Komprimierte Zustände (rund 3 KB/s pro Spieler zu Beginn), das Spiel selbst wird vorkomprimiert ausgeliefert (JavaScript 845 KB → 187 KB).
+- **Verbindungsabbruch:** Ein Bot springt ein, der Platz bleibt 2 Minuten reserviert, der Client verbindet sich sofort selbst neu und bekommt denselben Helden zurück – auch nach dem Neuladen der Seite. Der Grund der Trennung wird angezeigt (z. B. „Verbindung abgerissen (Netz oder Tunnel)“) und im Server-Log notiert.
+- **Absicherung:** Nachrichten werden geprüft, begrenzt (Größe, Anzahl pro Sekunde), tote Verbindungen per Herzschlag erkannt (getrennt wird erst nach 30 s ohne Antwort). Nach einem Ruckler nachgeschickte Eingaben führen nicht zur Trennung. Nach einem Update meldet die alte Seite „Neue Version – bitte neu laden“.
+- **Klein:** Inventar, Ränge, Punkte und Ziele gehen nur bei Änderung (und jede Sekunde zur Sicherheit) mit, sonst nur Positionen, Leben und Zustände (gepackt meist 1–2 KB pro Zustand). Das Spiel selbst wird vorkomprimiert ausgeliefert.
+- **Überlastung erkennen:** Der Server meldet im Log langsame Ticks und wenn er hinterherhinkt (z. B. weil Spiel und Server bei `npm run share` auf demselben Rechner laufen).
+
+**Wenn es ruckelt:** Im Esc-Menü „Leistung anzeigen“ einschalten (fps und Ping) und die Grafik auf „Automatisch“ lassen oder auf „Mittel“/„Niedrig“ stellen. Bei `npm run share` teilen sich Spiel und Server den Rechner; ein zweiter Rechner als reiner Server (oder Render) entlastet.
 
 Beim Entwickeln (`npm run dev`) leitet Vite den Mehrspieler an einen laufenden `npm run server` weiter. Zum Testen schlechter Leitungen: `LAG_MS=150 npm run server` (künstliche Verzögerung je Richtung).
 

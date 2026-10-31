@@ -23,8 +23,12 @@ const HOST = process.env.HOST ?? '0.0.0.0';
 const MAX_ROOMS = Number(process.env.MAX_ROOMS ?? 200);
 const LAG_MS = Number(process.env.LAG_MS ?? 0);
 const DIST = resolve(fileURLToPath(new URL('../dist', import.meta.url)));
-/** Herzschlag: so oft prüfen, ob die Verbindung noch lebt (ms); wer zweimal nicht antwortet, fliegt raus. */
+/** Herzschlag: so oft prüfen, ob die Verbindung noch lebt (ms). */
 const HEARTBEAT_MS = 5000;
+/** Erst nach so vielen unbeantworteten Herzschlägen trennen (kurze Tunnel-Aussetzer überstehen). */
+const HEARTBEAT_MISSES = 6;
+/** Warnung im Log, wenn ein Tick länger dauert (ms). */
+const SLOW_TICK_MS = 30;
 
 const log = (line: string) => console.log(`${new Date().toISOString().slice(11, 19)} ${line}`);
 
@@ -127,34 +131,48 @@ const http = createServer((req, res) => {
 
 // Kompression spart bei den JSON-Schnappschüssen über 90 % der Daten.
 const wss = new WebSocketServer({ server: http, path: '/ws', maxPayload: MAX_CLIENT_MESSAGE, perMessageDeflate: { threshold: 256 } });
-const alive = new WeakMap<WebSocket, boolean>();
+/** Unbeantwortete Herzschläge je Verbindung. */
+const missed = new WeakMap<WebSocket, number>();
 
 wss.on('connection', (ws: WebSocket) => {
-  alive.set(ws, true);
-  ws.on('pong', () => alive.set(ws, true));
+  missed.set(ws, 0);
+  ws.on('pong', () => missed.set(ws, 0));
+  // Jede Nachricht zeigt ebenfalls, dass die Verbindung lebt
+  ws.on('message', () => missed.set(ws, 0));
   // LAG_MS (nur Test): beide Richtungen verzögern
   const later = (fn: () => void) => (LAG_MS > 0 ? setTimeout(fn, LAG_MS) : fn());
   const client = lobby.connect(
     (data) => later(() => ws.readyState === ws.OPEN && ws.send(data)),
     () => ws.bufferedAmount,
-    () => ws.terminate(),
+    (reason) => {
+      log(`Trenne Spieler: ${reason}`);
+      ws.close(4000, reason.slice(0, 100));
+    },
   );
   ws.send(JSON.stringify({ t: 'hello', build: BUILD } satisfies ServerMessage));
   ws.on('message', (raw, isBinary) => {
     if (!isBinary) later(() => lobby.message(client, String(raw)));
   });
-  ws.on('close', () => lobby.disconnect(client));
-  ws.on('error', () => ws.terminate());
+  ws.on('close', (code, reason) => {
+    if (code !== 1000 && code !== 1001) log(`Verbindung geschlossen (${code}${reason.length ? `: ${reason}` : ''})`);
+    lobby.disconnect(client);
+  });
+  ws.on('error', (err) => {
+    log(`Verbindungsfehler: ${err.message}`);
+    ws.terminate();
+  });
 });
 
 // Herzschlag: tote Verbindungen (Rechner zugeklappt, WLAN weg) erkennen und aufräumen
 const heartbeat = setInterval(() => {
   for (const ws of wss.clients) {
-    if (!alive.get(ws)) {
+    const n = (missed.get(ws) ?? 0) + 1;
+    if (n > HEARTBEAT_MISSES) {
+      log(`Trenne Spieler: keine Antwort seit ${(HEARTBEAT_MISSES * HEARTBEAT_MS) / 1000} s`);
       ws.terminate();
       continue;
     }
-    alive.set(ws, false);
+    missed.set(ws, n);
     ws.ping();
   }
 }, HEARTBEAT_MS);
@@ -162,15 +180,29 @@ const heartbeat = setInterval(() => {
 // Feste Tick-Rate (20 pro Sekunde), Verzug wird aufgeholt
 let next = performance.now();
 let loopTimer: NodeJS.Timeout;
+const slowTicks: number[] = [];
+let lastSlowLog = 0;
 function loop(): void {
   const now = performance.now();
   let steps = 0;
   while (now >= next && steps < 5) {
+    const t0 = performance.now();
     lobby.tick();
+    const took = performance.now() - t0;
+    if (took > SLOW_TICK_MS) slowTicks.push(took);
     next += TICK_MS;
     steps++;
   }
-  if (now - next > 1000) next = now; // nach langer Pause nicht nachrennen
+  if (now - next > 1000) {
+    log(`Server hinkt ${Math.round(now - next)} ms hinterher (Rechner ausgelastet?)`);
+    next = now; // nach langer Pause nicht nachrennen
+  }
+  // Langsame Ticks höchstens alle 10 s melden
+  if (slowTicks.length > 0 && now - lastSlowLog > 10_000) {
+    log(`${slowTicks.length} langsame Ticks, längster ${Math.round(Math.max(...slowTicks))} ms`);
+    slowTicks.length = 0;
+    lastSlowLog = now;
+  }
   loopTimer = setTimeout(loop, Math.max(0, next - performance.now()));
 }
 loop();

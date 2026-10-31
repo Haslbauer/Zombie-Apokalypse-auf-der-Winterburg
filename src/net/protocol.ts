@@ -9,7 +9,7 @@
  * Server bestätigt die zuletzt angewendete (ack), damit der Client die eigene
  * Bewegung vorhersagen und abgleichen kann.
  */
-import { type BotDifficulty, type Command, type GameEvent, type GameState, type Hero, type HeroInput, PING_KINDS, type Zombie } from '../sim/types';
+import { type BotDifficulty, type Command, type GameEvent, type GameState, type Hero, type HeroInput, type Objective, PING_KINDS, type Zombie } from '../sim/types';
 
 /** Raum: wer welchen Helden steuert. reserved: Platz wartet auf einen Spieler, der kurz weg ist. */
 export interface RoomInfo {
@@ -130,9 +130,26 @@ const ST_MARKED = 32;
 const F_COURIER = 1;
 const F_NEUTRAL = 2;
 
-export interface Snapshot extends Omit<GameState, 'zombies' | 'wave' | 'rng' | 'nextId'> {
+export interface Snapshot extends Omit<GameState, 'zombies' | 'wave' | 'rng' | 'nextId' | 'heroes' | 'objectives'> {
   zombies: ZombieTuple[];
   wave: Omit<GameState['wave'], 'queue'> & { queue: number };
+  /** Ohne full fehlen die selten wechselnden Felder (SLOW_HERO_KEYS); der Client nimmt die letzten bekannten. */
+  heroes: Partial<Hero>[];
+  objectives: Partial<Objective>[];
+  /** Vollständiger Schnappschuss (alle Felder)? */
+  full: boolean;
+}
+
+/** Heldenfelder, die sich selten ändern: nur in vollständigen Schnappschüssen. */
+export const SLOW_HERO_KEYS = ['inventory', 'consumables', 'score', 'ranks', 'skillPoints', 'counters', 'xp', 'level', 'gold', 'maxHp', 'defId', 'slot', 'radius', 'name'] as const;
+/** Zielfelder, die sich oft ändern (der Rest nur in vollständigen Schnappschüssen). */
+const FAST_OBJECTIVE_KEYS = ['id', 'hp', 'destroyed', 'aggroUntil'] as const;
+
+/** Schlüssel der selten wechselnden Daten: ändert er sich, schickt der Server einen vollständigen Schnappschuss. */
+export function slowKey(state: GameState): string {
+  const heroes = state.heroes.map((h) => SLOW_HERO_KEYS.map((k) => (h as unknown as Record<string, unknown>)[k]));
+  const objectives = state.objectives.map((o) => [o.regrowIn, o.maxHp]);
+  return JSON.stringify([heroes, objectives]);
 }
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
@@ -144,7 +161,7 @@ const round = (_key: string, v: unknown) => (typeof v === 'number' && !Number.is
  * Hülle; stateMessage setzt je Spieler die Bestätigung davor). zombieTypes:
  * Typ-Ids in fester Reihenfolge.
  */
-export function encodeSnapshot(state: GameState, events: GameEvent[], zombieTypes: string[]): string {
+export function encodeSnapshot(state: GameState, events: GameEvent[], zombieTypes: string[], full = true): string {
   const t = state.time;
   const zombies = state.zombies.map((z): ZombieTuple => {
     const st = z.st;
@@ -158,15 +175,25 @@ export function encodeSnapshot(state: GameState, events: GameEvent[], zombieType
     const flags = (z.courier ? F_COURIER : 0) | (z.neutral ? F_NEUTRAL : 0);
     return [z.id, zombieTypes.indexOf(z.defId), r2(z.pos.x), r2(z.pos.y), r2(z.facing), Math.ceil(z.hp), Math.ceil(z.maxHp), bits, flags];
   });
-  // Bot-Gehirne bleiben auf dem Server; der Client muss nur wissen, wer ein Bot ist.
-  const heroes = state.heroes.map((h) => (h.bot ? { ...h, bot: { difficulty: h.bot.difficulty } as Hero['bot'] } : h));
+  // Bot-Gehirne und Eingaben bleiben auf dem Server; der Client muss nur wissen, wer ein Bot ist.
+  const heroes = state.heroes.map((h) => {
+    const out: Partial<Hero> & Record<string, unknown> = { ...h, bot: h.bot ? ({ difficulty: h.bot.difficulty } as Hero['bot']) : undefined };
+    delete out.input;
+    delete out.pingTimes;
+    if (!full) for (const k of SLOW_HERO_KEYS) delete out[k];
+    return out;
+  });
+  const objectives = full
+    ? state.objectives
+    : state.objectives.map((o) => Object.fromEntries(FAST_OBJECTIVE_KEYS.map((k) => [k, o[k]])) as Partial<Objective>);
   const snap: Snapshot = {
     tick: state.tick,
     time: state.time,
     heroes,
     zombies,
     projectiles: state.projectiles,
-    objectives: state.objectives,
+    objectives,
+    full,
     zones: state.zones,
     delayed: [],
     wave: { ...state.wave, queue: state.wave.queue.length },
@@ -184,7 +211,7 @@ export function stateMessage(snapshotJson: string, ack: number): string {
 }
 
 /** Client: Schnappschuss wieder in einen Spielzustand für Darstellung und HUD verwandeln. */
-export function decodeSnapshot(s: Snapshot, zombieTypes: string[], radius: (defId: string) => number): GameState {
+export function decodeSnapshot(s: Snapshot, zombieTypes: string[], radius: (defId: string) => number, prev?: GameState): GameState {
   const t = s.time;
   const until = (bits: number, bit: number) => (bits & bit ? t + 1 : 0);
   const zombies = s.zombies.map(([id, type, x, y, facing, hp, maxHp, bits, flags]): Zombie => {
@@ -223,8 +250,19 @@ export function decodeSnapshot(s: Snapshot, zombieTypes: string[], radius: (defI
       neutral: flags & F_NEUTRAL ? { campId: null, home: { x, y }, returning: false } : undefined,
     };
   });
+  // Fehlende (selten wechselnde) Felder vom letzten Zustand übernehmen
+  const heroes = s.heroes.map((h) => {
+    const old = prev?.heroes.find((x) => x.id === h.id);
+    const merged = { ...old, ...h } as Hero;
+    merged.input = { move: { x: 0, y: 0 }, aim: { ...merged.pos }, attack: false };
+    return merged;
+  });
+  const objectives = s.objectives.map((o) => ({ ...prev?.objectives.find((x) => x.id === o.id), ...o }) as Objective);
+  const { full: _full, ...rest } = s;
   return {
-    ...s,
+    ...rest,
+    heroes,
+    objectives,
     rng: 0,
     nextId: 0,
     zombies,

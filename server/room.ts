@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { gameData } from '../src/gameData';
-import { encodeSnapshot, stateMessage, type ClientCommand, type RoomInfo } from '../src/net/protocol';
+import { encodeSnapshot, slowKey, stateMessage, type ClientCommand, type RoomInfo } from '../src/net/protocol';
 import { createBot } from '../src/sim/bots/brain';
 import { Simulation } from '../src/sim/game';
 import type { BotDifficulty, Command, GameEvent, HeroInput } from '../src/sim/types';
@@ -18,6 +18,8 @@ export interface Player {
 export const ZOMBIE_TYPES = gameData.zombies.map((z) => z.id);
 /** Ab so vielen wartenden Bytes bekommt ein Spieler keinen neuen Zustand, bis sein Puffer leerer ist. */
 export const BACKPRESSURE_BYTES = 256 * 1024;
+/** Spätestens alle so viele Ticks ein vollständiger Schnappschuss (1 s). */
+const FULL_EVERY = 20;
 /** So lange bleibt der Platz eines Spielers nach einem Verbindungsabbruch für ihn reserviert (ms). */
 export const RESERVE_MS = 2 * 60 * 1000;
 /** Mehr wartende Eingaben werden verworfen (die ältesten), damit die Verzögerung nicht wächst. */
@@ -37,6 +39,8 @@ interface Slot {
   commands: Command[];
   /** Ereignisse, die dieser Spieler wegen voller Leitung noch nicht bekommen hat. */
   backlog: GameEvent[];
+  /** Nächster Schnappschuss muss vollständig sein (neu beigetreten, Zustände ausgelassen). */
+  needFull?: boolean;
 }
 
 /**
@@ -50,6 +54,8 @@ export class Room {
   private readonly slots: Slot[];
   /** Zeitpunkt, seit dem niemand mehr im Raum ist (zum Aufräumen). */
   emptySince: number | null = null;
+  /** Selten wechselnde Daten im letzten Schnappschuss (siehe slowKey). */
+  private lastSlowKey = '';
 
   constructor(
     readonly code: string,
@@ -72,6 +78,7 @@ export class Room {
       s.last = null;
       s.commands = [];
       s.backlog = [];
+      s.needFull = true;
     }
   }
 
@@ -118,6 +125,7 @@ export class Room {
     s.ack = 0;
     s.commands = [];
     s.backlog = [];
+    s.needFull = true;
     hero.bot = undefined;
     hero.input = { move: { x: 0, y: 0 }, aim: hero.input.aim, attack: false };
     this.emptySince = null;
@@ -142,6 +150,7 @@ export class Room {
     s.last = null;
     s.commands = [];
     s.backlog = [];
+    s.needFull = true;
     s.reservedUntil = keep ? now + RESERVE_MS : null;
     if (!keep) s.token = null;
     const hero = this.sim.state.heroes[slot];
@@ -187,6 +196,11 @@ export class Room {
     });
     this.sim.step(cmds);
     const events = this.sim.state.events;
+    // Selten wechselnde Daten (Inventar, Ränge, Punkte …) nur bei Änderung und
+    // zur Sicherheit jede Sekunde vollständig schicken
+    const key = slowKey(this.sim.state);
+    const full = key !== this.lastSlowKey || this.sim.state.tick % FULL_EVERY === 0;
+    this.lastSlowKey = key;
     // Ein Schnappschuss für alle; nur wer einen Rückstau hat, bekommt einen eigenen
     let shared: string | null = null;
     for (const s of this.slots) {
@@ -194,13 +208,15 @@ export class Room {
       if (s.player.buffered() > BACKPRESSURE_BYTES) {
         // Leitung voll: Zustand auslassen (der nächste ist vollständig), Ereignisse aufheben
         s.backlog.push(...events);
+        s.needFull = true;
         continue;
       }
       let json: string;
-      if (s.backlog.length > 0) {
-        json = encodeSnapshot(this.sim.state, [...s.backlog, ...events], ZOMBIE_TYPES);
+      if (s.backlog.length > 0 || s.needFull) {
+        json = encodeSnapshot(this.sim.state, [...s.backlog, ...events], ZOMBIE_TYPES, true);
         s.backlog = [];
-      } else json = shared ??= encodeSnapshot(this.sim.state, events, ZOMBIE_TYPES);
+        s.needFull = false;
+      } else json = shared ??= encodeSnapshot(this.sim.state, events, ZOMBIE_TYPES, full);
       s.player.send(stateMessage(json, s.ack));
     }
   }
