@@ -18,6 +18,9 @@ export function applyInputs(ctx: SimContext, commands: readonly Command[]): void
   for (const cmd of commands) {
     const h = ctx.state.heroes.find((x) => x.id === cmd.heroId);
     if (!h) continue;
+    // Lebenszeichen: jede Aktion außer „nichts drücken“
+    const idle = cmd.type === 'input' && cmd.move.x === 0 && cmd.move.y === 0 && !cmd.attack;
+    if (!idle) h.lastActiveAt = ctx.state.time;
     if (cmd.type === 'levelUp') {
       rankUp(ctx, h, cmd.slot);
       continue;
@@ -94,8 +97,13 @@ export function moveHero(ctx: SimContext, h: Hero, move: Vec2): void {
   h.pos.y += move.y * speed * DT;
 }
 
+/** So lange ohne Eingabe gilt ein Mensch als abwesend (s). */
+export const AFK_TIME = 30;
+
 /** Laufen mit WASD, Blick zur Maus, Angriff nur auf Tastendruck (kein Auto-Attack). */
 export function updateHero(ctx: SimContext, h: Hero): void {
+  // Abwesend: Mensch ohne Eingabe (Bots sind nie abwesend). Er lenkt keine Zombies ab und bekommt nichts.
+  h.afk = !h.bot && ctx.state.time - (h.lastActiveAt ?? 0) > AFK_TIME;
   if (!h.alive) return;
   const def = ctx.heroDefs.get(h.defId)!;
   const kit = kitOf(h.defId);

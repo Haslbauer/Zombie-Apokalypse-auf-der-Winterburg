@@ -26,7 +26,7 @@ export function awardXp(ctx: SimContext, z: Zombie, killer?: Hero, assists: Hero
   if (!def) return;
   const base = def.xp * (1 + prog.xpWaveScale * (state.wave.number - 1));
   for (const h of state.heroes) {
-    if (!h.alive) continue;
+    if (!h.alive || h.afk) continue;
     const share = h === killer ? rw.xpKiller : assists.includes(h) ? rw.xpAssist : dist(h.pos, z.pos) <= prog.xpShareRange ? rw.xpNearby : 0;
     if (share > 0) addXp(ctx, h, base * share);
   }

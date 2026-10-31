@@ -603,6 +603,10 @@ export interface Hero extends Unit {
   score: HeroScore;
   /** Welle, in der der Held zuletzt Schaden an Zombies gemacht hat (Wellenbonus nur für Aktive). */
   activeWave?: number;
+  /** Letzte eigene Eingabe eines Menschen (Laufen, Angriff, Fähigkeit, Einkauf …), Spielzeit. */
+  lastActiveAt?: number;
+  /** Abwesend (Mensch ohne Eingabe seit AFK_TIME): Zombies ignorieren ihn, keine Belohnung. */
+  afk?: boolean;
   /** Waffen und Items (Item-Ids), null = frei. */
   inventory: (string | null)[];
   /** Verbrauchsgüter auf R und T. */

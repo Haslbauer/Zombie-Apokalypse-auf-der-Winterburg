@@ -64,7 +64,7 @@ export function updateNeutral(ctx: SimContext, z: Zombie, def: ZombieDef, speed:
   const { state } = ctx;
   const n = z.neutral!;
   const leash = def.neutral?.leash ?? 10;
-  const heroes = state.heroes.filter((h) => h.alive);
+  const heroes = state.heroes.filter((h) => h.alive && !h.afk);
 
   if (!n.returning) {
     let target = z.targetId !== null ? heroes.find((h) => h.id === z.targetId) : undefined;

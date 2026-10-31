@@ -27,7 +27,7 @@ const BLIND_MISS = 0.5;
 export function updateZombies(ctx: SimContext, heroField: Float32Array | null, smallHeroField: Float32Array | null = null): void {
   const { state, zombieDefs } = ctx;
   // Unsichtbare Helden (Nebelschritt) werden nicht gesehen.
-  const heroes = state.heroes.filter((h) => h.alive && !hasBuff(h, 'invisible'));
+  const heroes = state.heroes.filter((h) => h.alive && !h.afk && !hasBuff(h, 'invisible'));
 
   for (const z of state.zombies) {
     if (z.hp <= 0) continue;
