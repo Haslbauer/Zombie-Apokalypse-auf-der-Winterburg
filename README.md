@@ -121,6 +121,20 @@ Du wählst deinen Helden, drei Bots spielen mit (je ein Nahkämpfer, Fernkämpfe
 
 `npm run balance` lässt vier Bots ohne Spieler über mehrere Seeds spielen und gibt die erreichte Welle aus (Optionen: `BALANCE_SEEDS=5`, `BALANCE_DIFF=mittel`).
 
+## Rollen
+
+Jeder Held hat eine Rolle im Team. Ohne Tank, Schaden und Support ist das Spiel kaum zu gewinnen:
+
+| Rolle | Helden | Wirkung |
+|---|---|---|
+| 🛡 Tank | Ragnar, Spike | nimmt 15 % weniger Schaden; Bosse und Elites in 8 m Nähe greifen ihn an statt der anderen |
+| ⚔ Schaden | Grimm, Rauchbart | 30 % mehr Schaden an Bossen und Elites |
+| ✚ Support | Hagedorn, Somnia | heilt Verbündete in 7 m Nähe ständig ein wenig und reinigt sie alle 3 s von **Seuche** |
+
+**Seuche:** Bossfähigkeiten hinterlassen einen stapelbaren Schaden über Zeit, der nur abklingt, wenn sie eine Weile nicht mehr trifft. Ein Support in der Nähe (oder der Zauber Reinigen) entfernt sie.
+
+Die Heldenwahl und die Lobby zeigen die Rolle jedes Helden und warnen, wenn eine Rolle fehlt. Bots füllen zuerst die fehlenden Rollen auf.
+
 ## Gegner
 
 Walker, Runner, Brute, Kriecher (hält fest), Ratten in Rudeln (fressen Beete, schlüpfen zum Vorrat), Hornissen-Schwärme (greifen den Bienenstock an) und alle 5 Wellen Elites mit leuchtendem Ring: Rattenkönig (ruft Ratten), Schlächter (Anlauf, betäubt) und ab Welle 15 der Dämon (Höllensprung mit Warnkreis). **Bosse wie in LoL:** Der letzte Treffer an einem Elite, dem Postboten oder einem großen Neutralen bringt Extra-Gold, Mithelfer bekommen die Hälfte (Assist), der erste Boss der Partie +150 („Erstes Blut“). Details in `docs/SPEC.md` (Abschnitt 7).

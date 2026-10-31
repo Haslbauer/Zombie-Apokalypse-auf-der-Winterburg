@@ -4,6 +4,7 @@ import { kitOf } from './heroes/index';
 import { awardBoss, awardGold } from './economy';
 import { itemStats } from './items';
 import { awardXp, heroDamage } from './progression';
+import { roleDamageFactor } from './roles';
 import { noteDeath, noteKill, statsOf } from './stats';
 import { absorbWithShield, buffSum } from './status';
 import { DT, type Hero, type Projectile, type Zombie } from './types';
@@ -29,6 +30,8 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
   if (target.hp <= 0 || amount <= 0) return 0;
   const { state } = ctx;
   if (source) source.lastCombatAt = state.time;
+  // Rollen: Tank nimmt weniger Schaden, Schaden-Rolle trifft Bosse härter
+  amount *= roleDamageFactor(ctx, target, source);
 
   if ('alive' in target) {
     target.lastCombatAt = state.time;

@@ -152,7 +152,7 @@ export class Hud {
       const btn = el('button', 'hud-hero-btn');
       const img = el('img', 'hud-hero-portrait');
       img.src = `portraits/${def.id}.jpg`;
-      btn.append(img, el('strong', '', def.name), el('small', 'hud-role', def.role), el('span', 'hud-hero-desc', label));
+      btn.append(img, el('strong', '', def.name), this.roleTag(def.id), el('small', 'hud-role', def.role), el('span', 'hud-hero-desc', label));
       return btn;
     };
     const render = () => {
@@ -174,7 +174,9 @@ export class Hud {
         });
         row.append(btn);
       });
+      check.replaceWith((check = this.roleCheck([playerId], team)));
     };
+    let check: HTMLElement = el('div', '');
     render();
     const diffRow = el('div', 'hud-difficulty');
     diffRow.append(el('span', '', 'Bot-Stärke:'));
@@ -194,7 +196,7 @@ export class Hud {
     const go = el('button', 'hud-restart hud-go', 'Allein spielen');
     go.addEventListener('click', () => onStart([...team], difficulty));
     buttons.append(back, go);
-    box.append(row, diffRow, this.spellPicker(playerId));
+    box.append(row, check, diffRow, this.spellPicker(playerId));
     if (onOnline) {
       // Mehrspieler: Raum auf dem Server, Freunde übernehmen per Link die Bot-Plätze
       const name = this.nameInput();
@@ -328,10 +330,12 @@ export class Hud {
       const who = s.human || s.reserved ? (s.name ?? 'Spieler') : 'Frei – spielt ein Bot';
       const status = !s.human && !s.reserved ? '' : s.ready ? '✔ Bereit' : def ? 'Wählt noch …' : 'Wählt einen Helden …';
       const spells = (s.spells ?? []).map((id) => this.data.spells.spells.find((x) => x.id === id)?.icon ?? '').join(' ');
-      card.append(img, el('strong', '', def?.name ?? '—'), el('small', 'hud-role', who), el('span', 'hud-hero-desc', `${status}${spells ? ` · ${spells}` : ''}`));
+      card.append(img, el('strong', '', def?.name ?? '—'), def ? this.roleTag(def.id) : el('span', ''), el('small', 'hud-role', who), el('span', 'hud-hero-desc', `${status}${spells ? ` · ${spells}` : ''}`));
       slots.append(card);
     });
-    box.append(slots);
+    const humanPicks = room.slots.filter((s) => (s.human || s.reserved) && s.defId).map((s) => s.defId);
+    const botSlots = room.slots.filter((s) => !s.human && !s.reserved).length;
+    box.append(slots, this.roleCheck(humanPicks, botSlots));
 
     // Heldenwahl
     const taken = new Map(room.slots.filter((s, i) => i !== mySlot && (s.human || s.reserved) && s.defId).map((s) => [s.defId, s.name ?? 'Spieler']));
@@ -341,7 +345,7 @@ export class Hud {
       b.dataset.hero = h.id;
       const img = el('img', '');
       img.src = `portraits/${h.id}.jpg`;
-      b.append(img, el('span', '', h.name));
+      b.append(img, el('span', '', h.name), this.roleTag(h.id));
       const by = taken.get(h.id);
       if (by) {
         b.disabled = true;
@@ -461,6 +465,44 @@ export class Hud {
       table.append(tr);
     }
     this.scoreboard.replaceChildren(el('h3', '', `Welle ${state.wave.number} · ${state.kills} Kills`), table);
+  }
+
+  /** Rollen-Abzeichen eines Helden (🛡 Tank, ⚔ Schaden, ✚ Support). */
+  private roleTag(defId: string): HTMLElement {
+    const role = this.data.bots.heroes[defId]?.teamRole;
+    const def = role ? this.data.economy.roles?.[role] : undefined;
+    const tag = el('span', `hud-role-tag role-${role ?? 'none'}`, def ? `${def.icon} ${def.name}` : '');
+    if (def) tag.title = def.description;
+    return tag;
+  }
+
+  /** Hinweis zur Teamzusammenstellung: welche Rollen fehlen (bzw. von Bots übernommen werden). */
+  private roleCheck(picked: string[], botSlots: string[] | number): HTMLElement {
+    const roles = this.data.economy.roles;
+    const box = el('div', 'hud-role-check');
+    if (!roles) return box;
+    const roleOf = (id: string) => this.data.bots.heroes[id]?.teamRole;
+    const all = ['tank', 'dmg', 'support'] as const;
+    const name = (r: (typeof all)[number]) => `${roles[r].icon} ${roles[r].name}`;
+    const have = new Set(picked.map(roleOf));
+    const missing = all.filter((r) => !have.has(r));
+    // Feste Bots (Solo) zählen mit; online füllen freie Plätze die fehlenden Rollen auf
+    if (typeof botSlots !== 'number') {
+      const withBots = new Set([...picked, ...botSlots].map(roleOf));
+      const still = all.filter((r) => !withBots.has(r));
+      if (still.length) {
+        box.classList.add('warn');
+        box.textContent = `⚠ Es fehlt: ${still.map(name).join(', ')}. Ohne Tank, Schaden und Support ist das Spiel kaum zu schaffen.`;
+      } else box.textContent = `✔ Team komplett: ${all.map(name).join(' · ')}`;
+      return box;
+    }
+    if (missing.length === 0) box.textContent = `✔ Team komplett: ${all.map(name).join(' · ')}`;
+    else if (missing.length <= botSlots) box.textContent = `Bots übernehmen: ${missing.map(name).join(', ')}`;
+    else {
+      box.classList.add('warn');
+      box.textContent = `⚠ Es fehlt: ${missing.slice(botSlots).map(name).join(', ')}. Ohne Tank, Schaden und Support ist das Spiel kaum zu schaffen.`;
+    }
+    return box;
   }
 
   /** Skillleiste: Lage, Größe, Deckkraft (verschiebbar über den Griff, gespeichert). */
@@ -630,7 +672,7 @@ export class Hud {
       const img = el('img', 'hud-hero-portrait');
       img.src = `portraits/${h.id}.jpg`;
       img.alt = h.name;
-      btn.append(img, el('strong', '', h.name), el('small', 'hud-role', h.role), el('span', 'hud-hero-desc', h.description));
+      btn.append(img, el('strong', '', h.name), this.roleTag(h.id), el('small', 'hud-role', h.role), el('span', 'hud-hero-desc', h.description));
       btn.addEventListener('click', () => onPick(h.id));
       row.append(btn);
     }

@@ -52,7 +52,8 @@ describe('Items', () => {
   it('Rüstung verringert erlittenen Schaden', () => {
     const { sim, h } = heroSim('rotschopf');
     equip(h, 'kettenhemd');
-    expect(applyDamage(sim, h, 100)).toBeCloseTo(80, 6);
+    // Ragnar ist Tank (−15 %), dazu das Kettenhemd (−20 %)
+    expect(applyDamage(sim, h, 100)).toBeCloseTo(68, 6);
   });
 
   it('Laufschuhe, Lebensamulett und Taschenuhr', () => {

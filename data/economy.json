@@ -6,6 +6,46 @@
   "shopRange": 6,
   "sellFactor": 0.7,
   "inventorySlots": 6,
-  "rewards": { "assistWindow": 8, "assistGold": 0.34, "xpKiller": 1, "xpAssist": 0.5, "xpNearby": 0.25 },
-  "boss": { "gold": 100, "goldPerWave": 15, "assistShare": 0.5, "firstBlood": 150, "assistWindow": 10 }
+  "rewards": {
+    "assistWindow": 8,
+    "assistGold": 0.34,
+    "xpKiller": 1,
+    "xpAssist": 0.5,
+    "xpNearby": 0.25
+  },
+  "boss": {
+    "gold": 100,
+    "goldPerWave": 15,
+    "assistShare": 0.5,
+    "firstBlood": 150,
+    "assistWindow": 10
+  },
+  "roles": {
+    "tank": {
+      "name": "Tank",
+      "icon": "🛡",
+      "description": "Zieht Bosse auf sich, hält mehr aus",
+      "damageReduction": 0.15,
+      "threatRange": 8
+    },
+    "dmg": {
+      "name": "Schaden",
+      "icon": "⚔",
+      "description": "Mehr Schaden an Bossen und Elites",
+      "bossDamage": 0.3
+    },
+    "support": {
+      "name": "Support",
+      "icon": "✚",
+      "description": "Heilt und reinigt Verbündete in der Nähe von Seuche",
+      "auraRadius": 7,
+      "auraHeal": 0.006,
+      "cleanseEvery": 3
+    }
+  },
+  "plague": {
+    "dpsPerStack": 5,
+    "duration": 8,
+    "maxStacks": 10
+  }
 }

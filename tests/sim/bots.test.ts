@@ -21,16 +21,18 @@ function botSim(heroId: string, difficulty: BotDifficulty = 'schwer', seed = 1) 
 }
 
 describe('Bots', () => {
-  it('Team: drei verschiedene Helden mit den Rollen Nahkampf, Fernkampf, Kontrolle', () => {
+  it('Team: drei verschiedene Helden, zusammen mit dem Spieler Tank, Schaden und Support', () => {
     const bots = testData().bots;
     for (const player of Object.keys(bots.heroes)) {
       const team = defaultTeam(bots, player);
       expect(team).toHaveLength(3);
       expect(new Set(team).size).toBe(3);
       expect(team).not.toContain(player);
-      expect(new Set(team.map((id) => bots.heroes[id].role))).toEqual(new Set(['melee', 'ranged', 'control']));
+      expect(new Set([player, ...team].map((id) => bots.heroes[id].teamRole))).toEqual(new Set(['tank', 'dmg', 'support']));
     }
-    expect(defaultTeam(bots, null)).toHaveLength(4);
+    const all = defaultTeam(bots, null);
+    expect(all).toHaveLength(4);
+    expect(new Set(all.map((id) => bots.heroes[id].teamRole))).toEqual(new Set(['tank', 'dmg', 'support']));
   });
 
   it('läuft zu einem Zombie am Herz und greift ihn an', () => {

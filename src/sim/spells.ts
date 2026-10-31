@@ -151,6 +151,7 @@ export function castSpell(ctx: SimContext, h: Hero, slot: number, aim: Vec2): bo
     }
     case 'reinigen':
       h.buffs = h.buffs.filter((b) => b.kind !== 'stunned' && b.kind !== 'rooted');
+      h.plague = null;
       addBuff(ctx, h, 'cleansed', 1, def.values.immune, 'spell-reinigen');
       break;
     default:

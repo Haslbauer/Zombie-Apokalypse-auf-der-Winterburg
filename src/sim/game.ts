@@ -15,6 +15,7 @@ import { updateWaves } from './waves';
 import { updateZombies } from './zombies';
 import { defaultSpells, updateSpells, validSpells } from './spells';
 import { emptyStats } from './stats';
+import { updateRoles } from './roles';
 
 /** Das Distanzfeld zu den Helden wird alle so viele Ticks neu berechnet. */
 const FIELD_TICKS = 5;
@@ -203,6 +204,7 @@ export class Simulation implements SimContext {
     }
     updateZombies(this, this.field, this.smallField);
     updateSpells(this);
+    updateRoles(this);
     updateProjectiles(this);
     updateZones(this);
     updateDelayed(this);

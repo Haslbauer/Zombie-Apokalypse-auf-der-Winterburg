@@ -167,6 +167,8 @@ export interface ItemDef {
 }
 
 export interface EconomyDef {
+  roles?: RolesDef;
+  plague?: PlagueDef;
   startGold: number;
   waveBonusBase: number;
   waveBonusPerWave: number;
@@ -509,7 +511,25 @@ export interface BotAbilityHint {
 
 export interface BotsDef {
   difficulties: Record<BotDifficulty, { think: number; aimError: number; abilityChance: number; retreatHp: number }>;
-  heroes: Record<string, { role: BotRole; skillOrder: number[]; buy: string[]; abilities: BotAbilityHint[] }>;
+  heroes: Record<string, { role: BotRole; teamRole?: TeamRole; skillOrder: number[]; buy: string[]; abilities: BotAbilityHint[] }>;
+}
+
+/** Rolle im Team: ohne Tank, Schaden und Support ist das Spiel kaum zu gewinnen. */
+export type TeamRole = 'tank' | 'dmg' | 'support';
+export const TEAM_ROLES: readonly TeamRole[] = ['tank', 'dmg', 'support'];
+
+/** Rollen-Passive (data/economy.json → roles). */
+export interface RolesDef {
+  tank: { name: string; icon: string; description: string; damageReduction: number; threatRange: number };
+  dmg: { name: string; icon: string; description: string; bossDamage: number };
+  support: { name: string; icon: string; description: string; auraRadius: number; auraHeal: number; cleanseEvery: number };
+}
+
+/** Seuche: Schaden über Zeit durch Bossfähigkeiten, stapelbar; nur Supports (und Reinigen) entfernen sie. */
+export interface PlagueDef {
+  dpsPerStack: number;
+  duration: number;
+  maxStacks: number;
 }
 
 export interface GameData {
@@ -684,6 +704,8 @@ export interface Hero extends Unit {
   score: HeroScore;
   /** Endstatistik (nur Server/lokal, nicht in den Schnappschüssen). */
   stats?: HeroStats;
+  /** Seuche (Bossfähigkeiten): Stapel und Ablauf (Spielzeit). */
+  plague?: { stacks: number; until: number } | null;
   /** Welle, in der der Held zuletzt Schaden an Zombies gemacht hat (Wellenbonus nur für Aktive). */
   activeWave?: number;
   /** Letzte eigene Eingabe eines Menschen (Laufen, Angriff, Fähigkeit, Einkauf …), Spielzeit. */

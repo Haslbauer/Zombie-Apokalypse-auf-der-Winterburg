@@ -9,6 +9,7 @@ import { hasBuff, heroCC, isBlind, isDisabled, isFeared, isRooted, statusSpeedFa
 import { DT, type Hero, type Objective, type Zombie } from './types';
 import { dist, type Vec2 } from './vec';
 import { brushAt } from './grid';
+import { threatTarget } from './roles';
 
 /** Bis zu diesem Abstand laufen Zombies direkt aufs Ziel zu, sonst entlang des Distanzfelds. */
 const DIRECT_RANGE = 3;
@@ -54,7 +55,10 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null, s
       continue;
     }
 
-    const hero = chaseTarget(ctx, z, seen, blind ? BLIND_SIGHT : def.aggroRange, def.provokeOnly ?? false);
+    // Bosse und Elites gehen auf einen Tank in der Nähe (Bedrohung), sonst wie gewohnt
+    const tank = blind ? null : threatTarget(ctx, z, seen);
+    if (tank) z.targetId = tank.id;
+    const hero = tank ?? chaseTarget(ctx, z, seen, blind ? BLIND_SIGHT : def.aggroRange, def.provokeOnly ?? false);
     if (hero) {
       if (edgeDistance(z, hero) <= def.attackRange) {
         face(z, hero.pos);

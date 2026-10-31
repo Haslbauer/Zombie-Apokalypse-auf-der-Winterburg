@@ -1538,3 +1538,39 @@ html, body {
   font-weight: 700;
   text-shadow: 0 0 12px rgba(255, 209, 102, 0.5);
 }
+
+/* Rollen: Abzeichen und Teamprüfung */
+.hud-role-tag {
+  display: inline-block;
+  margin: 2px auto;
+  padding: 1px 7px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.hud-role-tag.role-tank {
+  background: rgba(127, 209, 255, 0.18);
+  color: #9fdcff;
+}
+.hud-role-tag.role-dmg {
+  background: rgba(255, 138, 122, 0.18);
+  color: #ffa092;
+}
+.hud-role-tag.role-support {
+  background: rgba(155, 227, 138, 0.18);
+  color: #a9eb98;
+}
+.hud-lobby-hero .hud-role-tag {
+  font-size: 10px;
+  padding: 0 5px;
+}
+.hud-role-check {
+  margin: 8px auto 4px;
+  font-size: 13px;
+  color: #a9eb98;
+}
+.hud-role-check.warn {
+  color: #ffb347;
+  font-weight: 600;
+}

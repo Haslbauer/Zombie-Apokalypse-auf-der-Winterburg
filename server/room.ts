@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { gameData } from '../src/gameData';
 import { encodeSnapshot, slowKey, stateMessage, type ClientCommand, type RoomInfo } from '../src/net/protocol';
 import { createBot } from '../src/sim/bots/brain';
-import { defaultTeam } from '../src/sim/bots/team';
+import { defaultTeam, fillTeam } from '../src/sim/bots/team';
 import { validSpells } from '../src/sim/spells';
 import { Simulation } from '../src/sim/game';
 import type { BotDifficulty, Command, GameEvent, HeroInput } from '../src/sim/types';
@@ -100,14 +100,11 @@ export class Room {
    * Wunsch-Team des Gastgebers bzw. passenden Rollen auffüllen (keine doppelten).
    */
   private team(): string[] {
-    const taken = new Set(this.slots.map((s) => s.pick).filter((h): h is string => !!h));
-    const pool = [...this.heroes, ...defaultTeam(gameData.bots, this.heroes[0] ?? null), ...gameData.heroes.map((h) => h.id)].filter((id) => !taken.has(id));
-    return this.slots.map((s) => {
-      if (s.pick) return s.pick;
-      const next = pool.find((id) => !taken.has(id))!;
-      taken.add(next);
-      return next;
-    });
+    const picks = this.slots.map((s) => s.pick).filter((h): h is string => !!h);
+    const pool = [...this.heroes, ...defaultTeam(gameData.bots, this.heroes[0] ?? null), ...gameData.heroes.map((h) => h.id)].filter((id) => !picks.includes(id));
+    // Bots füllen zuerst die Rollen, die den Menschen fehlen (Tank, Schaden, Support)
+    const extra = fillTeam(gameData.bots, picks, pool, this.slots.length).slice(picks.length);
+    return this.slots.map((s) => s.pick ?? extra.shift()!);
   }
 
   private newSim(): void {

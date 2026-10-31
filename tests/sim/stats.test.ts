@@ -8,13 +8,18 @@ import type { GameEvent } from '../../src/sim/types';
 import { arenaData, noWaves, placeZombie, run, testData } from './helpers';
 
 function setup(heroes = ['rotschopf', 'gaertnerin']) {
-  const sim = new Simulation(arenaData(noWaves), { seed: 1, heroes, startLevel: 5 });
+  const sim = new Simulation(arenaData(noRoles), { seed: 1, heroes, startLevel: 5 });
   for (const h of sim.state.heroes) {
     h.maxHp = h.hp = 1000;
     h.pos = { x: 20, y: 20 };
   }
   return sim;
 }
+/** Ohne Rollen-Passive (Tank nimmt sonst weniger Schaden, Support heilt nebenbei). */
+const noRoles = (d: Parameters<typeof noWaves>[0]) => {
+  noWaves(d);
+  delete d.economy.roles;
+};
 const gameOverOf = (events: GameEvent[]) => events.find((e) => e.type === 'gameOver') as Extract<GameEvent, { type: 'gameOver' }> | undefined;
 
 describe('Endstatistik', () => {
@@ -41,7 +46,7 @@ describe('Endstatistik', () => {
   });
 
   it('Heilung zählt für den Heiler (Heilen-Zauber, Kräutertee), nicht über das Maximum', () => {
-    const sim = new Simulation(arenaData(noWaves), { seed: 1, heroes: ['rotschopf', 'gaertnerin'], spells: [['heilen', 'geist']], startLevel: 6 });
+    const sim = new Simulation(arenaData(noRoles), { seed: 1, heroes: ['rotschopf', 'gaertnerin'], spells: [['heilen', 'geist']], startLevel: 6 });
     const [a, g] = sim.state.heroes;
     for (const h of sim.state.heroes) {
       h.maxHp = 1000;
