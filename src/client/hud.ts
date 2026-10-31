@@ -2,6 +2,7 @@ import { rankValue } from '../sim/abilities';
 import { defaultTeam } from '../sim/bots/team';
 import { type Quality, QUALITY_LABELS, type QualitySetting } from './quality';
 import type { AudioSettings } from './audio';
+import { formatClock, loadBestTime, recordVictory } from './besttime';
 import type { BotDifficulty, FinalHeroStats, GameData, GameEvent, GameState, Hero, HeroDef } from '../sim/types';
 import type { RoomInfo } from '../net/protocol';
 import { type Action, ACTIONS, type Keybindings, keyName } from './keybindings';
@@ -28,6 +29,10 @@ export class Hud {
   private readonly top = el('div', 'hud-top');
   private readonly waveLabel = el('div', 'hud-wave');
   private readonly waveInfo = el('div', 'hud-wave-info');
+  /** Speedrun-Uhr: Spielzeit seit Spielbeginn (bleibt beim Spielende stehen). */
+  private readonly clock = el('div', 'hud-clock');
+  /** Gespeicherte Bestzeit (für den Tooltip der Uhr). */
+  private bestTime = loadBestTime();
   readonly startWaveBtn = el('button', 'hud-start-wave');
   private readonly team = el('div', 'hud-team');
   private readonly beds = el('div', 'hud-objective');
@@ -82,7 +87,7 @@ export class Hud {
     private readonly data: GameData,
     private readonly bindings: Keybindings,
   ) {
-    this.top.append(this.waveLabel, this.waveInfo, this.startWaveBtn, this.kills);
+    this.top.append(this.waveLabel, this.clock, this.waveInfo, this.startWaveBtn, this.kills);
     this.beds.className = 'hud-objective';
     for (const o of data.arena.objectives.filter((x) => x.kind !== 'bed')) {
       const box = el('div', 'hud-objective');
@@ -599,7 +604,7 @@ export class Hud {
     const teamRow = el('div', 'hud-stats-team');
     const teamItems: [string, HTMLElement | string][] = [
       ['Welle', `${team.wave}${victory ? ' ✔' : ''}`],
-      ['Spielzeit', formatTime(team.time)],
+      ['Spielzeit', formatClock(team.time)],
       ['Zombies', num(team.kills)],
       ['Bosse', num(team.bosses)],
       ['Postboten', num(team.couriers)],
@@ -615,6 +620,16 @@ export class Hud {
       teamRow.append(item);
     }
     box.append(teamRow);
+    // Speedrun: Bestzeit nur bei Sieg (im Browser gespeichert)
+    if (victory) {
+      const { previous, isNew } = recordVictory(team.time, stats.map((r) => r.defId));
+      this.bestTime = loadBestTime();
+      const line = el('div', `hud-besttime${isNew ? ' new' : ''}`);
+      line.textContent = isNew
+        ? `⏱ Neue Bestzeit: ${formatClock(team.time)}${previous ? ` (vorher ${formatClock(previous.time)})` : ''}`
+        : `⏱ Zeit ${formatClock(team.time)} · Bestzeit ${formatClock(previous!.time)} (+${formatClock(team.time - previous!.time)})`;
+      box.append(line);
+    }
 
     // 2. Podest: Platz 2 – 1 – 3
     const podium = el('div', 'hud-podium');
@@ -1132,6 +1147,10 @@ export class Hud {
       else delete r.status.dataset.respawn;
     }
     this.kills.textContent = `Kills: ${state.kills}`;
+    const clock = `⏱ ${formatClock(state.time)}`;
+    if (this.clock.textContent !== clock) this.clock.textContent = clock;
+    const best = this.bestTime;
+    this.clock.title = best ? `Spielzeit · Bestzeit ${formatClock(best.time)}` : 'Spielzeit (Bestzeit nach dem ersten Sieg)';
 
     const h = state.heroes.find((x) => x.id === heroId);
     if (h) this.updateHero(h, canRankUp);
@@ -1252,7 +1271,3 @@ function killsChart(stats: FinalHeroStats[], waves: number, color: (r: FinalHero
   return wrap;
 }
 
-function formatTime(seconds: number): string {
-  const s = Math.floor(seconds);
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} min`;
-}

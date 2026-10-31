@@ -148,6 +148,8 @@ Wer **Welle 20** übersteht, gewinnt. Das Spiel ist auf vier aktive Spieler ausg
 
 Gutes Spielen wird belohnt (wie in LoL): Der letzte Treffer bringt das volle Gold, Mithelfen ein Drittel, Danebenstehen nichts. Erfahrung: Killer voll, Mithelfer die Hälfte, Zuschauer in der Nähe ein Viertel. Den Wellenbonus bekommt nur, wer in der Welle mitgekämpft hat.
 
+**Speedrun:** Oben läuft die Spielzeit (⏱). Sobald alle Zombies einer Welle erledigt sind, startet N bzw. „Jetzt starten“ sofort die nächste Welle, statt die Pause abzuwarten. Nach einem Sieg zeigt die Endstatistik die Zeit und die Bestzeit; die Bestzeit wird im Browser gespeichert.
+
 **Endstatistik:** Nach Sieg oder Niederlage erscheint eine Statistik, online für alle gleich:
 - **Teamwerte:** Welle, Spielzeit, Zombies, Bosse, Postboten, Beete, Vorrat, Bienenstock.
 - **Podest:** die besten drei nach Wertung, der Erste ist **MVP**.

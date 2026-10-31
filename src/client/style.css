@@ -1474,3 +1474,20 @@ html, body {
 .hud-crosshair.locked .hud-crosshair-hint {
   display: none;
 }
+
+/* Speedrun-Uhr und Bestzeit */
+.hud-clock {
+  font-variant-numeric: tabular-nums;
+  color: #cfe3c9;
+  min-width: 6.5em;
+}
+.hud-besttime {
+  margin-top: 10px;
+  font-size: 15px;
+  color: #cfe3c9;
+}
+.hud-besttime.new {
+  color: #ffd166;
+  font-weight: 700;
+  text-shadow: 0 0 12px rgba(255, 209, 102, 0.5);
+}
