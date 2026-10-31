@@ -11,10 +11,17 @@ export interface RiggedModel {
   clips: Map<string, THREE.AnimationClip>;
   /** Faktor, der das Modell auf Spielgröße bringt. */
   scale: number;
+  /** Treffermoment je Angriffs-Clip als Anteil der Dauer (aus <name>.meta.json). */
+  impacts: Record<string, number>;
 }
 
 export async function loadRiggedModel(url: string, height = ZOMBIE_HEIGHT): Promise<RiggedModel> {
-  const gltf = await new GLTFLoader().loadAsync(url);
+  const [gltf, meta] = await Promise.all([
+    new GLTFLoader().loadAsync(url),
+    fetch(url.replace(/\.glb$/, '.meta.json'))
+      .then((r) => (r.ok ? r.json() : {}))
+      .catch(() => ({})) as Promise<{ impacts?: Record<string, number> }>,
+  ]);
   const box = new THREE.Box3().setFromObject(gltf.scene);
   const size = box.getSize(new THREE.Vector3());
   gltf.scene.traverse((o) => {
@@ -28,6 +35,7 @@ export async function loadRiggedModel(url: string, height = ZOMBIE_HEIGHT): Prom
     scene: gltf.scene,
     clips: new Map(gltf.animations.map((c) => [c.name, c])),
     scale: height / Math.max(0.01, size.y),
+    impacts: meta.impacts ?? {},
   };
 }
 
@@ -45,6 +53,8 @@ function upperBody(clip: THREE.AnimationClip): THREE.AnimationClip {
 
 /** Eine Instanz des Modells: eigenes Skelett, eigene Materialien (für Färbung und Treffer-Blitz). */
 export interface ModelInstance {
+  /** Treffermomente (siehe RiggedModel). */
+  impacts: Record<string, number>;
   root: THREE.Object3D;
   mixer: THREE.AnimationMixer;
   actions: Map<string, THREE.AnimationAction>;
@@ -111,8 +121,8 @@ export function instantiate(
   for (const [name, clip] of model.clips) actions.set(name, mixer.clipAction(clip));
   // Angriffe zusätzlich nur für den Oberkörper (zum Schießen im Laufen)
   for (const [name, clip] of model.clips) {
-    if (!name.startsWith('attack')) continue;
+    if (!name.startsWith('attack') && !name.startsWith('bite')) continue;
     actions.set(`${name}Upper`, mixer.clipAction(upperBody(clip)));
   }
-  return { root, mixer, actions, materials };
+  return { root, mixer, actions, materials, impacts: model.impacts };
 }

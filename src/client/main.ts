@@ -420,7 +420,12 @@ function handleEvents(state: GameState): void {
         if (e.amount > 0 && state.zombies.some((z) => z.id === e.targetId)) effects.sparks(e.pos, 0xffc070, 4);
         break;
       case 'attack':
-        renderer.zombieAttack(e.id);
+        {
+          // Angriffsanimation im Takt des Zombie-Typs
+          const zt = state.zombies.find((z) => z.id === e.id);
+          const zd = zt ? gameData.zombies.find((d) => d.id === zt.defId) : undefined;
+          renderer.zombieAttack(e.id, zd?.attackCooldown);
+        }
         break;
       case 'objectiveHit':
         renderer.flashObjective(e.objectiveId);

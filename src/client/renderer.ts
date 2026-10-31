@@ -286,8 +286,8 @@ export class GameRenderer {
   }
 
   /** Angriffsanimation eines Zombies (zufällige Variante). */
-  zombieAttack(id: number): void {
-    this.units.get(id)?.playAttack(ATTACK_ANIM, true);
+  zombieAttack(id: number, cooldown = ATTACK_ANIM): void {
+    this.units.get(id)?.playAttack(cooldown, true);
   }
 
   /** Heldenanimation: Standardangriff (duration = Angriffstakt), Fähigkeit (slot) oder Trank benutzen. */

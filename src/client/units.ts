@@ -57,6 +57,8 @@ interface ModelLook {
    * Schuss bzw. Hieb sichtbar mit dem Geschoss zusammenfällt.
    */
   attackStart?: number;
+  /** Treffermoment je Angriffs-Clip (Anteil), überschreibt den vom Konverter gemessenen. */
+  impact?: Record<string, number>;
   props?: Prop[];
   /** Kopfknochen für Hüte und Krone (Mixamo: mixamorigHead). */
   headBone?: string;
@@ -106,11 +108,11 @@ export const ELITE_COLORS: Record<string, number> = {
 /** Helden mit Modell (assets/models/<held>): Grimm ist ein Schäferhund (Quaternius), die übrigen Mixamo-Figuren mit eigenen Texturen. */
 const HERO_LOOKS: Record<string, ModelLook> = {
   grimm: { model: 'grimm', move: 'run', idle: 'idle', refSpeed: 6.5, scale: 1, tint: [1.25, 1.2, 1.15], attacks: ['attack'] },
-  rotschopf: { model: 'rotschopf', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.08, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.25, props: ['hammer'] },
-  schlaeferin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1, tint: [1, 1, 1], attacks: ['attack', 'attack2', 'attack3'], attackStart: 0.3, props: ['staff'] },
+  rotschopf: { model: 'rotschopf', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.08, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.25 },
+  schlaeferin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1, tint: [1, 1, 1], attacks: ['attack', 'attack2', 'attack3'], attackStart: 0.3, impact: { attack: 0.4, attack2: 0.4, attack3: 0.45 }, props: ['staff'] },
   libero: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.6, scale: 1.02, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.42 },
   pirat: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.5, props: ['hook'] },
-  gaertnerin: { model: 'gaertnerin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 0.98, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.4 },
+  gaertnerin: { model: 'gaertnerin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 0.98, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.4, impact: { attack: 0.78 } },
 };
 
 /** Höchstdauer einer Angriffs- bzw. Fähigkeitsanimation in der Darstellung (Sekunden). */
@@ -427,12 +429,44 @@ export class UnitView {
   /** Standardangriff: nächster Clip der Reihe (bei Zombies zufällig). */
   playAttack(duration = ATTACK_ANIM, random = false): void {
     const a = this.anim;
-    if (!a || (a.once && a.once.left > 0.15)) return;
+    // Ein neuer Treffer unterbricht den alten Angriff (sonst liefe die Animation hinterher)
+    if (!a) return;
     const list = a.look.attacks;
     const name = random ? list[Math.floor(Math.random() * list.length)] : list[a.attackIndex++ % list.length];
     // Im Laufen nur den Oberkörper animieren, die Beine laufen weiter
     const moving = this.shownSpeed > 0.8 && this.hasClip(`${name}Upper`);
-    this.playOnce(moving ? `${name}Upper` : name, Math.min(ATTACK_ANIM, duration), a.look.attackStart ?? 0);
+    this.playImpact(moving ? `${name}Upper` : name, name, duration);
+  }
+
+  /**
+   * Angriff so abspielen, dass der Treffermoment des Clips (impact) genau
+   * jetzt zu sehen ist: Der Clip beginnt kurz davor (sichtbares Ausholen) und
+   * läuft höchstens so lange wie der Angriffstakt. Zu lange Clips werden
+   * höchstens 2,5-fach beschleunigt und sonst am Ende gekürzt.
+   */
+  private playImpact(actionName: string, clipName: string, cooldown: number): void {
+    const a = this.anim!;
+    const action = a.inst.actions.get(actionName);
+    if (!action || a.dead) return;
+    const clip = action.getClip().duration;
+    const auto = a.inst.impacts[clipName];
+    const impact = Math.min(0.85, Math.max(0.15, a.look.impact?.[clipName] ?? auto ?? a.look.attackStart ?? 0.4));
+    const duration = Math.max(0.25, Math.min(1.2, cooldown));
+    const LEAD = 0.1; // so viele Sekunden Ausholen vor dem Treffer
+    // Tempo: Rest des Clips ab Treffer soll in die verbleibende Zeit passen
+    const after = clip * (1 - impact);
+    const speed = Math.min(2.5, Math.max(0.7, after / Math.max(0.1, duration - LEAD)));
+    const start = Math.max(0, clip * impact - LEAD * speed);
+    a.once?.action.fadeOut(0.06);
+    action.reset();
+    action.setLoop(THREE.LoopOnce, 1);
+    action.clampWhenFinished = true;
+    action.time = start;
+    action.timeScale = speed;
+    action.fadeIn(0.05).play();
+    const upper = actionName.endsWith('Upper');
+    if (!upper) a.loop?.fadeOut(0.06);
+    a.once = { action, left: duration, upper };
   }
 
   /** Fähigkeit (slot 0–3); lange Clips werden auf höchstens 1,2 s gerafft. */

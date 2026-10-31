@@ -208,6 +208,50 @@ window.convert = async (cfg) => {
     root.updateMatrixWorld(true);
     return out;
   };
+  /**
+   * Treffermoment je Angriffs-Clip (attack…, bite…, ability…): Zeitpunkt der
+   * schnellsten Bewegung von Händen bzw. Kopf, als Anteil der Clip-Dauer.
+   */
+  const findImpacts = (root, list) => {
+    const parts = [];
+    root.traverse((o) => { if (o.isBone && /(RightHand|LeftHand|Head)$/.test(o.name)) parts.push(o); });
+    if (!parts.length) return {};
+    const all = [];
+    root.traverse((o) => { if (o.isBone) all.push(o); });
+    const saved = all.map((b) => [b.position.clone(), b.quaternion.clone(), b.scale.clone()]);
+    const out = {};
+    const v = new THREE.Vector3();
+    for (const clip of list) {
+      if (!/^(attack|bite|ability)/.test(clip.name)) continue;
+      const mixer = new THREE.AnimationMixer(root);
+      const action = mixer.clipAction(clip);
+      action.play();
+      const N = 40;
+      let prev = null;
+      let best = 0;
+      let bestT = 0.5;
+      for (let i = 0; i <= N; i++) {
+        mixer.setTime((clip.duration * i) / N);
+        root.updateMatrixWorld(true);
+        const pos = parts.map((b) => b.getWorldPosition(v).clone());
+        if (prev && i > 1) {
+          const speed = Math.max(...pos.map((p, k) => p.distanceTo(prev[k])));
+          if (speed > best) {
+            best = speed;
+            bestT = (i - 0.5) / N;
+          }
+        }
+        prev = pos;
+      }
+      action.stop();
+      mixer.uncacheRoot(root);
+      out[clip.name] = Math.round(bestT * 100) / 100;
+    }
+    // Ruhepose wiederherstellen (sonst würde die letzte Pose exportiert)
+    all.forEach((b, i) => { b.position.copy(saved[i][0]); b.quaternion.copy(saved[i][1]); b.scale.copy(saved[i][2]); });
+    root.updateMatrixWorld(true);
+    return out;
+  };
   const clips = [];
   const entries = Object.entries(cfg.clips);
   if (cfg.idleFrom) entries.push(['idle', { file: cfg.idleFrom, firstFrame: true }]);
@@ -294,6 +338,7 @@ window.convert = async (cfg) => {
     }
   });
   const grounded = groundClips(base, clips);
+  const impacts = findImpacts(base, clips);
   base.animations = clips;
   const skeletons = new Set();
   let meshes = 0;
@@ -302,7 +347,7 @@ window.convert = async (cfg) => {
   const bytes = new Uint8Array(glb);
   let bin = '';
   for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return { glb: btoa(bin), triangles, skeletons: skeletons.size, meshes, unified, grounded, clips: clips.map((c) => c.name + ' ' + c.duration.toFixed(2) + 's') };
+  return { glb: btoa(bin), triangles, skeletons: skeletons.size, meshes, unified, grounded, impacts, clips: clips.map((c) => c.name + ' ' + c.duration.toFixed(2) + 's') };
 };
 window.ready = true;
 `;
@@ -352,9 +397,12 @@ try {
       for (const p of mesh.listPrimitives()) tris += (p.getIndices()?.getCount() ?? p.getAttribute('POSITION').getCount()) / 3;
     }
     const out = join(root, cfg.output);
+    // Treffermomente neben die GLB schreiben (der Client stimmt Angriffe darauf ab)
+    writeFileSync(out.replace(/\.glb$/, '.meta.json'), JSON.stringify({ impacts: res.impacts ?? {} }, null, 1) + '\n');
     const bytes = await io.writeBinary(doc);
     writeFileSync(out, bytes);
     if (res.grounded?.length) console.log(`${name}: Füße auf den Boden: ${res.grounded.join(', ')}`);
+    if (res.impacts && Object.keys(res.impacts).length) console.log(`${name}: Treffermomente ${Object.entries(res.impacts).map(([k, v]) => `${k} ${v}`).join(', ')}`);
     console.log(`${name}: Skelette ${res.skeletons}, Meshes ${res.meshes}, ${res.triangles} → ${tris} Dreiecke, Clips: ${res.clips.join(', ')}, ${(bytes.length / 1e6).toFixed(2)} MB → ${cfg.output}`);
   }
 } finally {
