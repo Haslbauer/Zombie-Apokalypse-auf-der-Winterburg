@@ -7,14 +7,37 @@
  * Aufruf: npm run share   (Port mit PORT=…, Standard 3000; Ende mit Strg+C)
  */
 import { spawn, spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { networkInterfaces } from 'node:os';
-import { dirname, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.PORT ?? 3000);
 const children = [];
-const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+const windows = process.platform === 'win32';
+
+/**
+ * npm bzw. npx ausführen. Unter Windows sind das .cmd-Dateien, die Node seit
+ * 18.20/20.12 nur noch über eine Shell startet (sonst Fehler EINVAL).
+ */
+function runNpm(tool, args) {
+  const result = spawnSync(windows ? `${tool}.cmd` : tool, args, { cwd: root, stdio: 'inherit', shell: windows });
+  if (result.error) line(`${tool} konnte nicht gestartet werden: ${result.error.message}`);
+  return result.status === 0;
+}
+
+/** cloudflared im PATH oder an den üblichen Orten der Windows-Installation (winget) finden. */
+function findCloudflared() {
+  if (spawnSync('cloudflared', ['--version'], { stdio: 'ignore' }).status === 0) return 'cloudflared';
+  if (!windows) return null;
+  const candidates = [
+    join(process.env.LOCALAPPDATA ?? '', 'Microsoft', 'WinGet', 'Links', 'cloudflared.exe'),
+    join(process.env['ProgramFiles(x86)'] ?? 'C:\\Program Files (x86)', 'cloudflared', 'cloudflared.exe'),
+    join(process.env.ProgramFiles ?? 'C:\\Program Files', 'cloudflared', 'cloudflared.exe'),
+  ];
+  return candidates.find((c) => existsSync(c) && spawnSync(c, ['--version'], { stdio: 'ignore' }).status === 0) ?? null;
+}
 
 const line = (text = '') => console.log(text);
 const box = (lines) => {
@@ -34,12 +57,21 @@ process.on('SIGINT', () => {
 });
 process.on('SIGTERM', stopAll);
 
+// 0. Fehlende Pakete (z. B. nach git pull) selbst nachinstallieren
+const needed = ['ws', 'tsx', 'vite', 'three'];
+if (needed.some((p) => !existsSync(join(root, 'node_modules', p)))) {
+  line('Installiere fehlende Pakete (npm install) …');
+  if (!runNpm('npm', ['install'])) {
+    line('npm install ist fehlgeschlagen. Bitte im Projektordner selbst „npm install“ ausführen und die Meldung prüfen.');
+    process.exit(1);
+  }
+}
+
 // 1. Bauen
 if (!process.argv.includes('--no-build')) {
   line('Baue das Spiel …');
-  const build = spawnSync(npx, ['vite', 'build'], { cwd: root, stdio: 'inherit' });
-  if (build.status !== 0) {
-    line('Bauen fehlgeschlagen.');
+  if (!runNpm('npx', ['vite', 'build'])) {
+    line('Bauen fehlgeschlagen (Meldung siehe oben). Tipp: einmal „npm install“ ausführen und erneut versuchen.');
     process.exit(1);
   }
 }
@@ -64,8 +96,8 @@ const lan = Object.values(networkInterfaces())
   .map((i) => `http://${i.address}:${port}`);
 
 // 3. Tunnel
-const hasCloudflared = spawnSync('cloudflared', ['--version'], { stdio: 'ignore' }).status === 0;
-if (!hasCloudflared) {
+const cloudflared = findCloudflared();
+if (!cloudflared) {
   line();
   box([
     'Spiel läuft. Im eigenen WLAN:',
@@ -77,11 +109,11 @@ if (!hasCloudflared) {
     '  macOS:    brew install cloudflared',
     '  Linux:    https://developers.cloudflare.com/cloudflare-one/',
     '            connections/connect-networks/downloads/',
-    'Danach npm run share erneut starten.',
+    'Danach ein neues Terminal öffnen und npm run share erneut starten.',
   ]);
 } else {
   line('Öffne Cloudflare-Tunnel …');
-  const tunnel = spawn('cloudflared', ['tunnel', '--no-autoupdate', '--url', `http://localhost:${port}`], { stdio: ['ignore', 'pipe', 'pipe'] });
+  const tunnel = spawn(cloudflared, ['tunnel', '--no-autoupdate', '--url', `http://localhost:${port}`], { stdio: ['ignore', 'pipe', 'pipe'] });
   children.push(tunnel);
   let shown = false;
   const scan = (chunk) => {
