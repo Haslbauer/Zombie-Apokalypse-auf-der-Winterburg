@@ -55,6 +55,7 @@ window.convert = async (cfg) => {
   const retarget = (clip, src, dst) => {
     const sb = bonesOf(src), db = bonesOf(dst);
     const sh = sb.get('Hips'), dh = db.get('Hips');
+    const tr = clip.tracks.find((t) => /Hips\.position$/.test(t.name));
     const k = sh && dh && Math.abs(sh.position.y) > 1e-3 ? dh.position.y / sh.position.y : 1;
     clip.tracks = clip.tracks.filter((t) => {
       const dot = t.name.lastIndexOf('.');
@@ -155,10 +156,68 @@ window.convert = async (cfg) => {
       for (const m of parts) m.removeFromParent();
     }
   };
+  /**
+   * Füße auf den Boden: Jeden Clip an 24 Zeitpunkten abspielen und den
+   * tiefsten Knochen messen. Stehen/Laufen/Angriff: Das untere Fünftel der
+   * Messwerte (Standfuß) soll so tief liegen wie in der Ruhepose; Liegen,
+   * Kriechen, Sterben: der tiefste Wert. Die Hüft-Spur wird um die Differenz
+   * verschoben. Gibt die Verschiebung je Clip in Prozent der Figurenhöhe zurück.
+   */
+  const groundClips = (root, list) => {
+    const bones = [];
+    root.traverse((o) => { if (o.isBone) bones.push(o); });
+    const hips = bones.find((b) => /Hips$/.test(b.name));
+    if (!hips || !list.length) return [];
+    const saved = bones.map((b) => [b.position.clone(), b.quaternion.clone()]);
+    const restore = () => bones.forEach((b, i) => { b.position.copy(saved[i][0]); b.quaternion.copy(saved[i][1]); });
+    const v = new THREE.Vector3();
+    const lowest = () => {
+      root.updateMatrixWorld(true);
+      let m = Infinity;
+      for (const b of bones) m = Math.min(m, b.getWorldPosition(v).y);
+      return m;
+    };
+    const restMin = lowest();
+    const box = new THREE.Box3().setFromObject(root);
+    const height = Math.max(1e-6, box.max.y - box.min.y);
+    const parentScale = hips.parent ? hips.parent.getWorldScale(v).y : 1;
+    const out = [];
+    for (const clip of list) {
+      const track = clip.tracks.find((t) => t.name === hips.name + '.position');
+      if (!track) continue;
+      const mixer = new THREE.AnimationMixer(root);
+      const action = mixer.clipAction(clip);
+      action.play();
+      const samples = [];
+      for (let i = 0; i < 24; i++) {
+        mixer.setTime((clip.duration * i) / 24);
+        samples.push(lowest());
+      }
+      action.stop();
+      mixer.uncacheRoot(root);
+      restore();
+      samples.sort((a, b) => a - b);
+      const lying = /crawl|death|down|laying|ability3$/.test(clip.name) && clip.name !== 'ability3' ? true : /crawl|death|down/.test(clip.name);
+      const measured = lying ? samples[0] : samples[Math.floor(samples.length / 5)];
+      const shift = (restMin - measured) / parentScale;
+      if (Math.abs(shift * parentScale) / height < 0.003) continue;
+      for (let i = 1; i < track.values.length; i += 3) track.values[i] += shift;
+      out.push(clip.name + ' ' + ((100 * shift * parentScale) / height).toFixed(1) + '%');
+    }
+    restore();
+    root.updateMatrixWorld(true);
+    return out;
+  };
   const clips = [];
   const entries = Object.entries(cfg.clips);
   if (cfg.idleFrom) entries.push(['idle', { file: cfg.idleFrom, firstFrame: true }]);
   const base = await load(cfg.base);
+  // Figuren aus mehreren Teilen (Körper, Kleidung, Haare …) haben nach dem
+  // Laden je Teil ein eigenes Skelett; die Animation träfe nur eines davon.
+  // Alle Teile auf ein gemeinsames Skelett binden, doppelte Knochen entfernen.
+  // Das muss vor dem Übertragen der Animationen geschehen, sonst wird die
+  // Hüfthöhe an einem doppelten Knochen gemessen.
+  const unified = unifySkeletons(base);
   for (const [name, c] of entries) {
     const file = c.file ?? cfg.base;
     const obj = await load(file);
@@ -184,10 +243,6 @@ window.convert = async (cfg) => {
     if (obj !== base) retarget(clip, obj, base);
     clips.push(clip);
   }
-  // Figuren aus mehreren Teilen (Körper, Kleidung, Haare …) haben nach dem
-  // Laden je Teil ein eigenes Skelett; die Animation träfe nur eines davon.
-  // Alle Teile auf ein gemeinsames Skelett binden, doppelte Knochen entfernen.
-  const unified = unifySkeletons(base);
   let triangles = 0;
   base.traverse((o) => {
     if (!o.isMesh) return;
@@ -238,6 +293,7 @@ window.convert = async (cfg) => {
       m.needsUpdate = true;
     }
   });
+  const grounded = groundClips(base, clips);
   base.animations = clips;
   const skeletons = new Set();
   let meshes = 0;
@@ -246,7 +302,7 @@ window.convert = async (cfg) => {
   const bytes = new Uint8Array(glb);
   let bin = '';
   for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  return { glb: btoa(bin), triangles, skeletons: skeletons.size, meshes, unified, clips: clips.map((c) => c.name + ' ' + c.duration.toFixed(2) + 's') };
+  return { glb: btoa(bin), triangles, skeletons: skeletons.size, meshes, unified, grounded, clips: clips.map((c) => c.name + ' ' + c.duration.toFixed(2) + 's') };
 };
 window.ready = true;
 `;
@@ -298,6 +354,7 @@ try {
     const out = join(root, cfg.output);
     const bytes = await io.writeBinary(doc);
     writeFileSync(out, bytes);
+    if (res.grounded?.length) console.log(`${name}: Füße auf den Boden: ${res.grounded.join(', ')}`);
     console.log(`${name}: Skelette ${res.skeletons}, Meshes ${res.meshes}, ${res.triangles} → ${tris} Dreiecke, Clips: ${res.clips.join(', ')}, ${(bytes.length / 1e6).toFixed(2)} MB → ${cfg.output}`);
   }
 } finally {
