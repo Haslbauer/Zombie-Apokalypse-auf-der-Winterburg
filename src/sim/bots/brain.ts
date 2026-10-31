@@ -213,6 +213,7 @@ function think(ctx: SimContext, h: Hero, bot: BotState, cmds: Command[]): void {
     bot.targetId = null;
     if (potion >= 0 && !healing) cmds.push({ heroId: h.id, type: 'use', slot: potion });
     setDest(ctx, bot, h, ctx.data.arena.heroStart);
+    useSpells(ctx, h, bot, null, cmds);
     return;
   }
 
@@ -237,6 +238,7 @@ function think(ctx: SimContext, h: Hero, bot: BotState, cmds: Command[]): void {
     } else if (order) target = nearestThreat(ctx, h, order.pos, HOLD_FIGHT);
     engage(ctx, h, bot, target, order?.pos ?? h.pos);
     useAbilities(ctx, h, bot, target, cmds);
+    useSpells(ctx, h, bot, target, cmds);
     if (hpShare < 0.5 && potion >= 0 && !healing) cmds.push({ heroId: h.id, type: 'use', slot: potion });
     return;
   }
@@ -260,9 +262,42 @@ function think(ctx: SimContext, h: Hero, bot: BotState, cmds: Command[]): void {
   const target = pickTarget(ctx, h, bot);
   engage(ctx, h, bot, target, bot.post);
   useAbilities(ctx, h, bot, target, cmds);
+  useSpells(ctx, h, bot, target, cmds);
 
   // 8. Heiltrank im Kampf
   if (hpShare < 0.5 && potion >= 0 && !healing) cmds.push({ heroId: h.id, type: 'use', slot: potion });
+}
+
+/**
+ * Beschwörerzauber der Bots (einfache Regeln): Heilen/Barriere bei wenig
+ * Leben, Reinigen bei Kontrolle, Blitz zur Flucht, Entzünden/Erschöpfen auf
+ * große Gegner, Zerschmettern zum Erlegen von Bossen und Lagern, Geist für
+ * weite Wege.
+ */
+function useSpells(ctx: SimContext, h: Hero, bot: BotState, target: Zombie | null, cmds: Command[]): void {
+  const diff = ctx.data.bots.difficulties[bot.difficulty];
+  const { state } = ctx;
+  const hpShare = h.hp / h.maxHp;
+  const big = target && (ctx.zombieDefs.get(target.defId)?.rank ?? 'normal') !== 'normal';
+  const near = state.zombies.some((z) => z.hp > 0 && !z.neutral && dist(z.pos, h.pos) < 3);
+  for (let slot = 0; slot < 2; slot++) {
+    if (!h.spells || h.spellCooldowns[slot] > 0) continue;
+    const id = h.spells[slot];
+    let aim: Vec2 | null = null;
+    if ((id === 'heilen' || id === 'barriere') && hpShare < 0.35 && h.lastCombatAt > state.time - 2) aim = h.pos;
+    else if (id === 'reinigen' && (hasBuff(h, 'stunned') || hasBuff(h, 'rooted'))) aim = h.pos;
+    else if (id === 'blitz' && hpShare < 0.22 && near) aim = ctx.data.arena.heroStart;
+    else if (id === 'geist' && bot.dest && dist(bot.dest, h.pos) > 25) aim = h.pos;
+    else if ((id === 'entzuenden' || id === 'erschoepfen') && target && big && dist(target.pos, h.pos) < 5.5) aim = target.pos;
+    else if (id === 'zerschmettern' && target && dist(target.pos, h.pos) < 4.5) {
+      const dmg = 380 + 40 * h.level;
+      if ((big || target.neutral) && target.hp <= dmg) aim = target.pos;
+    } else if (id === 'teleport' && bot.order && dist(bot.order.pos, h.pos) > 30) aim = bot.order.pos;
+    if (aim && nextRandom(state) < Math.max(0.5, diff.abilityChance)) {
+      cmds.push({ heroId: h.id, type: 'spell', slot, aim: { ...aim } });
+      return;
+    }
+  }
 }
 
 /** Ziel angreifen (Nahkampf hinlaufen, Fernkampf auf Abstand) oder ohne Ziel zum Ort fallback gehen. */

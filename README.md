@@ -72,6 +72,7 @@ Beim Entwickeln (`npm run dev`) leitet Vite den Mehrspieler an einen laufenden `
 | 1 2 3 4 | Fähigkeiten (4 = Ultimate). Halten zeigt die Vorschau, Loslassen löst aus |
 | Shift + 1–4 | Skillpunkt setzen (oder „+“ in der Fähigkeitenleiste) |
 | R T | Verbrauchsgüter benutzen (Heiltrank, Energiedrink) |
+| F G | Beschwörerzauber (wie D/F in LoL) Richtung Mauszeiger; Rechtsklick auf das Feld in der Pause: tauschen |
 | B | Shop (nur in der Pause im Innenhof) |
 | N | Welle sofort starten (in der Pause) |
 | Rechtsklick | Ping an alle: kurz = „Hier!“, halten und ziehen = Ping-Rad (oben Angriff, rechts Bin unterwegs, unten Hilfe, links Gefahr). Auch auf der Minimap. Bots folgen den Pings (siehe unten). |
@@ -100,6 +101,24 @@ Du wählst deinen Helden, drei Bots spielen mit (je ein Nahkämpfer, Fernkämpfe
 ## Gegner
 
 Walker, Runner, Brute, Kriecher (hält fest), Ratten in Rudeln (fressen Beete, schlüpfen zum Vorrat), Hornissen-Schwärme (greifen den Bienenstock an) und alle 5 Wellen Elites mit leuchtendem Ring: Rattenkönig (ruft Ratten), Schlächter (Anlauf, betäubt) und ab Welle 15 der Dämon (Höllensprung mit Warnkreis). **Bosse wie in LoL:** Der letzte Treffer an einem Elite, dem Postboten oder einem großen Neutralen bringt Extra-Gold, Mithelfer bekommen die Hälfte (Assist), der erste Boss der Partie +150 („Erstes Blut“). Details in `docs/SPEC.md` (Abschnitt 7).
+
+## Beschwörerzauber
+
+Wie in LoL wählst du vor dem Spiel zwei Zauber, unabhängig vom Helden (auf dem Team- bzw. Beitritts-Bildschirm; die Wahl wird gemerkt). In der Pause lassen sie sich tauschen, die Abklingzeit bleibt dabei erhalten.
+
+| Zauber | Wirkung | Abklingzeit |
+|---|---|---|
+| ⚡ Blitz | Sofort bis 4,5 m Richtung Mauszeiger springen, auch über Hecken | 110 s |
+| 🌀 Teleport | Nach 3 s Kanalisieren zu einem Mitspieler oder Ziel nahe dem Mauszeiger; Laufen bricht ab | 150 s |
+| 🔥 Entzünden | Gegner am Mauszeiger brennt 5 s (60 + 25 pro Level Schaden) | 80 s |
+| ✚ Heilen | Heilt dich und den schwächsten Mitspieler in 8 m, kurz schneller | 110 s |
+| 🛡 Barriere | Schild für 2,5 s | 90 s |
+| 👻 Geist | 8 s lang 35 % schneller | 100 s |
+| 💤 Erschöpfen | Gegner 3 s langsamer und schwächer | 95 s |
+| ☄ Zerschmettern | Großer Treffer (380 + 40 pro Level), ideal gegen Lager, Postbote und Elites | 50 s |
+| ✦ Reinigen | Löst Festhalten und Betäubung, 2 s immun | 90 s |
+
+Bots nehmen je nach Rolle Blitz plus Entzünden (Nahkampf), Heilen (Fernkampf), Erschöpfen (Kontrolle) bzw. Zerschmettern (Grimm) und setzen sie selbst ein. Werte in `data/spells.json`.
 
 ## Shop
 

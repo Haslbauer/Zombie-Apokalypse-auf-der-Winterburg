@@ -934,3 +934,89 @@ html, body {
   color: #b8f0c0;
   pointer-events: none;
 }
+
+/* Beschwörerzauber: Felder in der Leiste und Auswahl */
+.hud-inv.hud-spell {
+  flex: 0 0 34px;
+  cursor: pointer;
+  border-style: solid;
+  border-color: var(--spell, #6c5f8f);
+  background: #1d2430;
+  text-align: center;
+}
+.hud-spell-icon {
+  font-size: 15px;
+  line-height: 24px;
+}
+.hud-spell .hud-inv-key {
+  position: absolute;
+  left: 2px;
+  bottom: 0;
+  font-size: 9px;
+}
+.hud-spell-cd {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  color: #fff;
+}
+.hud-spell.cooling {
+  background: #10141a;
+}
+.hud-spell.cooling .hud-spell-icon {
+  opacity: 0.3;
+}
+.hud-spellpick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0;
+}
+.hud-spellpick-title {
+  font-weight: 600;
+  opacity: 0.85;
+}
+.hud-spellpick-slots {
+  display: flex;
+  gap: 8px;
+}
+.hud-spellpick-slot {
+  font: inherit;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 2px solid #4f5a7a;
+  background: #1d2430;
+  color: #e8f0e0;
+  cursor: pointer;
+}
+.hud-spellpick-slot.active {
+  border-color: #ffd166;
+}
+.hud-spellpick-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  max-width: 100%;
+}
+.hud-spellpick-btn {
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  border-radius: 8px;
+  border: 2px solid var(--spell, #4f5a7a);
+  background: #1d2430;
+  cursor: pointer;
+}
+.hud-spellpick-btn.chosen {
+  background: #3a4560;
+  box-shadow: 0 0 8px var(--spell);
+}
+.hud-spellchooser {
+  max-width: min(520px, calc(100vw - 32px));
+}

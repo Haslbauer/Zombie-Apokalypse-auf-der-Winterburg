@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.8)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.9)
 
 Stand: 31.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v1.9: Beschwörerzauber wie in LoL (zwei pro Held, vor dem Spiel gewählt, Tasten F/G), siehe Abschnitt 9b.
 Änderungen v1.8: Figuren laufen sichtbar (ein Skelett pro Figur), Schuss-Animationen mit sichtbaren Geschossen, Grafikstufen und Leistungsanzeige, kleinere Zustandspakete, geduldigerer Herzschlag mit Trennungsgrund.
 Änderungen v1.7: Neue Mixamo-Figuren für Helden und Zombies, schwere Gegner größer und mit Leucht-Ring, neuer Elite Dämon, Boss-Zähler mit Kill-, Assist- und Erstes-Blut-Gold (Anzeigetafel auf Tab), Bots folgen Pings, Rattenloch zum Innenhof, verdorrte Beete, Nachtstimmung mit vielen Details.
 Änderungen v1.6: Karte neu gestaltet (Fachwerkhaus, Bunker als Luke mit Hollywoodschaukel, Garten- und Geländedeko, Grabstätte, Teich, Abendstimmung), Verstecke (Gebüsch, hohes Gras, Schilf), flüssige eigene Bewegung im Mehrspieler.
@@ -246,6 +247,23 @@ Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
 - **Inventar:** 6 Plätze für Waffen und Items. Verkaufen (Rechtsklick im offenen Shop) bringt 70 % des Preises.
 - **Verbrauchsgüter** auf den Item-Tasten R und T, stapelbar: Heiltrank (150 Leben über 5 s, bis 5 Stück), Energiedrink (6 s lang +30 % Tempo und Angriffstempo, bis 3 Stück). Benutzbar jederzeit, außer wenn betäubt.
 - Keine Munition.
+
+## 9b. Beschwörerzauber (v1.9)
+
+Werte in `data/spells.json`, Logik in `src/sim/spells.ts`.
+- **Zwei pro Held**, unabhängig vom Helden. **Gewählt** wird vor dem Spiel (Team- bzw. Beitritts-Bildschirm, im Browser gemerkt). In der **Pause** kann man tauschen (Rechtsklick auf das Feld); die Abklingzeit des Platzes bleibt.
+- **Tasten:** F und G, frei belegbar; D ist schon „nach rechts laufen“.
+- **Zauber:**
+  - **Blitz** (110 s): bis 4,5 m springen, auch über Hecken.
+  - **Teleport** (150 s): 3 s kanalisieren, dann zu einem Mitspieler oder Ziel in 10 m um den Mauszeiger; Laufen bricht ab.
+  - **Entzünden** (80 s): Brand 5 s, 60 + 25 pro Level.
+  - **Heilen** (110 s): 90 + 18 pro Level für dich und den schwächsten Mitspieler in 8 m, dazu 1 s +30 % Tempo.
+  - **Barriere** (90 s): Schild 110 + 22 pro Level für 2,5 s.
+  - **Geist** (100 s): 8 s +35 % Tempo.
+  - **Erschöpfen** (95 s): 3 s 40 % langsamer und 40 % weniger Schaden.
+  - **Zerschmettern** (50 s): 380 + 40 pro Level Schaden, zählt als Treffer des Helden (Boss-Gold).
+  - **Reinigen** (90 s): löst Festhalten und Betäubung, 2 s immun.
+- **Vorgaben und Bots:** Nahkampf Blitz + Entzünden, Fernkampf Blitz + Heilen, Kontrolle Blitz + Erschöpfen, Grimm Blitz + Zerschmettern. Bots setzen sie nach einfachen Regeln ein: Heilen/Barriere bei wenig Leben, Blitz zur Flucht, Entzünden/Erschöpfen auf große Gegner, Zerschmettern zum Erlegen, Geist für weite Wege, Teleport zu weit entfernten Aufträgen.
 
 ## 10. Mehrspieler und Bots
 

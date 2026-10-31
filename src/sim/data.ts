@@ -14,6 +14,7 @@ export function parseGameData(raw: {
   items: unknown;
   economy: unknown;
   bots: unknown;
+  spells: unknown;
 }): GameData {
   const errors: string[] = [];
   const num = (o: any, key: string, path: string, min = 0): void => {
@@ -269,6 +270,22 @@ export function parseGameData(raw: {
     if (!Array.isArray(b.abilities) || b.abilities.length !== 4) errors.push(`bots.heroes.${h.id}.abilities: 4 Hinweise erwartet`);
     for (const id of b.buy ?? []) if (!itemIds.has(id)) errors.push(`bots.heroes.${h.id}.buy: unbekanntes Item ${id}`);
   }
+
+  // Beschwörerzauber
+  const sp = raw.spells as any;
+  const spellIds = new Set<string>();
+  for (const [i, s] of list(sp?.spells, 'spells.spells').entries()) {
+    const p = `spells.spells[${i}]`;
+    for (const k of ['id', 'name', 'icon', 'color', 'description']) str(s, k, p);
+    num(s, 'cooldown', p, 1);
+    if (!['point', 'unit', 'self'].includes(s?.aim)) errors.push(`${p}.aim: point, unit oder self erwartet`);
+    if (!s?.values || typeof s.values !== 'object') errors.push(`${p}.values fehlt`);
+    spellIds.add(s?.id);
+  }
+  for (const [k, pair] of Object.entries(sp?.defaults ?? {})) {
+    if (!Array.isArray(pair) || pair.length !== 2 || pair[0] === pair[1] || !pair.every((id) => spellIds.has(id as string))) errors.push(`spells.defaults.${k}: zwei verschiedene bekannte Zauber erwartet`);
+  }
+  for (const role of ['melee', 'ranged', 'control']) if (!sp?.defaults?.[role]) errors.push(`spells.defaults.${role} fehlt`);
 
   if (errors.length > 0) throw new Error(`Ungültige Spieldaten:\n- ${errors.join('\n- ')}`);
   return raw as GameData;

@@ -72,6 +72,10 @@ function parseCommand(c: unknown): ClientCommand | null {
       return int(o.slot, 0, 1) ? { type: 'use', slot: o.slot } : null;
     case 'startWave':
       return { type: 'startWave' };
+    case 'spell':
+      return int(o.slot, 0, 1) && vec(o.aim) ? { type: 'spell', slot: o.slot, aim: { x: o.aim.x, y: o.aim.y } } : null;
+    case 'chooseSpells':
+      return Array.isArray(o.spells) && o.spells.length === 2 && o.spells.every((s) => str(s, 24)) ? { type: 'chooseSpells', spells: [o.spells[0], o.spells[1]] as [string, string] } : null;
     case 'ping':
       return PING_KINDS.includes(o.kind as never) && vec(o.pos) ? { type: 'ping', kind: o.kind as (typeof PING_KINDS)[number], pos: { x: o.pos.x, y: o.pos.y } } : null;
     default:
@@ -126,6 +130,8 @@ const ST_FEAR = 4;
 const ST_BLIND = 8;
 const ST_ROOT = 16;
 const ST_MARKED = 32;
+const ST_BURN = 64;
+const ST_WEAK = 128;
 /** Merkmale: Postbote bzw. neutral (Lager). */
 const F_COURIER = 1;
 const F_NEUTRAL = 2;
@@ -141,7 +147,7 @@ export interface Snapshot extends Omit<GameState, 'zombies' | 'wave' | 'rng' | '
 }
 
 /** Heldenfelder, die sich selten ändern: nur in vollständigen Schnappschüssen. */
-export const SLOW_HERO_KEYS = ['inventory', 'consumables', 'score', 'ranks', 'skillPoints', 'counters', 'xp', 'level', 'gold', 'maxHp', 'defId', 'slot', 'radius', 'name'] as const;
+export const SLOW_HERO_KEYS = ['inventory', 'consumables', 'score', 'ranks', 'skillPoints', 'counters', 'xp', 'level', 'gold', 'maxHp', 'defId', 'slot', 'radius', 'name', 'spells'] as const;
 /** Zielfelder, die sich oft ändern (der Rest nur in vollständigen Schnappschüssen). */
 const FAST_OBJECTIVE_KEYS = ['id', 'hp', 'destroyed', 'aggroUntil'] as const;
 
@@ -171,7 +177,9 @@ export function encodeSnapshot(state: GameState, events: GameEvent[], zombieType
       (t < st.fearUntil ? ST_FEAR : 0) |
       (t < st.blindUntil ? ST_BLIND : 0) |
       (t < st.rootUntil ? ST_ROOT : 0) |
-      (t < st.markedUntil ? ST_MARKED : 0);
+      (t < st.markedUntil ? ST_MARKED : 0) |
+      (t < (st.burnUntil ?? 0) ? ST_BURN : 0) |
+      (t < (st.weakUntil ?? 0) ? ST_WEAK : 0);
     const flags = (z.courier ? F_COURIER : 0) | (z.neutral ? F_NEUTRAL : 0);
     return [z.id, zombieTypes.indexOf(z.defId), r2(z.pos.x), r2(z.pos.y), r2(z.facing), Math.ceil(z.hp), Math.ceil(z.maxHp), bits, flags];
   });
@@ -245,6 +253,8 @@ export function decodeSnapshot(s: Snapshot, zombieTypes: string[], radius: (defI
         heldBy: null,
         provokedBy: null,
         provokedUntil: 0,
+        burnUntil: until(bits, ST_BURN),
+        weakUntil: until(bits, ST_WEAK),
       },
       courier: flags & F_COURIER ? { wp: 0, dir: 1, leaveAt: Infinity } : undefined,
       neutral: flags & F_NEUTRAL ? { campId: null, home: { x, y }, returning: false } : undefined,

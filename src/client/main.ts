@@ -64,6 +64,10 @@ input.onLevelUp = (slot) => cmd({ type: 'levelUp', slot });
 hud.onLevelUp = input.onLevelUp;
 input.onUse = (slot) => cmd({ type: 'use', slot });
 hud.onUse = input.onUse;
+// Beschwörerzauber: Richtung Mauszeiger
+input.onSpell = (slot) => cmd({ type: 'spell', slot, aim: input.aimPoint });
+hud.onSpell = input.onSpell;
+hud.onChooseSpells = (spells) => cmd({ type: 'chooseSpells', spells });
 shop.onBuy = (itemId) => cmd({ type: 'buy', itemId });
 shop.onClose = () => shop.hide();
 hud.onSell = (slot, consumable) => {
@@ -130,6 +134,8 @@ function begin(isPlayer: boolean): void {
   renderer.setAimIndicator(gameData.heroes.find((h) => h.id === heroDefId)!.attack, hero.radius);
   effects.clear();
   hud.startGame(heroDefId);
+  // Gewählte Beschwörerzauber übernehmen (Spielbeginn ist immer eine Pause)
+  if (isPlayer && hud.spellPrefs) cmd({ type: 'chooseSpells', spells: hud.spellPrefs });
   hud.buildTeam(session!.state, isPlayer ? heroId : -1, difficulty, playerNames());
   renderer.cam.lookAt(hero.pos.x, hero.pos.y);
   // Entwicklermodus ?camera=x,y,abstand: feste Kamera auf einen Punkt (Nahaufnahmen der Karte)
@@ -325,6 +331,47 @@ const EFFECT_COLORS: Record<string, number> = {
   'rage-heal': 0x7bd36a,
 };
 
+/** Sichtbare Wirkung der Beschwörerzauber. */
+function spellEffect(e: Extract<GameEvent, { type: 'spell' }>): void {
+  const def = gameData.spells.spells.find((s) => s.id === e.spellId);
+  const color = def ? parseInt(def.color.slice(1), 16) : 0xb48cff;
+  switch (e.spellId) {
+    case 'blitz':
+      effects.flash(e.from, 1, 0xffe066, 2.2, 0.25);
+      effects.flash(e.to, 1, 0xffffff, 2.6, 0.3);
+      effects.line(e.from, e.to, 0.35, 0xffe066, 0.25);
+      break;
+    case 'teleport':
+      effects.warning(e.to, 1.4, 0xb48cff, 3);
+      effects.ring(e.from, 1.6, 0xb48cff, 3, 0.1);
+      break;
+    case 'teleport-land':
+      effects.flash(e.to, 1.2, 0xb48cff, 3, 0.4);
+      effects.ring(e.to, 2.5, 0xb48cff, 0.5);
+      break;
+    case 'zerschmettern':
+      effects.flash(e.to, 2.5, 0xffb347, 3.5, 0.35);
+      effects.sparks(e.to, 0xffb347, 10);
+      effects.ring(e.to, 1.8, 0xffb347, 0.4);
+      break;
+    case 'entzuenden':
+      effects.sparks(e.to, 0xff7a3d, 8);
+      effects.flash(e.to, 1.2, 0xff7a3d, 1.6, 0.3);
+      break;
+    case 'erschoepfen':
+      effects.disc(e.to, 1.3, 0x9fa8c8, 0.6, 0.4);
+      break;
+    case 'reinigen':
+    case 'barriere':
+    case 'geist':
+      effects.ring(e.from, 1.6, color, 0.5);
+      effects.flash(e.from, 1.2, color, 2, 0.3);
+      break;
+    default:
+      effects.ring(e.from, 1.2, color, 0.4);
+  }
+}
+
 function abilityEffect(e: Extract<GameEvent, { type: 'effect' }>): void {
   const color = EFFECT_COLORS[e.kind] ?? 0xffffff;
   if (e.facing !== undefined && e.arc !== undefined) {
@@ -448,6 +495,9 @@ function handleEvents(state: GameState): void {
         // Höllensprung: Landeplatz warnen, Dämon schreit
         effects.warning(e.to, e.radius, 0xb04dff, e.windup + 0.45);
         renderer.zombieScream(e.zombieId);
+        break;
+      case 'spell':
+        spellEffect(e);
         break;
       case 'courier':
         if (e.phase === 'arrive') hud.message(`Zombie-Postbote im Gelände! Besiegt ihn im Team: ${e.gold} Gold für alle`);

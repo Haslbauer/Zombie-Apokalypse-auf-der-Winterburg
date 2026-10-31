@@ -1,0 +1,28 @@
+{
+  "spells": [
+    { "id": "blitz", "name": "Blitz", "icon": "⚡", "color": "#ffe066", "cooldown": 110, "aim": "point",
+      "description": "Springt sofort bis zu 4,5 m in Richtung Mauszeiger, auch über Hecken.", "values": { "range": 4.5 } },
+    { "id": "teleport", "name": "Teleport", "icon": "🌀", "color": "#b48cff", "cooldown": 150, "aim": "point",
+      "description": "Nach 3 s Kanalisieren zu einem Mitspieler oder Ziel (Vorrat, Bienenstock, Beet) nahe dem Mauszeiger. Laufen bricht ab.", "values": { "channel": 3, "pick": 10 } },
+    { "id": "entzuenden", "name": "Entzünden", "icon": "🔥", "color": "#ff7a3d", "cooldown": 80, "aim": "unit",
+      "description": "Setzt den Gegner am Mauszeiger (bis 6 m) 5 s in Brand: 60 + 25 pro Level Schaden insgesamt.", "values": { "range": 6, "duration": 5, "damage": 60, "damagePerLevel": 25 } },
+    { "id": "heilen", "name": "Heilen", "icon": "✚", "color": "#7bd36a", "cooldown": 110, "aim": "self",
+      "description": "Heilt dich und den am stärksten verletzten Mitspieler in 8 m um 90 + 18 pro Level und gibt beiden 1 s lang 30 % Tempo.", "values": { "heal": 90, "healPerLevel": 18, "range": 8, "haste": 0.3, "hasteTime": 1 } },
+    { "id": "barriere", "name": "Barriere", "icon": "🛡", "color": "#7fd1ff", "cooldown": 90, "aim": "self",
+      "description": "Schild für 2,5 s, der 110 + 22 pro Level Schaden abfängt.", "values": { "shield": 110, "shieldPerLevel": 22, "duration": 2.5 } },
+    { "id": "geist", "name": "Geist", "icon": "👻", "color": "#d8e8ff", "cooldown": 100, "aim": "self",
+      "description": "8 s lang 35 % schneller.", "values": { "haste": 0.35, "duration": 8 } },
+    { "id": "erschoepfen", "name": "Erschöpfen", "icon": "💤", "color": "#9fa8c8", "cooldown": 95, "aim": "unit",
+      "description": "Der Gegner am Mauszeiger (bis 6 m) ist 3 s lang um 40 % verlangsamt und macht 40 % weniger Schaden.", "values": { "range": 6, "duration": 3, "slow": 0.6, "weaken": 0.6 } },
+    { "id": "zerschmettern", "name": "Zerschmettern", "icon": "☄", "color": "#ffb347", "cooldown": 50, "aim": "unit",
+      "description": "Schlägt den Gegner am Mauszeiger (bis 5 m) mit 380 + 40 pro Level Schaden. Gut gegen Lager, Postbote und Elites.", "values": { "range": 5, "damage": 380, "damagePerLevel": 40 } },
+    { "id": "reinigen", "name": "Reinigen", "icon": "✦", "color": "#ffffff", "cooldown": 90, "aim": "self",
+      "description": "Befreit sofort von Festhalten und Betäubung und macht 2 s lang immun dagegen.", "values": { "immune": 2 } }
+  ],
+  "defaults": {
+    "melee": ["blitz", "entzuenden"],
+    "ranged": ["blitz", "heilen"],
+    "control": ["blitz", "erschoepfen"],
+    "grimm": ["blitz", "zerschmettern"]
+  }
+}

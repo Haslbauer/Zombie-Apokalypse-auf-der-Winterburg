@@ -411,6 +411,28 @@ export interface GameData {
   items: ItemDef[];
   economy: EconomyDef;
   bots: BotsDef;
+  spells: SpellsDef;
+}
+
+/**
+ * Beschwörerzauber (wie in LoL): zwei pro Held, vor dem Spiel gewählt, auf D
+ * und F. aim: point (Ort), unit (Gegner am Mauszeiger), self (sofort).
+ */
+export interface SpellDef {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  cooldown: number;
+  aim: 'point' | 'unit' | 'self';
+  description: string;
+  values: Record<string, number>;
+}
+
+export interface SpellsDef {
+  spells: SpellDef[];
+  /** Vorgabe je Rolle (melee, ranged, control) bzw. Helden-Id. */
+  defaults: Record<string, [string, string]>;
 }
 
 // ---------- Befehle (Eingabe; im Mehrspieler das Netzwerkformat) ----------
@@ -438,7 +460,11 @@ export type Command =
   | { heroId: number; type: 'use'; slot: number }
   /** Pause beenden und die nächste Welle sofort starten. */
   | { heroId: number; type: 'startWave' }
-  | { heroId: number; type: 'ping'; kind: PingKind; pos: Vec2 };
+  | { heroId: number; type: 'ping'; kind: PingKind; pos: Vec2 }
+  /** Beschwörerzauber (slot 0 = D, 1 = F) Richtung aim. */
+  | { heroId: number; type: 'spell'; slot: number; aim: Vec2 }
+  /** Beschwörerzauber wählen (nur in der Pause). */
+  | { heroId: number; type: 'chooseSpells'; spells: [string, string] };
 
 /** Pings für Absprachen im Team (wie in LoL): Hier, Angriff, Bin unterwegs, Hilfe, Gefahr. */
 export const PING_KINDS = ['here', 'attack', 'omw', 'help', 'danger'] as const;
@@ -472,7 +498,9 @@ export type BuffKind =
   /** Kann nicht laufen (Kriecher). */
   | 'rooted'
   /** Kann nicht laufen, angreifen oder Fähigkeiten nutzen (Schlächter). */
-  | 'stunned';
+  | 'stunned'
+  /** Reinigen: kurz immun gegen Festhalten und Betäubung. */
+  | 'cleansed';
 
 /** Zeitlich begrenzte Wirkung auf einem Helden. value: Faktor, Schildpunkte oder Heilung pro Sekunde. */
 export interface Buff {
@@ -534,6 +562,11 @@ export interface Hero extends Unit {
   lastCombatAt: number;
   /** Zähler für Passive (z. B. Treffer bis zum nächsten Effekt). */
   counters: Record<string, number>;
+  /** Beschwörerzauber (Ids) und ihre Restabklingzeit in Sekunden. */
+  spells: [string, string];
+  spellCooldowns: [number, number];
+  /** Teleport: Ziel, solange kanalisiert wird. */
+  teleportTo?: Vec2 | null;
   ball?: Ball;
   gold: number;
   score: HeroScore;
@@ -595,6 +628,13 @@ export interface ZombieStatus {
   /** Von diesem Helden getroffen (gereizt) bis provokedUntil – für Ratten und Hornissen. */
   provokedBy: number | null;
   provokedUntil: number;
+  /** Entzünden: brennt bis, Schaden pro Sekunde, von welchem Helden. */
+  burnUntil?: number;
+  burnDps?: number;
+  burnBy?: number;
+  /** Erschöpfen: macht bis dahin weniger Schaden (Faktor weakFactor). */
+  weakUntil?: number;
+  weakFactor?: number;
 }
 
 export interface Zombie extends Unit {
@@ -727,6 +767,7 @@ export type GameEvent =
   | { type: 'harvest'; amount: number }
   | { type: 'regrow'; objectiveId: string }
   | { type: 'gold'; heroId: number; amount: number; pos?: Vec2 }
+  | { type: 'spell'; heroId: number; spellId: string; from: Vec2; to: Vec2; targetId?: number }
   | { type: 'bossKill'; zombieId: number; defId: string; killerId: number | null; assists: number[]; gold: number; assistGold: number; firstBlood: boolean }
   | { type: 'shop'; heroId: number; action: 'buy' | 'sell' | 'use'; itemId: string }
   | { type: 'shopDenied'; heroId: number; reason: string }

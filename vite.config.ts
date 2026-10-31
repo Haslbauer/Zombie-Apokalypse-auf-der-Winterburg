@@ -46,5 +46,7 @@ export default defineConfig({
   },
   test: {
     include: ['tests/**/*.test.ts'],
+    // Simulations- und Netztests brauchen unter Last manchmal länger als 5 s
+    testTimeout: 20000,
   },
 });

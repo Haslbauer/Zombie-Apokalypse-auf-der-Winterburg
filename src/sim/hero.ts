@@ -9,6 +9,7 @@ import { levelStats, rankUp } from './progression';
 import { buffSum, hasBuff, updateBuffs } from './status';
 import { arenaBounds } from './grid';
 import { orderBots } from './bots/brain';
+import { castSpell, chooseSpells, finishTeleport } from './spells';
 import { DT, PING_KINDS, type Command, type Hero, type PingKind } from './types';
 import type { Vec2 } from './vec';
 
@@ -39,6 +40,14 @@ export function applyInputs(ctx: SimContext, commands: readonly Command[]): void
     }
     if (cmd.type === 'use') {
       useConsumable(ctx, h, cmd.slot);
+      continue;
+    }
+    if (cmd.type === 'chooseSpells') {
+      chooseSpells(ctx, h, cmd.spells);
+      continue;
+    }
+    if (cmd.type === 'spell') {
+      castSpell(ctx, h, cmd.slot, cmd.aim);
       continue;
     }
     if (!h.alive) continue;
@@ -112,7 +121,8 @@ export function updateHero(ctx: SimContext, h: Hero): void {
     if (done || (moving && h.channel.cancelOnMove)) {
       const tag = h.channel.tag;
       h.channel = null;
-      kit.onChannelEnd?.(ctx, h, tag, done);
+      if (tag === 'teleport') finishTeleport(ctx, h, done);
+      else kit.onChannelEnd?.(ctx, h, tag, done);
     }
     if (h.channel) return;
   }

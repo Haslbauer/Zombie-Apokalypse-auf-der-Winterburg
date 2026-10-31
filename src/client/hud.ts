@@ -5,6 +5,16 @@ import type { BotDifficulty, GameData, GameState, Hero, HeroDef } from '../sim/t
 import type { RoomInfo } from '../net/protocol';
 import { type Action, ACTIONS, type Keybindings, keyName } from './keybindings';
 
+const SPELL_STORAGE = 'winterburg.spells';
+function loadSpellPrefs(): [string, string] | null {
+  try {
+    const v = JSON.parse(localStorage.getItem(SPELL_STORAGE) ?? 'null');
+    return Array.isArray(v) && v.length === 2 && typeof v[0] === 'string' && typeof v[1] === 'string' ? [v[0], v[1]] : null;
+  } catch {
+    return null;
+  }
+}
+
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
   e.className = cls;
@@ -41,6 +51,12 @@ export class Hud {
   /** Rechtsklick auf ein Inventarfeld (Verkaufen). */
   onSell: (slot: number, consumable: boolean) => void = () => {};
   onUse: (slot: number) => void = () => {};
+  /** Beschwörerzauber auslösen (Klick auf das Feld) bzw. neu wählen. */
+  onSpell: (slot: number) => void = () => {};
+  onChooseSpells: (spells: [string, string]) => void = () => {};
+  private spellSlots: { box: HTMLElement; icon: HTMLElement; key: HTMLElement; cd: HTMLElement }[] = [];
+  /** Gewählte Beschwörerzauber (im Browser gemerkt); null = Vorgabe der Rolle. */
+  spellPrefs: [string, string] | null = loadSpellPrefs();
   private readonly tooltip = el('div', 'hud-tooltip');
   private slots: { box: HTMLElement; key: HTMLElement; cd: HTMLElement; pips: HTMLElement; plus: HTMLElement }[] = [];
   private heroDef: HeroDef | null = null;
@@ -169,7 +185,7 @@ export class Hud {
     const go = el('button', 'hud-restart hud-go', 'Allein spielen');
     go.addEventListener('click', () => onStart([...team], difficulty));
     buttons.append(back, go);
-    box.append(row, diffRow);
+    box.append(row, diffRow, this.spellPicker(playerId));
     if (onOnline) {
       // Mehrspieler: Raum auf dem Server, Freunde übernehmen per Link die Bot-Plätze
       const name = this.nameInput();
@@ -232,7 +248,9 @@ export class Hud {
     const back = el('button', 'hud-restart', 'Allein spielen');
     back.addEventListener('click', onCancel);
     buttons.append(back);
-    box.append(row, name, buttons);
+    // Beschwörerzauber gelten für jeden Helden; Vorgabe nach dem ersten freien Platz
+    const firstFree = room.slots.find((s) => !s.human && !s.reserved)?.defId ?? room.slots[0]?.defId ?? 'rotschopf';
+    box.append(row, this.spellPicker(firstFree), name, buttons);
     this.overlay.append(box);
     this.overlay.style.display = '';
   }
@@ -403,7 +421,7 @@ export class Hud {
   /** Kurzbeschreibung der Steuerung mit der aktuellen Belegung. */
   private controlsText(): string {
     const k = (a: Parameters<Keybindings['get']>[0]) => `<b>${keyName(this.bindings.get(a))}</b>`;
-    return `${k('up')}${k('left')}${k('down')}${k('right')} laufen · <b>Maus</b> zielen · ${k('attack')} angreifen · ${k('ability1')}–${k('ability4')} Fähigkeiten (halten = Vorschau) · <b>Shift</b>+Taste steigern · <b>Mausrad</b> zoomen · <b>Esc</b> Menü`;
+    return `${k('up')}${k('left')}${k('down')}${k('right')} laufen · <b>Maus</b> zielen · ${k('attack')} angreifen · ${k('ability1')}–${k('ability4')} Fähigkeiten (halten = Vorschau) · ${k('spell1')} ${k('spell2')} Beschwörerzauber · <b>Shift</b>+Taste steigern · <b>Mausrad</b> zoomen · <b>Esc</b> Menü`;
   }
 
   private updateHelp(): void {
@@ -469,7 +487,7 @@ export class Hud {
       resume.addEventListener('click', onClose);
       const buttons = el('div', 'hud-buttons');
       buttons.append(reset, resume);
-      box.append(table, el('p', 'hud-small', 'Fähigkeiten 1–4: halten zeigt die Vorschau, loslassen löst aus. Shift + Taste setzt einen Skillpunkt. Items (R/T) folgen mit Meilenstein 4. Esc: weiter spielen.'), buttons);
+      box.append(table, el('p', 'hud-small', 'Fähigkeiten 1–4: halten zeigt die Vorschau, loslassen löst aus. Shift + Taste setzt einen Skillpunkt. R/T: Verbrauchsgüter, F/G: Beschwörerzauber (Rechtsklick auf das Feld in der Pause: tauschen). Esc: weiter spielen.'), buttons);
       this.overlay.append(box);
     };
     render();
@@ -530,6 +548,109 @@ export class Hud {
       this.inventoryRow.append(box);
       return { box, key, count };
     });
+    // Beschwörerzauber (wie D/F in LoL)
+    const spellActions: Action[] = ['spell1', 'spell2'];
+    this.spellSlots = spellActions.map((action, i) => {
+      const box = el('div', 'hud-inv hud-spell');
+      const icon = el('span', 'hud-spell-icon');
+      const key = el('span', 'hud-inv-key');
+      const cd = el('span', 'hud-spell-cd');
+      box.append(icon, key, cd);
+      box.addEventListener('click', () => this.onSpell(i));
+      // Rechtsklick in der Pause: Zauber tauschen
+      box.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        this.openSpellChooser(i);
+      });
+      this.tip(box, () => {
+        const def = this.data.spells.spells.find((s) => s.id === this.currentHero?.spells?.[i]);
+        if (!def) return 'Beschwörerzauber';
+        return `<b>${def.icon} ${def.name}</b> (${keyName(this.bindings.get(action))})<br>${def.description}<br><small>Abklingzeit ${def.cooldown} s · Rechtsklick in der Pause: tauschen</small>`;
+      });
+      this.inventoryRow.append(box);
+      return { box, icon, key, cd };
+    });
+  }
+
+  /**
+   * Auswahl der zwei Beschwörerzauber (Startbildschirm und Beitritt): zwei
+   * Plätze, darunter alle Zauber; Klick setzt den Zauber auf den gewählten Platz.
+   */
+  spellPicker(heroId: string): HTMLElement {
+    const wrap = el('div', 'hud-spellpick');
+    const d = this.data.spells.defaults;
+    const role = this.data.bots.heroes[heroId]?.role ?? 'melee';
+    const known = (p: [string, string] | null) => p && p[0] !== p[1] && p.every((id) => this.data.spells.spells.some((s) => s.id === id));
+    const chosen: [string, string] = [...(known(this.spellPrefs) ? this.spellPrefs! : (d[heroId] ?? d[role]))] as [string, string];
+    let active = 0;
+    const render = () => {
+      this.tooltip.style.display = 'none'; // Tooltip des ersetzten Knopfs nicht stehen lassen
+      wrap.replaceChildren(el('span', 'hud-spellpick-title', 'Beschwörerzauber:'));
+      const slots = el('div', 'hud-spellpick-slots');
+      chosen.forEach((id, i) => {
+        const def = this.data.spells.spells.find((s) => s.id === id)!;
+        const b = el('button', 'hud-spellpick-slot', `${def.icon} ${def.name}`);
+        b.dataset.spellSlot = String(i);
+        b.classList.toggle('active', i === active);
+        b.title = `${i === 0 ? keyName(this.bindings.get('spell1')) : keyName(this.bindings.get('spell2'))}: ${def.description}`;
+        b.addEventListener('click', () => {
+          active = i;
+          render();
+        });
+        slots.append(b);
+      });
+      const grid = el('div', 'hud-spellpick-grid');
+      for (const def of this.data.spells.spells) {
+        const b = el('button', 'hud-spellpick-btn', def.icon);
+        b.dataset.spell = def.id;
+        b.style.setProperty('--spell', def.color);
+        b.classList.toggle('chosen', chosen.includes(def.id));
+        this.tip(b, () => `<b>${def.icon} ${def.name}</b><br>${def.description}<br><small>Abklingzeit ${def.cooldown} s</small>`);
+        b.addEventListener('click', () => {
+          const other = chosen[1 - active];
+          // Schon auf dem anderen Platz: tauschen
+          if (other === def.id) chosen[1 - active] = chosen[active];
+          chosen[active] = def.id;
+          active = 1 - active;
+          this.setSpellPrefs([chosen[0], chosen[1]]);
+          render();
+        });
+        grid.append(b);
+      }
+      wrap.append(slots, grid);
+    };
+    this.setSpellPrefs(chosen);
+    render();
+    return wrap;
+  }
+
+  private setSpellPrefs(spells: [string, string]): void {
+    this.spellPrefs = [spells[0], spells[1]];
+    try {
+      localStorage.setItem(SPELL_STORAGE, JSON.stringify(this.spellPrefs));
+    } catch {
+      // ohne Speicher: nur für diese Sitzung
+    }
+  }
+
+  /** Im Spiel (Pause): kleines Fenster zum Tauschen der Zauber. */
+  private openSpellChooser(slot: number): void {
+    const h = this.currentHero;
+    if (!h?.spells) return;
+    this.spellPrefs = [...h.spells] as [string, string];
+    const box = el('div', 'hud-box hud-spellchooser');
+    box.append(el('h2', '', 'Beschwörerzauber tauschen'), el('p', 'hud-small', 'Nur in der Pause. Die Abklingzeit des Platzes bleibt erhalten.'));
+    const picker = this.spellPicker(h.defId);
+    (picker.querySelector(`[data-spell-slot="${slot}"]`) as HTMLButtonElement | null)?.click();
+    const ok = el('button', 'hud-restart', 'Übernehmen');
+    ok.addEventListener('click', () => {
+      if (this.spellPrefs) this.onChooseSpells(this.spellPrefs);
+      this.overlay.style.display = 'none';
+      this.overlay.replaceChildren();
+    });
+    box.append(picker, ok);
+    this.overlay.replaceChildren(box);
+    this.overlay.style.display = '';
   }
 
   /** Fähigkeitenleiste: Passiv plus vier Felder mit Taste, Abklingzeit, Rang und „+“. */
@@ -612,6 +733,18 @@ export class Hud {
       s.key.textContent = `${keyName(this.bindings.get(itemKeys[i]))}${item ? ` ${item.name}` : ''}`;
       s.count.textContent = c ? `×${c.count}` : '';
       s.box.classList.toggle('filled', !!c);
+    });
+    this.spellSlots.forEach((s, i) => {
+      const def = this.data.spells.spells.find((x) => x.id === h.spells?.[i]);
+      const actions: Action[] = ['spell1', 'spell2'];
+      if (def && s.icon.textContent !== def.icon) {
+        s.icon.textContent = def.icon;
+        s.box.style.setProperty('--spell', def.color);
+      }
+      s.key.textContent = keyName(this.bindings.get(actions[i]));
+      const cd = h.spellCooldowns?.[i] ?? 0;
+      s.cd.textContent = cd > 0 ? String(Math.ceil(cd)) : '';
+      s.box.classList.toggle('cooling', cd > 0);
     });
     this.skillHint.textContent =
       h.skillPoints > 0 ? `${h.skillPoints} Skillpunkt${h.skillPoints > 1 ? 'e' : ''} frei – Shift + Taste oder „+“` : '';

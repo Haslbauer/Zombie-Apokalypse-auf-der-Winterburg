@@ -13,6 +13,7 @@ import { type ArenaDef, type BotDifficulty, DT, type Command, type GameData, typ
 import { updateCamps } from './neutrals';
 import { updateWaves } from './waves';
 import { updateZombies } from './zombies';
+import { defaultSpells, updateSpells, validSpells } from './spells';
 
 /** Das Distanzfeld zu den Helden wird alle so viele Ticks neu berechnet. */
 const FIELD_TICKS = 5;
@@ -42,6 +43,8 @@ export interface SimulationOptions {
   startLevel?: number;
   /** Pro Slot: null = Mensch, sonst spielt ein Bot dieser Stärke. */
   bots?: (BotDifficulty | null)[];
+  /** Pro Slot: gewählte Beschwörerzauber (sonst die Vorgabe der Rolle). */
+  spells?: ([string, string] | null | undefined)[];
 }
 
 /**
@@ -140,6 +143,8 @@ export class Simulation implements SimContext {
         channel: null,
         lastCombatAt: -100,
         counters: {},
+        spells: options.spells?.[slot] && validSpells(this, options.spells[slot]) ? [...options.spells[slot]!] as [string, string] : defaultSpells(this, defId),
+        spellCooldowns: [0, 0],
         gold: data.economy.startGold,
         score: { kills: 0, bosses: 0, assists: 0, gold: 0 },
         inventory: Array<string | null>(data.economy.inventorySlots).fill(null),
@@ -195,6 +200,7 @@ export class Simulation implements SimContext {
       this.smallField = small && targets.length > 0 ? this.smallGrid.distanceField(targets) : null;
     }
     updateZombies(this, this.field, this.smallField);
+    updateSpells(this);
     updateProjectiles(this);
     updateZones(this);
     updateDelayed(this);

@@ -119,7 +119,7 @@ export function heroCC(
   duration: number,
   push?: { from: Vec2; distance: number },
 ): void {
-  if (!h.alive || hasBuff(h, 'unstoppable')) return;
+  if (!h.alive || hasBuff(h, 'unstoppable') || hasBuff(h, 'cleansed')) return;
   addBuff(ctx, h, kind, 1, duration, `cc-${kind}`);
   if (push) {
     const dx = h.pos.x - push.from.x;

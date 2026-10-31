@@ -61,7 +61,7 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null, s
           z.attackTimer = def.attackCooldown;
           state.events.push({ type: 'attack', id: z.id, targetId: hero.id });
           if (!blind || nextRandom(state) >= BLIND_MISS) {
-            applyDamage(ctx, hero, z.damage);
+            applyDamage(ctx, hero, z.damage * (state.time < (z.st.weakUntil ?? 0) ? (z.st.weakFactor ?? 1) : 1));
             if (def.rootOnHit) heroCC(ctx, hero, 'rooted', def.rootOnHit);
           }
         }

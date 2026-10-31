@@ -23,6 +23,7 @@ export class Input {
   onLevelUp: (slot: number) => void = () => {};
   /** Item-Taste R (0) bzw. T (1) gedrückt. */
   onUse: (slot: number) => void = () => {};
+  onSpell: (slot: number) => void = () => {};
   onShop: () => void = () => {};
   onStartWave: () => void = () => {};
   /** Mausrad (deltaY > 0: herauszoomen). */
@@ -95,6 +96,8 @@ export class Input {
         if (e.code === this.bindings.get('ping')) this.beginPing(this.mouse.x, this.mouse.y);
         if (e.code === this.bindings.get('item1')) this.onUse(0);
         if (e.code === this.bindings.get('item2')) this.onUse(1);
+        if (e.code === this.bindings.get('spell1')) this.onSpell(0);
+        if (e.code === this.bindings.get('spell2')) this.onSpell(1);
         if (e.code === this.bindings.get('shop')) this.onShop();
         if (e.code === this.bindings.get('startWave')) this.onStartWave();
       }
