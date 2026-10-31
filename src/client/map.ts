@@ -82,6 +82,22 @@ export function buildMap(scene: THREE.Scene, arena: ArenaDef): void {
   }
 
   for (const o of arena.obstacles) buildObstacle(o, { box, flat, add, m }, arena);
+
+  // Neutrale Lager: zertrampelte Erde mit ein paar Steinen
+  const stone = new THREE.DodecahedronGeometry(0.35, 0);
+  for (const c of arena.camps ?? []) {
+    const patch = new THREE.Mesh(new THREE.CircleGeometry(3, 24).rotateX(-Math.PI / 2), m(COLORS.dirt));
+    patch.position.set(c.x, 0.015, c.y);
+    patch.receiveShadow = true;
+    scene.add(patch);
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 + c.x;
+      const rock = new THREE.Mesh(stone, m(COLORS.concrete));
+      rock.position.set(c.x + Math.cos(a) * 3.2, 0.2, c.y + Math.sin(a) * 3.2);
+      rock.castShadow = true;
+      scene.add(rock);
+    }
+  }
 }
 
 interface Builders {

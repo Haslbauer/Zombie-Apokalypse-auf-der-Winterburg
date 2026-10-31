@@ -10,6 +10,7 @@ import { kitOf } from './heroes/index';
 import { updateDelayed, updateZones } from './zones';
 import { SpatialHash } from './spatial';
 import { type ArenaDef, type BotDifficulty, DT, type Command, type GameData, type GameState, type Hero, type Zombie } from './types';
+import { updateCamps } from './neutrals';
 import { updateWaves } from './waves';
 import { updateZombies } from './zombies';
 
@@ -93,6 +94,7 @@ export class Simulation implements SimContext {
       kills: 0,
       gameOver: false,
       events: [],
+      camps: [],
     };
 
     this.refreshObjectiveFields();
@@ -179,6 +181,7 @@ export class Simulation implements SimContext {
     state.zombies = state.zombies.filter((z) => z.hp > 0);
     this.resolveCollisions();
     updateWaves(this);
+    updateCamps(this);
   }
 
   /** Gefallenen Helden im Innenhof wiederbeleben. */

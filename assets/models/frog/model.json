@@ -1,0 +1,20 @@
+{
+  "base": "frog.fbx",
+  "clips": {
+    "walk": {
+      "clip": "Frog_Jump"
+    },
+    "idle": {
+      "clip": "Frog_Idle"
+    },
+    "attack": {
+      "clip": "Frog_Attack"
+    },
+    "death": {
+      "clip": "Frog_Death"
+    }
+  },
+  "textureSize": 512,
+  "simplifyRatio": 1,
+  "output": "public/models/frog.glb"
+}

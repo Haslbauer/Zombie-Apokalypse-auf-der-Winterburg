@@ -256,9 +256,15 @@ function handleEvents(state: GameState): void {
         break;
       }
       case 'courier':
-        if (e.phase === 'arrive') hud.message(`Zombie-Postbote im Gelände! Fang ihn: ${e.gold} Gold für alle`);
+        if (e.phase === 'arrive') hud.message(`Zombie-Postbote im Gelände! Besiegt ihn im Team: ${e.gold} Gold für alle`);
         else if (e.phase === 'caught') hud.message(`Paket erbeutet: +${e.gold} Gold für alle!`);
         else hud.message('Der Postbote ist entkommen');
+        break;
+      case 'camp':
+        if (e.phase === 'cleared') {
+          const camp = gameData.arena.camps?.find((c) => c.id === e.campId);
+          if (camp && state.heroes.some((h) => h.alive && Math.hypot(h.pos.x - camp.x, h.pos.y - camp.y) < 15)) hud.message(`${camp.name} besiegt`);
+        }
         break;
       case 'levelUp':
         if (e.heroId === heroId) {
@@ -364,6 +370,8 @@ const MODELS: Record<string, number> = {
   gaertnerin: 1.8,
   chupa: 0.95,
   rat: 0.3,
+  spider: 0.35,
+  frog: 0.35,
   wasp: 0.35,
 };
 for (const [name, height] of Object.entries(MODELS)) {

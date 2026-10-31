@@ -185,6 +185,8 @@ function pickTarget(ctx: SimContext, h: Hero, bot: BotState): Zombie | null {
   let bestScore = 0;
   for (const z of state.zombies) {
     if (z.hp <= 0) continue;
+    // Lager und Postbote nur, wenn sie schon kämpfen (Bots locken sie nicht an)
+    if (z.neutral && z.targetId === null) continue;
     let score = 0;
     for (const g of guarded) if (objDistance(z, g.o) < g.range) score = Math.max(score, g.value);
     const victim = z.targetId !== null ? state.heroes.find((x) => x.id === z.targetId) : undefined;

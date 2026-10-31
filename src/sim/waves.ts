@@ -113,8 +113,8 @@ export function updateWaves(ctx: SimContext): void {
     spawnEntry(ctx, w.queue.shift()!);
     w.spawnTimer += cfg.spawnInterval;
   }
-  // Der Postbote zählt nicht zur Welle
-  if (w.queue.length === 0 && state.zombies.every((z) => z.courier)) {
+  // Postbote und Lager zählen nicht zur Welle
+  if (w.queue.length === 0 && state.zombies.every((z) => z.neutral)) {
     state.events.push({ type: 'waveCleared', number: w.number });
     awardWaveBonus(ctx, w.number);
     harvest(ctx);
@@ -154,6 +154,7 @@ export function spawnCourier(ctx: SimContext): Zombie | null {
   const wp = Math.floor(nextRandom(state) * route.length);
   const z = spawnZombieAt(ctx, def, { ...route[wp] }, 'none');
   z.courier = { wp: (wp + 1) % route.length, dir: 1, leaveAt: state.time + def.courier.stay };
+  z.neutral = { campId: null, home: { ...z.pos }, returning: false };
   state.events.push({ type: 'courier', zombieId: z.id, phase: 'arrive', gold: courierGold(ctx, def) });
   return z;
 }

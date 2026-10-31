@@ -2,7 +2,7 @@
 
 Quellen:
 - [Mixamo](https://www.mixamo.com) (Adobe): Zombie und die fünf Menschen-Helden. Figuren und Animationen von Mixamo dürfen laut Adobe lizenzfrei in eigenen Projekten und Spielen verwendet werden (nicht als Rohdateien weiterverkauft).
-- [Quaternius](https://quaternius.com), Lizenz CC0 (gemeinfrei): vier Zombies (`zombie-basic`, `zombie-arm`, `zombie-ribcage`, `zombie-chubby`), Schäferhund (`chupa`, aus dem Zombie Apocalypse Kit), Ratte (`rat`) und Wespe (`wasp`, aus den Animated Animals).
+- [Quaternius](https://quaternius.com), Lizenz CC0 (gemeinfrei): vier Zombies (`zombie-basic`, `zombie-arm`, `zombie-ribcage`, `zombie-chubby`), Schäferhund (`chupa`, aus dem Zombie Apocalypse Kit), Ratte (`rat`), Wespe (`wasp`), Spinne (`spider`) und Frosch (`frog`, als Riesen-Zombiekröte), aus den Animated Animals.
 
 ## Aufbau
 

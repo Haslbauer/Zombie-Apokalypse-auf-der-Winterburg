@@ -72,6 +72,9 @@ const ZOMBIE_LOOKS: Record<string, ModelLook> = {
   brute: { model: 'zombie-chubby', move: 'walk', idle: 'idle', refSpeed: 1.4, scale: 1.25, tint: [1, 1, 1], attacks: ['attack', 'attack2'] },
   butcher: { model: 'zombie-chubby', move: 'walk', idle: 'idle', refSpeed: 1.6, scale: 1.45, tint: [1.35, 0.8, 0.6], attacks: ['attack', 'attack2'], props: ['cleaver'], ...Q },
   postman: { model: 'zombie-basic', move: 'walk', moveFast: 'run', fastAbove: 3, idle: 'idle', refSpeed: 2.4, scale: 1, tint: [0.75, 0.9, 1.5], attacks: ['attack'], props: ['parcel', 'cap'], ...Q },
+  spider: { model: 'spider', move: 'walk', idle: 'idle', refSpeed: 3.5, scale: 1, tint: [0.75, 0.85, 0.6], attacks: ['attack', 'attack2'] },
+  bigspider: { model: 'spider', move: 'walk', idle: 'idle', refSpeed: 3.2, scale: 2.2, tint: [0.6, 0.75, 0.5], attacks: ['attack', 'attack2'] },
+  toad: { model: 'frog', move: 'walk', idle: 'idle', refSpeed: 1.6, scale: 2.6, tint: [0.62, 0.62, 0.5], attacks: ['attack'] },
   rat: { model: 'rat', move: 'run', idle: 'idle', refSpeed: 5, scale: 1.2, tint: [1.8, 1.7, 1.6], attacks: ['attack', 'attack2'] },
   ratking: { model: 'rat', move: 'walk', idle: 'idle', refSpeed: 1.2, scale: 2.6, tint: [1.4, 1.1, 0.8], attacks: ['attack', 'attack2'], props: ['crown'], headBone: 'Head' },
   hornet: { model: 'wasp', move: 'fly', idle: 'fly', refSpeed: 4.5, scale: 1.6, tint: [1, 1, 1], attacks: ['attack'], lift: 0.9 },
@@ -109,6 +112,14 @@ export function textSprite(text: string, color: string): THREE.Sprite {
 /** Höhe der Zombiefigur (für Lebensbalken und Symbole). */
 function zombieHeight(figure: string, radius: number): number {
   switch (figure) {
+    case 'bat':
+      return 1.7;
+    case 'spider':
+      return 0.6;
+    case 'bigspider':
+      return 1.2;
+    case 'toad':
+      return 1.4;
     case 'rat':
       return 0.45;
     case 'ratking':
@@ -455,6 +466,33 @@ export class UnitView {
             const a = (i / 5) * Math.PI * 2;
             this.mesh(new THREE.ConeGeometry(0.04, 0.12, 4), 0xffc93c, 0.45 + Math.cos(a) * 0.18, 1.08, Math.sin(a) * 0.18);
           }
+        }
+        return;
+      }
+      case 'bat': {
+        // Zombie-Fledermaus: dunkler Körper, rote Augen, ledrige Flügel, schwebt (1,6-fach vergrößert)
+        const hover = 0.82;
+        this.body.scale.setScalar(1.6);
+        this.mesh(new THREE.SphereGeometry(0.14, 8, 6), 0x3a2f3f, 0, hover).scale.set(1.3, 1, 1);
+        this.mesh(new THREE.SphereGeometry(0.09, 8, 6), 0x4a3a4f, 0.17, hover + 0.05);
+        for (const side of [-1, 1]) {
+          this.mesh(new THREE.ConeGeometry(0.035, 0.1, 4), 0x3a2f3f, 0.16, hover + 0.15, side * 0.05);
+          eyeGlow(0.25, hover + 0.07, side * 0.04);
+          // Flügel als Dreieck; die Gruppe dreht sich (name 'wing') und schlägt so auf und ab
+          const shape = new THREE.Shape();
+          shape.moveTo(0, -0.08);
+          shape.lineTo(0.45, -0.02);
+          shape.lineTo(0.38, 0.1);
+          shape.lineTo(0, 0.08);
+          const wing = new THREE.Mesh(new THREE.ShapeGeometry(shape), this.lambert(0x2a2230));
+          (wing.material as THREE.MeshLambertMaterial).side = THREE.DoubleSide;
+          wing.rotation.x = -Math.PI / 2;
+          const pivot = new THREE.Group();
+          pivot.name = 'wing';
+          pivot.position.set(0, hover + 0.03, side * 0.1);
+          pivot.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2;
+          pivot.add(wing);
+          this.body.add(pivot);
         }
         return;
       }

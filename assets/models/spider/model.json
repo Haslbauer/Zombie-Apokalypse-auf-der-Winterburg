@@ -1,0 +1,23 @@
+{
+  "base": "spider.fbx",
+  "clips": {
+    "walk": {
+      "clip": "Spider_Walk"
+    },
+    "idle": {
+      "clip": "Spider_Idle"
+    },
+    "attack": {
+      "clip": "Spider_Attack"
+    },
+    "attack2": {
+      "clip": "Spider_Jump"
+    },
+    "death": {
+      "clip": "Spider_Death"
+    }
+  },
+  "textureSize": 512,
+  "simplifyRatio": 1,
+  "output": "public/models/spider.glb"
+}

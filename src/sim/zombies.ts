@@ -4,6 +4,7 @@ import { face, stepToward } from './movement';
 import { damageObjective, objDistance, objectivesFor } from './objectives';
 import { nextRandom } from './rng';
 import { updateElite } from './elites';
+import { updateNeutral } from './neutrals';
 import { hasBuff, heroCC, isBlind, isDisabled, isFeared, isRooted, statusSpeedFactor } from './status';
 import { DT, type Hero, type Objective, type Zombie } from './types';
 import { dist, type Vec2 } from './vec';
@@ -42,8 +43,10 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null): 
       continue;
     }
     if (def.special && updateElite(ctx, z, def, heroes)) continue;
-    if (z.courier) {
-      if (!rooted) updateCourier(ctx, z, speed, def.courier?.fleeFactor ?? 1);
+    if (z.neutral) {
+      if (rooted) continue;
+      const busy = updateNeutral(ctx, z, def, speed, (to, step) => moveTo(ctx, z, to, null, step));
+      if (!busy && z.courier) updateCourier(ctx, z, speed);
       continue;
     }
 
@@ -88,11 +91,8 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null): 
   }
 }
 
-/**
- * Postbote: läuft seinen Rundweg ab. Getroffen rennt er schneller und dreht
- * so, dass er vom Angreifer wegläuft. Nach seiner Zeit ist er verschwunden.
- */
-function updateCourier(ctx: SimContext, z: Zombie, speed: number, fleeFactor: number): void {
+/** Postbote: läuft seinen Rundweg ab; nach seiner Zeit ist er verschwunden. */
+function updateCourier(ctx: SimContext, z: Zombie, speed: number): void {
   const { state } = ctx;
   const c = z.courier!;
   const route = ctx.data.arena.courierRoute ?? [];
@@ -101,24 +101,11 @@ function updateCourier(ctx: SimContext, z: Zombie, speed: number, fleeFactor: nu
     state.events.push({ type: 'courier', zombieId: z.id, phase: 'escaped' });
     return;
   }
-  const fleeing = state.time < z.st.provokedUntil;
-  if (fleeing) {
-    const attacker = state.heroes.find((h) => h.id === z.st.provokedBy);
-    if (attacker) {
-      // Richtung wählen, deren Wegpunkt weiter vom Angreifer weg liegt
-      const n = route.length;
-      const ahead = route[c.wp];
-      const back = route[(c.wp - c.dir + 2 * n) % n];
-      const turn = dist(back, attacker.pos) > dist(ahead, attacker.pos) + 2;
-      if (turn) {
-        c.dir = -c.dir;
-        c.wp = (c.wp + c.dir + n) % n;
-      }
-    }
-  }
   const target = route[c.wp];
   if (dist(z.pos, target) < 0.8) c.wp = (c.wp + c.dir + route.length) % route.length;
-  stepToward(z, target, speed * (fleeing ? fleeFactor : 1) * DT);
+  stepToward(z, target, speed * DT);
+  // Sein Platz wandert mit: Wird er angegriffen, kämpft er höchstens leash Meter von hier
+  z.neutral!.home = { ...z.pos };
 }
 
 /** Vom Auslöser der Angst weglaufen. */

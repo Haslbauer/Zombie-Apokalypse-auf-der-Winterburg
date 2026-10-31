@@ -2,7 +2,7 @@
 
 Stand: 31.10.2026. Arbeitsgrundlage für Claude Code.
 
-Änderungen v1.1: Karte um 10 m Gelände erweitert, Zombies kommen von außen durch Tore (West, Süd, Ost), Bunkertür nach Norden. Hornissen ab Welle 1 in wachsenden Schwärmen, mehr Zombies aus Nordwest. Ohne Bienenstock wachsen Beete nicht mehr nach. Sidequest Zombie-Postbote.
+Änderungen v1.1: Karte um 10 m Gelände erweitert, Zombies kommen von außen durch Tore (West, Süd, Ost), Bunkertür nach Norden. Hornissen ab Welle 1 in wachsenden Schwärmen, mehr Zombies aus Nordwest. Ohne Bienenstock wachsen Beete nicht mehr nach. Sidequests: Zombie-Postbote als Team-Ziel, neutrale Lager (Fledermäuse, Spinnen, Kröte).
 Änderungen v1.0: Items kombinierbar wie in LoL (Grundteile, Aufbau, fertige Items; Bauteile werden verbraucht und angerechnet). Animierte Modelle für alle Helden, Zombies, Ratten und Hornissen.
 Änderungen v0.9: Herz wird Lebensmittelvorrat (kein Selbstheilen, Ernte der Hochbeete füllt ihn auf). Zombies gehen auf Helden und Vorrat, Ratten auf Hochbeete und Bienenstock, neue Hornissen auf den Bienenstock. Neuer Spawnpunkt Nordwest. Elites langsamer mehr, Wellen neu abgestimmt.
 Änderungen v0.8: M5 umgesetzt. Bots in drei Stärken, ausgewogenes Team, Wellen für 4 Helden neu abgestimmt, Pausen 25 s (erste 20 s) mit „Welle starten“ (N).
@@ -199,17 +199,24 @@ Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `
 - Der **Bienenstock** (1000 Leben) wird von Hornissen und einem Teil der Ratten angegriffen. Normalerweise stechen die Bienen nur Gegner in der Nähe. Sobald der Stock Schaden bekommt, werden sie für einige Sekunden wütend und stechen alle in der Nähe, auch Helden. Ein zerstörter Stock ist keine Niederlage, die Bienen sind dann aber weg und zerstörte Beete wachsen nicht mehr nach.
 - Gefallene Helden respawnen nach einem Timer, der mit der Welle wächst (5 s + 1 s pro Welle), im Innenhof und müssen von dort durch den Durchgang nach draußen.
 
-## 8b. Sidequest: Zombie-Postbote
+## 8b. Sidequests: Postbote und Lager (wie Drache und Dschungel in LoL)
 
-Wie der Drache in LoL: ein freiwilliges Ziel für Extra-Gold, das die Verteidigung schwächt, solange man ihm nachjagt.
+Freiwillige Ziele im Gelände außerhalb des Gartens. Sie bringen Gold und XP, kosten aber Zeit, in der der Garten schwächer verteidigt ist. Alle Neutralen greifen erst an, wenn man sie angreift, und dann gemeinsam mit ihrem Lager. Entfernen sie sich weiter als ihre **Leine** von ihrem Platz (oder ist kein Held mehr in der Nähe), kehren sie um und heilen sich voll. Bots greifen Neutrale nicht von sich aus an.
 
-- Erscheint ab Welle 2 in jeder zweiten Welle, 20 s nach Wellenbeginn, an einem zufälligen Punkt seines **Rundwegs** im Gelände außerhalb des Gartens (`courierRoute` in `data/map.json`, Werte in `data/waves.json` und beim Typ `postbote` in `data/zombies.json`).
-- Läuft seine Runde (2,4 m/s), greift nicht an und zählt nicht zur Welle: Die Welle ist auch geschafft, wenn er noch unterwegs ist. Nach 75 s ist er verschwunden („entkommen“).
-- Getroffen rennt er 1,9-mal so schnell weiter und dreht um, wenn das vom Angreifer wegführt. Man muss ihn also stellen oder mit Kontrolle (Schlaf, Betäuben, Festhalten) aufhalten.
-- Leben 450, wächst wie bei Zombies mit der Welle.
-- **Belohnung:** Jeder Held bekommt 100 + 20 × Welle Gold, egal wo er steht.
-- Darstellung: blauer Zombie mit Mütze und Paket, goldener Ring (auch durch Wände sichtbar), Meldungen beim Auftauchen, Erwischen und Entkommen.
-- Bots jagen ihn nur, wenn er zufällig nah an ihnen vorbeiläuft.
+**Zombie-Postbote** (Drache): ein Team-Ziel
+- Erscheint ab Welle 3 in jeder dritten Welle, 20 s nach Wellenbeginn, und läuft seinen **Rundweg** im Gelände (`courierRoute` in `data/map.json`). Nach 120 s ist er weg.
+- 2500 Leben, wachsend mit der Welle (in Welle 3 etwa 4500, in Welle 6 etwa 7500), schlägt hart zurück (45 Schaden, ebenfalls wachsend). Allein kaum zu schaffen, im Team gut.
+- Leine 14 m ab dem Punkt, an dem der Kampf beginnt.
+- **Belohnung:** Jeder Held bekommt 150 + 30 × Welle Gold, egal wo er steht.
+- Blauer Zombie mit Mütze und Paket, goldener Ring (auch durch Wände sichtbar), Meldungen beim Auftauchen, Besiegen und Entkommen.
+
+**Lager** (Dschungel), Werte in `data/zombies.json`, Lage in `data/map.json` (`camps`):
+- **Fledermausschwarm** (Nord und Ost): 5 fliegende Zombie-Fledermäuse, schnell und schwach
+- **Spinnennest** (West): Riesen-Zombiespinne mit zwei kleinen Spinnen
+- **Krötentümpel** (Süd): eine Riesen-Zombiekröte, langsam, viel Leben, harte Treffer
+- Zu Spielbeginn besetzt. Geleerte Lager kommen nach 75 s (Kröte 90 s) wieder, mit der Stärke der aktuellen Welle.
+- Belohnung: Kill-Gold und XP wie bei Zombies für alle Helden in der Nähe.
+- Lager und Postbote zählen nicht zur Welle.
 
 ## 9. Gold, Shop und Items
 

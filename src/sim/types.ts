@@ -117,11 +117,16 @@ export interface ZombieDef {
   /** Fliegt über Hindernisse (Hornissen). */
   flying?: boolean;
   /**
-   * Sidequest (Zombie-Postbote): läuft die Route im Gelände ab, greift nicht an
-   * und zählt nicht zur Welle. Getroffen rennt er fleeFactor-mal so schnell;
-   * nach stay Sekunden ist er weg. Wer ihn erwischt: Gold für alle Helden.
+   * Sidequest (Zombie-Postbote): läuft die Route im Gelände ab und zählt nicht
+   * zur Welle. Nach stay Sekunden ist er weg. Wer ihn besiegt: Gold für alle Helden.
    */
-  courier?: { gold: number; goldPerWave: number; fleeFactor: number; stay: number };
+  courier?: { gold: number; goldPerWave: number; stay: number };
+  /**
+   * Neutral (Lager, Postbote): greift erst an, wenn er angegriffen wird, dann
+   * mit allen aus seinem Lager. Entfernt er sich mehr als leash Meter von
+   * seinem Platz, kehrt er um und heilt sich voll (wie im LoL-Dschungel).
+   */
+  neutral?: { leash: number };
   /** Elite-Fähigkeit mit ihren Werten. */
   special?: { kind: 'summon' | 'charge'; interval: number; [key: string]: number | string };
 }
@@ -287,6 +292,17 @@ export interface ArenaDef {
   botPosts?: Vec2[];
   /** Rundweg des Postboten im Gelände (geschlossene Schleife). */
   courierRoute?: Vec2[];
+  /** Neutrale Lager im Gelände: Typen der Bewohner, Wiederkehr respawn Sekunden nach dem Leeren. */
+  camps?: CampDef[];
+}
+
+export interface CampDef {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  units: string[];
+  respawn: number;
 }
 
 export type BotDifficulty = 'leicht' | 'mittel' | 'schwer';
@@ -488,6 +504,8 @@ export interface Zombie extends Unit {
   charge?: { dir: Vec2; remaining: number; hitIds: number[]; windup: number } | null;
   /** Postbote: nächster Wegpunkt, Laufrichtung (+1/−1) und wann er verschwindet. */
   courier?: { wp: number; dir: number; leaveAt: number };
+  /** Neutrale: Lager (oder null beim Postboten), Platz, zu dem er zurückkehrt, und ob er gerade heimkehrt. */
+  neutral?: { campId: string | null; home: Vec2; returning: boolean };
 }
 
 /** Fläche mit Wirkung über Zeit (Dornen, Rauch, Hecke, Block). */
@@ -601,6 +619,7 @@ export type GameEvent =
   | { type: 'shopDenied'; heroId: number; reason: string }
   | { type: 'elite'; zombieId: number; defId: string }
   | { type: 'courier'; zombieId: number; phase: 'arrive' | 'caught' | 'escaped'; gold?: number }
+  | { type: 'camp'; campId: string; phase: 'spawn' | 'cleared' }
   | { type: 'charge'; zombieId: number; from: Vec2; to: Vec2 }
   | { type: 'heroStatus'; heroId: number; status: 'rooted' | 'stunned' }
   | { type: 'cast'; heroId: number; slot: number; pos: Vec2 }
@@ -627,6 +646,8 @@ export interface GameState {
   gameOver: boolean;
   /** Ereignisse des letzten Ticks (für Effekte im Client). */
   events: GameEvent[];
+  /** Neutrale Lager: wann ein geleertes Lager wiederkommt (null: besetzt). */
+  camps: { id: string; respawnAt: number | null }[];
 }
 
 /** Ticks pro Sekunde der Simulation. */

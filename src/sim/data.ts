@@ -145,11 +145,24 @@ export function parseGameData(raw: {
     for (const k of ['fromWave', 'packsPerWave', 'minSize', 'maxSize']) num(p, k, `waves.packs[${i}]`);
     if (p?.sizePerWave !== undefined) num(p, 'sizePerWave', `waves.packs[${i}]`);
   }
+  const zombieList: any[] = Array.isArray(raw.zombies) ? raw.zombies : [];
+  (Array.isArray(a?.camps) ? a.camps : []).forEach((c: any, i: number) => {
+    const p = `arena.camps[${i}]`;
+    str(c, 'id', p);
+    pos(c, p);
+    num(c, 'respawn', p);
+    if (!Array.isArray(c?.units) || c.units.length === 0) errors.push(`${p}.units: Liste von Zombie-Typen erwartet`);
+    for (const u of c?.units ?? []) {
+      const def = zombieList.find((z) => z?.id === u);
+      if (!def) errors.push(`${p}.units: unbekannter Typ ${u}`);
+      else if (!def.neutral) errors.push(`${p}.units: ${u} braucht neutral-Werte`);
+    }
+  });
   if (w?.courier !== undefined) {
     for (const k of ['firstWave', 'every', 'delay']) num(w.courier, k, 'waves.courier', k === 'delay' ? 0 : 1);
     const def = (Array.isArray(raw.zombies) ? raw.zombies : []).find((z: any) => z?.id === w.courier.type);
     if (!def?.courier) errors.push('waves.courier.type: Zombie-Typ mit courier-Werten erwartet');
-    else for (const k of ['gold', 'goldPerWave', 'fleeFactor', 'stay']) num(def.courier, k, `zombies.${def.id}.courier`);
+    else for (const k of ['gold', 'goldPerWave', 'stay']) num(def.courier, k, `zombies.${def.id}.courier`);
     if (!Array.isArray(a?.courierRoute) || a.courierRoute.length < 2) errors.push('arena.courierRoute: mindestens 2 Wegpunkte erwartet');
     else a.courierRoute.forEach((p: any, i: number) => pos(p, `arena.courierRoute[${i}]`));
   }

@@ -14,7 +14,7 @@ function courierSim() {
 }
 
 describe('Sidequest Zombie-Postbote', () => {
-  it('erscheint ab Welle 2 in jeder zweiten Welle, 20 s nach Wellenbeginn', () => {
+  it('erscheint ab Welle 3 in jeder dritten Welle, 20 s nach Wellenbeginn', () => {
     const sim = new Simulation(testData(), { seed: 1, heroes: ['rotschopf'] });
     const cfg = sim.data.waves.courier!;
     sim.state.wave.timer = 0;
@@ -22,6 +22,11 @@ describe('Sidequest Zombie-Postbote', () => {
     expect(sim.state.wave.courierAt).toBeNull();
     sim.state.wave.phase = 'pause';
     sim.state.wave.number = 2;
+    sim.state.wave.timer = 0;
+    sim.step();
+    expect(sim.state.wave.courierAt).toBeNull();
+    sim.state.wave.phase = 'pause';
+    sim.state.wave.number = 3;
     sim.state.wave.timer = 0;
     sim.step();
     expect(sim.state.wave.courierAt! - sim.state.time).toBeGreaterThan(cfg.delay - 0.2);
@@ -39,6 +44,7 @@ describe('Sidequest Zombie-Postbote', () => {
     const start = { ...z.pos };
     sim.state.wave.queue = [];
     sim.state.zombies = [z];
+    sim.data.arena.camps = [];
     run(sim, 20 * 5);
     expect(Math.hypot(z.pos.x - start.x, z.pos.y - start.y)).toBeGreaterThan(5);
     // Welle ist geschafft, obwohl der Postbote noch unterwegs ist
@@ -46,19 +52,26 @@ describe('Sidequest Zombie-Postbote', () => {
     expect(sim.state.zombies).toContain(z);
   });
 
-  it('getroffen rennt er schneller davon', () => {
-    const { sim, z } = courierSim();
+  it('angegriffen schlägt er zurück, entkommt man ihm, kehrt er um und heilt sich', () => {
+    const { sim, z, def } = courierSim();
     const h = sim.state.heroes[0];
-    const step = () => {
-      const p = { ...z.pos };
-      sim.step();
-      return Math.hypot(z.pos.x - p.x, z.pos.y - p.y);
-    };
-    const calm = step();
-    h.pos = { x: z.pos.x + 3, y: z.pos.y };
-    applyDamage(sim, z, 1, h);
-    const flee = step();
-    expect(flee).toBeGreaterThan(calm * 1.5);
+    h.pos = { x: z.pos.x + 1.2, y: z.pos.y };
+    const hp = h.hp;
+    applyDamage(sim, z, 500, h);
+    run(sim, 20 * 3);
+    expect(z.targetId).toBe(h.id);
+    expect(h.hp).toBeLessThan(hp);
+    // Held flieht weit weg (in den Innenhof): Postbote kehrt um und ist wieder voll
+    h.pos = { ...sim.data.arena.heroStart };
+    run(sim, 20 * 10);
+    expect(z.targetId).toBeNull();
+    expect(z.hp).toBe(z.maxHp);
+    expect(def.neutral!.leash).toBeGreaterThan(5);
+  });
+
+  it('ist ab Welle 3 stark: allein dauert es lange', () => {
+    const { z } = courierSim();
+    expect(z.maxHp).toBeGreaterThan(5000);
   });
 
   it('erwischt: alle Helden bekommen Gold, auch weit weg', () => {

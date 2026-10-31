@@ -486,13 +486,6 @@
     },
     {
       "kind": "circle",
-      "x": 16,
-      "y": -7.5,
-      "r": 1.4,
-      "look": "tree"
-    },
-    {
-      "kind": "circle",
       "x": 30,
       "y": -8,
       "r": 1.4,
@@ -530,13 +523,6 @@
       "kind": "circle",
       "x": -7.5,
       "y": 36,
-      "r": 1.4,
-      "look": "tree"
-    },
-    {
-      "kind": "circle",
-      "x": -8,
-      "y": 52,
       "r": 1.4,
       "look": "tree"
     },
@@ -612,13 +598,6 @@
     },
     {
       "kind": "circle",
-      "x": 73.5,
-      "y": 60,
-      "r": 1.4,
-      "look": "tree"
-    },
-    {
-      "kind": "circle",
       "x": 74,
       "y": 72,
       "r": 1.4,
@@ -641,36 +620,88 @@
   ],
   "courierRoute": [
     {
-      "x": -4,
-      "y": -4
+      "x": -2.5,
+      "y": -2.5
     },
     {
       "x": 33,
-      "y": -4.5
+      "y": -2.5
     },
     {
-      "x": 70,
-      "y": -4
+      "x": 68.5,
+      "y": -2.5
     },
     {
-      "x": 70.5,
+      "x": 68.5,
       "y": 40
     },
     {
-      "x": 70,
-      "y": 79
+      "x": 68.5,
+      "y": 77.5
     },
     {
       "x": 33,
-      "y": 79.5
+      "y": 77.5
     },
     {
-      "x": -4,
-      "y": 79
+      "x": -2.5,
+      "y": 77.5
     },
     {
-      "x": -4.5,
+      "x": -2.5,
       "y": 40
+    }
+  ],
+  "camps": [
+    {
+      "id": "fledermaeuse-nord",
+      "name": "Fledermausschwarm",
+      "x": 20,
+      "y": -6.5,
+      "units": [
+        "fledermaus",
+        "fledermaus",
+        "fledermaus",
+        "fledermaus",
+        "fledermaus"
+      ],
+      "respawn": 75
+    },
+    {
+      "id": "spinnen-west",
+      "name": "Spinnennest",
+      "x": -6.5,
+      "y": 48,
+      "units": [
+        "riesenspinne",
+        "spinne",
+        "spinne"
+      ],
+      "respawn": 75
+    },
+    {
+      "id": "kroete-sued",
+      "name": "Krötentümpel",
+      "x": 14,
+      "y": 81.5,
+      "units": [
+        "kroete"
+      ],
+      "respawn": 90
+    },
+    {
+      "id": "fledermaeuse-ost",
+      "name": "Fledermausschwarm",
+      "x": 72,
+      "y": 60,
+      "units": [
+        "fledermaus",
+        "fledermaus",
+        "fledermaus",
+        "fledermaus",
+        "fledermaus"
+      ],
+      "respawn": 75
     }
   ]
 }

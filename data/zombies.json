@@ -174,14 +174,14 @@
   {
     "id": "postbote",
     "name": "Zombie-Postbote",
-    "hp": 450,
+    "hp": 2500,
     "speed": 2.4,
     "radius": 0.45,
-    "damage": 0,
-    "attackRange": 0,
-    "attackCooldown": 1,
+    "damage": 45,
+    "attackRange": 0.6,
+    "attackCooldown": 1.5,
     "aggroRange": 0,
-    "xp": 60,
+    "xp": 200,
     "gold": 0,
     "color": "#3a5fa8",
     "figure": "postman",
@@ -190,10 +190,99 @@
       "heart": 1
     },
     "courier": {
-      "gold": 100,
-      "goldPerWave": 20,
-      "fleeFactor": 1.9,
-      "stay": 75
+      "gold": 150,
+      "goldPerWave": 30,
+      "stay": 120
+    },
+    "neutral": {
+      "leash": 14
+    }
+  },
+  {
+    "id": "fledermaus",
+    "name": "Zombie-Fledermaus",
+    "color": "#4a3a4f",
+    "hp": 70,
+    "speed": 4.5,
+    "radius": 0.25,
+    "damage": 7,
+    "attackRange": 0.4,
+    "attackCooldown": 0.8,
+    "aggroRange": 0,
+    "xp": 10,
+    "gold": 7,
+    "figure": "bat",
+    "flying": true,
+    "targets": {
+      "heart": 1
+    },
+    "neutral": {
+      "leash": 11
+    }
+  },
+  {
+    "id": "spinne",
+    "name": "Zombie-Spinne",
+    "color": "#3d3a32",
+    "hp": 160,
+    "speed": 3.6,
+    "radius": 0.4,
+    "damage": 12,
+    "attackRange": 0.4,
+    "attackCooldown": 1.0,
+    "aggroRange": 0,
+    "xp": 14,
+    "gold": 10,
+    "figure": "spider",
+    "targets": {
+      "heart": 1
+    },
+    "neutral": {
+      "leash": 11
+    }
+  },
+  {
+    "id": "riesenspinne",
+    "name": "Riesen-Zombiespinne",
+    "color": "#2e2b25",
+    "hp": 650,
+    "speed": 3.2,
+    "radius": 0.8,
+    "damage": 28,
+    "attackRange": 0.5,
+    "attackCooldown": 1.2,
+    "aggroRange": 0,
+    "xp": 45,
+    "gold": 40,
+    "figure": "bigspider",
+    "rank": "elite",
+    "targets": {
+      "heart": 1
+    },
+    "neutral": {
+      "leash": 11
+    }
+  },
+  {
+    "id": "kroete",
+    "name": "Riesen-Zombiekröte",
+    "color": "#5d6b3c",
+    "hp": 1200,
+    "speed": 1.6,
+    "radius": 1.0,
+    "damage": 40,
+    "attackRange": 0.6,
+    "attackCooldown": 2.0,
+    "aggroRange": 0,
+    "xp": 70,
+    "gold": 75,
+    "figure": "toad",
+    "rank": "elite",
+    "targets": {
+      "heart": 1
+    },
+    "neutral": {
+      "leash": 10
     }
   }
 ]
