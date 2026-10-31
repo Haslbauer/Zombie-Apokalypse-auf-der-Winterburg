@@ -1,4 +1,5 @@
 import { arenaBounds } from '../sim/grid';
+import { zombieRevealed } from './renderer';
 import type { GameData, GameState } from '../sim/types';
 import type { Vec2 } from '../sim/vec';
 
@@ -17,6 +18,13 @@ const COLORS = {
   fence: '#8a6a45',
   blocked: '#557f42',
   bunker: '#8d8d86',
+  brush: '#2e5a26',
+  reed: '#4f6f52',
+  water: '#4d8592',
+  rock: '#8a8a82',
+  grave: '#c8c8c0',
+  cobbles: '#9a9286',
+  prop: '#7a5f43',
   tree: '#2d6b2a',
   path: '#7a5f43',
   camp: '#5b4632',
@@ -126,6 +134,7 @@ export class Minimap {
     // Zombies, Lager, Postbote
     const blink = Math.sin(this.clock * 8) > 0;
     for (const z of state.zombies) {
+      if (!zombieRevealed(this.data, state, z)) continue;
       const def = this.data.zombies.find((d) => d.id === z.defId);
       if (z.courier) dot(z.pos, blink ? 4 : 3, COLORS.courier, '#000');
       else if (z.neutral) dot(z.pos, def?.rank ? 2.6 : 1.8, COLORS.neutral);
@@ -195,6 +204,19 @@ export class Minimap {
     const g = arena.garden;
     if (g) rect(g.x, g.y, g.w, g.h, COLORS.garden);
     for (const p of arena.paths ?? []) rect(p.x, p.y, p.w, p.h, COLORS.path);
+    for (const d of arena.decor ?? []) if (d.look !== 'gravefence') rect(d.x, d.y, d.w, d.h, d.look === 'cobbles' ? COLORS.cobbles : COLORS.path);
+    // Verstecke: dunkleres Grün (Schilf bläulich)
+    for (const b of arena.brush ?? []) {
+      c.fillStyle = b.look === 'reed' ? COLORS.reed : COLORS.brush;
+      if (b.kind === 'circle') {
+        c.beginPath();
+        c.arc((b.x - this.b.x0) * k, (b.y - this.b.y0) * k, b.r * k, 0, Math.PI * 2);
+        c.fill();
+      } else rect(b.x, b.y, b.w, b.h, c.fillStyle as string);
+    }
+    // Bunker-Luke
+    const bunker = arena.spawnPoints.find((s) => s.id === 'bunker');
+    if (bunker) rect(bunker.x, bunker.y, 3, 2.4, COLORS.bunker);
     for (const camp of arena.camps ?? []) {
       c.fillStyle = COLORS.camp;
       c.beginPath();
@@ -203,16 +225,22 @@ export class Minimap {
     }
     for (const o of arena.obstacles) {
       if (o.kind === 'circle') {
-        if (o.look === 'objective') continue;
-        c.fillStyle = COLORS.tree;
+        if (o.look === 'objective' || o.look === 'lamp') continue;
+        c.fillStyle = o.look === 'pond' ? COLORS.water : o.look === 'rock' ? COLORS.rock : COLORS.tree;
         c.beginPath();
         c.arc((o.x - this.b.x0) * k, (o.y - this.b.y0) * k, o.r * k, 0, Math.PI * 2);
         c.fill();
         continue;
       }
       const look = o.look ?? 'hedge';
-      if (look === 'objective' || look === 'bed') continue;
-      const color = look === 'house' ? COLORS.house : look === 'fence' ? COLORS.fence : look === 'blocked' ? COLORS.blocked : look === 'bunker' ? COLORS.bunker : COLORS.hedge;
+      if (look === 'objective' || look === 'bed' || look === 'flowers' || look === 'bench' || look === 'wheelbarrow') continue;
+      const color =
+        look === 'house' ? COLORS.house
+        : look === 'fence' ? COLORS.fence
+        : look === 'blocked' ? COLORS.blocked
+        : look === 'grave' ? COLORS.grave
+        : look === 'hedge' ? COLORS.hedge
+        : COLORS.prop;
       // Zäune sind sehr dünn: mindestens 1,5 Pixel
       const thin = 1.5 / k;
       rect(o.x, o.y, Math.max(o.w, thin), Math.max(o.h, thin), color);

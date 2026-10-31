@@ -9,7 +9,7 @@ import type { Vec2 } from '../sim/vec';
 /** Ab dieser Abweichung zur Server-Position wird sofort umgesetzt statt weich ausgeglichen (m). */
 const SNAP_DISTANCE = 2;
 /** Zeitkonstante des weichen Ausgleichs (s). */
-const SMOOTH_TIME = 0.1;
+const SMOOTH_TIME = 0.15;
 
 /**
  * Vorhersage der eigenen Bewegung im Mehrspieler: Der Client bewegt den
@@ -18,14 +18,19 @@ const SMOOTH_TIME = 0.1;
  * übrigen werden auf die Server-Position erneut angewendet. Abweichungen
  * werden weich ausgeglichen. Im Sprung, beim Kanalisieren, betäubt oder
  * festgehalten gilt einfach die Server-Position.
+ *
+ * Gezeichnet wird zwischen der Position vor und nach dem letzten Eingabe-Tick
+ * (Anteil alpha), sonst sähe man die 50-ms-Schritte als Ruckeln.
  */
 export class Prediction {
   private readonly arena: ArenaDef;
   private readonly heroDefs: Map<string, HeroDef>;
   private readonly zombieDefs: Map<string, ZombieDef>;
   private pending: { seq: number; move: Vec2 }[] = [];
-  /** Vorhergesagte Position (null: keine Vorhersage, Server-Position gilt). */
+  /** Vorhergesagte Position nach dem letzten Eingabe-Tick (null: Server-Position gilt) … */
   private pos: Vec2 | null = null;
+  /** … und davor (für das Überblenden zwischen zwei Ticks). */
+  private before: Vec2 | null = null;
   /** Darstellungsversatz, der nach einer Korrektur abklingt. */
   private offset: Vec2 = { x: 0, y: 0 };
   private server: Hero | null = null;
@@ -46,7 +51,10 @@ export class Prediction {
   apply(seq: number, move: Vec2): void {
     this.pending.push({ seq, move: { ...move } });
     if (this.pending.length > 120) this.pending.shift(); // ohne Server-Antwort nicht endlos sammeln
-    if (this.server && this.state && this.pos && Prediction.movable(this.server)) this.pos = this.step(this.pos, move);
+    if (this.server && this.state && this.pos && Prediction.movable(this.server)) {
+      this.before = this.pos;
+      this.pos = this.step(this.pos, move);
+    }
   }
 
   /** Zustand vom Server: Server-Position plus noch unbestätigte Eingaben. */
@@ -56,11 +64,16 @@ export class Prediction {
     this.pending = this.pending.filter((p) => p.seq > ack);
     if (!Prediction.movable(hero)) {
       this.pos = null;
+      this.before = null;
       this.offset = { x: 0, y: 0 };
       return;
     }
     let p = { ...hero.pos };
-    for (const input of this.pending) p = this.step(p, input.move);
+    let before = p;
+    for (const input of this.pending) {
+      before = p;
+      p = this.step(p, input.move);
+    }
     if (this.pos) {
       // Bisher gezeigter Ort minus neuer Ort = Fehler, der weich abgebaut wird
       const ex = this.pos.x + this.offset.x - p.x;
@@ -68,19 +81,26 @@ export class Prediction {
       this.offset = Math.hypot(ex, ey) > SNAP_DISTANCE ? { x: 0, y: 0 } : { x: ex, y: ey };
     }
     this.pos = p;
+    this.before = before;
   }
 
-  /** Darzustellende Position (null: Server-Position verwenden). dt baut den Korrekturversatz ab. */
-  display(dt: number): Vec2 | null {
+  /**
+   * Darzustellende Position (null: Server-Position verwenden). alpha: Anteil
+   * der Zeit seit dem letzten Eingabe-Tick (0–1); dt baut den Korrekturversatz ab.
+   */
+  display(dt: number, alpha = 1): Vec2 | null {
     if (!this.pos) return null;
     const k = Math.exp(-dt / SMOOTH_TIME);
     this.offset = { x: this.offset.x * k, y: this.offset.y * k };
-    return { x: this.pos.x + this.offset.x, y: this.pos.y + this.offset.y };
+    const from = this.before ?? this.pos;
+    const a = Math.max(0, Math.min(1, alpha));
+    return { x: from.x + (this.pos.x - from.x) * a + this.offset.x, y: from.y + (this.pos.y - from.y) * a + this.offset.y };
   }
 
   reset(): void {
     this.pending = [];
     this.pos = null;
+    this.before = null;
     this.offset = { x: 0, y: 0 };
     this.server = null;
   }

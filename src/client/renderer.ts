@@ -1,9 +1,10 @@
 import * as THREE from 'three';
+import { arenaBounds, brushAt } from '../sim/grid';
 import { hasBuff, shieldAmount } from '../sim/status';
 import { type AbilityDef, type AttackDef, DT, type GameData, type GameState, type Hero, type Zombie } from '../sim/types';
 import type { Vec2 } from '../sim/vec';
 import { GameCamera } from './camera';
-import { buildMap } from './map';
+import { buildMap, type MapAnimation } from './map';
 import { ObjectiveView } from './objectives';
 import { AbilityPreview } from './preview';
 import type { RiggedModel } from './models';
@@ -12,6 +13,17 @@ import { ATTACK_ANIM, heroView, UnitView, zombieView } from './units';
 /** So lange bleibt ein toter Zombie liegen (s), die letzte Sekunde versinkt er. */
 const CORPSE_TIME = 2.5;
 import { WorldView } from './world';
+
+/** So nah muss ein Held einem Zombie im Gebüsch sein, damit man ihn sieht (m). */
+const BRUSH_REVEAL = 3;
+
+/** Ist der Zombie für die Spieler sichtbar? Im Gebüsch nur, wenn ein Held im selben Gebüsch oder nah dran ist. */
+export function zombieRevealed(data: GameData, state: GameState, z: Zombie): boolean {
+  if (!data.arena.brush?.length) return true;
+  const brush = brushAt(data.arena, z.pos);
+  if (brush < 0) return true;
+  return state.heroes.some((h) => h.alive && (h.brush === brush || Math.hypot(h.pos.x - z.pos.x, h.pos.y - z.pos.y) <= BRUSH_REVEAL));
+}
 
 /** Position und Blickrichtung eines Objekts im vorherigen Tick (für Interpolation). */
 export interface Snapshot {
@@ -26,6 +38,8 @@ export class GameRenderer {
   readonly cam: GameCamera;
   private readonly units = new Map<number, UnitView>();
   private readonly world: WorldView;
+  /** Wind in Gras und Büschen, Rauch aus den Schornsteinen. */
+  private readonly mapAnimation: MapAnimation;
   readonly preview: AbilityPreview;
   private readonly raycaster = new THREE.Raycaster();
   private readonly groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -48,20 +62,25 @@ export class GameRenderer {
 
     this.cam = new GameCamera(container.clientWidth / container.clientHeight);
     this.cam.lookAt(data.arena.width / 2, data.arena.height / 2);
-    this.scene.background = new THREE.Color(0x9cc6e0);
-    this.scene.fog = new THREE.Fog(0x9cc6e0, 45, 90);
-    this.scene.add(new THREE.HemisphereLight(0xfff6e0, 0x3d5a2e, 1.3));
-    const sun = new THREE.DirectionalLight(0xfff1d6, 2);
-    const { width, height } = data.arena;
-    sun.position.set(width / 2 - 15, 30, height / 2 + 10);
-    sun.target.position.set(width / 2, 0, height / 2);
+    // Abendstimmung: warmes, tiefes Sonnenlicht, lange Schatten, Dunst am Rand
+    const dusk = 0xd8b89a;
+    this.scene.background = new THREE.Color(dusk);
+    this.scene.fog = new THREE.Fog(dusk, 50, 105);
+    this.scene.add(new THREE.HemisphereLight(0xffe2c0, 0x3a4a2c, 1.15));
+    const sun = new THREE.DirectionalLight(0xffc48a, 2.4);
+    const b = arenaBounds(data.arena);
+    const cx = (b.x0 + b.x1) / 2;
+    const cz = (b.y0 + b.y1) / 2;
+    sun.position.set(cx - 32, 26, cz + 22);
+    sun.target.position.set(cx, 0, cz);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
-    const s = Math.max(width, height) * 0.75;
-    Object.assign(sun.shadow.camera, { left: -s, right: s, top: s, bottom: -s, near: 1, far: 100 });
+    sun.shadow.bias = -0.0005;
+    const s = Math.max(b.x1 - b.x0, b.y1 - b.y0) * 0.72;
+    Object.assign(sun.shadow.camera, { left: -s, right: s, top: s, bottom: -s, near: 1, far: 130 });
     this.scene.add(sun, sun.target);
 
-    buildMap(this.scene, data.arena);
+    this.mapAnimation = buildMap(this.scene, data.arena);
     this.world = new WorldView(this.scene);
     this.preview = new AbilityPreview(this.scene);
     for (const def of data.arena.objectives) {
@@ -133,13 +152,16 @@ export class GameRenderer {
       }
       view.revive();
       view.ring.visible = true;
-      view.showHero(h, shieldAmount(h), hasBuff(h, 'invisible'));
+      const hidden = (h.brush ?? -1) >= 0 && state.time >= (h.revealedUntil ?? 0);
+      view.showHero(h, shieldAmount(h), hasBuff(h, 'invisible') ? 0.3 : hidden ? 0.55 : 1);
       const hold = h.channel?.tag === 'nap' ? 'ability3' : undefined;
       view.animate(dt, speed, state.gameOver, hold);
     }
     for (const z of state.zombies) {
       const def = this.data.zombies.find((d) => d.id === z.defId)!;
       const view = upsert(z, () => zombieView(z, def, this.models));
+      // Im Gebüsch verborgen, bis ein Held dort steht oder nah dran ist (wie in LoL)
+      view.group.visible = zombieRevealed(this.data, state, z);
       view.showStatus(z, state.time, z.hp / z.maxHp < revealBelow);
       if (z.courier) view.markCourier();
       const p = prev.get(z.id);
@@ -173,6 +195,7 @@ export class GameRenderer {
       this.objectives.get(obj.id)?.update(obj, state.time, state.time < obj.aggroUntil, camera, dt);
     }
     this.world.sync(state, prev, alpha, time);
+    this.mapAnimation.update(time);
   }
 
   /** Vorschau einer Fähigkeit (Taste gehalten) oder ausblenden. */

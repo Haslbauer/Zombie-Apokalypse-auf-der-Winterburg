@@ -4,6 +4,7 @@ import type { DataContext } from '../sim/context';
 import { shopClosedReason } from '../sim/economy';
 import { Simulation } from '../sim/game';
 import { buildPlan } from '../sim/items';
+import { spawnZombieAt } from '../sim/waves';
 import { defaultTeam } from '../sim/bots/team';
 import { canRankUp } from '../sim/progression';
 import type { BotDifficulty, GameEvent, GameState } from '../sim/types';
@@ -128,7 +129,10 @@ function begin(isPlayer: boolean): void {
   hud.startGame(heroDefId);
   hud.buildTeam(session!.state, isPlayer ? heroId : -1, difficulty, playerNames());
   renderer.cam.lookAt(hero.pos.x, hero.pos.y);
-  if (overview || !isPlayer) {
+  // Entwicklermodus ?camera=x,y,abstand: feste Kamera auf einen Punkt (Nahaufnahmen der Karte)
+  const camera = params.get('camera')?.split(',').map(Number);
+  if (camera && camera.length === 3 && camera.every(Number.isFinite)) renderer.cam.overview(camera[0], camera[1], camera[2]);
+  else if (overview || !isPlayer) {
     renderer.scene.fog = null;
     renderer.cam.overview(gameData.arena.width / 2 + (gameData.arena.minX ?? 0) / 2, gameData.arena.height / 2 + (gameData.arena.minY ?? 0) / 2 + 8, 135);
   }
@@ -557,7 +561,18 @@ if (params.has('debug')) {
       serverPosition: () => (session instanceof RemoteSession ? session.serverHero()?.pos : myHero()?.pos) ?? null,
       rtt: () => (session instanceof RemoteSession ? session.rtt : null),
       heroId: () => heroId,
+      renderInfo: () => ({ ...renderer.renderer.info.render }),
       drop: () => (session instanceof RemoteSession ? session.dropConnection() : undefined),
+      // Einzelspieler: Held an einen Ort setzen bzw. einen Zombie dort erscheinen lassen
+      teleport: (x: number, y: number) => {
+        const h = session instanceof LocalSession ? session.sim.hero(heroId) : undefined;
+        if (h) h.pos = { x, y };
+      },
+      spawnZombie: (defId: string, x: number, y: number) => {
+        if (!(session instanceof LocalSession)) return;
+        const def = session.sim.zombieDefs.get(defId);
+        if (def) spawnZombieAt(session.sim, def, { x, y });
+      },
     },
   });
 }

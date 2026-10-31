@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.5)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.6)
 
 Stand: 31.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v1.6: Karte neu gestaltet (Fachwerkhaus, Bunker als Luke mit Hollywoodschaukel, Garten- und Geländedeko, Grabstätte, Teich, Abendstimmung), Verstecke (Gebüsch, hohes Gras, Schilf), flüssige eigene Bewegung im Mehrspieler.
 Änderungen v1.5: Netzcode mit Bewegungsvorhersage, Jitter-Puffer, Wiederverbinden, Absicherung; kostenlose Bereitstellung (Tunnel, Render, Docker).
 Änderungen v1.4: Minimap und Pings mit der rechten Maustaste (Ping-Rad wie in LoL).
 Änderungen v1.3: M6 Mehrspieler: Node-Server mit Räumen, Beitritt per Link, Bots auf freien Plätzen, Docker.
@@ -251,7 +252,7 @@ Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
   - Im Mehrspieler gibt es keine Pause (Esc öffnet nur die Tastenbelegung). „Nochmal“ nach Game Over startet die Partie für alle neu.
   - **Netzcode (v1.5):**
     - Eingaben mit laufender Nummer (`seq`), genau eine pro Server-Tick angewendet (fehlt eine, gilt die letzte weiter), Bestätigung (`ack`) im Zustand.
-    - Der Client sagt die eigene Bewegung mit derselben Formel voraus (`moveHero` in `src/sim/hero.ts`, `src/client/prediction.ts`), wendet unbestätigte Eingaben auf die Server-Position erneut an und gleicht Abweichungen weich aus (über 2 m sofort). Keine Vorhersage im Sprung, beim Kanalisieren, betäubt oder festgehalten.
+    - Der Client sagt die eigene Bewegung mit derselben Formel voraus und blendet zwischen den 50-ms-Schritten über (v1.6, sonst ruckelt der eigene Held) (`moveHero` in `src/sim/hero.ts`, `src/client/prediction.ts`), wendet unbestätigte Eingaben auf die Server-Position erneut an und gleicht Abweichungen weich aus (über 2 m sofort). Keine Vorhersage im Sprung, beim Kanalisieren, betäubt oder festgehalten.
     - Jitter-Puffer (`src/client/snapshots.ts`): Darstellung 2 Ticks hinter dem neuesten Zustand nach Server-Tick; jedes Ereignis genau einmal.
     - Gegendruck: Bei vollem Sendepuffer lässt der Server Zustände aus und liefert die Ereignisse mit dem nächsten nach.
     - Wiederverbinden: Token je Spieler (im Tab gespeichert), Platz 2 Minuten reserviert, automatische Wiederholung (0,5–8 s), auch nach Neuladen. Erster Verbindungsaufbau wird bis 90 s wiederholt („Server wacht auf …“).
@@ -270,24 +271,30 @@ Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
   - **Einkauf** in der Pause nach Einkaufsliste je Held. Skillpunkte nach Reihenfolge, die Ultimate sobald möglich.
   - Bots schicken dieselben Befehle wie Menschen. Übernimmt in M6 ein Mensch einen Bot-Slot, wird nur die Bot-Steuerung entfernt.
 - Bots laufen auf dem Server (Mehrspieler) bzw. lokal (Singleplayer)
-- **Balancing für 4 Helden** (Wellen in `data/waves.json`, `npm run balance` lässt vier Bots über mehrere Seeds spielen). Stand v0.9 (Vorrat, Beete, Hornissen; Elites: eine in Welle 5 und 10, zwei ab Welle 15): Vier Bots allein schaffen im Schnitt Welle 11,3 (leicht), 14,5 (mittel) und 14,3 (schwer). „Schwer“ ist damit nicht stärker als „mittel“: Seit dem Umbau entscheidet vor allem der Druck auf den Vorrat, nicht die Feinsteuerung. Das ist ein Punkt für M7. Seit den Item-Rezepten (v1.0) liegen die Bots bei 11,2 / 12,7 / 12,8 (je 6 Seeds), weil sie ihre Kraft später in wenigen fertigen Items bündeln; Feinabstimmung der Preise in M7. Mit erweiterter Karte, früheren Hornissen und Postbote (v1.1): 11,0 / 14,2 / 12,8. Mit einem guten menschlichen Spieler kommt das Team weiter. Ziel bleibt Welle 30 für sehr gute Teams.
+- **Balancing für 4 Helden** (Wellen in `data/waves.json`, `npm run balance` lässt vier Bots über mehrere Seeds spielen). Stand v0.9 (Vorrat, Beete, Hornissen; Elites: eine in Welle 5 und 10, zwei ab Welle 15): Vier Bots allein schaffen im Schnitt Welle 11,3 (leicht), 14,5 (mittel) und 14,3 (schwer). „Schwer“ ist damit nicht stärker als „mittel“: Seit dem Umbau entscheidet vor allem der Druck auf den Vorrat, nicht die Feinsteuerung. Das ist ein Punkt für M7. Seit den Item-Rezepten (v1.0) liegen die Bots bei 11,2 / 12,7 / 12,8 (je 6 Seeds), weil sie ihre Kraft später in wenigen fertigen Items bündeln; Feinabstimmung der Preise in M7. Mit erweiterter Karte, früheren Hornissen und Postbote (v1.1): 11,0 / 14,2 / 12,8. Mit neuer Karte und Verstecken (v1.6): 11,2 / 13,0 / 13,5. Mit einem guten menschlichen Spieler kommt das Team weiter. Ziel bleibt Welle 30 für sehr gute Teams.
 
 ## 11. Karte
 
 Garten mit Haus, Hecken und Zugängen. Umgesetzt in `data/map.json`, 1 Spieleinheit = 1 Meter, Norden oben.
 
 - Garten ca. 66 x 75 m. Rundherum 10 m **Gelände** (Karte von −10 bis 76 bzw. 85, `minX`/`minY` in `data/map.json`), dahinter Wald als Kulisse. Ein Zaun umschließt den Garten; offen sind nur die **Tore** im Westen (beim Bienenstock), Süden (Heckenlücke) und Osten (Zuwegung).
-- Haus in U-Form (ca. 21 x 24 m) mit Westflügel, Ostflügel und Südblock. Das Haus selbst ist nicht begehbar.
+- Haus in U-Form (ca. 21 x 24 m) mit Westflügel, Ostflügel und Südblock. Das Haus selbst ist nicht begehbar. Aussehen: verputzte Wände mit Fachwerk und Sockel, Fenster mit warmem Licht und Läden, Satteldächer mit Ziegeln, Schornsteine mit Rauch; der Innenhof ist gepflastert.
 - **Innenhof = Lebensmittelvorrat der Winterburg.** Dort stehen Kisten, Fässer und Säcke. Der Hof ist nur über einen schmalen Durchgang (ca. 2,7 m) von Süden zwischen Westflügel und Südblock erreichbar: die wichtigste Engstelle.
 - Helden starten im Innenhof und erscheinen dort nach dem Tod wieder.
 - **Bienenstock** nordwestlich vom Haus: Ziel der Hornissen und eines Teils der Ratten (siehe Abschnitt 8)
 - Sechs **Hochbeete** westlich vom Haus: Ziel der Ratten, versorgen den Vorrat mit ihrer Ernte. Sie blockieren das Laufen, nicht aber Schüsse.
 - Zombie-Zugänge:
-  1. **Bunker** unten links im Garten, der einzige Spawn im Garten: Zombies kommen aus der Bunkertür (Nordseite)
+  1. **Bunker** unten links im Garten, der einzige Spawn im Garten. Der Bunker liegt unter der Erde: Zu sehen ist nur eine flache Luke im Rasen mit rostiger Doppeltür, aus der die Zombies steigen; daneben steht eine Hollywoodschaukel.
   2. **Süd:** im Gelände vor der Heckenlücke, durch das Südtor
   3. **Ost:** am Ende der Zuwegung; die Zombies laufen den Hang hinauf und sind dort langsamer (halbes Tempo)
   4. **Nordwest** im Gelände vor dem Westtor: 85 % der Hornissen (sie fliegen über den Zaun) und ebenso oft Zombies wie Ost. Liegt nah an Bienenstock und Hochbeeten.
-- Hecken im Norden, Osten und Süden, Zäune an der Zuwegung und zum Nachbargrundstück (nordöstlich, nicht begehbar), Bäume als Hindernisse
+- Hecken im Norden, Osten und Süden, Zäune an der Zuwegung und zum Nachbargrundstück (nordöstlich, nicht begehbar, verwildertes Dickicht), Bäume als Hindernisse
+- **Garten (v1.6):** Kieswege zwischen Toren, Haus und Beeten; Gartenhaus, Kompost, Holzstapel, Regentonne, Schubkarre, Bank, Blumenbeete, Laternen mit Lichtschein.
+- **Gelände (v1.6):** Heckenreihen mit Büschen davor, Felsen, umgestürzte Stämme, tote Bäume, eine verwilderte Grabstätte im Norden und ein Teich mit Schilf im Süden (beim Krötentümpel). Wald mit Laub- und Nadelbäumen als Kulisse, Abendstimmung (warmes, tiefes Licht, Dunst am Rand).
+- **Verstecke (wie das Gebüsch in LoL, `brush` in `data/map.json`):** hohes Gras und Büsche im Garten, Büsche an den Hecken und in den Ecken des Geländes, Schilf am Teich. Begehbar, halten keine Schüsse auf.
+  - Wer im Versteck steht, wird von Zombies und Lagerbewohnern erst aus nächster Nähe gesehen (2,5 m) oder wenn sie im selben Versteck stehen. Angriff oder Fähigkeit verrät den Helden für 1,5 s.
+  - Zombies im Versteck sind für die Spieler unsichtbar (auch auf der Minimap), bis ein Held im selben Versteck oder höchstens 3 m daneben steht.
+  - Eigene Helden im Versteck werden halbdurchsichtig gezeigt. Bots nutzen Verstecke nicht gezielt.
 - Spawnpunkte haben Gewichte (wie oft dort Zombies erscheinen), alles in `data/map.json`
 - Grafikstil: stilisiert, Low-Poly (siehe Abschnitt 3)
 

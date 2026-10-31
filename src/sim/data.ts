@@ -145,6 +145,21 @@ export function parseGameData(raw: {
     for (const k of ['fromWave', 'packsPerWave', 'minSize', 'maxSize']) num(p, k, `waves.packs[${i}]`);
     if (p?.sizePerWave !== undefined) num(p, 'sizePerWave', `waves.packs[${i}]`);
   }
+  (Array.isArray(a?.brush) ? a.brush : []).forEach((b: any, i: number) => {
+    const p = `arena.brush[${i}]`;
+    pos(b, p);
+    if (b?.kind === 'circle') num(b, 'r', p, 0.1);
+    else if (b?.kind === 'rect') {
+      num(b, 'w', p, 0.1);
+      num(b, 'h', p, 0.1);
+    } else errors.push(`${p}.kind: "circle" oder "rect" erwartet`);
+    if (!['bush', 'grass', 'reed'].includes(b?.look)) errors.push(`${p}.look: bush, grass oder reed erwartet`);
+  });
+  (Array.isArray(a?.decor) ? a.decor : []).forEach((d: any, i: number) => {
+    pos(d, `arena.decor[${i}]`);
+    for (const k of ['w', 'h']) num(d, k, `arena.decor[${i}]`, 0.1);
+    if (!['cobbles', 'gravel', 'gravefence'].includes(d?.look)) errors.push(`arena.decor[${i}].look: cobbles, gravel oder gravefence erwartet`);
+  });
   const zombieList: any[] = Array.isArray(raw.zombies) ? raw.zombies : [];
   (Array.isArray(a?.camps) ? a.camps : []).forEach((c: any, i: number) => {
     const p = `arena.camps[${i}]`;

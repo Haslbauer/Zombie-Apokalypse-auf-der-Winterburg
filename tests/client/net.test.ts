@@ -47,11 +47,39 @@ describe('Vorhersage der eigenen Bewegung', () => {
     pred.reconcile(clone(sim.state), moved, 1);
     const first = pred.display(0.016)!;
     expect(first.x).toBeLessThan(moved.pos.x);
-    expect(pred.display(1)!.x).toBeCloseTo(moved.pos.x, 3);
+    expect(pred.display(2)!.x).toBeCloseTo(moved.pos.x, 3);
     // großer Sprung (Respawn): sofort
     const far = { ...h, pos: { x: h.pos.x + 10, y: h.pos.y } };
     pred.reconcile(clone(sim.state), far, 1);
     expect(pred.display(0)!.x).toBeCloseTo(far.pos.x, 5);
+  });
+
+  it('läuft bei 60 Bildern/s gleichmäßig (überblendet zwischen den 50-ms-Schritten)', () => {
+    const sim = server();
+    const pred = new Prediction(gameData);
+    const h = structuredClone(sim.state.heroes[0]);
+    h.pos = { x: 20, y: 50 }; // freie Fläche im Garten
+    pred.reconcile(clone(sim.state), h, 0);
+    const frame = 1 / 60;
+    let since = 0;
+    let seq = 0;
+    const xs: number[] = [];
+    for (let i = 0; i < 60; i++) {
+      since += frame;
+      while (since >= DT) {
+        since -= DT;
+        pred.apply(++seq, { x: 1, y: 0 });
+      }
+      xs.push(pred.display(frame, since / DT)!.x);
+    }
+    // Ab dem ersten Schritt (vorher steht der Held noch)
+    const steps = xs.slice(4).map((x, i) => x - xs[i + 3]);
+    const mean = steps.reduce((a, b) => a + b, 0) / steps.length;
+    expect(mean).toBeGreaterThan(0);
+    for (const d of steps) {
+      expect(d).toBeGreaterThan(0);
+      expect(d).toBeLessThan(mean * 1.5);
+    }
   });
 
   it('keine Vorhersage im Sprung, betäubt oder gefallen: dann gilt die Server-Position', () => {

@@ -311,7 +311,7 @@ export class RemoteSession implements Session {
     const { from, to, alpha } = frame;
     remember(this.prev, from);
     // Eigener Held: vorhergesagte Position, Blick sofort zur Maus
-    const predicted = this.prediction.display(dt);
+    const predicted = this.prediction.display(dt, this.sinceInput / DT);
     this.state = { ...to, heroes: to.heroes.map((h) => (h.id === this.heroId ? { ...h, pos: predicted ?? h.pos } : h)) };
     const me = this.state.heroes.find((h) => h.id === this.heroId);
     if (me) {

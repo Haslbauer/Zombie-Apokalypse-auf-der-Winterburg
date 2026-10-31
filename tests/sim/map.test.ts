@@ -57,13 +57,45 @@ describe('Karte Winterburg', () => {
     }
   });
 
-  it('der Bunker öffnet sich nach Norden', () => {
-    const bunker = arena.obstacles.find((o) => o.look === 'bunker')!;
+  it('Bunker unter der Erde: Luke begehbar, daneben die Hollywoodschaukel', () => {
     const spawn = arena.spawnPoints.find((s) => s.id === 'bunker')!;
-    expect(bunker.kind).toBe('rect');
-    if (bunker.kind === 'rect') {
-      expect(spawn.y).toBeLessThan(bunker.y - bunker.h / 2);
-      expect(Math.abs(spawn.x - bunker.x)).toBeLessThan(bunker.w / 2);
+    expect(sim.grid.isBlocked(spawn)).toBe(false);
+    expect(arena.obstacles.some((o) => (o.look as string) === 'bunker')).toBe(false);
+    const swing = arena.obstacles.find((o) => o.look === 'swing')!;
+    expect(Math.hypot(swing.x - spawn.x, swing.y - spawn.y)).toBeLessThan(5);
+  });
+
+  it('Postboten-Runde, Lager und Verstecke liegen frei', () => {
+    for (const p of arena.courierRoute!) expect(sim.grid.isBlocked(p), `Wegpunkt ${p.x}/${p.y}`).toBe(false);
+    // Jede Strecke der Runde ist frei (der Postbote läuft geradeaus)
+    const route = arena.courierRoute!;
+    route.forEach((a, i) => {
+      const b = route[(i + 1) % route.length];
+      expect(sim.grid.lineOfSight(a, b), `Strecke ${i}`).toBe(true);
+    });
+    const field = sim.objectiveFields.get('heart')!;
+    for (const c of arena.camps!) expect(field[sim.grid.cellOf(c)], c.id).toBeLessThan(Infinity);
+    expect(arena.brush!.length).toBeGreaterThanOrEqual(15);
+    // In jedem Versteck kann man stehen (Mittelpunkt begehbar, außer Schilf um den Teich)
+    for (const b of arena.brush!.filter((x) => x.look !== 'reed')) expect(sim.grid.isBlocked(b), `${b.look} ${b.x}/${b.y}`).toBe(false);
+  });
+
+  it('keine schmalen Spalten zwischen Hindernissen und Kartenrand (dort blieben Zombies stecken)', () => {
+    const x0 = arena.minX ?? 0;
+    const y0 = arena.minY ?? 0;
+    for (const o of arena.obstacles) {
+      const [hw, hh] = o.kind === 'circle' ? [o.r, o.r] : [o.w / 2, o.h / 2];
+      const gaps = [o.x - hw - x0, arena.width - (o.x + hw), o.y - hh - y0, arena.height - (o.y + hh)];
+      for (const g of gaps) expect(g <= 0.05 || g >= 1.8, `${o.look} bei ${o.x}/${o.y}: Spalt ${g.toFixed(2)} m`).toBe(true);
     }
+  });
+
+  it('ein in eine gesperrte Zelle geschobener Zombie findet wieder heraus', () => {
+    const field = sim.objectiveFields.get('heart')!;
+    const stuck = { x: arena.width - 0.3, y: 30 };
+    expect(sim.grid.isBlocked(stuck)).toBe(true);
+    const next = sim.grid.downhill(field, stuck)!;
+    expect(next).not.toBeNull();
+    expect(sim.grid.isBlocked(next)).toBe(false);
   });
 });

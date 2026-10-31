@@ -204,7 +204,38 @@ export interface WaveConfig {
 }
 
 /** Aussehen eines Hindernisses (nur für die Darstellung). */
-export type ObstacleLook = 'house' | 'hedge' | 'fence' | 'tree' | 'bed' | 'bunker' | 'blocked' | 'objective';
+export type ObstacleLook =
+  | 'house'
+  | 'hedge'
+  | 'fence'
+  | 'tree'
+  | 'bed'
+  | 'blocked'
+  | 'objective'
+  // Garten und Gelände (nur Aussehen; als Hindernis wirken sie wie jedes Rechteck bzw. jeder Kreis)
+  | 'swing'
+  | 'shed'
+  | 'compost'
+  | 'woodpile'
+  | 'barrel'
+  | 'bench'
+  | 'lamp'
+  | 'wheelbarrow'
+  | 'flowers'
+  | 'grave'
+  | 'rock'
+  | 'log'
+  | 'deadtree'
+  | 'pond';
+
+/** Nur Darstellung, ohne Wirkung im Spiel: Pflaster, Kieswege, Friedhofszaun. Rechteck mit Mittelpunkt. */
+export interface DecorDef {
+  look: 'cobbles' | 'gravel' | 'gravefence';
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
 
 interface ObstacleBase {
   look?: ObstacleLook;
@@ -212,10 +243,19 @@ interface ObstacleBase {
   blocksShots?: boolean;
 }
 
+/** Reine Form (Kreis oder Rechteck mit Mittelpunkt), z. B. für Abstandsberechnungen. */
+export type Shape = { kind: 'circle'; x: number; y: number; r: number } | { kind: 'rect'; x: number; y: number; w: number; h: number };
+
 export type Obstacle =
   | (ObstacleBase & { kind: 'circle'; x: number; y: number; r: number })
   /** Rechteck mit Mittelpunkt x/y, Breite w und Höhe h. */
   | (ObstacleBase & { kind: 'rect'; x: number; y: number; w: number; h: number });
+
+/** Versteck (wie das Gebüsch in LoL): Busch, hohes Gras oder Schilf. Begehbar, kein Hindernis. */
+export type BrushLook = 'bush' | 'grass' | 'reed';
+export type Brush =
+  | { kind: 'circle'; x: number; y: number; r: number; look: BrushLook }
+  | { kind: 'rect'; x: number; y: number; w: number; h: number; look: BrushLook };
 
 export interface SpawnPoint {
   id: string;
@@ -294,6 +334,10 @@ export interface ArenaDef {
   courierRoute?: Vec2[];
   /** Neutrale Lager im Gelände: Typen der Bewohner, Wiederkehr respawn Sekunden nach dem Leeren. */
   camps?: CampDef[];
+  /** Verstecke: Wer darin steht, wird von Gegnern erst aus nächster Nähe gesehen. */
+  brush?: Brush[];
+  /** Deko ohne Spielwirkung (nur Darstellung). */
+  decor?: DecorDef[];
 }
 
 export interface CampDef {
@@ -429,6 +473,10 @@ export interface Hero extends Unit {
   input: HeroInput;
   /** Zeitpunkte der letzten Pings (Spam-Schutz). */
   pingTimes?: number[];
+  /** Index des Verstecks, in dem der Held steht (−1: keins); jeden Tick neu bestimmt. */
+  brush?: number;
+  /** Nach Angriff oder Fähigkeit bis zu diesem Zeitpunkt sichtbar, auch im Versteck. */
+  revealedUntil?: number;
   alive: boolean;
   /** Spielzeit, zu der ein gefallener Held wiederbelebt wird. */
   respawnAt: number;

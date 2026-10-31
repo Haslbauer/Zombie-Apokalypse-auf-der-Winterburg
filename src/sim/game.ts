@@ -1,6 +1,6 @@
 import { updateProjectiles } from './combat';
 import type { SimContext } from './context';
-import { arenaBounds, Grid, resolveObstacles } from './grid';
+import { arenaBounds, brushAt, Grid, resolveObstacles } from './grid';
 import { botCommands, createBot } from './bots/brain';
 import { applyInputs, updateHero } from './hero';
 import { pushApart } from './movement';
@@ -172,6 +172,7 @@ export class Simulation implements SimContext {
     for (const h of state.heroes) {
       if (!h.alive && state.time >= h.respawnAt) this.respawn(h);
       updateHero(this, h);
+      h.brush = h.alive ? brushAt(this.arena, h.pos) : -1;
     }
 
     if (state.tick % FIELD_TICKS === 1 || !this.field) {

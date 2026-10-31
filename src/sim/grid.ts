@@ -1,4 +1,4 @@
-import type { ArenaDef, Obstacle } from './types';
+import type { ArenaDef, Obstacle, Shape } from './types';
 import { clamp, type Vec2 } from './vec';
 
 /** Abstand, den Wege zu Hindernissen halten (etwa ein Einheitenradius). */
@@ -301,17 +301,30 @@ export class Grid {
         best = nb;
       }
     }
+    if (best === -1 && this.blocked[idx]) {
+      // In eine gesperrte Zelle geschoben (z. B. Spalt am Rand): erst zur nächsten freien Zelle zurück
+      const free = this.nearestFree(p);
+      return this.center(free % this.cols, (free / this.cols) | 0);
+    }
     return best === -1 ? null : this.center(best % this.cols, (best / this.cols) | 0);
   }
 }
 
 /** Abstand eines Punkts zum Rand eines Hindernisses (negativ = innen). */
-export function distanceToObstacle(p: Vec2, o: Obstacle): number {
+export function distanceToObstacle(p: Vec2, o: Shape): number {
   if (o.kind === 'circle') return Math.hypot(p.x - o.x, p.y - o.y) - o.r;
   const dx = Math.abs(p.x - o.x) - o.w / 2;
   const dy = Math.abs(p.y - o.y) - o.h / 2;
   const outside = Math.hypot(Math.max(dx, 0), Math.max(dy, 0));
   return outside + Math.min(Math.max(dx, dy), 0);
+}
+
+/** Index des Verstecks an diesem Punkt (−1: keins). */
+export function brushAt(arena: ArenaDef, p: Vec2): number {
+  const list = arena.brush;
+  if (!list) return -1;
+  for (let i = 0; i < list.length; i++) if (distanceToObstacle(p, list[i]) <= 0) return i;
+  return -1;
 }
 
 /** Hält ein Hindernis an diesem Punkt Schüsse auf? Niedrige Hindernisse (blocksShots: false) nicht. */

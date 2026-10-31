@@ -82,9 +82,13 @@ export function heroHit(ctx: SimContext, h: Hero, z: Zombie, base: number): numb
  * Standardangriff in Blickrichtung. Nahkampf trifft alle Zombies im Bogen vor
  * dem Helden, Fernkampf feuert ein Projektil, das geradeaus fliegt.
  */
+/** So lange ist ein Held nach Angriff oder Fähigkeit auch im Versteck sichtbar (s). */
+export const REVEAL_TIME = 1.5;
+
 export function heroAttack(ctx: SimContext, h: Hero, cooldown: number): void {
   const attack = ctx.heroDefs.get(h.defId)!.attack;
   h.attackTimer = cooldown;
+  h.revealedUntil = ctx.state.time + REVEAL_TIME;
   const dir = { x: Math.cos(h.facing), y: Math.sin(h.facing) };
   const range = attack.range * (1 + itemStats(ctx, h).range);
 

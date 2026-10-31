@@ -621,8 +621,8 @@ export class UnitView {
     this.ring.renderOrder = 5;
   }
 
-  /** Held: Schildblase, Unsichtbarkeit, festgehalten oder betäubt. */
-  showHero(h: Hero, shield: number, invisible: boolean): void {
+  /** Held: Schildblase, festgehalten oder betäubt; opacity < 1 bei Unsichtbarkeit (Nebelschritt) bzw. im Versteck. */
+  showHero(h: Hero, shield: number, opacity: number): void {
     const stunned = h.buffs.some((b) => b.kind === 'stunned');
     const rooted = h.buffs.some((b) => b.kind === 'rooted');
     this.icon.visible = stunned || rooted;
@@ -638,8 +638,8 @@ export class UnitView {
     }
     if (this.shield) this.shield.visible = shield > 0;
     for (const m of this.materials) {
-      m.transparent = invisible;
-      m.opacity = invisible ? 0.3 : 1;
+      m.transparent = opacity < 1;
+      m.opacity = opacity;
     }
   }
 

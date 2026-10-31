@@ -8,6 +8,7 @@ import { updateNeutral } from './neutrals';
 import { hasBuff, heroCC, isBlind, isDisabled, isFeared, isRooted, statusSpeedFactor } from './status';
 import { DT, type Hero, type Objective, type Zombie } from './types';
 import { dist, type Vec2 } from './vec';
+import { brushAt } from './grid';
 
 /** Bis zu diesem Abstand laufen Zombies direkt aufs Ziel zu, sonst entlang des Distanzfelds. */
 const DIRECT_RANGE = 3;
@@ -42,7 +43,9 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null): 
       if (!rooted) flee(z, z.st.fearFrom, speed * DT);
       continue;
     }
-    if (def.special && updateElite(ctx, z, def, heroes)) continue;
+    // Versteckte Helden (Gebüsch, hohes Gras) sieht der Zombie nur aus nächster Nähe
+    const seen = heroes.some((h) => (h.brush ?? -1) >= 0) ? heroes.filter((h) => canSee(ctx, z, h)) : heroes;
+    if (def.special && updateElite(ctx, z, def, seen)) continue;
     if (z.neutral) {
       if (rooted) continue;
       const busy = updateNeutral(ctx, z, def, speed, (to, step) => moveTo(ctx, z, to, null, step));
@@ -50,7 +53,7 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null): 
       continue;
     }
 
-    const hero = chaseTarget(ctx, z, heroes, blind ? BLIND_SIGHT : def.aggroRange, def.provokeOnly ?? false);
+    const hero = chaseTarget(ctx, z, seen, blind ? BLIND_SIGHT : def.aggroRange, def.provokeOnly ?? false);
     if (hero) {
       if (edgeDistance(z, hero) <= def.attackRange) {
         face(z, hero.pos);
@@ -106,6 +109,21 @@ function updateCourier(ctx: SimContext, z: Zombie, speed: number): void {
   stepToward(z, target, speed * DT);
   // Sein Platz wandert mit: Wird er angegriffen, kämpft er höchstens leash Meter von hier
   z.neutral!.home = { ...z.pos };
+}
+
+/** Aus dieser Nähe sieht ein Gegner auch einen versteckten Helden (m, Rand zu Rand). */
+export const BRUSH_SIGHT = 2.5;
+
+/**
+ * Sieht der Zombie den Helden? Nicht, wenn der Held im Versteck steht, außer
+ * er ist sehr nah, beide stehen im selben Versteck oder der Held hat gerade
+ * angegriffen.
+ */
+export function canSee(ctx: SimContext, z: Zombie, h: Hero): boolean {
+  const brush = h.brush ?? -1;
+  if (brush < 0 || ctx.state.time < (h.revealedUntil ?? 0)) return true;
+  if (edgeDistance(z, h) <= BRUSH_SIGHT) return true;
+  return brushAt(ctx.arena, z.pos) === brush;
 }
 
 /** Vom Auslöser der Angst weglaufen. */

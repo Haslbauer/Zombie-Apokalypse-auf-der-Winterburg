@@ -1,5 +1,5 @@
 {
-  "//": "Winterburg. 1 Einheit = 1 m, x nach Osten, y nach Süden. Rechtecke: Mittelpunkt x/y, Breite w, Höhe h. Der Garten liegt bei 0–66 × 0–75; außen herum 10 m Gelände (minX/minY negativ), dort liegen die Spawnpunkte. Zombies kommen durch die Tore im Westen, Süden und Osten, nur der Bunker liegt im Garten (Tür nach Norden).",
+  "//": "Winterburg. 1 Einheit = 1 m, x nach Osten, y nach Süden. Rechtecke: Mittelpunkt x/y, Breite w, Höhe h. Der Garten liegt bei 0–66 × 0–75; außen herum 10 m Gelände (minX/minY negativ), dort liegen die Spawnpunkte. Zombies kommen durch die Tore im Westen, Süden und Osten, nur der Bunker liegt im Garten (Luke im Rasen, daneben die Hollywoodschaukel). brush: Verstecke (Busch, hohes Gras, Schilf), decor: nur Darstellung.",
   "minX": -10,
   "minY": -10,
   "width": 76,
@@ -178,7 +178,7 @@
     {
       "id": "bunker",
       "x": 15.7,
-      "y": 47.4,
+      "y": 50.5,
       "weight": 2
     },
     {
@@ -335,14 +335,6 @@
     },
     {
       "kind": "rect",
-      "x": 15.7,
-      "y": 52.25,
-      "w": 11.4,
-      "h": 6.5,
-      "look": "bunker"
-    },
-    {
-      "kind": "rect",
       "x": 26,
       "y": 0,
       "w": 52,
@@ -472,78 +464,57 @@
     },
     {
       "kind": "circle",
-      "x": -7,
-      "y": -7,
+      "x": -8.799999999999999,
+      "y": -8.799999999999999,
       "r": 1.4,
       "look": "tree"
     },
     {
       "kind": "circle",
       "x": 4,
-      "y": -8,
+      "y": -8.799999999999999,
       "r": 1.4,
       "look": "tree"
     },
     {
       "kind": "circle",
       "x": 30,
-      "y": -8,
+      "y": -8.799999999999999,
       "r": 1.4,
       "look": "tree"
     },
     {
       "kind": "circle",
       "x": 44,
-      "y": -7.5,
+      "y": -8.799999999999999,
       "r": 1.4,
       "look": "tree"
     },
     {
       "kind": "circle",
       "x": 58,
-      "y": -8,
+      "y": -8.799999999999999,
       "r": 1.4,
       "look": "tree"
     },
     {
       "kind": "circle",
-      "x": 72,
-      "y": -7,
-      "r": 1.4,
-      "look": "tree"
-    },
-    {
-      "kind": "circle",
-      "x": -8,
+      "x": -8.799999999999999,
       "y": 22,
       "r": 1.4,
       "look": "tree"
     },
     {
       "kind": "circle",
-      "x": -7.5,
+      "x": -8.799999999999999,
       "y": 36,
       "r": 1.4,
       "look": "tree"
     },
     {
       "kind": "circle",
-      "x": -7.5,
+      "x": -8.799999999999999,
       "y": 66,
-      "r": 1.4,
-      "look": "tree"
-    },
-    {
-      "kind": "circle",
-      "x": -7,
-      "y": 79,
-      "r": 1.4,
-      "look": "tree"
-    },
-    {
-      "kind": "circle",
-      "x": 8,
-      "y": 82,
       "r": 1.4,
       "look": "tree"
     },
@@ -557,7 +528,7 @@
     {
       "kind": "circle",
       "x": 52,
-      "y": 82,
+      "y": 83.8,
       "r": 1.4,
       "look": "tree"
     },
@@ -570,38 +541,356 @@
     },
     {
       "kind": "circle",
-      "x": 73,
-      "y": 79,
-      "r": 1.4,
-      "look": "tree"
-    },
-    {
-      "kind": "circle",
-      "x": 73.5,
+      "x": 74.8,
       "y": 8,
       "r": 1.4,
       "look": "tree"
     },
     {
       "kind": "circle",
-      "x": 74,
+      "x": 74.8,
       "y": 20,
       "r": 1.4,
       "look": "tree"
     },
     {
       "kind": "circle",
-      "x": 74,
+      "x": 74.8,
       "y": 47,
       "r": 1.4,
       "look": "tree"
     },
     {
       "kind": "circle",
-      "x": 74,
+      "x": 74.8,
       "y": 72,
       "r": 1.4,
       "look": "tree"
+    },
+    {
+      "kind": "rect",
+      "x": 15.7,
+      "y": 53.9,
+      "w": 2.8,
+      "h": 1.4,
+      "look": "swing"
+    },
+    {
+      "kind": "rect",
+      "x": 6,
+      "y": 64.5,
+      "w": 4.2,
+      "h": 3.2,
+      "look": "shed"
+    },
+    {
+      "kind": "rect",
+      "x": 3.4,
+      "y": 45,
+      "w": 2.2,
+      "h": 2.2,
+      "look": "compost"
+    },
+    {
+      "kind": "rect",
+      "x": 48.5,
+      "y": 44.5,
+      "w": 3.2,
+      "h": 1.2,
+      "look": "woodpile"
+    },
+    {
+      "kind": "circle",
+      "x": 23.6,
+      "y": 31.5,
+      "r": 0.5,
+      "look": "barrel"
+    },
+    {
+      "kind": "rect",
+      "x": 37,
+      "y": 34.2,
+      "w": 2.2,
+      "h": 0.7,
+      "look": "bench",
+      "blocksShots": false
+    },
+    {
+      "kind": "circle",
+      "x": 29,
+      "y": 35.5,
+      "r": 0.22,
+      "look": "lamp"
+    },
+    {
+      "kind": "circle",
+      "x": 34.2,
+      "y": 33.6,
+      "r": 0.22,
+      "look": "lamp"
+    },
+    {
+      "kind": "circle",
+      "x": 36.2,
+      "y": 70,
+      "r": 0.22,
+      "look": "lamp"
+    },
+    {
+      "kind": "circle",
+      "x": 52,
+      "y": 31.2,
+      "r": 0.22,
+      "look": "lamp"
+    },
+    {
+      "kind": "rect",
+      "x": 12.3,
+      "y": 44.6,
+      "w": 1.7,
+      "h": 0.8,
+      "look": "wheelbarrow",
+      "blocksShots": false
+    },
+    {
+      "kind": "rect",
+      "x": 50,
+      "y": 63,
+      "w": 4,
+      "h": 1.4,
+      "look": "flowers",
+      "blocksShots": false
+    },
+    {
+      "kind": "rect",
+      "x": 31.5,
+      "y": 46,
+      "w": 3,
+      "h": 1.2,
+      "look": "flowers",
+      "blocksShots": false
+    },
+    {
+      "kind": "rect",
+      "x": 37,
+      "y": -9.4,
+      "w": 8,
+      "h": 1.2,
+      "look": "hedge"
+    },
+    {
+      "kind": "rect",
+      "x": 52,
+      "y": -9.4,
+      "w": 6,
+      "h": 1.2,
+      "look": "hedge"
+    },
+    {
+      "kind": "rect",
+      "x": -9.4,
+      "y": 29,
+      "w": 1.2,
+      "h": 8,
+      "look": "hedge"
+    },
+    {
+      "kind": "rect",
+      "x": -9.4,
+      "y": 60,
+      "w": 1.2,
+      "h": 6,
+      "look": "hedge"
+    },
+    {
+      "kind": "rect",
+      "x": 46,
+      "y": 84.4,
+      "w": 8,
+      "h": 1.2,
+      "look": "hedge"
+    },
+    {
+      "kind": "rect",
+      "x": 26,
+      "y": 84.4,
+      "w": 6,
+      "h": 1.2,
+      "look": "hedge"
+    },
+    {
+      "kind": "rect",
+      "x": 75.4,
+      "y": 26,
+      "w": 1.2,
+      "h": 6,
+      "look": "hedge"
+    },
+    {
+      "kind": "rect",
+      "x": 75.4,
+      "y": 52,
+      "w": 1.2,
+      "h": 6,
+      "look": "hedge"
+    },
+    {
+      "kind": "circle",
+      "x": 6,
+      "y": 82.60000000000001,
+      "r": 2.6,
+      "look": "pond",
+      "blocksShots": false
+    },
+    {
+      "kind": "circle",
+      "x": 25,
+      "y": -5.6,
+      "r": 0.9,
+      "look": "rock"
+    },
+    {
+      "kind": "circle",
+      "x": -6,
+      "y": 40,
+      "r": 1.1,
+      "look": "rock"
+    },
+    {
+      "kind": "circle",
+      "x": 75.2,
+      "y": 40,
+      "r": 1,
+      "look": "rock"
+    },
+    {
+      "kind": "circle",
+      "x": 60,
+      "y": 80.5,
+      "r": 0.9,
+      "look": "rock"
+    },
+    {
+      "kind": "circle",
+      "x": -5.5,
+      "y": 20,
+      "r": 0.7,
+      "look": "rock"
+    },
+    {
+      "kind": "rect",
+      "x": 10,
+      "y": -6,
+      "w": 3.6,
+      "h": 0.9,
+      "look": "log"
+    },
+    {
+      "kind": "rect",
+      "x": -6.2,
+      "y": 72,
+      "w": 0.9,
+      "h": 3.4,
+      "look": "log"
+    },
+    {
+      "kind": "rect",
+      "x": 73,
+      "y": 8.5,
+      "w": 0.9,
+      "h": 3,
+      "look": "log"
+    },
+    {
+      "kind": "circle",
+      "x": -7,
+      "y": 14,
+      "r": 0.45,
+      "look": "deadtree"
+    },
+    {
+      "kind": "circle",
+      "x": 73,
+      "y": 70,
+      "r": 0.45,
+      "look": "deadtree"
+    },
+    {
+      "kind": "circle",
+      "x": 32,
+      "y": 84.75,
+      "r": 0.45,
+      "look": "deadtree"
+    },
+    {
+      "kind": "circle",
+      "x": 63,
+      "y": -9.75,
+      "r": 0.45,
+      "look": "deadtree"
+    },
+    {
+      "kind": "rect",
+      "x": 58,
+      "y": -7.6,
+      "w": 0.7,
+      "h": 0.3,
+      "look": "grave",
+      "blocksShots": false
+    },
+    {
+      "kind": "rect",
+      "x": 60,
+      "y": -7.4,
+      "w": 0.7,
+      "h": 0.3,
+      "look": "grave",
+      "blocksShots": false
+    },
+    {
+      "kind": "rect",
+      "x": 62,
+      "y": -7.7,
+      "w": 0.7,
+      "h": 0.3,
+      "look": "grave",
+      "blocksShots": false
+    },
+    {
+      "kind": "rect",
+      "x": 64,
+      "y": -7.3,
+      "w": 0.7,
+      "h": 0.3,
+      "look": "grave",
+      "blocksShots": false
+    },
+    {
+      "kind": "rect",
+      "x": 58.6,
+      "y": -5.4,
+      "w": 0.7,
+      "h": 0.3,
+      "look": "grave",
+      "blocksShots": false
+    },
+    {
+      "kind": "rect",
+      "x": 60.8,
+      "y": -5.6,
+      "w": 0.7,
+      "h": 0.3,
+      "look": "grave",
+      "blocksShots": false
+    },
+    {
+      "kind": "rect",
+      "x": 63,
+      "y": -5.2,
+      "w": 0.7,
+      "h": 0.3,
+      "look": "grave",
+      "blocksShots": false
     }
   ],
   "botPosts": [
@@ -702,6 +991,202 @@
         "fledermaus"
       ],
       "respawn": 75
+    }
+  ],
+  "brush": [
+    {
+      "kind": "rect",
+      "x": 21,
+      "y": 21,
+      "w": 3.4,
+      "h": 9,
+      "look": "grass"
+    },
+    {
+      "kind": "rect",
+      "x": 3,
+      "y": 27,
+      "w": 3,
+      "h": 10,
+      "look": "grass"
+    },
+    {
+      "kind": "circle",
+      "x": 54,
+      "y": 47,
+      "r": 3,
+      "look": "grass"
+    },
+    {
+      "kind": "circle",
+      "x": 11,
+      "y": 58.5,
+      "r": 2.6,
+      "look": "grass"
+    },
+    {
+      "kind": "circle",
+      "x": 45,
+      "y": 62,
+      "r": 2.3,
+      "look": "bush"
+    },
+    {
+      "kind": "circle",
+      "x": 26,
+      "y": 57,
+      "r": 2,
+      "look": "bush"
+    },
+    {
+      "kind": "rect",
+      "x": 37,
+      "y": -7.5,
+      "w": 8,
+      "h": 2.6,
+      "look": "bush"
+    },
+    {
+      "kind": "rect",
+      "x": 52,
+      "y": -7.5,
+      "w": 6,
+      "h": 2.6,
+      "look": "bush"
+    },
+    {
+      "kind": "rect",
+      "x": -7.5,
+      "y": 29,
+      "w": 2.6,
+      "h": 8,
+      "look": "bush"
+    },
+    {
+      "kind": "rect",
+      "x": -7.5,
+      "y": 60,
+      "w": 2.6,
+      "h": 6,
+      "look": "bush"
+    },
+    {
+      "kind": "rect",
+      "x": 46,
+      "y": 82.5,
+      "w": 8,
+      "h": 2.6,
+      "look": "bush"
+    },
+    {
+      "kind": "rect",
+      "x": 26,
+      "y": 82.5,
+      "w": 6,
+      "h": 2.6,
+      "look": "bush"
+    },
+    {
+      "kind": "rect",
+      "x": 73.5,
+      "y": 26,
+      "w": 2.6,
+      "h": 6,
+      "look": "bush"
+    },
+    {
+      "kind": "rect",
+      "x": 73.5,
+      "y": 52,
+      "w": 2.6,
+      "h": 6,
+      "look": "bush"
+    },
+    {
+      "kind": "circle",
+      "x": -4.6,
+      "y": -5.2,
+      "r": 2.2,
+      "look": "bush"
+    },
+    {
+      "kind": "circle",
+      "x": 72,
+      "y": -6,
+      "r": 2.2,
+      "look": "bush"
+    },
+    {
+      "kind": "circle",
+      "x": -6,
+      "y": 80,
+      "r": 2.2,
+      "look": "bush"
+    },
+    {
+      "kind": "circle",
+      "x": 71.5,
+      "y": 80.5,
+      "r": 2.2,
+      "look": "bush"
+    },
+    {
+      "kind": "circle",
+      "x": 6,
+      "y": 82.60000000000001,
+      "r": 3.8,
+      "look": "reed"
+    }
+  ],
+  "decor": [
+    {
+      "look": "cobbles",
+      "x": 37,
+      "y": 17.2,
+      "w": 14,
+      "h": 12.5
+    },
+    {
+      "look": "gravel",
+      "x": 31.35,
+      "y": 38,
+      "w": 2.4,
+      "h": 12
+    },
+    {
+      "look": "gravel",
+      "x": 34.3,
+      "y": 57,
+      "w": 2.2,
+      "h": 29
+    },
+    {
+      "look": "gravel",
+      "x": 24,
+      "y": 44,
+      "w": 20,
+      "h": 2
+    },
+    {
+      "look": "gravel",
+      "x": 8,
+      "y": 9,
+      "w": 16,
+      "h": 2
+    },
+    {
+      "look": "gravel",
+      "x": 48,
+      "y": 33.25,
+      "w": 6,
+      "h": 2.4
+    },
+    {
+      "look": "gravefence",
+      "x": 61,
+      "y": -6.4,
+      "w": 9,
+      "h": 5
     }
   ]
 }
