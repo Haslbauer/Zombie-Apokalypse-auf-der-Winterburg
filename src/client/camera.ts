@@ -67,6 +67,11 @@ export class GameCamera {
     this.lookAt(this.focus.x + (x - this.focus.x) * k, this.focus.z + (y - this.focus.z) * k);
   }
 
+  /** Aktueller Abstand der Kamera zum Fokus (für Nebel). */
+  get distance(): number {
+    return this.offset.length();
+  }
+
   resize(aspect: number): void {
     this.camera.aspect = aspect;
     this.camera.updateProjectionMatrix();

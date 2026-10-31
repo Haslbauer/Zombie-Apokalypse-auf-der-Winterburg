@@ -40,6 +40,8 @@ export class GameRenderer {
   private readonly world: WorldView;
   /** Wind in Gras und Büschen, Rauch aus den Schornsteinen. */
   private readonly mapAnimation: MapAnimation;
+  private readonly fog: THREE.Fog;
+  private readonly lantern = new THREE.PointLight(0xffb866, 26, 13, 1.6);
   readonly preview: AbilityPreview;
   private readonly raycaster = new THREE.Raycaster();
   private readonly groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -62,12 +64,15 @@ export class GameRenderer {
 
     this.cam = new GameCamera(container.clientWidth / container.clientHeight);
     this.cam.lookAt(data.arena.width / 2, data.arena.height / 2);
-    // Abendstimmung: warmes, tiefes Sonnenlicht, lange Schatten, Dunst am Rand
-    const dusk = 0xd8b89a;
-    this.scene.background = new THREE.Color(dusk);
-    this.scene.fog = new THREE.Fog(dusk, 50, 105);
-    this.scene.add(new THREE.HemisphereLight(0xffe2c0, 0x3a4a2c, 1.15));
-    const sun = new THREE.DirectionalLight(0xffc48a, 2.4);
+    // Nacht: kühles Mondlicht von schräg oben, dunkelblauer Himmel, Nebel in
+    // der Ferne (folgt dem Kameraabstand, siehe render). Warme Lichtinseln
+    // kommen von Fenstern, Laternen, Feuerfässern und der Laterne des Helden.
+    const night = 0x0c1222;
+    this.scene.background = new THREE.Color(night);
+    this.fog = new THREE.Fog(night, 40, 95);
+    this.scene.fog = this.fog;
+    this.scene.add(new THREE.HemisphereLight(0x7d8fc4, 0x1a2018, 0.8));
+    const sun = new THREE.DirectionalLight(0xaebfff, 1.15);
     const b = arenaBounds(data.arena);
     const cx = (b.x0 + b.x1) / 2;
     const cz = (b.y0 + b.y1) / 2;
@@ -81,6 +86,9 @@ export class GameRenderer {
     this.scene.add(sun, sun.target);
 
     this.mapAnimation = buildMap(this.scene, data.arena);
+    // Laterne des eigenen Helden: warmes Licht, das mitläuft
+    this.lantern.position.y = 2.6;
+    this.scene.add(this.lantern);
     this.world = new WorldView(this.scene);
     this.preview = new AbilityPreview(this.scene);
     for (const def of data.arena.objectives) {
@@ -197,7 +205,11 @@ export class GameRenderer {
       this.objectives.get(obj.id)?.update(obj, state.time, state.time < obj.aggroUntil, camera, dt);
     }
     this.world.sync(state, prev, alpha, time);
-    this.mapAnimation.update(time);
+    this.mapAnimation.update(time, state.heroes.filter((h) => h.alive).map((h) => h.pos));
+    // Laterne folgt dem eigenen Helden (Zuschauer: aus)
+    const mine = this.playerId !== null ? this.units.get(this.playerId) : undefined;
+    this.lantern.visible = !!mine;
+    if (mine) this.lantern.position.set(mine.group.position.x, 2.6, mine.group.position.z);
   }
 
   /** Vorschau einer Fähigkeit (Taste gehalten) oder ausblenden. */
@@ -318,6 +330,10 @@ export class GameRenderer {
   }
 
   render(): void {
+    // Nebel beginnt ein Stück hinter dem Fokus, sonst wäre die Übersicht nur grau
+    const d = this.cam.distance;
+    this.fog.near = d + 10;
+    this.fog.far = d * 1.6 + 50;
     this.renderer.render(this.scene, this.cam.camera);
   }
 }

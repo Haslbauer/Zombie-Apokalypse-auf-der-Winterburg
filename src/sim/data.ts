@@ -1,3 +1,4 @@
+import { PROP_LOOKS } from './types';
 import type { GameData } from './types';
 
 /**
@@ -154,6 +155,10 @@ export function parseGameData(raw: {
       num(b, 'h', p, 0.1);
     } else errors.push(`${p}.kind: "circle" oder "rect" erwartet`);
     if (!['bush', 'grass', 'reed'].includes(b?.look)) errors.push(`${p}.look: bush, grass oder reed erwartet`);
+  });
+  (Array.isArray(a?.props) ? a.props : []).forEach((d: any, i: number) => {
+    pos(d, `arena.props[${i}]`);
+    if (!PROP_LOOKS.includes(d?.look)) errors.push(`arena.props[${i}].look: unbekannt (${d?.look})`);
   });
   (Array.isArray(a?.decor) ? a.decor : []).forEach((d: any, i: number) => {
     pos(d, `arena.decor[${i}]`);

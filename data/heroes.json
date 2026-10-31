@@ -165,7 +165,7 @@
     "abilities": [
       {
         "id": "schleuderschuss",
-        "name": "Schleuderschuss",
+        "name": "Pfeilschuss",
         "description": "Starker Pfeilschuss mit dem Bogen, stößt den Zombie leicht zurück.",
         "shape": "line",
         "range": 12,

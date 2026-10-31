@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { Hero, HeroDef, Unit, Zombie, ZombieDef } from '../sim/types';
 import { instantiate, type ModelInstance, type RiggedModel } from './models';
+import { groundGlow } from './nightdecor';
 import type { Snapshot } from './renderer';
 
 const UNIT_HEIGHT = 1.6;
@@ -763,6 +764,8 @@ export function heroView(h: Hero, def: HeroDef, isPlayer: boolean, models: Map<s
   view.bar.visible = true;
   (view.ring.material as THREE.MeshBasicMaterial).color.set(isPlayer ? 0x4cd964 : 0x5aa9ff);
   view.ring.visible = true;
+  // Schwacher Lichtkreis (Laterne), damit Helden bei Nacht gut zu sehen sind
+  view.group.add(groundGlow(0xffc070, isPlayer ? 7 : 5, isPlayer ? 0.32 : 0.22));
   return view;
 }
 

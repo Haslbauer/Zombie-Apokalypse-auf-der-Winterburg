@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.6)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.7)
 
 Stand: 31.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v1.7: Neue Mixamo-Figuren für Helden und Zombies, schwere Gegner größer und mit Leucht-Ring, neuer Elite Dämon, Boss-Zähler mit Kill-, Assist- und Erstes-Blut-Gold (Anzeigetafel auf Tab), Bots folgen Pings, Rattenloch zum Innenhof, verdorrte Beete, Nachtstimmung mit vielen Details.
 Änderungen v1.6: Karte neu gestaltet (Fachwerkhaus, Bunker als Luke mit Hollywoodschaukel, Garten- und Geländedeko, Grabstätte, Teich, Abendstimmung), Verstecke (Gebüsch, hohes Gras, Schilf), flüssige eigene Bewegung im Mehrspieler.
 Änderungen v1.5: Netzcode mit Bewegungsvorhersage, Jitter-Puffer, Wiederverbinden, Absicherung; kostenlose Bereitstellung (Tunnel, Render, Docker).
 Änderungen v1.4: Minimap und Pings mit der rechten Maustaste (Ping-Rad wie in LoL).
@@ -98,7 +99,7 @@ Geplant sind 8 Helden, 2 Slots bleiben frei. In M3 spielbar: **Grimm, Gärtnerin
 | Pirat (Qualm) | Kontrolle | Qualmstoß | Rauchwolke | Nebelschritt | Dicke Luft |
 | Imker | Fernkampf, Schaden über Zeit | Schwarm | Bienenstock | Honigfalle | Königin |
 | Libero | Fernkampf, Support | Aufschlag | Block | Zuspiel | Schmetterball |
-| Gärtnerin | Fernkampf, ausdauernd | Schleuderschuss | Saat | Kräutertee | Mein Garten! |
+| Gärtnerin | Fernkampf, ausdauernd | Pfeilschuss | Saat | Kräutertee | Mein Garten! |
 | Rotschopf | Nahkampf, Berserker | Wuchtschlag | Wutanfall | Ungezielter Sprung | Amok |
 | Schläferin | Kontrolle | Berührung | Gähnen | Powernap | Gute Nacht |
 | Grimm | Nahkampf, Jäger | Sprungbiss | Fährte | Heulen | Hetzjagd |
@@ -140,7 +141,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - Rolle: Fernkampf, ausdauernd. Optik (`assets/reference/helden/gaertnerin.jpg`): ältere, grummelige Frau mit Stoffhut, Karohemd, Latzhose, Gummistiefeln, Arbeitshandschuhen, Werkzeuggürtel und großer Heckenschere. Spielgefühl: Pflanzen als kleine Geschütztürme (Zyra in LoL).
 - Linksklick: Steinschleuder (die Heckenschere ist Optik)
 - Passiv Sturschädel: regeneriert langsam Leben und wird zäher, je länger sie im Kampf bleibt
-- Q Schleuderschuss: Fernschuss mit Steinschleuder
+- Q Pfeilschuss: Fernschuss mit dem Bogen (bis v1.6 Steinschleuder)
 - W Saat: pflanzt Samen, nach 2 s wachsen Dornenranken, die Zombies verlangsamen und stechen (max. 3 gleichzeitig)
 - E Kräutertee: heilt sie und Verbündete im Umkreis über Zeit
 - R Mein Garten!: Dornenhecke wächst als Ring (ca. 8 s), hält Zombies zurück und verursacht Schaden. Kann einen Zugang kurz sperren.
@@ -183,15 +184,17 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 
 Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `data/waves.json`.
 
-- **Walker** (langsam, Masse; Optik: Zombie mit Bart und langen Haaren), **Runner** (schnell, wenig Leben; Optik: hagerer, einarmiger Zombie), **Brute** (Tank)
+- **Walker** (langsam, Masse; Optik v1.7: meist Polizisten-Zombie, sonst Zombie-Mädchen), **Runner** (schnell, wenig Leben; Optik: Parasit oder Skelett-Zombie), **Brute** (Tank; Kürbis-Hulk, 1,5-fach groß)
 - **Kriecher** (ab Welle 3): kriecht am Boden, sehr langsam, viel Leben. Sein Treffer hält den Helden 1 s fest.
 - **Wer greift was an:** Zombies (Walker, Runner, Brute, Kriecher, Elites) jagen Helden in der Nähe und laufen sonst zum Lebensmittelvorrat. Den Bienenstock und die Beete lassen sie in Ruhe.
-- **Ratten (Minions):** klein, sehr schnell, wenig Leben und Schaden. Ab Welle 2 kommen Rudel von 5–8 Ratten gemeinsam an einem Spawnpunkt, mit jeder Welle mehr Rudel. Sie fressen die **Hochbeete** an (75 %, jeweils das nächste intakte Beet) oder gehen an den **Bienenstock** (25 %). Helden beißen sie nur, wenn sie gestört werden: Ein Held steht näher als 2 m oder hat sie in den letzten 4 s getroffen.
+- **Ratten (Minions):** klein, sehr schnell, wenig Leben und Schaden. Ab Welle 2 kommen Rudel von 5–8 Ratten gemeinsam an einem Spawnpunkt, mit jeder Welle mehr Rudel. Sie fressen die **Hochbeete** an (45 %, jeweils das nächste intakte Beet), gehen an den **Bienenstock** (20 %) oder an den **Vorrat** (35 %, v1.7). Zum Vorrat schlüpfen sie durch das **Rattenloch** in der Nordmauer des Innenhofs, durch das sonst niemand passt. Helden beißen sie nur, wenn sie gestört werden: Ein Held steht näher als 2 m oder hat sie in den letzten 4 s getroffen.
 - **Hornissen** (ab Welle 1: anfangs ein Schwarm von 2–3, Schwärme wachsen um 0,4 Tiere pro Welle, alle 4 Wellen ein Schwarm mehr): gelb-schwarz, schnell, wenig Leben. Sie fliegen über Hecken, Zäune und das Haus und greifen die Honigkästen des Bienenstocks an. Sie kommen zu 85 % aus dem Spawnpunkt Nordwest. Helden greifen sie wie Ratten nur an, wenn sie gestört werden. Ihr Angriff macht die Bienen wütend.
 - **Elites** alle 5 Wellen (⌊Welle/5⌋ Stück, abwechselnd), mit immer sichtbarem Lebensbalken und Ankündigung:
   - **Rattenkönig:** große Ratte mit Krone, ruft alle 8 s vier Ratten herbei
-  - **Schlächter:** großer Zombie mit Schürze und Beil. Holt alle 8 s aus (rote Warnlinie) und stürmt auf einen Helden in bis zu 8 m. Wer getroffen wird, nimmt Schaden, wird zurückgestoßen und 0,75 s betäubt.
+  - **Dämon** (v1.7, ab Welle 15 im Wechsel): schnell, springt alle 8 s auf einen Helden in bis zu 10 m. Vorher markiert ein violetter Kreis 0,7 s lang den Landeplatz; bei der Landung trifft er alle Helden im Umkreis von 2,5 m (55 Schaden, kurz betäubt).
+  - **Schlächter:** riesiger Zombie (1,9-fach) mit Hackbeil. Holt alle 8 s aus (rote Warnlinie) und stürmt auf einen Helden in bis zu 8 m. Wer getroffen wird, nimmt Schaden, wird zurückgestoßen und 0,75 s betäubt.
   - Elites schlafen nur halb so lang. Grimms Hetzjagd bevorzugt sie.
+  - Optik (v1.7): leuchtender Boden-Ring in eigener Farbe (Schlächter rot, Dämon violett, Rattenkönig gold), glühende Augen, Namensschild über dem großen Lebensbalken. Der Rattenkönig ist dreimal so groß wie eine Ratte.
 - Kontrolle auf Helden (festgehalten, betäubt) wirkt nicht, solange der Held unaufhaltsam ist (Rotschopf: Amok)
 - Später: Spitter (Fernkampf), Boss
 - Verhalten: Zombies greifen Helden an, die in Reichweite sind. Sonst laufen sie zum Haus. Pfadfindung um Hindernisse.
@@ -208,14 +211,14 @@ Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `
 
 ## 8b. Sidequests: Postbote und Lager (wie Drache und Dschungel in LoL)
 
-Freiwillige Ziele im Gelände außerhalb des Gartens. Sie bringen Gold und XP, kosten aber Zeit, in der der Garten schwächer verteidigt ist. Alle Neutralen greifen erst an, wenn man sie angreift, und dann gemeinsam mit ihrem Lager. Entfernen sie sich weiter als ihre **Leine** von ihrem Platz (oder ist kein Held mehr in der Nähe), kehren sie um und heilen sich voll. Bots greifen Neutrale nicht von sich aus an.
+Freiwillige Ziele im Gelände außerhalb des Gartens. Sie bringen Gold und XP, kosten aber Zeit, in der der Garten schwächer verteidigt ist. Alle Neutralen greifen erst an, wenn man sie angreift, und dann gemeinsam mit ihrem Lager. Entfernen sie sich weiter als ihre **Leine** von ihrem Platz (oder ist kein Held mehr in der Nähe), kehren sie um und heilen sich voll (der Postbote heilt sich seit v1.7 nicht mehr). Bots greifen Neutrale nicht von sich aus an, helfen aber Menschen, die gegen Postbote oder Lager kämpfen (bis 25 m), und folgen einem Angriffs-Ping.
 
 **Zombie-Postbote** (Drache): ein Team-Ziel
 - Erscheint ab Welle 3 in jeder dritten Welle, 20 s nach Wellenbeginn, und läuft seinen **Rundweg** im Gelände (`courierRoute` in `data/map.json`). Nach 120 s ist er weg.
 - 2500 Leben, wachsend mit der Welle (in Welle 3 etwa 4500, in Welle 6 etwa 7500), schlägt hart zurück (45 Schaden, ebenfalls wachsend). Allein kaum zu schaffen, im Team gut.
 - Leine 14 m ab dem Punkt, an dem der Kampf beginnt.
 - **Belohnung:** Jeder Held bekommt 150 + 30 × Welle Gold, egal wo er steht.
-- Blauer Zombie mit Mütze und Paket, goldener Ring (auch durch Wände sichtbar), Meldungen beim Auftauchen, Besiegen und Entkommen.
+- Zombie in Uniform mit Postmütze und Paket, goldener Ring (auch durch Wände sichtbar), Meldungen beim Auftauchen, Besiegen und Entkommen.
 
 **Lager** (Dschungel), Werte in `data/zombies.json`, Lage in `data/map.json` (`camps`):
 - **Fledermausschwarm** (Nord und Ost): 5 fliegende Zombie-Fledermäuse, schnell und schwach
@@ -230,6 +233,7 @@ Freiwillige Ziele im Gelände außerhalb des Gartens. Sie bringen Gold und XP, k
 Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
 
 - **Gold:** Startgold 350. Kill-Gold je Zombie-Typ bekommt jeder Held im Umkreis von 15 m in voller Höhe (Koop, kein Last-Hit). Bonus pro überstandener Welle: 50 + 10 × Welle für alle.
+- **Bosse wie in LoL (v1.7):** Elites, Postbote und die großen Neutralen (Riesenspinne, Kröte) merken sich, wer ihnen in den letzten 10 s Schaden gemacht hat. Der letzte Treffer bringt 100 + 15 × Welle Gold, jeder andere Beteiligte die Hälfte (Assist). Der erste Boss der Partie bringt +150 Gold („Erstes Blut“). Normales Kill-Gold und Postboten-Gold kommen dazu. Jeder Held zählt Kills, Bosse, Assists und verdientes Gold; **Tab halten** zeigt die Anzeigetafel, die Teamleiste einen Totenkopf mit der Zahl der Bosse.
 - **Shop:** nur in der Pause **und** nur im Innenhof (6 m um das Herz). Taste B oder Klick auf den Hinweis „B: Shop öffnen“. Das Spiel läuft beim Einkaufen weiter, die Pause tickt also. Beginnt die Welle oder verlässt man den Hof, schließt der Shop.
 - **Waffen sind Werte-Items** (wie in LoL): Der Standardangriff des Helden bleibt, die Waffe macht ihn stärker. Nahkampfwaffen wirken bei Nahkämpfern voll, Fernkampfwaffen bei Fernkämpfern, sonst halb.
 - **Rezepte wie in LoL:** Items haben drei Stufen. Ein Rezept besteht aus Bauteilen plus Aufpreis (`from` in `data/items.json`, der Preis ist der Gesamtpreis). Beim Kauf werden Bauteile im Inventar verbraucht und auf den Preis angerechnet; fehlt ein Bauteil, zählen dessen eigene Bauteile (rekursiv). Kombinieren geht auch bei vollem Inventar. Der Shop zeigt den Restpreis („noch 450 Gold“), vorhandene Bauteile grün und beim Überfahren mit der Maus Bauteile und Weiterentwicklungen.
@@ -243,6 +247,13 @@ Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
 - Keine Munition.
 
 ## 10. Mehrspieler und Bots
+
+- **Pings als Aufträge an Bots (v1.7):** Ein Ping eines Menschen wird zum Auftrag. Bots antworten mit „Bin unterwegs“.
+  - **Angriff!:** Alle Bots greifen das nächste Ziel um den Ping an (Zombie, Lager oder Postbote), solange sie dort kämpfen bis es fällt (sonst höchstens 25 s). Ohne Ziel kämpfen sie am Ort.
+  - **Hilfe!:** Alle Bots laufen zum Helden und beschützen ihn 12 s.
+  - **Hier! / Bin unterwegs:** Die zwei nächsten Bots halten den Ort 12 s.
+  - **Gefahr!:** Bots meiden den Bereich (10 m) für 10 s.
+  - Mit Auftrag ziehen sich Bots erst bei sehr wenig Leben zurück. Ohne Auftrag bevorzugen sie Ziele, die Mitspieler gerade angreifen (Fokus).
 
 - Raum mit 4 Slots. Der Host erstellt den Raum, Freunde joinen per Link. Leere Slots füllen Bots.
 - **Umgesetzt (M6):** Node-Server (`server/`, `npm run server`, Docker), liefert das gebaute Spiel aus und betreibt Räume über WebSocket (`/ws`).
@@ -271,7 +282,7 @@ Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
   - **Einkauf** in der Pause nach Einkaufsliste je Held. Skillpunkte nach Reihenfolge, die Ultimate sobald möglich.
   - Bots schicken dieselben Befehle wie Menschen. Übernimmt in M6 ein Mensch einen Bot-Slot, wird nur die Bot-Steuerung entfernt.
 - Bots laufen auf dem Server (Mehrspieler) bzw. lokal (Singleplayer)
-- **Balancing für 4 Helden** (Wellen in `data/waves.json`, `npm run balance` lässt vier Bots über mehrere Seeds spielen). Stand v0.9 (Vorrat, Beete, Hornissen; Elites: eine in Welle 5 und 10, zwei ab Welle 15): Vier Bots allein schaffen im Schnitt Welle 11,3 (leicht), 14,5 (mittel) und 14,3 (schwer). „Schwer“ ist damit nicht stärker als „mittel“: Seit dem Umbau entscheidet vor allem der Druck auf den Vorrat, nicht die Feinsteuerung. Das ist ein Punkt für M7. Seit den Item-Rezepten (v1.0) liegen die Bots bei 11,2 / 12,7 / 12,8 (je 6 Seeds), weil sie ihre Kraft später in wenigen fertigen Items bündeln; Feinabstimmung der Preise in M7. Mit erweiterter Karte, früheren Hornissen und Postbote (v1.1): 11,0 / 14,2 / 12,8. Mit neuer Karte und Verstecken (v1.6): 11,2 / 13,0 / 13,5. Mit einem guten menschlichen Spieler kommt das Team weiter. Ziel bleibt Welle 30 für sehr gute Teams.
+- **Balancing für 4 Helden** (Wellen in `data/waves.json`, `npm run balance` lässt vier Bots über mehrere Seeds spielen). Stand v0.9 (Vorrat, Beete, Hornissen; Elites: eine in Welle 5 und 10, zwei ab Welle 15): Vier Bots allein schaffen im Schnitt Welle 11,3 (leicht), 14,5 (mittel) und 14,3 (schwer). „Schwer“ ist damit nicht stärker als „mittel“: Seit dem Umbau entscheidet vor allem der Druck auf den Vorrat, nicht die Feinsteuerung. Das ist ein Punkt für M7. Seit den Item-Rezepten (v1.0) liegen die Bots bei 11,2 / 12,7 / 12,8 (je 6 Seeds), weil sie ihre Kraft später in wenigen fertigen Items bündeln; Feinabstimmung der Preise in M7. Mit erweiterter Karte, früheren Hornissen und Postbote (v1.1): 11,0 / 14,2 / 12,8. Mit neuer Karte und Verstecken (v1.6): 11,2 / 13,0 / 13,5. BALANCE_V17 Mit einem guten menschlichen Spieler kommt das Team weiter. Ziel bleibt Welle 30 für sehr gute Teams.
 
 ## 11. Karte
 
@@ -290,7 +301,10 @@ Garten mit Haus, Hecken und Zugängen. Umgesetzt in `data/map.json`, 1 Spieleinh
   4. **Nordwest** im Gelände vor dem Westtor: 85 % der Hornissen (sie fliegen über den Zaun) und ebenso oft Zombies wie Ost. Liegt nah an Bienenstock und Hochbeeten.
 - Hecken im Norden, Osten und Süden, Zäune an der Zuwegung und zum Nachbargrundstück (nordöstlich, nicht begehbar, verwildertes Dickicht), Bäume als Hindernisse
 - **Garten (v1.6):** Kieswege zwischen Toren, Haus und Beeten; Gartenhaus, Kompost, Holzstapel, Regentonne, Schubkarre, Bank, Blumenbeete, Laternen mit Lichtschein.
-- **Gelände (v1.6):** Heckenreihen mit Büschen davor, Felsen, umgestürzte Stämme, tote Bäume, eine verwilderte Grabstätte im Norden und ein Teich mit Schilf im Süden (beim Krötentümpel). Wald mit Laub- und Nadelbäumen als Kulisse, Abendstimmung (warmes, tiefes Licht, Dunst am Rand).
+- **Gelände (v1.6):** Heckenreihen mit Büschen davor, Felsen, umgestürzte Stämme, tote Bäume, eine verwilderte Grabstätte im Norden und ein Teich mit Schilf im Süden (beim Krötentümpel). Wald mit Laub- und Nadelbäumen als Kulisse.
+- **Nacht (v1.7):** kühles Mondlicht, dunkelblauer Himmel, Nebel in der Ferne und ziehende Bodennebel. Warme Lichtinseln: Fenster (einige vernagelt), Laternen, brennende Fässer an den Toren und eine Laterne beim eigenen Helden; jeder Held hat einen schwachen Lichtkreis, Helden ein Randlicht in ihrer Farbe, Zombies glühende Augen.
+- **Details (v1.7, `props` in `data/map.json`, ohne Kollision):** Barrikaden aus Sandsäcken, Kisten und Brettern an den Toren, Vogelscheuche, umgekippter Handwagen, Knochen und Schädel, Blutflecken, leuchtende Pilze und Wurzeln, Spinnweben am Friedhofszaun und am Gartenhaus, eine offene Grube mit Schaufel, Krähen (flattern auf, wenn ein Held nahe kommt). Als Hindernisse: verrostetes Autowrack vor dem Osttor, Brunnen im Garten.
+- **Rattenloch (v1.7):** Kellerloch in der Nordmauer des Innenhofs (0,8 m). Nur kleine Einheiten (`small` in `data/zombies.json`, Ratten) haben ein eigenes Wegeraster mit weniger Abstand zu Hindernissen und kommen hindurch; für alle anderen ist es Mauer.
 - **Verstecke (wie das Gebüsch in LoL, `brush` in `data/map.json`):** hohes Gras und Büsche im Garten, Büsche an den Hecken und in den Ecken des Geländes, Schilf am Teich. Begehbar, halten keine Schüsse auf.
   - Wer im Versteck steht, wird von Zombies und Lagerbewohnern erst aus nächster Nähe gesehen (2,5 m) oder wenn sie im selben Versteck stehen. Angriff oder Fähigkeit verrät den Helden für 1,5 s.
   - Zombies im Versteck sind für die Spieler unsichtbar (auch auf der Minimap), bis ein Held im selben Versteck oder höchstens 3 m daneben steht.

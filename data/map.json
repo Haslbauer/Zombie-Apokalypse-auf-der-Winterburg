@@ -234,9 +234,30 @@
       "h": 7.5,
       "look": "house"
     },
-    { "kind": "rect", "x": 37.425, "y": 10.5, "w": 2.85, "h": 1, "look": "house" },
-    { "kind": "rect", "x": 39.25, "y": 10.5, "w": 0.8, "h": 1, "look": "rathole" },
-    { "kind": "rect", "x": 40.575, "y": 10.5, "w": 1.85, "h": 1, "look": "house" },
+    {
+      "kind": "rect",
+      "x": 37.425,
+      "y": 10.5,
+      "w": 2.85,
+      "h": 1,
+      "look": "house"
+    },
+    {
+      "kind": "rect",
+      "x": 39.25,
+      "y": 10.5,
+      "w": 0.8,
+      "h": 1,
+      "look": "rathole"
+    },
+    {
+      "kind": "rect",
+      "x": 40.575,
+      "y": 10.5,
+      "w": 1.85,
+      "h": 1,
+      "look": "house"
+    },
     {
       "kind": "rect",
       "x": 43.5,
@@ -886,6 +907,21 @@
       "h": 0.3,
       "look": "grave",
       "blocksShots": false
+    },
+    {
+      "kind": "rect",
+      "x": 71.0,
+      "y": 24.5,
+      "w": 1.9,
+      "h": 4.2,
+      "look": "car"
+    },
+    {
+      "kind": "circle",
+      "x": 50,
+      "y": 58,
+      "r": 0.9,
+      "look": "well"
     }
   ],
   "botPosts": [
@@ -1182,6 +1218,242 @@
       "y": -6.4,
       "w": 9,
       "h": 5
+    }
+  ],
+  "props": [
+    {
+      "look": "firebarrel",
+      "x": -1.0,
+      "y": 5.4
+    },
+    {
+      "look": "firebarrel",
+      "x": -1.0,
+      "y": 12.6
+    },
+    {
+      "look": "firebarrel",
+      "x": 34.4,
+      "y": 72.9
+    },
+    {
+      "look": "firebarrel",
+      "x": 40.1,
+      "y": 72.9
+    },
+    {
+      "look": "firebarrel",
+      "x": 67.2,
+      "y": 29.6
+    },
+    {
+      "look": "firebarrel",
+      "x": 67.2,
+      "y": 36.9
+    },
+    {
+      "look": "barricade",
+      "x": -1.6,
+      "y": 3.9,
+      "rot": 1.571,
+      "w": 2.2
+    },
+    {
+      "look": "barricade",
+      "x": -1.6,
+      "y": 14.1,
+      "rot": 1.571,
+      "w": 2.2
+    },
+    {
+      "look": "barricade",
+      "x": 32.9,
+      "y": 73.6,
+      "w": 2.2
+    },
+    {
+      "look": "barricade",
+      "x": 41.6,
+      "y": 73.6,
+      "w": 2.2
+    },
+    {
+      "look": "barricade",
+      "x": 68.0,
+      "y": 28.1,
+      "rot": 1.571,
+      "w": 2.2
+    },
+    {
+      "look": "barricade",
+      "x": 68.0,
+      "y": 38.4,
+      "rot": 1.571,
+      "w": 2.2
+    },
+    {
+      "look": "scarecrow",
+      "x": 20,
+      "y": 42.2
+    },
+    {
+      "look": "cart",
+      "x": 44,
+      "y": 64,
+      "rot": 0.4
+    },
+    {
+      "look": "bones",
+      "x": -4,
+      "y": 30
+    },
+    {
+      "look": "bones",
+      "x": 70,
+      "y": 50
+    },
+    {
+      "look": "bones",
+      "x": 24,
+      "y": -3.6
+    },
+    {
+      "look": "bones",
+      "x": 50,
+      "y": 79
+    },
+    {
+      "look": "bones",
+      "x": 4,
+      "y": 68
+    },
+    {
+      "look": "bones",
+      "x": 28,
+      "y": 58
+    },
+    {
+      "look": "bones",
+      "x": 56,
+      "y": 40
+    },
+    {
+      "look": "bones",
+      "x": -6,
+      "y": -6
+    },
+    {
+      "look": "blood",
+      "x": 36.6,
+      "y": 69.4
+    },
+    {
+      "look": "blood",
+      "x": 3,
+      "y": 9
+    },
+    {
+      "look": "blood",
+      "x": 64.5,
+      "y": 33.2
+    },
+    {
+      "look": "blood",
+      "x": 40,
+      "y": 40
+    },
+    {
+      "look": "blood",
+      "x": 20,
+      "y": 26.2
+    },
+    {
+      "look": "blood",
+      "x": -3,
+      "y": 48
+    },
+    {
+      "look": "mushrooms",
+      "x": -7,
+      "y": 62
+    },
+    {
+      "look": "mushrooms",
+      "x": 73,
+      "y": 16
+    },
+    {
+      "look": "mushrooms",
+      "x": 44,
+      "y": -6.5
+    },
+    {
+      "look": "mushrooms",
+      "x": 10,
+      "y": 78
+    },
+    {
+      "look": "mushrooms",
+      "x": -3,
+      "y": 26
+    },
+    {
+      "look": "mushrooms",
+      "x": 70,
+      "y": 65
+    },
+    {
+      "look": "mushrooms",
+      "x": 30,
+      "y": 80
+    },
+    {
+      "look": "crows",
+      "x": 62,
+      "y": -3.6
+    },
+    {
+      "look": "crows",
+      "x": 20,
+      "y": 43.8
+    },
+    {
+      "look": "crows",
+      "x": 8,
+      "y": -3
+    },
+    {
+      "look": "crows",
+      "x": 72,
+      "y": 72
+    },
+    {
+      "look": "crows",
+      "x": -6,
+      "y": 35
+    },
+    {
+      "look": "web",
+      "x": 56.6,
+      "y": -8.8,
+      "rot": 0.8
+    },
+    {
+      "look": "web",
+      "x": 65.4,
+      "y": -8.8,
+      "rot": -0.8
+    },
+    {
+      "look": "web",
+      "x": 8.1,
+      "y": 63,
+      "rot": 0
+    },
+    {
+      "look": "opengrave",
+      "x": 67.8,
+      "y": -6.8
     }
   ]
 }

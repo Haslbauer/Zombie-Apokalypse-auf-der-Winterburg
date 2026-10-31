@@ -226,6 +226,8 @@ export type ObstacleLook =
   | 'house'
   /** Kellerloch in der Hofmauer: nur kleine Einheiten (Ratten) kommen durch. */
   | 'rathole'
+  | 'car'
+  | 'well'
   | 'hedge'
   | 'fence'
   | 'tree'
@@ -358,6 +360,20 @@ export interface ArenaDef {
   brush?: Brush[];
   /** Deko ohne Spielwirkung (nur Darstellung). */
   decor?: DecorDef[];
+  /** Kleinkram ohne Kollision (Feuerfässer, Knochen, Krähen …), nur Darstellung. */
+  props?: PropDef[];
+}
+
+export const PROP_LOOKS = ['firebarrel', 'barricade', 'bones', 'blood', 'mushrooms', 'web', 'opengrave', 'scarecrow', 'cart', 'crows'] as const;
+
+/** Deko-Objekt an einem Punkt; rot dreht um die Hochachse, w: Breite (Barrikade), h: Höhe (Krähen auf Zaun/Grabstein). */
+export interface PropDef {
+  look: (typeof PROP_LOOKS)[number];
+  x: number;
+  y: number;
+  rot?: number;
+  w?: number;
+  h?: number;
 }
 
 export interface CampDef {

@@ -165,8 +165,24 @@ export function house(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chimne
         const t = -long / 2 + ((i + 0.5) * long) / posts;
         const win = new THREE.Group();
         win.add(part(new THREE.BoxGeometry(0.9, 1, 0.08), mats.lambert(0x3a2a1c), 0, 0, 0, false));
-        const glass = part(new THREE.BoxGeometry(0.72, 0.82, 0.1), mats.lambert(0xffcf7a, { emissive: 0xffa53a, emissiveIntensity: 0.55 }), 0, 0, 0, false);
+        // Manche Fenster sind dunkel und mit Brettern vernagelt
+        const boarded = (i * 7 + Math.round(o.x * 3 + o.y) + (side > 0 ? 1 : 0)) % 3 === 0;
+        const glass = part(
+          new THREE.BoxGeometry(0.72, 0.82, 0.1),
+          boarded ? mats.lambert(0x141210) : mats.lambert(0xffcf7a, { emissive: 0xffa53a, emissiveIntensity: 0.9 }),
+          0,
+          0,
+          0,
+          false,
+        );
         win.add(glass);
+        if (boarded) {
+          for (const [y, r] of [[0.22, 0.25], [-0.12, -0.18], [-0.32, 0.1]] as const) {
+            const plank = part(new THREE.BoxGeometry(1.0, 0.13, 0.05), mats.lambert(0x6a5238), 0, y, 0.07, false);
+            plank.rotation.z = r;
+            win.add(plank);
+          }
+        }
         for (const s of [-1, 1]) win.add(part(new THREE.BoxGeometry(0.42, 1, 0.06), mats.lambert(0x3f6b3f), s * 0.68, 0, 0, false));
         win.position.set(alongX ? t : side * (off + 0.03), 2.35, alongX ? side * (off + 0.03) : t);
         if (!alongX) win.rotation.y = Math.PI / 2;

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { arenaBounds } from '../sim/grid';
 import type { ArenaDef, Obstacle } from '../sim/types';
+import { nightDecor, nightObstacle } from './nightdecor';
 import { brushes, decor, hatch, hedge, house, Mats, obstacleDecor, smoke, thicket, tree, windTime, rathole } from './mapdecor';
 
 const COLORS = {
@@ -19,7 +20,8 @@ const COLORS = {
 
 /** Bewegte Teile der Karte (Wind in Gras und Büschen, Rauch). */
 export interface MapAnimation {
-  update(time: number): void;
+  /** heroes: Positionen der Helden (Krähen flattern auf). */
+  update(time: number, heroes?: { x: number; y: number }[]): void;
 }
 
 /**
@@ -87,6 +89,10 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   for (const o of arena.obstacles) {
     if (o.kind === 'rect' && o.look === 'house') scene.add(house(o, mats, chimneys));
     else if (o.kind === 'rect' && o.look === 'rathole') scene.add(rathole(o, mats, chimneys));
+    else if (o.look === 'car' || o.look === 'well') {
+      const d = nightObstacle(o, mats);
+      if (d) scene.add(d);
+    }
     else if (o.kind === 'rect' && (o.look ?? 'hedge') === 'hedge') scene.add(hedge(o, mats));
     else if (o.kind === 'circle' && o.look === 'tree') scene.add(tree(o.x, o.y, o.r, mats));
     else if (o.kind === 'rect' && o.look === 'blocked') {
@@ -117,13 +123,17 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
     }
   }
 
+  const live = new THREE.Group();
+  const night = nightDecor(scene, live, arena, mats);
   target.add(mergeStatic(scene));
+  target.add(live);
   const smokes = smoke(chimneys);
   target.add(smokes.group);
   return {
-    update(time) {
+    update(time, heroes = []) {
       windTime.value = time;
       smokes.update(time);
+      night.update(time, heroes);
     },
   };
 }

@@ -4,7 +4,7 @@ import { dist } from '../../../src/sim/vec';
 import { heroSim, placeZombie, run } from '../helpers';
 
 describe('Gärtnerin', () => {
-  it('Schleuderschuss trifft und stößt zurück', () => {
+  it('Pfeilschuss trifft und stößt zurück', () => {
     const { sim, h, zombie, cast, value } = heroSim('gaertnerin');
     const z = zombie(h.pos.x + 6, h.pos.y);
     const before = z.pos.x;

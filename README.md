@@ -71,7 +71,8 @@ Beim Entwickeln (`npm run dev`) leitet Vite den Mehrspieler an einen laufenden `
 | R T | Verbrauchsgüter benutzen (Heiltrank, Energiedrink) |
 | B | Shop (nur in der Pause im Innenhof) |
 | N | Welle sofort starten (in der Pause) |
-| Rechtsklick | Ping an alle: kurz = „Hier!“, halten und ziehen = Ping-Rad (oben Angriff, rechts Bin unterwegs, unten Hilfe, links Gefahr). Auch auf der Minimap. |
+| Rechtsklick | Ping an alle: kurz = „Hier!“, halten und ziehen = Ping-Rad (oben Angriff, rechts Bin unterwegs, unten Hilfe, links Gefahr). Auch auf der Minimap. Bots folgen den Pings (siehe unten). |
+| Tab (halten) | Anzeigetafel: Kills, Bosse, Assists, Gold und Level aller Helden |
 | Mausrad | Kamera heran- bzw. herauszoomen |
 | Esc | Pause und Tastenbelegung (alle Tasten frei belegbar); online läuft das Spiel weiter |
 
@@ -79,21 +80,23 @@ Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bog
 
 ## Karte
 
-Die Winterburg: U-förmiges Haus mit dem **Lebensmittelvorrat** im Innenhof (nur über einen schmalen Durchgang erreichbar). Zombies kommen aus dem **Bunker**, durch die **Heckenlücke Süd**, den **Hang Ost** hinauf und aus dem **Nordwesten**. Zombies plündern den Vorrat, **Ratten** fressen die **Hochbeete** (deren Ernte füllt den Vorrat nach jeder Welle auf), **Hornissen** greifen den **Bienenstock** an. Ist der Vorrat leer, ist das Spiel verloren.
+Die Winterburg: U-förmiges Haus mit dem **Lebensmittelvorrat** im Innenhof (nur über einen schmalen Durchgang erreichbar). Zombies kommen aus dem **Bunker**, durch die **Heckenlücke Süd**, den **Hang Ost** hinauf und aus dem **Nordwesten**. Zombies plündern den Vorrat, **Ratten** fressen die **Hochbeete** oder schlüpfen durch das **Rattenloch** in der Hofmauer zum Vorrat (deren Ernte füllt den Vorrat nach jeder Welle auf), **Hornissen** greifen den **Bienenstock** an. Ist der Vorrat leer, ist das Spiel verloren.
 
-Rund um den Garten liegt Gelände mit Büschen, Hecken, einer alten Grabstätte und einem Teich. **Verstecke** wie das Gebüsch in LoL: Im hohen Gras, in Büschen und im Schilf sehen Zombies einen Helden erst aus nächster Nähe – bis er angreift. Umgekehrt sieht man Zombies im Gebüsch erst, wenn man selbst nah dran ist.
+Es ist Nacht: Mondlicht, Nebel, brennende Fässer an den Toren, Krähen, Knochen und ein Autowrack vor dem Osttor. Ohne Bienenstock wachsen zerstörte Beete nicht mehr nach (verdorrte Stängel, Hinweis in der Kopfleiste). Rund um den Garten liegt Gelände mit Büschen, Hecken, einer alten Grabstätte und einem Teich. **Verstecke** wie das Gebüsch in LoL: Im hohen Gras, in Büschen und im Schilf sehen Zombies einen Helden erst aus nächster Nähe – bis er angreift. Umgekehrt sieht man Zombies im Gebüsch erst, wenn man selbst nah dran ist.
 
 Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben, `?level=6` startet auf Level 6, `?wave=5` mit Welle 5 (kombinierbar: `?wave=5&level=8`), `?bots=4` lässt vier Bots allein spielen (Zuschauen, optional `&difficulty=schwer`). `?camera=x,y,abstand` richtet die Kamera fest auf einen Punkt (z. B. `?bots=4&camera=37,22,30` fürs Haus), `?debug` gibt Testhilfen frei.
 
 ## Team und Bots
 
-Du wählst deinen Helden, drei Bots spielen mit (je ein Nahkämpfer, Fernkämpfer und eine Kontrolle; per Klick tauschbar). Die Bot-Stärke (leicht, mittel, schwer) stellst du auf dem Startbildschirm ein. Links zeigt die Teamleiste Level und Leben aller vier Helden; Bots haben einen blauen Ring.
+Du wählst deinen Helden, drei Bots spielen mit (je ein Nahkämpfer, Fernkämpfer und eine Kontrolle; per Klick tauschbar). Die Bot-Stärke (leicht, mittel, schwer) stellst du auf dem Startbildschirm ein. Links zeigt die Teamleiste Level, Leben und erlegte Bosse aller vier Helden; Bots haben einen blauen Ring.
+
+**Bots folgen Pings:** „Angriff!“ schickt alle Bots auf das Ziel (auch Postbote und Lager), „Hilfe!“ holt sie zu dir, „Hier!“ schickt die zwei nächsten an den Ort, „Gefahr!“ lässt sie den Bereich meiden. Sie antworten mit „Bin unterwegs“. Kämpfst du gegen Postbote oder Lager, helfen Bots in der Nähe auch ohne Ping.
 
 `npm run balance` lässt vier Bots ohne Spieler über mehrere Seeds spielen und gibt die erreichte Welle aus (Optionen: `BALANCE_SEEDS=5`, `BALANCE_DIFF=mittel`).
 
 ## Gegner
 
-Walker, Runner, Brute, Kriecher (hält fest), Ratten in Rudeln (fressen Beete), Hornissen-Schwärme (greifen den Bienenstock an) und alle 5 Wellen Elites: Rattenkönig (ruft Ratten) und Schlächter (Anlauf, betäubt). Details in `docs/SPEC.md` (Abschnitt 7).
+Walker, Runner, Brute, Kriecher (hält fest), Ratten in Rudeln (fressen Beete, schlüpfen zum Vorrat), Hornissen-Schwärme (greifen den Bienenstock an) und alle 5 Wellen Elites mit leuchtendem Ring: Rattenkönig (ruft Ratten), Schlächter (Anlauf, betäubt) und ab Welle 15 der Dämon (Höllensprung mit Warnkreis). **Bosse wie in LoL:** Der letzte Treffer an einem Elite, dem Postboten oder einem großen Neutralen bringt Extra-Gold, Mithelfer bekommen die Hälfte (Assist), der erste Boss der Partie +150 („Erstes Blut“). Details in `docs/SPEC.md` (Abschnitt 7).
 
 ## Shop
 
@@ -104,7 +107,7 @@ Gold gibt es für Kills und jede überstandene Welle. In der Pause im Innenhof �
 | Held | Rolle | Fähigkeiten (1–4) |
 |---|---|---|
 | Grimm (Hund) | Nahkampf-Jäger | Sprungbiss, Fährte, Heulen, Hetzjagd |
-| Hagedorn (Gärtnerin) | Fernkampf, ausdauernd | Schleuderschuss, Saat, Kräutertee, Mein Garten! |
+| Hagedorn (Waldläuferin) | Fernkampf, ausdauernd | Pfeilschuss, Saat, Kräutertee, Mein Garten! |
 | Rauchbart (Pirat) | Kontrolle | Qualmstoß, Rauchwolke, Nebelschritt, Dicke Luft |
 | Spike (Libero) | Fernkampf, Support | Aufschlag, Block, Zuspiel, Schmetterball |
 | Ragnar (Rotschopf) | Nahkampf, Berserker | Wuchtschlag, Wutanfall, Ungezielter Sprung, Amok |
