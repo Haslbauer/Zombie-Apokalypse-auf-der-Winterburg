@@ -9,6 +9,22 @@ interface Effect {
   update: (t: number) => void;
 }
 
+let soft: THREE.CanvasTexture | null = null;
+/** Weicher, runder Lichtfleck (für Blitze und Funken). */
+function softTexture(): THREE.CanvasTexture {
+  if (soft) return soft;
+  const c = document.createElement('canvas');
+  c.width = c.height = 32;
+  const g = c.getContext('2d')!;
+  const grad = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+  grad.addColorStop(0, 'rgba(255,255,255,1)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 32, 32);
+  soft = new THREE.CanvasTexture(c);
+  return soft;
+}
+
 /** Kurzlebige Effekte: Schlagbogen und Todeswolken. */
 export class Effects {
   private readonly effects: Effect[] = [];
@@ -130,6 +146,33 @@ export class Effects {
     this.add(mesh, 0.25, (t) => {
       mesh.position.set(from.x + (to.x - from.x) * t, 1.5 - t * 0.5 + Math.sin(t * Math.PI) * 0.6, from.y + (to.y - from.y) * t);
     });
+  }
+
+  /** Mündungs- bzw. Abschussblitz: kurz aufleuchtender Lichtfleck (additiv). */
+  flash(p: Vec2, height: number, color: number, size = 1.1, life = 0.14): void {
+    const material = new THREE.SpriteMaterial({ map: softTexture(), color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+    const s = new THREE.Sprite(material);
+    s.position.set(p.x, height, p.y);
+    this.add(s, life, (t) => {
+      s.scale.setScalar(size * (0.6 + t * 0.8));
+      material.opacity = 1 - t;
+    });
+  }
+
+  /** Treffer: ein paar Funken, die auseinanderfliegen. */
+  sparks(p: Vec2, color: number, count = 5): void {
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const up = 0.6 + Math.random() * 1.2;
+      const speed = 1.5 + Math.random() * 2;
+      const material = new THREE.SpriteMaterial({ map: softTexture(), color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+      const s = new THREE.Sprite(material);
+      s.scale.setScalar(0.18);
+      this.add(s, 0.3, (t) => {
+        s.position.set(p.x + Math.cos(a) * speed * t * 0.3, 1.1 + up * t * 0.3 - t * t * 0.4, p.y + Math.sin(a) * speed * t * 0.3);
+        material.opacity = 1 - t;
+      });
+    }
   }
 
   /** Grüne Wolke, wenn ein Zombie fällt. */

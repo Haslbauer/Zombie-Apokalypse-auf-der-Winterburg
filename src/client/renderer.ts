@@ -41,7 +41,7 @@ export class GameRenderer {
   /** Wind in Gras und Büschen, Rauch aus den Schornsteinen. */
   private readonly mapAnimation: MapAnimation;
   private readonly fog: THREE.Fog;
-  private readonly lantern = new THREE.PointLight(0xffb866, 26, 13, 1.6);
+  private readonly lantern = new THREE.PointLight(0xffb866, 16, 12, 1.6);
   readonly preview: AbilityPreview;
   private readonly raycaster = new THREE.Raycaster();
   private readonly groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);

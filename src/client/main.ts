@@ -366,6 +366,8 @@ function handleEvents(state: GameState): void {
     switch (e.type) {
       case 'hit':
         renderer.flash(e.targetId);
+        // Treffer an Zombies: kleine Funken
+        if (e.amount > 0 && state.zombies.some((z) => z.id === e.targetId)) effects.sparks(e.pos, 0xffc070, 4);
         break;
       case 'attack':
         renderer.zombieAttack(e.id);
@@ -385,9 +387,17 @@ function handleEvents(state: GameState): void {
         renderer.heroAction(e.id, 'attack', attackTime(state, e.id));
         break;
       }
-      case 'shot':
+      case 'shot': {
         renderer.heroAction(e.id, 'attack', attackTime(state, e.id));
+        // Abschussblitz vor dem Helden, in der Farbe seines Geschosses
+        const h = state.heroes.find((x) => x.id === e.id);
+        if (h) {
+          const look = gameData.heroes.find((d) => d.id === h.defId)?.attack.look ?? '';
+          const color = ({ stone: 0xc8f0a0, hook: 0xd8c8a8, star: 0x9fe3ff, volley: 0xff9a4a } as Record<string, number>)[look] ?? 0xffe066;
+          effects.flash({ x: h.pos.x + Math.cos(h.facing) * 0.7, y: h.pos.y + Math.sin(h.facing) * 0.7 }, 1.3, color);
+        }
         break;
+      }
       case 'cast':
         renderer.heroAction(e.heroId, 'ability', e.slot);
         break;

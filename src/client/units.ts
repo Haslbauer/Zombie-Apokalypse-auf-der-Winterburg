@@ -52,6 +52,11 @@ interface ModelLook {
   paint?: boolean;
   /** Angriffs-Clips, abwechselnd bzw. zufällig. */
   attacks: string[];
+  /**
+   * Anteil des Angriffs-Clips, der übersprungen wird (Ausholen), damit der
+   * Schuss bzw. Hieb sichtbar mit dem Geschoss zusammenfällt.
+   */
+  attackStart?: number;
   props?: Prop[];
   /** Kopfknochen für Hüte und Krone (Mixamo: mixamorigHead). */
   headBone?: string;
@@ -101,11 +106,11 @@ export const ELITE_COLORS: Record<string, number> = {
 /** Helden mit Modell (assets/models/<held>): Grimm ist ein Schäferhund (Quaternius), die übrigen Mixamo-Figuren mit eigenen Texturen. */
 const HERO_LOOKS: Record<string, ModelLook> = {
   grimm: { model: 'grimm', move: 'run', idle: 'idle', refSpeed: 6.5, scale: 1, tint: [1.25, 1.2, 1.15], attacks: ['attack'] },
-  rotschopf: { model: 'rotschopf', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.08, tint: [1, 1, 1], attacks: ['attack'], props: ['hammer'] },
-  schlaeferin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1, tint: [1, 1, 1], attacks: ['attack', 'attack2', 'attack3'], props: ['staff'] },
-  libero: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.6, scale: 1.02, tint: [1, 1, 1], attacks: ['attack'] },
-  pirat: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], attacks: ['attack'], props: ['hook'] },
-  gaertnerin: { model: 'gaertnerin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 0.98, tint: [1, 1, 1], attacks: ['attack'] },
+  rotschopf: { model: 'rotschopf', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.08, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.25, props: ['hammer'] },
+  schlaeferin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1, tint: [1, 1, 1], attacks: ['attack', 'attack2', 'attack3'], attackStart: 0.3, props: ['staff'] },
+  libero: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.6, scale: 1.02, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.42 },
+  pirat: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.5, props: ['hook'] },
+  gaertnerin: { model: 'gaertnerin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 0.98, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.4 },
 };
 
 /** Höchstdauer einer Angriffs- bzw. Fähigkeitsanimation in der Darstellung (Sekunden). */
@@ -191,7 +196,7 @@ export class UnitView {
     look: ModelLook;
     loop: THREE.AnimationAction | null;
     loopName: string;
-    once: { action: THREE.AnimationAction; left: number } | null;
+    once: { action: THREE.AnimationAction; left: number; upper?: boolean } | null;
     attackIndex: number;
     /** Gestorben: nach der Sterbe-Animation liegen bleiben. */
     dead: boolean;
@@ -394,7 +399,7 @@ export class UnitView {
   }
 
   /** Einmal-Animation (Angriff, Fähigkeit, Schrei, Tod); duration in Sekunden. */
-  playOnce(name: string, duration: number): void {
+  playOnce(name: string, duration: number, start = 0): void {
     const a = this.anim;
     const action = a?.inst.actions.get(name);
     if (!a || !action || a.dead) return;
@@ -402,10 +407,14 @@ export class UnitView {
     action.reset();
     action.setLoop(THREE.LoopOnce, 1);
     action.clampWhenFinished = true;
-    action.timeScale = action.getClip().duration / Math.max(0.1, duration);
+    const clip = action.getClip().duration;
+    action.time = clip * start;
+    action.timeScale = (clip * (1 - start)) / Math.max(0.1, duration);
     action.fadeIn(0.08).play();
-    a.loop?.fadeOut(0.08);
-    a.once = { action, left: duration };
+    // Oberkörper-Variante (im Laufen): Beine laufen weiter
+    const upper = name.endsWith('Upper');
+    if (!upper) a.loop?.fadeOut(0.08);
+    a.once = { action, left: duration, upper };
   }
 
   /** Hat die Figur eine Animation dieses Namens? */
@@ -419,7 +428,9 @@ export class UnitView {
     if (!a || (a.once && a.once.left > 0.15)) return;
     const list = a.look.attacks;
     const name = random ? list[Math.floor(Math.random() * list.length)] : list[a.attackIndex++ % list.length];
-    this.playOnce(name, Math.min(ATTACK_ANIM, duration));
+    // Im Laufen nur den Oberkörper animieren, die Beine laufen weiter
+    const moving = this.shownSpeed > 0.8 && this.hasClip(`${name}Upper`);
+    this.playOnce(moving ? `${name}Upper` : name, Math.min(ATTACK_ANIM, duration), a.look.attackStart ?? 0);
   }
 
   /** Fähigkeit (slot 0–3); lange Clips werden auf höchstens 1,2 s gerafft. */
@@ -455,8 +466,9 @@ export class UnitView {
       a.once.left -= dt;
       if (a.once.left <= 0 && !a.dead) {
         a.once.action.fadeOut(0.15);
+        const upper = a.once.upper;
         a.once = null;
-        a.loop?.reset().fadeIn(0.15).play();
+        if (!upper) a.loop?.reset().fadeIn(0.15).play();
       }
     }
     if (!a.dead) {

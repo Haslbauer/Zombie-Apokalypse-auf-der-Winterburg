@@ -31,6 +31,18 @@ export async function loadRiggedModel(url: string, height = ZOMBIE_HEIGHT): Prom
   };
 }
 
+const upperCache = new WeakMap<THREE.AnimationClip, THREE.AnimationClip>();
+/** Nur die Spuren oberhalb der Hüfte (Wirbelsäule, Arme, Kopf); Beine und Hüfte bleiben beim Laufen. */
+function upperBody(clip: THREE.AnimationClip): THREE.AnimationClip {
+  let c = upperCache.get(clip);
+  if (!c) {
+    const lower = /Hips|UpLeg|Leg|Foot|Toe/;
+    c = new THREE.AnimationClip(`${clip.name}Upper`, clip.duration, clip.tracks.filter((t) => !lower.test(t.name.split('.')[0])));
+    upperCache.set(clip, c);
+  }
+  return c;
+}
+
 /** Eine Instanz des Modells: eigenes Skelett, eigene Materialien (für Färbung und Treffer-Blitz). */
 export interface ModelInstance {
   root: THREE.Object3D;
@@ -97,5 +109,10 @@ export function instantiate(
   const mixer = new THREE.AnimationMixer(inner);
   const actions = new Map<string, THREE.AnimationAction>();
   for (const [name, clip] of model.clips) actions.set(name, mixer.clipAction(clip));
+  // Angriffe zusätzlich nur für den Oberkörper (zum Schießen im Laufen)
+  for (const [name, clip] of model.clips) {
+    if (!name.startsWith('attack')) continue;
+    actions.set(`${name}Upper`, mixer.clipAction(upperBody(clip)));
+  }
   return { root, mixer, actions, materials };
 }

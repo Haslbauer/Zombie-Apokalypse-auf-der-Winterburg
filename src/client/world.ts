@@ -1,23 +1,95 @@
 import * as THREE from 'three';
-import type { Ball, GameState, Projectile, Zone } from '../sim/types';
+import type { Ball, GameState, Zone } from '../sim/types';
 import type { Snapshot } from './renderer';
 
-/** Aussehen der Geschosse je Held. */
-const PROJECTILES: Record<string, { color: number; size: number }> = {
-  stone: { color: 0x8d8d86, size: 0.13 },
-  bigstone: { color: 0x6f6f69, size: 0.22 },
-  hook: { color: 0x3a3a3a, size: 0.16 },
-  star: { color: 0x9fe3ff, size: 0.16 },
-  volley: { color: 0xffffff, size: 0.14 },
-};
+let glowTex: THREE.CanvasTexture | null = null;
+function glowTexture(): THREE.CanvasTexture {
+  if (glowTex) return glowTex;
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const g = c.getContext('2d')!;
+  const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, 'rgba(255,255,255,1)');
+  grad.addColorStop(0.35, 'rgba(255,255,255,0.5)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 64, 64);
+  glowTex = new THREE.CanvasTexture(c);
+  return glowTex;
+}
+
+function glow(color: number, size: number): THREE.Sprite {
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  s.scale.set(size, size, 1);
+  return s;
+}
+
+/** Schweif hinter dem Geschoss (entlang −x), additiv und nach hinten ausblendend. */
+function trail(color: number, length: number, width: number): THREE.Mesh {
+  const geo = new THREE.PlaneGeometry(length, width).rotateX(-Math.PI / 2).translate(-length / 2, 0, 0);
+  // Ausblenden über Vertex-Farben: vorn hell, hinten dunkel (additiv = durchsichtig)
+  const colors: number[] = [];
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const k = 1 + pos.getX(i) / length; // 1 vorn, 0 hinten
+    colors.push(k, k, k);
+  }
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  return new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
+}
+
+/**
+ * Aussehen der Geschosse (Modell entlang +x, wird in Flugrichtung gedreht):
+ * Pfeil (Hagedorn), Enterhaken an der Leine (Rauchbart), Sternenfunken
+ * (Somnia), leuchtender Ball (Spike). Unbekannte: leuchtende Kugel.
+ */
+function buildProjectile(look: string): THREE.Group {
+  const g = new THREE.Group();
+  switch (look) {
+    case 'stone':
+    case 'bigstone': {
+      const big = look === 'bigstone' ? 1.4 : 1;
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.018 * big, 0.018 * big, 0.75 * big, 5).rotateZ(Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x8a6a45 }));
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.05 * big, 0.14 * big, 5).rotateZ(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xd8d8d0 }));
+      tip.position.x = 0.42 * big;
+      const fl = new THREE.Mesh(new THREE.PlaneGeometry(0.16 * big, 0.08 * big), new THREE.MeshBasicMaterial({ color: 0xc8f0a0, side: THREE.DoubleSide }));
+      fl.position.x = -0.33 * big;
+      const fl2 = fl.clone();
+      fl2.rotation.x = Math.PI / 2;
+      g.add(shaft, tip, fl, fl2, trail(0x9fe36a, 1.6 * big, 0.12 * big));
+      if (big > 1) g.add(glow(0xb8ff7a, 0.9));
+      break;
+    }
+    case 'hook': {
+      const hook = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.025, 5, 10, Math.PI * 1.3), new THREE.MeshBasicMaterial({ color: 0x9a9a9a }));
+      hook.rotation.x = Math.PI / 2;
+      const shank = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.3, 5).rotateZ(Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x777777 }));
+      shank.position.x = -0.15;
+      g.add(hook, shank);
+      break;
+    }
+    case 'star': {
+      g.add(glow(0x9fe3ff, 0.9), glow(0xffffff, 0.35), trail(0x7fb8ff, 1.4, 0.3));
+      break;
+    }
+    case 'volley': {
+      const ball = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+      g.add(ball, glow(0xff9a4a, 0.8), trail(0xff8a3d, 1.3, 0.25));
+      break;
+    }
+    default:
+      g.add(new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffe066 })), glow(0xffe066, 0.6));
+  }
+  return g;
+}
 
 /** Zonen, Libero-Ball und Geschosse in der Szene. */
 export class WorldView {
   private readonly zones = new Map<number, THREE.Object3D>();
-  private readonly projectiles = new Map<number, THREE.Mesh>();
+  private readonly projectiles = new Map<number, THREE.Group>();
   private readonly balls = new Map<number, THREE.Group>();
-  private readonly geometries = new Map<string, THREE.SphereGeometry>();
-  private readonly materials = new Map<string, THREE.MeshBasicMaterial>();
+  /** Leinen der Enterhaken (Geschoss-Id → Linie zum Werfer). */
+  private readonly ropes = new Map<number, THREE.Line>();
 
   constructor(private readonly scene: THREE.Scene) {}
 
@@ -30,7 +102,7 @@ export class WorldView {
 
   sync(state: GameState, prev: Map<number, Snapshot>, alpha: number, time: number): void {
     this.syncZones(state.zones, state.time, time);
-    this.syncProjectiles(state.projectiles, prev, alpha);
+    this.syncProjectiles(state, prev, alpha);
     const seen = new Set<number>();
     for (const h of state.heroes) {
       if (!h.ball) continue;
@@ -71,27 +143,44 @@ export class WorldView {
     }
   }
 
-  private syncProjectiles(projectiles: Projectile[], prev: Map<number, Snapshot>, alpha: number): void {
+  private syncProjectiles(state: GameState, prev: Map<number, Snapshot>, alpha: number): void {
     const seen = new Set<number>();
-    for (const p of projectiles) {
+    for (const p of state.projectiles) {
       seen.add(p.id);
       let m = this.projectiles.get(p.id);
       if (!m) {
-        const look = PROJECTILES[p.look ?? ''] ?? { color: 0xffe066, size: 0.15 };
-        const key = p.look ?? 'default';
-        if (!this.geometries.has(key)) this.geometries.set(key, new THREE.SphereGeometry(look.size, 8, 6));
-        if (!this.materials.has(key)) this.materials.set(key, new THREE.MeshBasicMaterial({ color: look.color }));
-        m = new THREE.Mesh(this.geometries.get(key), this.materials.get(key));
+        m = buildProjectile(p.look ?? '');
         this.projectiles.set(p.id, m);
         this.scene.add(m);
       }
       const pr = prev.get(p.id);
-      m.position.set(pr ? pr.x + (p.pos.x - pr.x) * alpha : p.pos.x, 1.1, pr ? pr.y + (p.pos.y - pr.y) * alpha : p.pos.y);
+      m.position.set(pr ? pr.x + (p.pos.x - pr.x) * alpha : p.pos.x, 1.15, pr ? pr.y + (p.pos.y - pr.y) * alpha : p.pos.y);
+      m.rotation.y = -Math.atan2(p.dir.y, p.dir.x);
+      if (p.look === 'hook') {
+        // Leine vom Werfer zum Haken
+        const owner = state.heroes.find((h) => h.id === p.ownerId);
+        let rope = this.ropes.get(p.id);
+        if (!rope) {
+          rope = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineBasicMaterial({ color: 0xc8b08a }));
+          this.ropes.set(p.id, rope);
+          this.scene.add(rope);
+        }
+        const pos = rope.geometry.attributes.position as THREE.BufferAttribute;
+        if (owner) pos.setXYZ(0, owner.pos.x, 1.2, owner.pos.y);
+        pos.setXYZ(1, m.position.x, m.position.y, m.position.z);
+        pos.needsUpdate = true;
+      }
     }
     for (const [id, m] of this.projectiles) {
       if (!seen.has(id)) {
         this.scene.remove(m);
         this.projectiles.delete(id);
+        const rope = this.ropes.get(id);
+        if (rope) {
+          this.scene.remove(rope);
+          rope.geometry.dispose();
+          this.ropes.delete(id);
+        }
       }
     }
   }
