@@ -53,16 +53,20 @@ export function damageObjective(ctx: SimContext, obj: Objective, amount: number)
 
 /**
  * Nach einer überstandenen Welle: Intakte Hochbeete ernten (anteilig nach
- * Leben) und füllen den Lebensmittelvorrat auf; zerstörte wachsen nach.
+ * Leben) und füllen den Lebensmittelvorrat auf; zerstörte wachsen nach,
+ * solange der Bienenstock steht.
  */
 export function harvest(ctx: SimContext): void {
   const { state } = ctx;
   const food = state.objectives.find((o) => o.kind === 'food' && !o.destroyed);
+  const hiveAlive = state.objectives.some((o) => o.kind === 'hive' && !o.destroyed);
   let total = 0;
   for (const obj of state.objectives) {
     const def = objectiveDef(ctx, obj.id);
     if (!def.harvest && !def.regrowWaves) continue;
     if (obj.destroyed) {
+      // Ohne Bienen keine Bestäubung: Ist der Bienenstock zerstört, wächst nichts mehr nach.
+      if (!hiveAlive) continue;
       obj.regrowIn--;
       if (obj.regrowIn <= 0) {
         obj.destroyed = false;

@@ -132,6 +132,7 @@ export function parseGameData(raw: {
   for (const [i, p] of (Array.isArray(w?.packs) ? w.packs : []).entries()) {
     if (!zombieIds.has(p?.type)) errors.push(`waves.packs[${i}].type: unbekannter Zombie-Typ`);
     for (const k of ['fromWave', 'packsPerWave', 'minSize', 'maxSize']) num(p, k, `waves.packs[${i}]`);
+    if (p?.sizePerWave !== undefined) num(p, 'sizePerWave', `waves.packs[${i}]`);
   }
   num(a?.heroStart, 'x', 'arena.heroStart');
   num(a?.heroStart, 'y', 'arena.heroStart');

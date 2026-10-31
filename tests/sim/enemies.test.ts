@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { isSleeping, sleep } from '../../src/sim/status';
-import { packCount, waveElites, waveQueue } from '../../src/sim/waves';
+import { packCount, packSize, waveElites, waveQueue } from '../../src/sim/waves';
 import { dist } from '../../src/sim/vec';
 import { arenaData, makeSim, noWaves, placeZombie, run, testData } from './helpers';
 
@@ -36,8 +36,13 @@ describe('Neue Gegner und Elites', () => {
     expect(packCount(1, cfg, 'ratte')).toBe(0);
     expect(packCount(2, cfg, 'ratte')).toBe(1);
     expect(packCount(8, cfg, 'ratte')).toBeGreaterThan(2);
-    expect(packCount(2, cfg, 'hornisse')).toBe(0);
-    expect(packCount(3, cfg, 'hornisse')).toBe(1);
+    // Hornissen ab Welle 1: anfangs ein kleiner Schwarm, mit jeder Welle größer und mehr
+    const hornets = cfg.packs!.find((p) => p.type === 'hornisse')!;
+    expect(packCount(1, cfg, 'hornisse')).toBe(1);
+    expect(packCount(9, cfg, 'hornisse')).toBe(3);
+    expect(packSize(1, hornets, 0)).toBe(2);
+    expect(packSize(1, hornets, 0.99)).toBe(3);
+    expect(packSize(11, hornets, 0)).toBe(6);
     expect(waveElites(4, cfg)).toEqual([]);
     expect(waveElites(5, cfg)).toEqual(['rattenkoenig']);
     expect(waveElites(10, cfg)).toEqual(['schlaechter']);

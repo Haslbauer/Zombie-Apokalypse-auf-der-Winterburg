@@ -37,9 +37,12 @@ describe('Wellenaufbau', () => {
     expect(sim.state.wave.phase).toBe('pause');
     run(sim, cfg.firstPauseDuration * 20 + 1);
     expect(sim.state.wave.phase).toBe('wave');
-    run(sim, Math.ceil(cfg.spawnInterval * 20 * waveSize(1, cfg)) + 1);
+    run(sim, Math.ceil(cfg.spawnInterval * 20 * (waveSize(1, cfg) + 1)) + 1);
     expect(sim.state.wave.queue).toHaveLength(0);
-    expect(sim.state.zombies.length + sim.state.kills).toBe(waveSize(1, cfg));
+    // Dazu ein kleiner Hornissenschwarm mit 2–3 Tieren (ab Welle 1)
+    const spawned = sim.state.zombies.length + sim.state.kills;
+    expect(spawned).toBeGreaterThanOrEqual(waveSize(1, cfg) + 2);
+    expect(spawned).toBeLessThanOrEqual(waveSize(1, cfg) + 3);
     // Ziele nur Herz oder Bienenstock.
     for (const z of sim.state.zombies) expect(['heart', 'hive']).toContain(z.objectiveId);
 

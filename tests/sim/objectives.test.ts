@@ -76,6 +76,17 @@ describe('Ziele: Herz und Bienenstock', () => {
     expect(sim.state.events.filter((e) => e.type === 'regrow')).toHaveLength(beds.length);
   });
 
+  it('ohne Bienenstock wachsen zerstörte Beete nicht mehr nach', () => {
+    const { sim } = setup();
+    const beds = sim.state.objectives.filter((o) => o.kind === 'bed');
+    const hive = sim.state.objectives.find((o) => o.kind === 'hive')!;
+    damageObjective(sim, hive, hive.maxHp);
+    damageObjective(sim, beds[0], beds[0].maxHp);
+    for (let i = 0; i < 5; i++) harvest(sim);
+    expect(beds[0].destroyed).toBe(true);
+    expect(beds.slice(1).every((b) => !b.destroyed)).toBe(true);
+  });
+
   it('Zombies wählen den Vorrat, Ratten Beete oder Stock, Hornissen den Stock', () => {
     const sim = makeSim('rotschopf', 4, testData());
     const pick = (type: string) => {

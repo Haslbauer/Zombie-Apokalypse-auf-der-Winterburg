@@ -55,6 +55,12 @@ export function packCount(n: number, cfg: WaveConfig, type: string): number {
   return p && n >= p.fromWave ? Math.floor(1 + (n - p.fromWave) * p.packsPerWave) : 0;
 }
 
+/** Größe eines Rudels in Welle n; r ist eine Zufallszahl in [0, 1). */
+export function packSize(n: number, pack: NonNullable<WaveConfig['packs']>[number], r: number): number {
+  const grow = Math.floor((pack.sizePerWave ?? 0) * Math.max(0, n - pack.fromWave));
+  return pack.minSize + grow + Math.floor(r * (pack.maxSize - pack.minSize + 1));
+}
+
 /** Elite-Typen in Welle n (alle `every` Wellen, Anzahl siehe WaveConfig.elites, abwechselnd). */
 export function waveElites(n: number, cfg: WaveConfig): string[] {
   const e = cfg.elites;
@@ -119,7 +125,7 @@ function spawnEntry(ctx: SimContext, entry: string): void {
   if (!def) return;
   const base = pickSpawnPoint(ctx, def);
   const pack = kind === 'pack' ? data.waves.packs?.find((p) => p.type === id) : undefined;
-  const count = pack ? pack.minSize + Math.floor(nextRandom(state) * (pack.maxSize - pack.minSize + 1)) : 1;
+  const count = pack ? packSize(state.wave.number, pack, nextRandom(state)) : 1;
   for (let i = 0; i < count; i++) {
     const spread = kind === 'pack' ? 3 : 2;
     const pos = {

@@ -181,8 +181,11 @@ export interface WaveConfig {
   firstPauseDuration: number;
   pauseDuration: number;
   mix: WaveMixEntry[];
-  /** Rudel und Schwärme: ab fromWave, Anzahl 1 + (Welle − fromWave) × packsPerWave (abgerundet), je minSize–maxSize Tiere. */
-  packs?: { type: string; fromWave: number; packsPerWave: number; minSize: number; maxSize: number }[];
+  /**
+   * Rudel und Schwärme: ab fromWave, Anzahl 1 + (Welle − fromWave) × packsPerWave (abgerundet),
+   * je minSize–maxSize Tiere; sizePerWave lässt beide Grenzen mit jeder Welle wachsen (abgerundet).
+   */
+  packs?: { type: string; fromWave: number; packsPerWave: number; minSize: number; maxSize: number; sizePerWave?: number }[];
   /** Elites: alle `every` Wellen, Anzahl ⌈Welle/countEvery⌉ (Standard: ⌊Welle/every⌋), Typen abwechselnd. */
   elites?: { every: number; countEvery?: number; types: string[] };
 }

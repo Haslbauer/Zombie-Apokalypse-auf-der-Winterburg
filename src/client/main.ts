@@ -269,7 +269,9 @@ function handleEvents(state: GameState): void {
         hud.message('Die Bienen sind wütend!');
         break;
       case 'objectiveDestroyed':
-        if (!state.gameOver) hud.message(`${gameData.arena.objectives.find((o) => o.id === e.objectiveId)?.name} zerstört`);
+        if (state.gameOver) break;
+        if (state.objectives.find((o) => o.id === e.objectiveId)?.kind === 'hive') hud.message('Bienenstock zerstört – die Beete wachsen nicht mehr nach!');
+        else hud.message(`${gameData.arena.objectives.find((o) => o.id === e.objectiveId)?.name} zerstört`);
         break;
       case 'harvest':
         hud.message(`Ernte: +${e.amount} Vorrat`);

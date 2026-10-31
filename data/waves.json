@@ -56,10 +56,11 @@
     },
     {
       "type": "hornisse",
-      "fromWave": 3,
-      "packsPerWave": 0.35,
-      "minSize": 4,
-      "maxSize": 6
+      "fromWave": 1,
+      "packsPerWave": 0.25,
+      "minSize": 2,
+      "maxSize": 3,
+      "sizePerWave": 0.4
     }
   ]
 }
