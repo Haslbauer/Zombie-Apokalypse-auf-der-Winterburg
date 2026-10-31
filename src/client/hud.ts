@@ -1,6 +1,7 @@
 import { rankValue } from '../sim/abilities';
 import { defaultTeam } from '../sim/bots/team';
 import type { BotDifficulty, GameData, GameState, Hero, HeroDef } from '../sim/types';
+import type { RoomInfo } from '../net/protocol';
 import { type Action, ACTIONS, type Keybindings, keyName } from './keybindings';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text = ''): HTMLElementTagNameMap[K] => {
@@ -47,6 +48,7 @@ export class Hud {
   private readonly banner = el('div', 'hud-banner');
   private readonly help = el('div', 'hud-help');
   private readonly overlay = el('div', 'hud-overlay');
+  private readonly invite = el('div', 'hud-invite');
   private bannerTimer = 0;
 
   constructor(
@@ -83,7 +85,8 @@ export class Hud {
     this.shopHint.style.display = 'none';
     root.append(this.shopHint, this.team);
     this.updateHelp();
-    root.append(this.top, this.bottom, this.banner, this.respawn, this.help, this.overlay, this.tooltip);
+    root.append(this.top, this.bottom, this.banner, this.respawn, this.help, this.invite, this.overlay, this.tooltip);
+    this.invite.style.display = 'none';
     this.showInGame(false);
   }
 
@@ -96,7 +99,12 @@ export class Hud {
    * Zweiter Schritt: Team mit drei Bots (Klick tauscht reihum durch die freien
    * Helden) und Bot-Stärke wählen, dann „Los!“.
    */
-  showTeam(playerId: string, onStart: (bots: string[], difficulty: BotDifficulty) => void, onBack: () => void): void {
+  showTeam(
+    playerId: string,
+    onStart: (bots: string[], difficulty: BotDifficulty) => void,
+    onBack: () => void,
+    onOnline?: (bots: string[], difficulty: BotDifficulty, name: string) => void,
+  ): void {
     this.overlay.replaceChildren();
     const team = defaultTeam(this.data.bots, playerId);
     let difficulty: BotDifficulty = 'mittel';
@@ -147,16 +155,106 @@ export class Hud {
     const buttons = el('div', 'hud-buttons');
     const back = el('button', 'hud-restart', 'Zurück');
     back.addEventListener('click', onBack);
-    const go = el('button', 'hud-restart hud-go', 'Los!');
+    const go = el('button', 'hud-restart hud-go', 'Allein spielen');
     go.addEventListener('click', () => onStart([...team], difficulty));
     buttons.append(back, go);
-    box.append(row, diffRow, buttons);
+    box.append(row, diffRow);
+    if (onOnline) {
+      // Mehrspieler: Raum auf dem Server, Freunde übernehmen per Link die Bot-Plätze
+      const name = this.nameInput();
+      const online = el('button', 'hud-restart hud-go hud-online', 'Online mit Freunden');
+      online.addEventListener('click', () => onOnline([...team], difficulty, name.value));
+      buttons.append(online);
+      box.append(name);
+    }
+    box.append(buttons);
     this.overlay.append(box);
     this.overlay.style.display = '';
   }
 
-  /** Teamleiste links: Porträt, Name, Mensch/Bot, Level, Leben, Respawn. */
-  buildTeam(state: GameState, playerId: number, difficulty: BotDifficulty): void {
+  /** Namensfeld für den Mehrspieler (im Browser gemerkt). */
+  private nameInput(): HTMLInputElement {
+    const input = el('input', 'hud-name-input');
+    input.placeholder = 'Dein Name';
+    input.maxLength = 16;
+    try {
+      input.value = localStorage.getItem('playerName') ?? '';
+    } catch {
+      // ohne Speicher: leer lassen
+    }
+    input.addEventListener('change', () => {
+      try {
+        localStorage.setItem('playerName', input.value);
+      } catch {
+        // egal
+      }
+    });
+    return input;
+  }
+
+  /**
+   * Beitreten per Einladungslink: Die Plätze des Raums; ein Bot-Platz lässt sich
+   * übernehmen (samt Level, Gold und Items).
+   */
+  showJoin(room: RoomInfo, onPick: (slot: number, name: string) => void, onCancel: () => void, error?: string): void {
+    delete this.overlay.dataset.menu;
+    this.showInGame(false);
+    this.overlay.replaceChildren();
+    const box = el('div', 'hud-box hud-start');
+    box.append(el('h1', '', `Raum ${room.code}`), el('p', '', 'Wähle einen Helden, den gerade ein Bot spielt. Du übernimmst ihn mit Level, Gold und Items.'));
+    if (error) box.append(el('p', 'hud-error', error));
+    const name = this.nameInput();
+    const row = el('div', 'hud-heroes');
+    room.slots.forEach((slot, i) => {
+      const def = this.data.heroes.find((h) => h.id === slot.defId)!;
+      const btn = el('button', 'hud-hero-btn');
+      btn.dataset.slot = String(i);
+      const img = el('img', 'hud-hero-portrait');
+      img.src = `portraits/${def.id}.jpg`;
+      btn.append(img, el('strong', '', def.name), el('small', 'hud-role', def.role), el('span', 'hud-hero-desc', slot.human ? `Spielt: ${slot.name}` : 'Bot – übernehmen'));
+      if (slot.human) btn.disabled = true;
+      else btn.addEventListener('click', () => onPick(i, name.value));
+      row.append(btn);
+    });
+    const buttons = el('div', 'hud-buttons');
+    const back = el('button', 'hud-restart', 'Allein spielen');
+    back.addEventListener('click', onCancel);
+    buttons.append(back);
+    box.append(row, name, buttons);
+    this.overlay.append(box);
+    this.overlay.style.display = '';
+  }
+
+  /** Hinweis während der Verbindung bzw. bei Fehlern (Mehrspieler). */
+  showNotice(title: string, text: string, onBack: () => void): void {
+    this.showInGame(false);
+    this.overlay.replaceChildren();
+    const box = el('div', 'hud-box');
+    const back = el('button', 'hud-restart', 'Zurück');
+    back.addEventListener('click', onBack);
+    box.append(el('h1', '', title), el('p', '', text), back);
+    this.overlay.append(box);
+    this.overlay.style.display = '';
+  }
+
+  /** Einladung im Spiel: Raum-Code und Link zum Kopieren (null blendet aus). */
+  setInvite(code: string | null, link = ''): void {
+    this.invite.replaceChildren();
+    this.invite.style.display = code ? '' : 'none';
+    if (!code) return;
+    const copy = el('button', 'hud-invite-copy', 'Link kopieren');
+    copy.addEventListener('click', () => {
+      navigator.clipboard?.writeText(link).then(
+        () => (copy.textContent = 'Kopiert!'),
+        () => window.prompt('Einladungslink:', link),
+      );
+      setTimeout(() => (copy.textContent = 'Link kopieren'), 2000);
+    });
+    this.invite.append(el('span', '', `Raum ${code}`), copy);
+  }
+
+  /** Teamleiste links: Porträt, Name, Mensch/Bot, Level, Leben, Respawn. names: Menschen im Raum nach Helden-Id (Mehrspieler). */
+  buildTeam(state: GameState, playerId: number, difficulty: BotDifficulty, names?: Map<number, string>): void {
     this.team.replaceChildren();
     this.teamRows.clear();
     for (const h of state.heroes) {
@@ -169,7 +267,9 @@ export class Hud {
       const info = el('div', 'hud-team-info');
       const name = el('div', 'hud-team-name');
       name.append(el('span', '', def.name), level);
-      const status = el('div', 'hud-team-status', h.bot ? `Bot (${difficulty})` : 'Du');
+      // Mehrspieler (names gesetzt): Wer nicht in der Raumliste steht, ist ein Bot
+      const bot = names ? !names.has(h.id) : !!h.bot;
+      const status = el('div', 'hud-team-status', h.id === playerId ? 'Du' : bot ? `Bot (${difficulty})` : (names?.get(h.id) ?? 'Mitspieler'));
       const bar = el('div', 'hud-team-bar');
       const hp = el('div', 'hud-team-hp');
       bar.append(hp);

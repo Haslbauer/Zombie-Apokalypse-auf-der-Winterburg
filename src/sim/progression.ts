@@ -1,4 +1,4 @@
-import type { SimContext } from './context';
+import type { DataContext, SimContext } from './context';
 import { itemStats, refreshMaxHp } from './items';
 import type { Hero, HeroDef, Zombie } from './types';
 import { dist } from './vec';
@@ -46,7 +46,7 @@ export function levelUp(ctx: SimContext, h: Hero): void {
 }
 
 /** Darf der Held einen Skillpunkt in diese Fähigkeit stecken (Regeln wie in LoL)? */
-export function canRankUp(ctx: SimContext, h: Hero, slot: number): boolean {
+export function canRankUp(ctx: DataContext, h: Hero, slot: number): boolean {
   const prog = ctx.data.progression;
   if (h.skillPoints <= 0 || slot < 0 || slot > 3) return false;
   const rank = h.ranks[slot];

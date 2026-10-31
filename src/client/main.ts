@@ -1,16 +1,19 @@
 import { gameData } from '../gameData';
-import { Simulation } from '../sim/game';
+import type { ClientCommand, RoomInfo } from '../net/protocol';
+import type { DataContext } from '../sim/context';
 import { shopClosedReason } from '../sim/economy';
+import { Simulation } from '../sim/game';
 import { buildPlan } from '../sim/items';
 import { defaultTeam } from '../sim/bots/team';
 import { canRankUp } from '../sim/progression';
-import { type BotDifficulty, type Command, DT, type GameEvent, type GameState } from '../sim/types';
+import type { BotDifficulty, GameEvent, GameState } from '../sim/types';
 import { Effects } from './effects';
 import { Hud } from './hud';
 import { Input } from './input';
 import { Keybindings } from './keybindings';
 import { loadRiggedModel } from './models';
-import { GameRenderer, type Snapshot } from './renderer';
+import { GameRenderer } from './renderer';
+import { LocalSession, RemoteSession, type Session } from './session';
 import { ShopView } from './shop';
 
 const renderer = new GameRenderer(document.getElementById('game')!, gameData);
@@ -33,36 +36,40 @@ const spectateDifficulty = (params.get('difficulty') ?? 'mittel') as BotDifficul
 const zoom = Number(params.get('zoom')) || 0;
 if (zoom > 0) renderer.cam.setDistance(zoom);
 
-let sim: Simulation | null = null;
+/** Laufende Partie: lokal (Einzelspieler) oder auf dem Server (Mehrspieler). */
+let session: Session | null = null;
+/** Held des Spielers (beim Zuschauen der erste Bot). */
 let heroId = 0;
 let heroDefId = '';
 let team: string[] = [];
 let difficulty: BotDifficulty = 'mittel';
-let accumulator = 0;
-let paused = false;
-/** Einmalige Befehle (Fähigkeiten, Skillpunkte) bis zum nächsten Tick. */
-let pending: Command[] = [];
-const prev = new Map<number, Snapshot>();
 
-input.onCast = (slot) => pending.push({ heroId, type: 'cast', slot, aim: input.aimPoint });
-input.onLevelUp = (slot) => pending.push({ heroId, type: 'levelUp', slot });
+/** Befehl an die Partie (lokal sofort in den nächsten Tick, online an den Server). */
+const cmd = (c: ClientCommand) => session?.send(c);
+/** Zustand und Daten für Abfragen wie „Shop offen?“ (ohne eigene Simulation im Mehrspieler). */
+const ctx = (): DataContext => ({ state: session!.state, data: gameData });
+const myHero = () => session?.state.heroes.find((h) => h.id === heroId);
+
+input.onCast = (slot) => cmd({ type: 'cast', slot, aim: input.aimPoint });
+input.onLevelUp = (slot) => cmd({ type: 'levelUp', slot });
 hud.onLevelUp = input.onLevelUp;
-input.onUse = (slot) => pending.push({ heroId, type: 'use', slot });
+input.onUse = (slot) => cmd({ type: 'use', slot });
 hud.onUse = input.onUse;
-shop.onBuy = (itemId) => pending.push({ heroId, type: 'buy', itemId });
+shop.onBuy = (itemId) => cmd({ type: 'buy', itemId });
 shop.onClose = () => shop.hide();
 hud.onSell = (slot, consumable) => {
-  if (shop.open) pending.push({ heroId, type: 'sell', slot, consumable });
+  if (shop.open) cmd({ type: 'sell', slot, consumable });
   else hud.message('Verkaufen nur im offenen Shop');
 };
 /** Shop öffnen bzw. schließen; nur in der Pause im Innenhof. */
 function toggleShop(): void {
-  if (!sim) return;
+  const hero = myHero();
+  if (!session || !hero) return;
   if (shop.open) {
     shop.hide();
     return;
   }
-  const reason = shopClosedReason(sim, sim.hero(heroId)!);
+  const reason = shopClosedReason(ctx(), hero);
   if (reason) hud.message(reason);
   else shop.show();
 }
@@ -74,56 +81,147 @@ input.onEscape = () => {
   return true;
 };
 
-/** Heldenwahl, dann Team-Ansicht, dann Spielstart. */
+/** Heldenwahl, dann Team-Ansicht, dann Spielstart (allein oder online). */
 function pickHero(defId: string): void {
-  hud.showTeam(defId, (bots, diff) => startGame(defId, bots, diff), () => hud.showStart(pickHero));
+  hud.showTeam(
+    defId,
+    (bots, diff) => startGame(defId, bots, diff),
+    () => hud.showStart(pickHero),
+    (bots, diff, name) => startOnline(defId, bots, diff, name),
+  );
 }
 
 /**
- * Partie starten: Slot 0 ist der Spieler, die übrigen drei spielen Bots.
+ * Einzelspieler: Slot 0 ist der Spieler, die übrigen drei spielen Bots.
  * defId null: nur Bots (Zuschauen).
  */
 function startGame(defId: string | null, bots: string[], diff: BotDifficulty): void {
+  session?.close();
   team = bots;
   difficulty = diff;
   const heroes = defId ? [defId, ...bots] : bots;
-  sim = new Simulation(gameData, {
-    seed: (Math.random() * 2 ** 31) | 0,
-    heroes,
-    startLevel,
-    bots: heroes.map((_, i) => (defId && i === 0 ? null : diff)),
-  });
-  sim.state.wave.number = startWave;
-  const hero = sim.state.heroes[0];
+  const local = new LocalSession(
+    { seed: (Math.random() * 2 ** 31) | 0, heroes, startLevel, bots: heroes.map((_, i) => (defId && i === 0 ? null : diff)) },
+    startWave,
+    !defId,
+  );
+  session = local;
+  heroId = local.state.heroes[0].id;
+  begin(defId !== null);
+  hud.setInvite(null);
+}
+
+/** Gemeinsamer Start: Darstellung, HUD und Kamera für den Helden heroId. */
+function begin(isPlayer: boolean): void {
+  const hero = myHero()!;
   heroDefId = hero.defId;
-  heroId = hero.id;
-  renderer.playerId = defId ? hero.id : null;
+  renderer.playerId = isPlayer ? hero.id : null;
   shop.hide();
-  accumulator = 0;
-  paused = false;
-  pending = [];
-  prev.clear();
   renderer.reset();
   renderer.setAimIndicator(gameData.heroes.find((h) => h.id === heroDefId)!.attack, hero.radius);
   effects.clear();
   hud.startGame(heroDefId);
-  hud.buildTeam(sim.state, defId ? heroId : -1, diff);
+  hud.buildTeam(session!.state, isPlayer ? heroId : -1, difficulty, playerNames());
   renderer.cam.lookAt(hero.pos.x, hero.pos.y);
-  if (overview || !defId) {
+  if (overview || !isPlayer) {
     renderer.scene.fog = null;
     renderer.cam.overview(gameData.arena.width / 2 + (gameData.arena.minX ?? 0) / 2, gameData.arena.height / 2 + (gameData.arena.minY ?? 0) / 2 + 8, 135);
   }
   hud.message('Mach dich bereit!');
 }
 
-/** Esc: Pause mit Tastenbelegung öffnen bzw. schließen (nur während einer Partie). */
+/** Mitspieler-Namen nach Helden-Id (Mehrspieler). */
+function playerNames(): Map<number, string> | undefined {
+  const room = session instanceof RemoteSession ? session.room : null;
+  return room ? new Map(room.slots.filter((s) => s.human && s.name).map((s) => [s.heroId, s.name!])) : undefined;
+}
+
+/** Platzhalter-Zustand, bis der erste Zustand vom Server da ist. */
+function placeholder(heroes: string[]): GameState {
+  return new Simulation(gameData, { seed: 1, heroes }).state;
+}
+
+/** Mehrspieler: Raum auf dem Server erstellen; Freunde treten per Link bei. */
+function startOnline(defId: string, bots: string[], diff: BotDifficulty, name: string): void {
+  team = bots;
+  difficulty = diff;
+  connect({ t: 'create', heroes: [defId, ...bots], difficulty: diff, name }, [defId, ...bots]);
+}
+
+/** Einladungslink geöffnet (?room=CODE): Plätze zeigen, einen Bot übernehmen. */
+async function joinRoom(code: string, error?: string): Promise<void> {
+  hud.showNotice('Verbinde …', `Raum ${code}`, leaveOnline);
+  try {
+    const room = await RemoteSession.info(code);
+    difficulty = room.difficulty;
+    hud.showJoin(
+      room,
+      (slot, name) => connect({ t: 'join', room: room.code, slot, name }, room.slots.map((s) => s.defId)),
+      leaveOnline,
+      error,
+    );
+  } catch (err) {
+    hud.showNotice('Raum nicht gefunden', (err as Error).message, leaveOnline);
+  }
+}
+
+function connect(first: Parameters<typeof RemoteSession.connect>[0], heroes: string[]): void {
+  session?.close();
+  session = null;
+  hud.showNotice('Verbinde …', 'Verbindung zum Spielserver wird aufgebaut.', leaveOnline);
+  RemoteSession.connect(first, placeholder(heroes)).then(
+    (remote) => {
+      let started = false;
+      remote.onRoom = (room: RoomInfo) => {
+        if (remote.heroId < 0) return; // erst nach der Beitrittsbestätigung
+        difficulty = room.difficulty;
+        if (!started) {
+          started = true;
+          session = remote;
+          heroId = remote.heroId;
+          const link = `${location.origin}${location.pathname}?room=${room.code}`;
+          history.replaceState(null, '', `?room=${room.code}`);
+          begin(true);
+          hud.setInvite(room.code, link);
+        } else hud.buildTeam(remote.state, heroId, difficulty, playerNames());
+      };
+      remote.onError = (msg) => {
+        if (!started) {
+          remote.close();
+          const code = new URLSearchParams(location.search).get('room');
+          if (code) void joinRoom(code, msg);
+          else hud.showNotice('Fehler', msg, leaveOnline);
+        } else hud.message(msg);
+      };
+      remote.onClose = () => {
+        if (session === remote) {
+          session = null;
+          hud.setInvite(null);
+          hud.showNotice('Verbindung getrennt', 'Die Verbindung zum Spielserver ist abgebrochen. Über den Einladungslink kommst du zurück.', leaveOnline);
+        }
+      };
+    },
+    () => hud.showNotice('Server nicht erreichbar', 'Für den Mehrspieler muss der Spielserver laufen (npm run server).', leaveOnline),
+  );
+}
+
+/** Mehrspieler verlassen: zurück zur Heldenwahl. */
+function leaveOnline(): void {
+  session?.close();
+  session = null;
+  hud.setInvite(null);
+  history.replaceState(null, '', location.pathname);
+  hud.showStart(pickHero);
+}
+
+/** Esc: Pause mit Tastenbelegung öffnen bzw. schließen (online läuft das Spiel weiter). */
 input.onMenu = () => {
-  if (!sim || sim.state.gameOver) return;
+  if (!session || session.state.gameOver) return;
   if (hud.menuOpen) {
     hud.hideSettings();
-    paused = false;
+    session.paused = false;
   } else {
-    paused = true;
+    session.paused = !session.online;
     input.releaseAll();
     hud.showSettings(
       (done) => (input.capture = done),
@@ -131,13 +229,6 @@ input.onMenu = () => {
     );
   }
 };
-
-/** Positionen vor dem Tick merken, damit zwischen zwei Ticks interpoliert werden kann. */
-function snapshot(state: GameState): void {
-  prev.clear();
-  for (const u of [...state.heroes, ...state.zombies]) prev.set(u.id, { x: u.pos.x, y: u.pos.y, facing: u.facing });
-  for (const p of state.projectiles) prev.set(p.id, { x: p.pos.x, y: p.pos.y, facing: 0 });
-}
 
 /** Farben der Fähigkeitseffekte. */
 const EFFECT_COLORS: Record<string, number> = {
@@ -306,7 +397,12 @@ function handleEvents(state: GameState): void {
         hud.message(`Welle ${e.number} geschafft`);
         break;
       case 'gameOver':
-        hud.showGameOver(state, e.reason, () => startGame(spectate ? null : heroDefId, team, difficulty));
+        hud.showGameOver(state, e.reason, () => {
+          if (session instanceof RemoteSession) {
+            session.restart();
+            begin(true);
+          } else startGame(spectate ? null : heroDefId, team, difficulty);
+        });
         break;
     }
   }
@@ -318,39 +414,28 @@ renderer.renderer.setAnimationLoop((now) => {
   last = now;
   const time = now / 1000;
 
-  if (sim) {
-    if (!paused) {
-      accumulator += dt;
-      // Eine Eingabe pro Frame; sie gilt für alle Ticks dieses Frames.
-      // Zuschauen: keine eigenen Befehle, alle Helden sind Bots.
-      const own: Command[] = spectate ? [] : [{ heroId, type: 'input', ...input.read() }];
-      while (accumulator >= DT) {
-        snapshot(sim.state);
-        sim.step(spectate ? pending.filter((c) => c.type === 'startWave') : [...own, ...pending]);
-        pending = [];
-        handleEvents(sim.state);
-        accumulator -= DT;
-      }
-    } else {
-      pending = [];
-    }
-    const state = sim.state;
-    const hero = sim.hero(heroId)!;
-    renderer.sync(state, prev, state.gameOver || paused ? 1 : accumulator / DT, dt, time);
-    const focus = renderer.unitPosition(heroId) ?? hero.pos;
-    renderer.updateAimIndicator(hero.alive && !spectate ? focus : null, hero.facing, hero.attackTimer <= 0);
+  const hero = myHero();
+  if (session && hero) {
+    // Eine Eingabe pro Frame; zuschauen: keine eigenen Befehle
+    if (!spectate) cmd({ type: 'input', ...input.read() });
+    const alpha = session.frame(dt, handleEvents);
+    const state = session.state;
+    const me = myHero() ?? hero;
+    renderer.sync(state, session.prev, alpha, dt, time);
+    const focus = renderer.unitPosition(heroId) ?? me.pos;
+    renderer.updateAimIndicator(me.alive && !spectate ? focus : null, me.facing, me.attackTimer <= 0);
     const slot = input.previewSlot;
     const def = gameData.heroes.find((h) => h.id === heroDefId)!;
-    renderer.showPreview(slot !== null && hero.alive && hero.ranks[slot] > 0 ? def.abilities[slot] : null, hero, input.aimPoint);
+    renderer.showPreview(slot !== null && me.alive && me.ranks[slot] > 0 ? def.abilities[slot] : null, me, input.aimPoint);
     renderer.cam.follow(focus.x, focus.y, dt);
-    hud.update(state, heroId, dt, (s) => canRankUp(sim!, hero, s));
-    const shopReason = state.gameOver ? 'Spiel vorbei' : shopClosedReason(sim, hero);
+    hud.update(state, heroId, dt, (s) => canRankUp(ctx(), me, s));
+    const shopReason = state.gameOver ? 'Spiel vorbei' : shopClosedReason(ctx(), me);
     if (shop.open && shopReason) {
       shop.hide();
       hud.message(shopReason);
     }
-    hud.setShopHint(!shopReason && !shop.open && !paused);
-    shop.update(hero, def.attack.type, (id) => buildPlan(sim!, hero, id));
+    hud.setShopHint(!shopReason && !shop.open && !session.paused);
+    shop.update(me, def.attack.type, (id) => buildPlan(ctx(), me, id));
   }
 
   effects.update(dt);
@@ -380,9 +465,11 @@ for (const [name, height] of Object.entries(MODELS)) {
     .catch((err) => console.warn(`Modell ${name} nicht geladen:`, err));
 }
 
-input.onStartWave = () => pending.push({ heroId, type: 'startWave' });
+input.onStartWave = () => cmd({ type: 'startWave' });
 input.onZoom = (d) => renderer.cam.zoom(d);
 hud.startWaveBtn.addEventListener('click', input.onStartWave);
 
+const roomCode = params.get('room');
 if (spectate) startGame(null, defaultTeam(gameData.bots, null), spectateDifficulty);
+else if (roomCode) void joinRoom(roomCode.toUpperCase());
 else hud.showStart(pickHero);

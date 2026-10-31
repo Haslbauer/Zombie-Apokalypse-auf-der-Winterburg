@@ -1,4 +1,4 @@
-import type { SimContext } from './context';
+import type { DataContext, SimContext } from './context';
 import { buildPlan, itemDef, refreshMaxHp } from './items';
 import { addBuff, hasBuff } from './status';
 import type { Hero, Zombie, ZombieDef } from './types';
@@ -38,7 +38,7 @@ function giveGold(ctx: SimContext, h: Hero, amount: number, pos?: { x: number; y
 }
 
 /** Einkaufen nur in der Pause und nur im Innenhof (Umkreis um das Herz). Gibt den Grund zurück, wenn nicht. */
-export function shopClosedReason(ctx: SimContext, h: Hero): string | null {
+export function shopClosedReason(ctx: DataContext, h: Hero): string | null {
   if (!h.alive) return 'Gefallene Helden können nicht einkaufen';
   if (ctx.state.wave.phase !== 'pause') return 'Der Shop hat nur in der Pause geöffnet';
   const heart = ctx.state.objectives.find((o) => o.id === 'heart');

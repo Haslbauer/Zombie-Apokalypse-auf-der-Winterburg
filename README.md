@@ -16,6 +16,31 @@ npm run dev
 
 Dann http://localhost:5173 öffnen. Weitere Befehle: `npm test` (Simulationstests), `npm run typecheck`, `npm run build`, `npm run models` (3D-Modelle aus `assets/models/` umwandeln, siehe dortige README).
 
+## Mehrspieler
+
+Bis zu vier Spieler, freie Plätze spielen Bots. Der Server rechnet das Spiel (samt Bots) und liefert es auch aus.
+
+```bash
+npm run build
+npm run server
+```
+
+Dann http://localhost:3000 öffnen, Helden wählen, **„Online mit Freunden“**. Oben rechts steht der Raum-Code mit **„Link kopieren“**. Wer den Link öffnet, übernimmt einen Bot-Platz samt Level, Gold und Items; wer geht, wird wieder durch einen Bot ersetzt. Leere Räume halten 5 Minuten (Rückkehr über denselben Link).
+
+- **Im selben WLAN:** Die anderen öffnen `http://<IP-des-Rechners>:3000/?room=CODE` (IP z. B. mit `ipconfig` bzw. `ip addr`). Eventuell muss die Firewall Port 3000 erlauben.
+- **Über das Internet, von zu Hause:** einen Tunnel starten, z. B. `cloudflared tunnel --url http://localhost:3000` oder `ngrok http 3000`, und dessen Adresse weitergeben.
+- **Dauerhaft im Internet:** Docker-Image bauen und bei einem Anbieter (Fly.io, Render, Railway, eigener Server) starten:
+
+```bash
+docker build -t winterburg .
+```
+
+```bash
+docker run -p 3000:3000 winterburg
+```
+
+Port über `PORT` (Standard 3000). Beim Entwickeln (`npm run dev`) leitet Vite den Mehrspieler an einen laufenden `npm run server` weiter.
+
 ## Steuerung (wie in Supervive)
 
 | Eingabe | Wirkung |
@@ -68,10 +93,12 @@ Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.
 
 ## Aufbau
 
-- `src/sim/` – Spiellogik, tickbasiert (20 Ticks/s), ohne Browser-Abhängigkeit. Läuft im Singleplayer im Browser, ab M6 auch auf dem Server.
-- `src/client/` – Rendering (Three.js), Eingabe, HUD
+- `src/sim/` – Spiellogik, tickbasiert (20 Ticks/s), ohne Browser-Abhängigkeit. Läuft im Einzelspieler im Browser, im Mehrspieler auf dem Server.
+- `src/net/` – Netzprotokoll (Nachrichten, kompakte Zustände)
+- `src/client/` – Rendering (Three.js), Eingabe, HUD; `session.ts` verbindet lokal oder mit dem Server
+- `server/` – Spielserver (Node, WebSocket): Räume, Beitritt per Link, Bots auf freien Plätzen
 - `data/` – Helden, Zombies, Wellen und Arena als JSON (Balancing ohne Codeänderung)
-- `tests/sim/` – Tests für die Simulation (Vitest)
+- `tests/sim/`, `tests/server/` – Tests für Simulation und Server (Vitest)
 
 ## Meilensteine
 
@@ -80,5 +107,5 @@ Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.
 3. M3: Level, XP, Skillpunkte, 6 Helden mit Fähigkeiten ✅
 4. M4: Gold, Shop, Waffen und Items, Elite-Zombies ✅
 5. M5: Bots (Singleplayer mit 3 Bots) ✅
-6. M6: Server und Mehrspieler
+6. M6: Server und Mehrspieler ✅ (Vorhersage der eigenen Bewegung folgt)
 7. M7: Weitere Helden, Boss, Balancing, Feinschliff

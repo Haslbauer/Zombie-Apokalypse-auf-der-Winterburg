@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.2)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v1.3)
 
 Stand: 31.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v1.3: M6 Mehrspieler: Node-Server mit Räumen, Beitritt per Link, Bots auf freien Plätzen, Docker.
 Änderungen v1.2: Heldennamen Grimm (Hund), Hagedorn (Gärtnerin), Rauchbart (Pirat), Spike (Libero), Ragnar (Rotschopf), Somnia (Schläferin). Die internen IDs bleiben (`gaertnerin`, `pirat`, `libero`, `rotschopf`, `schlaeferin`, `grimm`).
 Änderungen v1.1: Karte um 10 m Gelände erweitert, Zombies kommen von außen durch Tore (West, Süd, Ost), Bunkertür nach Norden. Hornissen ab Welle 1 in wachsenden Schwärmen, mehr Zombies aus Nordwest. Ohne Bienenstock wachsen Beete nicht mehr nach. Sidequests: Zombie-Postbote als Team-Ziel, neutrale Lager (Fledermäuse, Spinnen, Kröte).
 Änderungen v1.0: Items kombinierbar wie in LoL (Grundteile, Aufbau, fertige Items; Bauteile werden verbraucht und angerechnet). Animierte Modelle für alle Helden, Zombies, Ratten und Hornissen.
@@ -239,6 +240,12 @@ Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
 ## 10. Mehrspieler und Bots
 
 - Raum mit 4 Slots. Der Host erstellt den Raum, Freunde joinen per Link. Leere Slots füllen Bots.
+- **Umgesetzt (M6):** Node-Server (`server/`, `npm run server`, Docker), liefert das gebaute Spiel aus und betreibt Räume über WebSocket (`/ws`).
+  - Raum erstellen: Held und Team wählen, „Online mit Freunden“. Raum-Code aus 4 Zeichen, Einladungslink `?room=CODE`.
+  - Beitreten: Der Link zeigt die vier Plätze; ein Bot-Platz lässt sich übernehmen (Level, Gold, Items bleiben). Verlässt ein Mensch den Raum, übernimmt wieder ein Bot. Leere Räume stehen still und werden nach 5 Minuten geschlossen.
+  - Netz: Der Server simuliert mit 20 Ticks/s und schickt jedem Spieler 20× pro Sekunde den Zustand (Zombies als kompakte Zahlenreihen, Ereignisse gesammelt, WebSocket-Kompression). Gemessen rund 3 KB/s pro Spieler zu Beginn. Der Client blendet zwischen zwei Zuständen weich über und schickt Eingaben höchstens 20× pro Sekunde. Befehle steuern nur den eigenen Helden.
+  - Im Mehrspieler gibt es keine Pause (Esc öffnet nur die Tastenbelegung). „Nochmal“ nach Game Over startet die Partie für alle neu.
+  - Noch offen: Vorhersage der eigenen Bewegung im Client (bei hohem Ping spürbar), Heldenwechsel in der Pause, Hosting bei einem Anbieter.
 - Join in laufender Partie: Der Mensch übernimmt den Bot-Slot samt Level, Gold und Items. Heldenwechsel nur in der Pausenphase (Vorschlag).
 - Schwierigkeit ist fest und hängt nicht von der Zahl der Menschen ab.
 - Bot-KI ist klassische Spiel-KI, kein Sprachmodell. Umgesetzt in M5 (`src/sim/bots/`, Werte in `data/bots.json`):
@@ -279,7 +286,7 @@ Garten mit Haus, Hecken und Zugängen. Umgesetzt in `data/map.json`, 1 Spieleinh
 3. M3: Level, XP, Skillpunkte, 6 Helden (Grimm, Gärtnerin, Pirat, Libero, Rotschopf, Schläferin) mit Fähigkeiten auf 1–4
 4. M4: Gold, Shop, Waffen und Items, Elite-Zombies, Ratten und Kriecher
 5. M5: Bots (Singleplayer mit 3 Bots), Balancing für 4 Helden
-6. M6: Server und Mehrspieler (Raum, Join per Link, Bot-Ersatz)
+6. M6: Server und Mehrspieler (Raum, Join per Link, Bot-Ersatz) – umgesetzt bis auf die Bewegungsvorhersage
 7. M7: Weitere Helden (Taucher, Imker, zwei freie Slots), Boss, Balancing, Feinschliff
 
 ## 13. Offene Fragen

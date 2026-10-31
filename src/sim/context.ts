@@ -15,3 +15,6 @@ export interface SimContext {
   heroDefs: Map<string, HeroDef>;
   zombieDefs: Map<string, ZombieDef>;
 }
+
+/** Nur Zustand und Daten: reicht für Abfragen, die auch der Mehrspieler-Client ohne eigene Simulation stellt. */
+export type DataContext = Pick<SimContext, 'state' | 'data'>;

@@ -679,3 +679,49 @@ html, body {
     display: none;
   }
 }
+/* ---------- M6: Mehrspieler ---------- */
+.hud-name-input {
+  display: block;
+  margin: 10px auto 0;
+  padding: 8px 12px;
+  width: 220px;
+  font: inherit;
+  color: #f2f2e8;
+  background: #2c4231;
+  border: 1px solid #4f7a57;
+  border-radius: 8px;
+  pointer-events: auto;
+}
+.hud-online {
+  background: #3a6fb0;
+}
+.hud-error {
+  color: #ff9f7a;
+}
+.hud-hero-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.hud-invite {
+  position: absolute;
+  top: 70px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  background: rgba(15, 22, 17, 0.85);
+  border: 1px solid #4f7a57;
+  border-radius: 8px;
+  font-size: 13px;
+  pointer-events: auto;
+}
+.hud-invite-copy {
+  font: inherit;
+  color: #1b1b1b;
+  background: #ffd166;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+}

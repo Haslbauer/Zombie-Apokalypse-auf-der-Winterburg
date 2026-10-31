@@ -1,0 +1,9 @@
+{
+  "//": "Server (Node): Simulation, Netzprotokoll und Spieldaten ohne Browser-Typen.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": ["node"]
+  },
+  "include": ["server", "src/sim", "src/net", "src/gameData.ts"]
+}

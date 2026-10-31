@@ -1,4 +1,4 @@
-import type { SimContext } from './context';
+import type { DataContext, SimContext } from './context';
 import { levelStats } from './progression';
 import type { Hero, ItemDef, ItemStats } from './types';
 
@@ -13,7 +13,7 @@ const ZERO: Required<ItemStats> = {
   cooldownReduction: 0,
 };
 
-export function itemDef(ctx: SimContext, id: string): ItemDef | undefined {
+export function itemDef(ctx: DataContext, id: string): ItemDef | undefined {
   return ctx.data.items.find((i) => i.id === id);
 }
 
@@ -52,7 +52,7 @@ export function refreshMaxHp(ctx: SimContext, h: Hero): void {
  * Kauf eines Rezept-Items: Welche Inventarplätze werden verbraucht und was
  * kostet der Rest? Fehlt ein Bauteil, zählen dessen eigene Bauteile (rekursiv).
  */
-export function buildPlan(ctx: SimContext, h: Hero, itemId: string): { cost: number; consumed: number[] } {
+export function buildPlan(ctx: DataContext, h: Hero, itemId: string): { cost: number; consumed: number[] } {
   const taken = new Set<number>();
   const owned = (id: string): number => {
     let value = 0;
@@ -70,6 +70,6 @@ export function buildPlan(ctx: SimContext, h: Hero, itemId: string): { cost: num
 }
 
 /** Alle Bauteile eines Items, rekursiv (ohne das Item selbst). */
-export function componentsOf(ctx: SimContext, itemId: string): string[] {
+export function componentsOf(ctx: DataContext, itemId: string): string[] {
   return (itemDef(ctx, itemId)?.from ?? []).flatMap((c) => [c, ...componentsOf(ctx, c)]);
 }
