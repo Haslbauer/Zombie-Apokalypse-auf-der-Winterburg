@@ -27,6 +27,8 @@ export interface LobbyOptions {
   now?: () => number;
   /** Höchstzahl gleichzeitiger Räume. */
   maxRooms?: number;
+  /** Räume ohne Lobby sofort starten (für Tests des Spielbetriebs). */
+  skipLobby?: boolean;
   log?: (line: string) => void;
 }
 
@@ -36,8 +38,10 @@ export class Lobby {
   private readonly now: () => number;
   private readonly maxRooms: number;
   private readonly log: (line: string) => void;
+  private readonly skipLobby: boolean;
 
   constructor(options: LobbyOptions = {}) {
+    this.skipLobby = options.skipLobby ?? false;
     this.now = options.now ?? (() => Date.now());
     this.maxRooms = options.maxRooms ?? 200;
     this.log = options.log ?? (() => {});
@@ -86,10 +90,23 @@ export class Lobby {
         client.room?.command(client, msg.cmd);
         break;
       case 'restart':
-        if (client.room?.sim.state.gameOver) {
-          client.room.restart();
-          client.room.broadcastRoom(now);
-        }
+        if (client.room?.sim.state.gameOver) client.room.restart(now);
+        break;
+      case 'pick': {
+        const err = client.room?.pick(client, msg.heroId, now);
+        if (err) this.reply(client, { t: 'error', msg: err });
+        break;
+      }
+      case 'spells':
+        client.room?.chooseSpells(client, msg.spells, now);
+        break;
+      case 'ready': {
+        const err = client.room?.setReady(client, msg.ready, now);
+        if (err) this.reply(client, { t: 'error', msg: err });
+        break;
+      }
+      case 'difficulty':
+        client.room?.setDifficulty(client, msg.difficulty, now);
         break;
       case 'ping':
         this.reply(client, { t: 'pong', ts: msg.ts });
@@ -113,7 +130,7 @@ export class Lobby {
       if (room.emptySince !== null && now - room.emptySince > EMPTY_ROOM_TTL) {
         this.rooms.delete(code);
         this.log(`Raum ${code} geschlossen (leer)`);
-      } else room.tick();
+      } else room.tick(now);
     }
   }
 
@@ -134,10 +151,12 @@ export class Lobby {
     for (const id of defaultTeam(gameData.bots, team[0])) if (team.length < 4 && !team.includes(id)) team.push(id);
     const diff = DIFFICULTIES.includes(difficulty) ? difficulty : 'mittel';
     this.leaveRoom(client);
-    const room = new Room(this.newCode(), team, diff);
+    const room = new Room(this.newCode(), team, diff, this.skipLobby);
     this.rooms.set(room.code, room);
     this.log(`Raum ${room.code} erstellt (${team.join(', ')}, ${diff})`);
     this.enter(client, room, 0, name);
+    // Gastgeber hat seinen Helden schon gewählt
+    if (room.phase === 'lobby') room.pick(client, team[0], this.now());
   }
 
   private join(client: Client, code: string, slot: number, name: string): void {
@@ -162,7 +181,7 @@ export class Lobby {
     if (typeof result === 'string') return this.reply(client, { t: 'error', msg: result });
     client.room = room;
     this.log(`Raum ${room.code}: ${client.name} ${token ? 'ist zurück' : 'beigetreten'} (Platz ${slot + 1})`);
-    this.reply(client, { t: 'joined', room: room.info(this.now()), heroId: result.heroId, token: result.token });
+    this.reply(client, { t: 'joined', room: room.info(this.now()), heroId: result.heroId, token: result.token, slot: result.slot });
     room.broadcastRoom(this.now());
   }
 

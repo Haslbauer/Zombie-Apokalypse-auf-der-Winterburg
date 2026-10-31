@@ -167,9 +167,11 @@ function playerNames(): Map<number, string> | undefined {
   return room ? new Map(room.slots.filter((s) => s.human && s.name).map((s) => [s.heroId, s.name!])) : undefined;
 }
 
-/** Platzhalter-Zustand, bis der erste Zustand vom Server da ist. */
+/** Platzhalter-Zustand, bis der erste Zustand vom Server da ist (leere Lobby-Plätze mit irgendeinem Helden). */
 function placeholder(heroes: string[]): GameState {
-  return new Simulation(gameData, { seed: 1, heroes }).state;
+  const all = gameData.heroes.map((h) => h.id);
+  const list = heroes.map((h, i) => (all.includes(h) ? h : all[i % all.length]));
+  return new Simulation(gameData, { seed: 1, heroes: list }).state;
 }
 
 /** Mehrspieler: Raum auf dem Server erstellen; Freunde treten per Link bei. */
@@ -230,16 +232,39 @@ function connect(first: Parameters<typeof RemoteSession.connect>[0], heroes: str
   const remote = RemoteSession.connect(first, placeholder(heroes));
   let started = false;
   remote.onRoom = (room: RoomInfo) => {
-    if (remote.heroId < 0) return; // erst nach der Beitrittsbestätigung
+    if (!remote.token) return; // erst nach der Beitrittsbestätigung
     difficulty = room.difficulty;
     storeToken(room.code, remote.token);
-    if (!started) {
+    const link = `${location.origin}${location.pathname}?room=${room.code}`;
+    if (room.phase === 'lobby') {
+      // Lobby: sammeln, Helden wählen, bereit melden; das Spiel startet der Server
+      started = false;
+      session = remote;
+      heroId = -1;
+      minimap.visible = false;
+      hud.setInvite(null);
+      const query = new URLSearchParams(location.search);
+      query.set('room', room.code);
+      history.replaceState(null, '', `?${query}`);
+      hud.showLobby(room, remote.slot, link, {
+        pick: (id) => remote.lobby({ t: 'pick', heroId: id }),
+        spells: (spells) => remote.lobby({ t: 'spells', spells }),
+        ready: (ready) => {
+          // Beim Bereitmelden auch die aktuellen Zauber schicken
+          if (ready && hud.spellPrefs) remote.lobby({ t: 'spells', spells: hud.spellPrefs });
+          remote.lobby({ t: 'ready', ready });
+        },
+        difficulty: (d) => remote.lobby({ t: 'difficulty', difficulty: d }),
+        leave: leaveOnline,
+      });
+      return;
+    }
+    if (!started || heroId !== remote.heroId) {
       started = true;
       // Platzhalter mit den Helden des Raums, bis der erste Zustand da ist (wichtig nach dem Neuladen)
       remote.state = placeholder(room.slots.map((sl) => sl.defId));
       session = remote;
       heroId = remote.heroId;
-      const link = `${location.origin}${location.pathname}?room=${room.code}`;
       const query = new URLSearchParams(location.search);
       query.set('room', room.code);
       history.replaceState(null, '', `?${query}`);
@@ -583,8 +608,8 @@ function handleEvents(state: GameState): void {
           e.reason,
           () => {
             if (session instanceof RemoteSession) {
+              // Online: zurück in die Lobby (der Server schickt die Raum-Info)
               session.restart();
-              begin(true);
             } else startGame(spectate ? null : heroDefId, team, difficulty);
           },
           e.victory,
@@ -628,6 +653,7 @@ renderer.renderer.setAnimationLoop((now) => {
   }
 
   effects.update(dt);
+  hud.updateLobbyCountdown();
   quality.frame(dt);
   hud.setPerf(quality.showPerf, quality.fps, QUALITY_LABELS[quality.level], session instanceof RemoteSession ? session.rtt : null);
   renderer.render();

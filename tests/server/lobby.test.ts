@@ -6,9 +6,9 @@ import { decodeSnapshot, encodeSnapshot, MAX_CLIENT_MESSAGE, parseClientMessage,
 import { Simulation } from '../../src/sim/game';
 
 /** Lobby mit Spielern, die ihre Nachrichten sammeln; die Uhr wird von Hand gestellt. */
-function setup() {
+function setup(skipLobby = true) {
   let now = 1_000_000;
-  const lobby = new Lobby({ now: () => now });
+  const lobby = new Lobby({ now: () => now, skipLobby });
   const player = () => {
     const inbox: ServerMessage[] = [];
     const io = { buffered: 0, closed: false };
@@ -246,4 +246,101 @@ describe('Netzprotokoll', () => {
       attack: false,
     });
   });
+
+  describe('Lobby vor dem Spiel', () => {
+    function lobbyRoom() {
+      const t = setup(false);
+      const host = t.player();
+      host.send({ t: 'create', heroes: ['rotschopf'], difficulty: 'mittel', name: 'Anna' });
+      const code = host.last('joined')!.room.code;
+      const guest = t.player();
+      guest.send({ t: 'join', room: code, slot: -1, name: 'Ben' });
+      return { ...t, host, guest, code, room: t.lobby.rooms.get(code)! };
+    }
+
+    it('Raum beginnt in der Lobby; Gastgeber hat seinen Helden, Gast noch keinen; keine Simulation', () => {
+      const { lobby, host, room } = lobbyRoom();
+      const info = host.last('room')!.room;
+      expect(info.phase).toBe('lobby');
+      expect(info.slots[0]).toMatchObject({ defId: 'rotschopf', human: true, name: 'Anna', ready: false });
+      expect(info.slots[1]).toMatchObject({ defId: '', human: true, name: 'Ben' });
+      const tick = room.sim.state.tick;
+      lobby.tick();
+      expect(room.sim.state.tick).toBe(tick);
+      expect(host.all('state')).toHaveLength(0);
+    });
+
+    it('Heldenwahl: keine doppelten; bereit nur mit Held', () => {
+      const { host, guest } = lobbyRoom();
+      guest.send({ t: 'ready', ready: true });
+      expect(guest.last('error')!.msg).toMatch(/Helden/);
+      guest.send({ t: 'pick', heroId: 'rotschopf' });
+      expect(guest.last('error')!.msg).toMatch(/schon jemand/);
+      guest.send({ t: 'pick', heroId: 'gaertnerin' });
+      expect(host.last('room')!.room.slots[1].defId).toBe('gaertnerin');
+    });
+
+    it('alle bereit: Countdown 15 s, Abbruch bei „nicht bereit“ und bei neuem Spieler; danach Start mit Bots', () => {
+      const { lobby, host, guest, code, room, advance, player } = lobbyRoom();
+      guest.send({ t: 'pick', heroId: 'gaertnerin' });
+      guest.send({ t: 'spells', spells: ['geist', 'barriere'] });
+      host.send({ t: 'ready', ready: true });
+      expect(host.last('room')!.room.startsIn).toBeNull();
+      guest.send({ t: 'ready', ready: true });
+      expect(host.last('room')!.room.startsIn).toBeCloseTo(15, 0);
+      guest.send({ t: 'ready', ready: false });
+      expect(host.last('room')!.room.startsIn).toBeNull();
+      guest.send({ t: 'ready', ready: true });
+      // Neuer Spieler bricht den Countdown ab
+      const third = player();
+      third.send({ t: 'join', room: code, slot: -1, name: 'Cem' });
+      expect(host.last('room')!.room.startsIn).toBeNull();
+      third.send({ t: 'pick', heroId: 'grimm' });
+      third.send({ t: 'ready', ready: true });
+      expect(host.last('room')!.room.startsIn).toBeCloseTo(15, 0);
+      advance(14_000);
+      lobby.tick();
+      expect(room.phase).toBe('lobby');
+      advance(1_100);
+      lobby.tick();
+      expect(room.phase).toBe('playing');
+      const heroes = room.sim.state.heroes;
+      expect(heroes.map((h) => h.defId).slice(0, 3)).toEqual(['rotschopf', 'gaertnerin', 'grimm']);
+      expect(new Set(heroes.map((h) => h.defId)).size).toBe(4);
+      expect(heroes[3].bot).toBeDefined();
+      expect(heroes[0].bot).toBeUndefined();
+      expect(heroes[1].spells).toEqual(['geist', 'barriere']);
+      // Jeder Mensch bekommt seinen Helden mitgeteilt
+      expect(guest.last('joined')!.heroId).toBe(heroes[1].id);
+      lobby.tick();
+      expect(guest.last('state')).toBeDefined();
+    });
+
+    it('nach Spielende führt „Nochmal“ zurück in die Lobby (alle bleiben, nicht mehr bereit)', () => {
+      const { lobby, host, guest, room, advance } = lobbyRoom();
+      guest.send({ t: 'pick', heroId: 'pirat' });
+      host.send({ t: 'ready', ready: true });
+      guest.send({ t: 'ready', ready: true });
+      advance(15_100);
+      lobby.tick();
+      expect(room.phase).toBe('playing');
+      room.sim.state.gameOver = true;
+      host.send({ t: 'restart' });
+      const info = host.last('room')!.room;
+      expect(info.phase).toBe('lobby');
+      expect(info.slots.slice(0, 2).map((s) => [s.defId, s.ready])).toEqual([
+        ['rotschopf', false],
+        ['pirat', false],
+      ]);
+    });
+
+    it('Bot-Stärke darf nur der Gastgeber ändern', () => {
+      const { host, guest } = lobbyRoom();
+      guest.send({ t: 'difficulty', difficulty: 'schwer' });
+      expect(host.last('room')!.room.difficulty).toBe('mittel');
+      host.send({ t: 'difficulty', difficulty: 'schwer' });
+      expect(host.last('room')!.room.difficulty).toBe('schwer');
+    });
+  });
 });
+

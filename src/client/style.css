@@ -1024,3 +1024,80 @@ html, body {
   color: #ffd166;
   text-shadow: 0 0 18px rgba(255, 209, 102, 0.6);
 }
+
+/* Lobby vor dem Spiel */
+.hud-lobby {
+  max-width: min(980px, calc(100vw - 32px));
+}
+.hud-lobby-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.hud-lobby-slot {
+  cursor: default;
+}
+.hud-lobby-slot.me {
+  border-color: #8ff0a4;
+}
+.hud-lobby-slot.ready {
+  box-shadow: 0 0 0 2px #4cd964 inset, 0 0 14px rgba(76, 217, 100, 0.35);
+}
+.hud-hero-portrait.empty {
+  background: repeating-linear-gradient(45deg, #1d2a20, #1d2a20 8px, #243328 8px, #243328 16px);
+  min-height: 120px;
+}
+.hud-lobby-pick {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.hud-lobby-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 86px;
+  padding: 4px;
+  font: inherit;
+  font-size: 12px;
+  color: #e8f0e0;
+  background: #1d2a20;
+  border: 2px solid #3e5a43;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.hud-lobby-hero img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.hud-lobby-hero small {
+  color: #ffb08a;
+  font-size: 10px;
+}
+.hud-lobby-hero.active {
+  border-color: #ffd166;
+  box-shadow: 0 0 10px rgba(255, 209, 102, 0.5);
+}
+.hud-lobby-hero:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.hud-ready.active {
+  background: #4f5a7a;
+}
+.hud-lobby-countdown {
+  min-height: 1.6em;
+  margin: 8px 0;
+  font-weight: 700;
+  color: #b8c8b0;
+}
+.hud-lobby-countdown.running {
+  color: #ffd166;
+  font-size: 20px;
+}

@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v2.0)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v2.1)
 
 Stand: 31.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v2.1: Lobby vor dem Spiel (freie Heldenwahl, Bereit, Countdown 15 s), erste Geräusche und Musik (im Code erzeugt) mit Lautstärke-Einstellungen.
 Änderungen v2.0: Figuren stehen auf dem Boden, Angriffe synchron zum Treffer, Bienen-/Beete-Kreislauf, Postbote ab Welle 6 ohne Zeitlimit, Landschaft überarbeitet.
 Änderungen v1.9: Karte mit mehr Details (Ruine, Stacheldraht, Barrikaden, Feuerstellen, Hochbeete, Bruchsteinwege, Gras), Nordeingang zum Innenhof (ersetzt das Rattenloch), Lager weichen aus. Beschwörerzauber wie in LoL (zwei pro Held, vor dem Spiel gewählt, Tasten F/G), siehe Abschnitt 9b.
 Änderungen v1.8: Figuren laufen sichtbar (ein Skelett pro Figur), Schuss-Animationen mit sichtbaren Geschossen, Grafikstufen und Leistungsanzeige, kleinere Zustandspakete, geduldigerer Herzschlag mit Trennungsgrund.
@@ -275,6 +276,7 @@ Werte in `data/spells.json`, Logik in `src/sim/spells.ts`.
 
 ## 10. Mehrspieler und Bots
 
+- **Lobby (v2.1):** Ein Online-Raum beginnt in der Lobby (`phase: lobby`, keine Simulation). Jeder Mensch wählt einen Helden (keine doppelten) und seine Zauber und meldet sich bereit (nur mit Held). Sind alle Menschen bereit, startet nach 15 s die Partie; leere Plätze füllen Bots mit freien Helden (Wunsch-Team des Gastgebers zuerst). „Nicht bereit“, ein neuer oder gehender Spieler stoppen den Countdown. Die Bot-Stärke legt der Gastgeber fest. „Nochmal“ nach Spielende führt zurück in die Lobby. Nachrichten: `pick`, `spells`, `ready`, `difficulty`; `join` mit Platz −1 = nächster freier Platz.
 - **Pings als Aufträge an Bots (v1.7):** Ein Ping eines Menschen wird zum Auftrag. Bots antworten mit „Bin unterwegs“.
   - **Angriff!:** Alle Bots greifen das nächste Ziel um den Ping an (Zombie, Lager oder Postbote), solange sie dort kämpfen bis es fällt (sonst höchstens 25 s). Ohne Ziel kämpfen sie am Ort.
   - **Hilfe!:** Alle Bots laufen zum Helden und beschützen ihn 12 s.

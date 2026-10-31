@@ -228,6 +228,22 @@ export class Hud {
     this.showInGame(false);
     this.overlay.replaceChildren();
     const box = el('div', 'hud-box hud-start');
+    if (room.phase === 'lobby') {
+      // Lobby: nur Namen eingeben und beitreten, Held und Zauber wählt man in der Lobby
+      box.append(el('h1', '', `Raum ${room.code}`), el('p', '', 'Die Gruppe sammelt sich gerade in der Lobby.'));
+      if (error) box.append(el('p', 'hud-error', error));
+      const name = this.nameInput();
+      const go = el('button', 'hud-restart hud-go', 'Lobby betreten');
+      go.addEventListener('click', () => onPick(-1, name.value));
+      const back = el('button', 'hud-restart', 'Allein spielen');
+      back.addEventListener('click', onCancel);
+      const buttons = el('div', 'hud-buttons');
+      buttons.append(back, go);
+      box.append(name, buttons);
+      this.overlay.append(box);
+      this.overlay.style.display = '';
+      return;
+    }
     box.append(el('h1', '', `Raum ${room.code}`), el('p', '', 'Wähle einen Helden, den gerade ein Bot spielt. Du übernimmst ihn mit Level, Gold und Items.'));
     if (error) box.append(el('p', 'hud-error', error));
     const name = this.nameInput();
@@ -253,6 +269,134 @@ export class Hud {
     box.append(row, this.spellPicker(firstFree), name, buttons);
     this.overlay.append(box);
     this.overlay.style.display = '';
+  }
+
+  /**
+   * Lobby vor dem Spiel: vier Plätze (Held, Spieler, Zauber, Bereit), freie
+   * Heldenwahl (vergebene ausgegraut), Zauberauswahl, Bereit-Knopf und
+   * Countdown, sobald alle bereit sind. Freie Plätze spielen beim Start Bots.
+   */
+  showLobby(
+    room: RoomInfo,
+    mySlot: number,
+    link: string,
+    on: {
+      pick: (heroId: string) => void;
+      spells: (spells: [string, string]) => void;
+      ready: (ready: boolean) => void;
+      difficulty: (d: BotDifficulty) => void;
+      leave: () => void;
+    },
+  ): void {
+    delete this.overlay.dataset.menu;
+    this.showInGame(false);
+    this.lobbyCountdown = room.startsIn !== null ? performance.now() + room.startsIn * 1000 : null;
+    this.overlay.replaceChildren();
+    const box = el('div', 'hud-box hud-start hud-lobby');
+    const me = room.slots[mySlot];
+    const head = el('div', 'hud-lobby-head');
+    const copy = el('button', 'hud-invite-copy', 'Link kopieren');
+    copy.addEventListener('click', () => {
+      navigator.clipboard?.writeText(link).then(
+        () => (copy.textContent = 'Kopiert!'),
+        () => window.prompt('Einladungslink:', link),
+      );
+      setTimeout(() => (copy.textContent = 'Link kopieren'), 2000);
+    });
+    head.append(el('h1', '', `Lobby ${room.code}`), copy);
+    box.append(head, el('p', 'hud-small', 'Schick den Link an deine Freunde. Jeder wählt einen Helden und klickt „Bereit“. Freie Plätze spielen Bots.'));
+
+    // Vier Plätze
+    const slots = el('div', 'hud-heroes hud-lobby-slots');
+    room.slots.forEach((s, i) => {
+      const def = this.data.heroes.find((d) => d.id === s.defId);
+      const card = el('div', 'hud-hero-btn hud-lobby-slot');
+      if (i === mySlot) card.classList.add('me');
+      if (s.ready) card.classList.add('ready');
+      const img = el('img', 'hud-hero-portrait');
+      if (def) img.src = `portraits/${def.id}.jpg`;
+      else img.classList.add('empty');
+      const who = s.human || s.reserved ? (s.name ?? 'Spieler') : 'Frei – spielt ein Bot';
+      const status = !s.human && !s.reserved ? '' : s.ready ? '✔ Bereit' : def ? 'Wählt noch …' : 'Wählt einen Helden …';
+      const spells = (s.spells ?? []).map((id) => this.data.spells.spells.find((x) => x.id === id)?.icon ?? '').join(' ');
+      card.append(img, el('strong', '', def?.name ?? '—'), el('small', 'hud-role', who), el('span', 'hud-hero-desc', `${status}${spells ? ` · ${spells}` : ''}`));
+      slots.append(card);
+    });
+    box.append(slots);
+
+    // Heldenwahl
+    const taken = new Map(room.slots.filter((s, i) => i !== mySlot && (s.human || s.reserved) && s.defId).map((s) => [s.defId, s.name ?? 'Spieler']));
+    const pickRow = el('div', 'hud-lobby-pick');
+    for (const h of this.data.heroes) {
+      const b = el('button', 'hud-lobby-hero');
+      b.dataset.hero = h.id;
+      const img = el('img', '');
+      img.src = `portraits/${h.id}.jpg`;
+      b.append(img, el('span', '', h.name));
+      const by = taken.get(h.id);
+      if (by) {
+        b.disabled = true;
+        b.title = `Gewählt von ${by}`;
+        b.append(el('small', '', by));
+      } else b.title = `${h.name} – ${h.role}`;
+      if (me?.defId === h.id) b.classList.add('active');
+      b.addEventListener('click', () => on.pick(h.id));
+      pickRow.append(b);
+    }
+    box.append(el('h2', '', 'Dein Held'), pickRow);
+    // Zauber (Vorgabe nach dem gewählten Helden; jede Änderung geht an den Server)
+    box.append(this.spellPicker(me?.defId || 'rotschopf', on.spells));
+
+    // Bot-Stärke (nur Gastgeber), Bereit, Countdown
+    const foot = el('div', 'hud-buttons hud-lobby-foot');
+    const diffRow = el('div', 'hud-difficulty');
+    diffRow.append(el('span', '', 'Bot-Stärke:'));
+    for (const d of ['leicht', 'mittel', 'schwer'] as BotDifficulty[]) {
+      const b = el('button', 'hud-diff', d);
+      b.classList.toggle('active', d === room.difficulty);
+      b.disabled = mySlot !== 0;
+      b.addEventListener('click', () => on.difficulty(d));
+      diffRow.append(b);
+    }
+    const leave = el('button', 'hud-restart', 'Verlassen');
+    leave.addEventListener('click', on.leave);
+    const ready = el('button', `hud-restart hud-go hud-ready${me?.ready ? ' active' : ''}`, me?.ready ? 'Nicht bereit' : 'Bereit');
+    ready.disabled = !me?.defId;
+    ready.addEventListener('click', () => on.ready(!me?.ready));
+    this.lobbyCountdownEl = el('div', 'hud-lobby-countdown');
+    const humans = room.slots.filter((s) => s.human);
+    const waiting = humans.filter((s) => !s.ready).length;
+    this.lobbyWaitText = waiting > 0 ? `Warte auf ${waiting} Spieler …` : '';
+    foot.append(leave, ready);
+    box.append(diffRow, this.lobbyCountdownEl, foot);
+    this.overlay.append(box);
+    this.overlay.style.display = '';
+    this.updateLobbyCountdown();
+  }
+
+  private lobbyCountdown: number | null = null;
+  private lobbyCountdownEl: HTMLElement | null = null;
+  private lobbyWaitText = '';
+  /** Wird jede Sekunde des Countdowns aufgerufen (für den Ton). */
+  onCountdownTick: (secondsLeft: number) => void = () => {};
+  private lastCountdownSecond = -1;
+
+  /** Countdown-Anzeige in der Lobby (jedes Bild aufrufen). */
+  updateLobbyCountdown(): void {
+    const e = this.lobbyCountdownEl;
+    if (!e || !e.isConnected) return;
+    if (this.lobbyCountdown === null) {
+      e.textContent = this.lobbyWaitText;
+      e.classList.remove('running');
+      return;
+    }
+    const left = Math.max(0, Math.ceil((this.lobbyCountdown - performance.now()) / 1000));
+    e.textContent = left > 0 ? `Alle bereit – Start in ${left} s` : 'Los geht’s!';
+    e.classList.add('running');
+    if (left !== this.lastCountdownSecond) {
+      this.lastCountdownSecond = left;
+      this.onCountdownTick(left);
+    }
   }
 
   /** Hinweis während der Verbindung bzw. bei Fehlern (Mehrspieler). */
@@ -580,7 +724,7 @@ export class Hud {
    * Auswahl der zwei Beschwörerzauber (Startbildschirm und Beitritt): zwei
    * Plätze, darunter alle Zauber; Klick setzt den Zauber auf den gewählten Platz.
    */
-  spellPicker(heroId: string): HTMLElement {
+  spellPicker(heroId: string, onChange?: (spells: [string, string]) => void): HTMLElement {
     const wrap = el('div', 'hud-spellpick');
     const d = this.data.spells.defaults;
     const role = this.data.bots.heroes[heroId]?.role ?? 'melee';
@@ -617,6 +761,7 @@ export class Hud {
           chosen[active] = def.id;
           active = 1 - active;
           this.setSpellPrefs([chosen[0], chosen[1]]);
+          onChange?.([chosen[0], chosen[1]]);
           render();
         });
         grid.append(b);

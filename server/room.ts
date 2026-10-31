@@ -2,6 +2,8 @@ import { randomBytes } from 'node:crypto';
 import { gameData } from '../src/gameData';
 import { encodeSnapshot, slowKey, stateMessage, type ClientCommand, type RoomInfo } from '../src/net/protocol';
 import { createBot } from '../src/sim/bots/brain';
+import { defaultTeam } from '../src/sim/bots/team';
+import { validSpells } from '../src/sim/spells';
 import { Simulation } from '../src/sim/game';
 import type { BotDifficulty, Command, GameEvent, HeroInput } from '../src/sim/types';
 import { DT } from '../src/sim/types';
@@ -41,7 +43,14 @@ interface Slot {
   backlog: GameEvent[];
   /** Nächster Schnappschuss muss vollständig sein (neu beigetreten, Zustände ausgelassen). */
   needFull?: boolean;
+  /** Lobby: gewählter Held (null = noch keiner), Zauber, bereit. */
+  pick: string | null;
+  spells: [string, string] | null;
+  ready: boolean;
 }
+
+/** So lange läuft der Countdown, wenn alle bereit sind (ms). */
+export const LOBBY_COUNTDOWN_MS = 15_000;
 
 /**
  * Ein Raum mit vier Heldenplätzen. Die Simulation läuft hier; freie Plätze
@@ -52,6 +61,12 @@ interface Slot {
 export class Room {
   sim!: Simulation;
   private readonly slots: Slot[];
+  /** Lobby (Sammeln, Heldenwahl, Bereit) oder laufendes Spiel. */
+  phase: 'lobby' | 'playing' = 'lobby';
+  /** Countdown bis zum Start (ms-Zeitstempel), null = warten, bis alle bereit sind. */
+  startsAt: number | null = null;
+  /** Bot-Stärke (der Gastgeber kann sie in der Lobby ändern). */
+  difficulty: BotDifficulty;
   /** Zeitpunkt, seit dem niemand mehr im Raum ist (zum Aufräumen). */
   emptySince: number | null = null;
   /** Selten wechselnde Daten im letzten Schnappschuss (siehe slowKey). */
@@ -59,19 +74,48 @@ export class Room {
 
   constructor(
     readonly code: string,
-    readonly heroes: string[],
-    readonly difficulty: BotDifficulty,
+    /** Wunsch-Team des Gastgebers (sein Held zuerst); füllt beim Start freie Plätze. */
+    public heroes: string[],
+    difficulty: BotDifficulty,
+    /** true: sofort spielen (ohne Lobby, z. B. Tests und alte Clients). */
+    skipLobby = false,
   ) {
-    this.slots = heroes.map(() => ({ player: null, token: null, reservedUntil: null, name: null, inputs: [], last: null, ack: 0, commands: [], backlog: [] }));
-    this.restart();
+    this.difficulty = difficulty;
+    this.slots = [0, 1, 2, 3].map(() => ({ player: null, token: null, reservedUntil: null, name: null, inputs: [], last: null, ack: 0, commands: [], backlog: [], pick: null, spells: null, ready: false }));
+    this.slots.forEach((s, i) => (s.pick = skipLobby ? (heroes[i] ?? null) : null));
+    this.newSim();
+    if (skipLobby) this.phase = 'playing';
   }
 
-  /** Neue Partie mit denselben Helden; Menschen behalten ihre Plätze. */
-  restart(): void {
+  /** Neue Partie: zurück in die Lobby, alle bleiben im Raum, „bereit“ wird zurückgesetzt. */
+  restart(now = Date.now()): void {
+    this.phase = 'lobby';
+    this.startsAt = null;
+    for (const s of this.slots) s.ready = false;
+    this.broadcastRoom(now);
+  }
+
+  /**
+   * Helden der Partie: gewählte Helden auf ihren Plätzen, freie Plätze mit dem
+   * Wunsch-Team des Gastgebers bzw. passenden Rollen auffüllen (keine doppelten).
+   */
+  private team(): string[] {
+    const taken = new Set(this.slots.map((s) => s.pick).filter((h): h is string => !!h));
+    const pool = [...this.heroes, ...defaultTeam(gameData.bots, this.heroes[0] ?? null), ...gameData.heroes.map((h) => h.id)].filter((id) => !taken.has(id));
+    return this.slots.map((s) => {
+      if (s.pick) return s.pick;
+      const next = pool.find((id) => !taken.has(id))!;
+      taken.add(next);
+      return next;
+    });
+  }
+
+  private newSim(): void {
     this.sim = new Simulation(gameData, {
       seed: (Math.random() * 2 ** 31) | 0,
-      heroes: this.heroes,
+      heroes: this.team(),
       bots: this.slots.map((s) => (s.player ? null : this.difficulty)),
+      spells: this.slots.map((s) => (s.player ? s.spells : null)),
     });
     for (const s of this.slots) {
       s.inputs = [];
@@ -83,15 +127,87 @@ export class Room {
   }
 
   info(now = Date.now()): RoomInfo {
+    const lobby = this.phase === 'lobby';
     return {
       code: this.code,
       difficulty: this.difficulty,
-      slots: this.sim.state.heroes.map((h, i) => {
-        const s = this.slots[i];
+      phase: this.phase,
+      startsIn: lobby && this.startsAt !== null ? Math.max(0, (this.startsAt - now) / 1000) : null,
+      slots: this.slots.map((s, i) => {
+        const h = this.sim.state.heroes[i];
         const reserved = !s.player && s.reservedUntil !== null && now < s.reservedUntil;
-        return { heroId: h.id, defId: h.defId, human: s.player !== null, reserved, name: s.player || reserved ? s.name : null };
+        return {
+          heroId: lobby ? -1 : h.id,
+          defId: lobby ? (s.player || reserved ? (s.pick ?? '') : '') : h.defId,
+          human: s.player !== null,
+          reserved,
+          name: s.player || reserved ? s.name : null,
+          ready: s.ready,
+          spells: s.spells,
+        };
       }),
     };
+  }
+
+  /** Lobby: Held wählen (nur, wenn ihn kein anderer Mensch hat). */
+  pick(player: Player, heroId: string, now: number): string | null {
+    const s = this.slots[this.slotOf(player)];
+    if (!s || this.phase !== 'lobby') return 'Die Heldenwahl ist nur in der Lobby möglich';
+    if (!gameData.heroes.some((h) => h.id === heroId)) return 'Unbekannter Held';
+    if (this.slots.some((o) => o !== s && o.pick === heroId && (o.player || o.reservedUntil !== null))) return 'Diesen Helden hat schon jemand gewählt';
+    s.pick = heroId;
+    this.updateCountdown(now);
+    this.broadcastRoom(now);
+    return null;
+  }
+
+  /** Lobby: Beschwörerzauber wählen. */
+  chooseSpells(player: Player, spells: [string, string], now: number): void {
+    const s = this.slots[this.slotOf(player)];
+    if (!s || !validSpells(this.sim, spells)) return;
+    s.spells = [spells[0], spells[1]];
+    this.broadcastRoom(now);
+  }
+
+  /** Lobby: bereit melden (nur mit gewähltem Helden). */
+  setReady(player: Player, ready: boolean, now: number): string | null {
+    const s = this.slots[this.slotOf(player)];
+    if (!s || this.phase !== 'lobby') return null;
+    if (ready && !s.pick) return 'Wähle zuerst einen Helden';
+    s.ready = ready;
+    this.updateCountdown(now);
+    this.broadcastRoom(now);
+    return null;
+  }
+
+  /** Bot-Stärke (nur der Gastgeber auf Platz 0, nur in der Lobby). */
+  setDifficulty(player: Player, difficulty: BotDifficulty, now: number): void {
+    if (this.phase !== 'lobby' || this.slotOf(player) !== 0) return;
+    this.difficulty = difficulty;
+    this.broadcastRoom(now);
+  }
+
+  /** Countdown starten, wenn alle Menschen bereit sind, sonst abbrechen. */
+  private updateCountdown(now: number): void {
+    if (this.phase !== 'lobby') return;
+    const humans = this.slots.filter((s) => s.player);
+    const all = humans.length > 0 && humans.every((s) => s.ready && s.pick);
+    if (all && this.startsAt === null) this.startsAt = now + LOBBY_COUNTDOWN_MS;
+    if (!all) this.startsAt = null;
+  }
+
+  /** Countdown abgelaufen: Partie mit den gewählten Helden starten, freie Plätze spielen Bots. */
+  private start(now: number): void {
+    this.phase = 'playing';
+    this.startsAt = null;
+    this.newSim();
+    for (const s of this.slots) {
+      s.ready = false;
+      if (!s.player) continue;
+      const i = this.slots.indexOf(s);
+      s.player.send(JSON.stringify({ t: 'joined', room: this.info(now), heroId: this.sim.state.heroes[i].id, token: s.token, slot: i }));
+    }
+    this.broadcastRoom(now);
   }
 
   /** Menschen im Raum. */
@@ -107,7 +223,10 @@ export class Room {
    * Spieler übernimmt einen Bot-Platz (token: zum Wiederverbinden, sonst neu).
    * Gibt Helden-Id und Token zurück oder einen Fehlertext.
    */
-  join(player: Player, slot: number, now: number, token?: string): { heroId: number; token: string } | string {
+  join(player: Player, slot: number, now: number, token?: string): { heroId: number; token: string; slot: number } | string {
+    // Lobby: ohne festen Platz den nächsten freien nehmen
+    if (slot < 0) slot = this.slots.findIndex((x) => !x.player && !(x.reservedUntil !== null && now < x.reservedUntil));
+    if (slot < 0) return 'Der Raum ist voll';
     const hero = this.sim.state.heroes[slot];
     const s = this.slots[slot];
     if (!hero || !s) return 'Diesen Platz gibt es nicht';
@@ -126,10 +245,18 @@ export class Room {
     s.commands = [];
     s.backlog = [];
     s.needFull = true;
+    this.emptySince = null;
+    if (this.phase === 'lobby') {
+      // Neuer Spieler: noch kein Held (außer beim Wiederverbinden), nicht bereit; Countdown neu prüfen
+      if (!token) s.pick = null;
+      s.ready = false;
+      this.updateCountdown(now);
+      return { heroId: -1, token: s.token, slot };
+    }
+    s.pick = hero.defId;
     hero.bot = undefined;
     hero.input = { move: { x: 0, y: 0 }, aim: hero.input.aim, attack: false };
-    this.emptySince = null;
-    return { heroId: hero.id, token: s.token };
+    return { heroId: hero.id, token: s.token, slot };
   }
 
   /** Mit Token zurückkommen: den Platz finden, der zu diesem Token gehört (−1: keiner). */
@@ -153,6 +280,14 @@ export class Room {
     s.needFull = true;
     s.reservedUntil = keep ? now + RESERVE_MS : null;
     if (!keep) s.token = null;
+    if (this.phase === 'lobby') {
+      s.ready = false;
+      if (!keep) s.pick = null;
+      if (this.humans.length === 0) this.emptySince = now;
+      this.updateCountdown(now);
+      this.broadcastRoom(now);
+      return;
+    }
     const hero = this.sim.state.heroes[slot];
     hero.bot = createBot(this.sim, this.difficulty, slot);
     hero.input = { move: { x: 0, y: 0 }, aim: hero.input.aim, attack: false };
@@ -177,7 +312,12 @@ export class Room {
   }
 
   /** Ein Tick: Eingaben und Befehle anwenden, simulieren, Zustand verschicken. */
-  tick(): void {
+  tick(now = Date.now()): void {
+    // Lobby: nur der Countdown läuft
+    if (this.phase === 'lobby') {
+      if (this.startsAt !== null && now >= this.startsAt) this.start(now);
+      return;
+    }
     // Leerer Raum: Spiel steht still, bis wieder jemand da ist
     if (this.humans.length === 0) return;
     const cmds: Command[] = [];

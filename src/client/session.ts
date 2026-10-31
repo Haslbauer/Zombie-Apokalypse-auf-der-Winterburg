@@ -163,6 +163,8 @@ export class RemoteSession implements Session {
   private sincePing = PING_INTERVAL;
   private closed = false;
   private reconnecting = false;
+  /** Eigener Platz im Raum (Lobby). */
+  slot = -1;
   /** Letzter entpackter Zustand (liefert fehlende, selten wechselnde Felder). */
   private lastDecoded: GameState | null = null;
   private reconnectStart = 0;
@@ -246,6 +248,7 @@ export class RemoteSession implements Session {
         break;
       case 'joined': {
         this.heroId = msg.heroId;
+        if (msg.slot !== undefined) this.slot = msg.slot;
         this.token = msg.token;
         this.room = msg.room;
         this.prediction.reset();
@@ -301,6 +304,11 @@ export class RemoteSession implements Session {
 
   restart(): void {
     this.sendRaw({ t: 'restart' });
+  }
+
+  /** Lobby: Held wählen, Zauber, bereit, Bot-Stärke. */
+  lobby(msg: Extract<ClientMessage, { t: 'pick' | 'spells' | 'ready' | 'difficulty' }>): void {
+    this.sendRaw(msg);
   }
 
   frame(dt: number, onStep: (state: GameState) => void): number {

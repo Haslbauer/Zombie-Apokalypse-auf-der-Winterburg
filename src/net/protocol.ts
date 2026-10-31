@@ -11,11 +11,18 @@
  */
 import { type BotDifficulty, type Command, type GameEvent, type GameState, type Hero, type HeroInput, type Objective, PING_KINDS, type Zombie } from '../sim/types';
 
-/** Raum: wer welchen Helden steuert. reserved: Platz wartet auf einen Spieler, der kurz weg ist. */
+/**
+ * Raum: wer welchen Helden steuert. reserved: Platz wartet auf einen Spieler,
+ * der kurz weg ist. phase: lobby (Sammeln, Heldenwahl, Bereit) oder playing.
+ * In der Lobby ist defId der gewählte Held ('' = noch keiner, frei = Bot beim
+ * Start), heroId −1; startsIn: Sekunden bis zum Start (null = warten auf alle).
+ */
 export interface RoomInfo {
   code: string;
   difficulty: BotDifficulty;
-  slots: { heroId: number; defId: string; human: boolean; reserved: boolean; name: string | null }[];
+  phase: 'lobby' | 'playing';
+  startsIn: number | null;
+  slots: { heroId: number; defId: string; human: boolean; reserved: boolean; name: string | null; ready: boolean; spells: [string, string] | null }[];
 }
 
 /** Befehl ohne heroId: Der Server setzt den Helden der Verbindung ein. Eingaben gehen als eigene Nachricht. */
@@ -31,6 +38,11 @@ export type ClientMessage =
   | ({ t: 'input'; seq: number } & HeroInput)
   | { t: 'cmd'; cmd: ClientCommand }
   | { t: 'restart' }
+  /** Lobby: Held wählen, Zauber wählen, bereit melden, Bot-Stärke (nur Gastgeber). */
+  | { t: 'pick'; heroId: string }
+  | { t: 'spells'; spells: [string, string] }
+  | { t: 'ready'; ready: boolean }
+  | { t: 'difficulty'; difficulty: BotDifficulty }
   /** Laufzeitmessung: Der Server schickt ts unverändert zurück. */
   | { t: 'ping'; ts: number };
 
@@ -38,7 +50,8 @@ export type ServerMessage =
   /** Nach dem Verbinden: Kennung des gebauten Spiels (null im Entwicklungsmodus). */
   | { t: 'hello'; build: string | null }
   | { t: 'info'; room: RoomInfo }
-  | { t: 'joined'; room: RoomInfo; heroId: number; token: string }
+  /** Beitritt bestätigt (und beim Spielstart erneut): eigener Platz, Held (−1 in der Lobby), Token. */
+  | { t: 'joined'; room: RoomInfo; heroId: number; token: string; slot?: number }
   | { t: 'room'; room: RoomInfo }
   /** ack: zuletzt angewendete Eingabe dieses Spielers. */
   | { t: 'state'; s: Snapshot; ack: number }
@@ -101,7 +114,16 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'info':
       return str(m.room, 8) ? { t: 'info', room: m.room } : null;
     case 'join':
-      return str(m.room, 8) && int(m.slot, 0, 3) ? { t: 'join', room: m.room, slot: m.slot, name } : null;
+      // slot −1: nächster freier Platz (Lobby)
+      return str(m.room, 8) && int(m.slot, -1, 3) ? { t: 'join', room: m.room, slot: m.slot, name } : null;
+    case 'pick':
+      return str(m.heroId, 32) ? { t: 'pick', heroId: m.heroId } : null;
+    case 'spells':
+      return Array.isArray(m.spells) && m.spells.length === 2 && m.spells.every((s) => str(s, 24)) ? { t: 'spells', spells: [m.spells[0], m.spells[1]] as [string, string] } : null;
+    case 'ready':
+      return { t: 'ready', ready: m.ready === true };
+    case 'difficulty':
+      return ['leicht', 'mittel', 'schwer'].includes(m.difficulty as string) ? { t: 'difficulty', difficulty: m.difficulty as BotDifficulty } : null;
     case 'resume':
       return str(m.room, 8) && str(m.token, 64) ? { t: 'resume', room: m.room, token: m.token, name } : null;
     case 'input':

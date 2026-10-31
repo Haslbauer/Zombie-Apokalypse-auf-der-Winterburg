@@ -48,6 +48,10 @@ docker run -p 3000:3000 winterburg
 
 Im Internet hinter HTTPS betreiben (z. B. Caddy oder ein Tunnel), denn Browser verlangen dort `wss://`. Einstellungen: `PORT` (3000), `HOST` (0.0.0.0), `MAX_ROOMS` (200). `/health` meldet Build, Räume und Spieler.
 
+### Lobby
+
+„Online mit Freunden“ öffnet eine **Lobby**: Oben stehen Raum-Code und „Link kopieren“. Wer den Link öffnet, gibt seinen Namen ein und landet ebenfalls in der Lobby. Jeder wählt einen Helden (vergebene sind ausgegraut) und seine Beschwörerzauber und klickt **„Bereit“**. Sind alle bereit, startet das Spiel nach **15 Sekunden**; „Nicht bereit“ oder ein neuer Spieler halten den Countdown an. Freie Plätze spielen Bots, die Bot-Stärke wählt der Gastgeber. Nach Spielende führt „Nochmal“ zurück in die Lobby. Wer später kommt, übernimmt einen Bot im laufenden Spiel.
+
 ### Was der Netzcode tut
 
 - **Eigene Bewegung ohne Verzögerung:** Der Client sagt die eigene Bewegung voraus und gleicht sie mit dem Server ab (getestet mit 300 ms Laufzeit: Der Held läuft sofort los, am Ende stimmen Bild und Server auf den Zentimeter).
