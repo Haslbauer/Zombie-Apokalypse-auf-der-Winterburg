@@ -3,6 +3,7 @@ import { defaultTeam } from '../sim/bots/team';
 import { type Quality, QUALITY_LABELS, type QualitySetting } from './quality';
 import type { AudioSettings } from './audio';
 import { formatClock, loadBestTime, recordVictory } from './besttime';
+import { BAR_OPACITY, BAR_SCALE, type BarLayout, clampOffset, DEFAULT_BAR, loadBar, saveBar } from './barlayout';
 import type { BotDifficulty, FinalHeroStats, GameData, GameEvent, GameState, Hero, HeroDef } from '../sim/types';
 import type { RoomInfo } from '../net/protocol';
 import { type Action, ACTIONS, type Keybindings, keyName } from './keybindings';
@@ -112,7 +113,9 @@ export class Hud {
     const head = el('div', 'hud-hero-head');
     head.append(portraitBox, info);
     this.buildInventory();
-    this.bottom.append(head, this.abilityRow, this.inventoryRow, this.skillHint);
+    this.bottom.append(head, this.abilityRow, this.inventoryRow, this.skillHint, this.barControls());
+    this.applyBar();
+    window.addEventListener('resize', () => this.moveBar(this.bar.dx, this.bar.dy, true));
     this.shopHint.style.display = 'none';
     root.append(this.shopHint, this.team);
     this.updateHelp();
@@ -458,6 +461,76 @@ export class Hud {
       table.append(tr);
     }
     this.scoreboard.replaceChildren(el('h3', '', `Welle ${state.wave.number} · ${state.kills} Kills`), table);
+  }
+
+  /** Skillleiste: Lage, Größe, Deckkraft (verschiebbar über den Griff, gespeichert). */
+  private bar: BarLayout = loadBar();
+
+  /** Griff (ziehen = verschieben, Doppelklick = zurücksetzen) und Größenknöpfe der Skillleiste. */
+  private barControls(): HTMLElement {
+    const box = el('div', 'hud-bar-controls');
+    const grip = el('span', 'hud-bar-grip', '⠿');
+    grip.title = 'Ziehen: Leiste verschieben · Doppelklick: zurücksetzen';
+    const minus = el('button', 'hud-bar-size', '−');
+    const plus = el('button', 'hud-bar-size', '+');
+    minus.title = 'Leiste verkleinern';
+    plus.title = 'Leiste vergrößern';
+    minus.addEventListener('click', () => this.setBar({ scale: this.bar.scale - 0.1 }));
+    plus.addEventListener('click', () => this.setBar({ scale: this.bar.scale + 0.1 }));
+    grip.addEventListener('dblclick', () => this.setBar({ dx: 0, dy: 0 }));
+    grip.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      grip.setPointerCapture(e.pointerId);
+      const start = { x: e.clientX, y: e.clientY, dx: this.bar.dx, dy: this.bar.dy };
+      const move = (m: PointerEvent) => this.moveBar(start.dx + m.clientX - start.x, start.dy + m.clientY - start.y, false);
+      const up = () => {
+        grip.removeEventListener('pointermove', move);
+        grip.removeEventListener('pointerup', up);
+        grip.removeEventListener('pointercancel', up);
+        saveBar(this.bar);
+      };
+      grip.addEventListener('pointermove', move);
+      grip.addEventListener('pointerup', up);
+      grip.addEventListener('pointercancel', up);
+    });
+    box.append(minus, plus, grip);
+    return box;
+  }
+
+  /** Leiste verschieben, im Fenster gehalten. */
+  private moveBar(dx: number, dy: number, save: boolean): void {
+    const rect = this.bottom.getBoundingClientRect();
+    if (rect.width > 0) {
+      const base = { left: rect.left - this.bar.dx, top: rect.top - this.bar.dy, width: rect.width, height: rect.height };
+      ({ dx, dy } = clampOffset(dx, dy, base, { width: window.innerWidth, height: window.innerHeight }));
+    }
+    this.bar = { ...this.bar, dx, dy };
+    this.applyBar();
+    if (save) saveBar(this.bar);
+  }
+
+  /** Größe, Deckkraft oder Lage ändern und speichern. */
+  setBar(change: Partial<BarLayout>): void {
+    const b = { ...this.bar, ...change };
+    this.bar = {
+      ...b,
+      scale: Math.round(Math.min(BAR_SCALE.max, Math.max(BAR_SCALE.min, b.scale)) * 100) / 100,
+      opacity: Math.min(BAR_OPACITY.max, Math.max(BAR_OPACITY.min, b.opacity)),
+    };
+    this.applyBar();
+    // Nach dem Skalieren wieder ins Fenster holen
+    this.moveBar(this.bar.dx, this.bar.dy, true);
+  }
+
+  get barLayout(): BarLayout {
+    return { ...this.bar };
+  }
+
+  private applyBar(): void {
+    const { dx, dy, scale, opacity } = this.bar;
+    this.bottom.style.transform = `translate(calc(-50% + ${dx}px), ${dy}px) scale(${scale})`;
+    this.bottom.style.setProperty('--bar-opacity', String(opacity));
   }
 
   private crosshair: HTMLElement | null = null;
@@ -807,6 +880,35 @@ export class Hud {
         perfLabel.append(perf, el('span', '', ' Leistung anzeigen (fps, Ping)'));
         row.append(el('span', '', 'Qualität'), select, perfLabel);
         box.append(row);
+      }
+      // Skillleiste: Größe und Deckkraft
+      {
+        box.append(el('h2', '', 'Skillleiste'));
+        const grid = el('div', 'hud-audio');
+        const rows: [string, 'scale' | 'opacity', number, number][] = [
+          ['Größe', 'scale', BAR_SCALE.min, BAR_SCALE.max],
+          ['Deckkraft', 'opacity', BAR_OPACITY.min, BAR_OPACITY.max],
+        ];
+        for (const [label, key, min, max] of rows) {
+          const range = el('input', 'hud-range');
+          range.type = 'range';
+          range.min = String(Math.round(min * 100));
+          range.max = String(Math.round(max * 100));
+          range.value = String(Math.round(this.bar[key] * 100));
+          range.dataset.bar = key;
+          const value = el('span', 'hud-range-value', `${range.value} %`);
+          range.addEventListener('input', () => {
+            this.setBar({ [key]: Number(range.value) / 100 });
+            value.textContent = `${range.value} %`;
+          });
+          grid.append(el('span', '', label), range, value);
+        }
+        const reset = el('button', 'hud-key', 'Lage und Größe zurücksetzen');
+        reset.addEventListener('click', () => {
+          this.setBar({ ...DEFAULT_BAR });
+          render();
+        });
+        box.append(grid, el('p', 'hud-small', 'Verschieben: am Griff ⠿ oben rechts an der Leiste ziehen.'), reset);
       }
       // Ton: Regler je Kanal und Stumm (gespeichert im Browser)
       const a = this.audio;

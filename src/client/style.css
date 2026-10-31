@@ -269,6 +269,53 @@ html, body {
 .hud-bottom {
   width: min(560px, calc(100% - 32px));
   pointer-events: auto;
+  transform-origin: bottom center;
+  background: rgba(15, 22, 17, 0.55);
+  opacity: var(--bar-opacity, 0.7);
+  transition: opacity 0.15s;
+}
+.hud-bottom:hover {
+  opacity: 1;
+}
+/* Griff und Größenknöpfe der Skillleiste */
+.hud-bar-controls {
+  position: absolute;
+  top: -24px;
+  right: 4px;
+  padding: 2px 3px;
+  border-radius: 6px 6px 0 0;
+  background: rgba(15, 22, 17, 0.55);
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  opacity: 0.45;
+  transition: opacity 0.15s;
+}
+.hud-bottom:hover .hud-bar-controls {
+  opacity: 1;
+}
+.hud-bar-grip {
+  cursor: grab;
+  padding: 0 4px;
+  font-size: 16px;
+  line-height: 1;
+  user-select: none;
+  touch-action: none;
+}
+.hud-bar-grip:active {
+  cursor: grabbing;
+}
+.hud-bar-size {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.35);
+  color: #e8f0e0;
+  cursor: pointer;
 }
 .hud-hero-head {
   display: flex;
