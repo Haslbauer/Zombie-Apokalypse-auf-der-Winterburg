@@ -68,30 +68,129 @@ export class ObjectiveView {
     return g;
   }
 
-  /** Hochbeet: Holzkasten mit Erde, Pflanzen wachsen bzw. schrumpfen mit dem Leben. */
+  /**
+   * Hochbeet: Kasten aus drei Lagen Brettern mit Eckpfosten und Abschlussbrett,
+   * krümelige Erde und je nach Beet andere Pflanzen (Kohl, Salat, Tomaten an
+   * Stäben, Kürbisse, Lauch). Die Pflanzen schrumpfen mit dem Leben des Beets.
+   */
   private buildBed(): THREE.Object3D {
     const g = new THREE.Group();
     const w = this.def.w ?? 2;
     const h = this.def.h ?? 1;
-    const box = new THREE.Mesh(new THREE.BoxGeometry(w, 0.6, h), this.lambert(0x7a5634));
-    box.position.y = 0.3;
-    box.castShadow = box.receiveShadow = true;
-    const soil = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.3, h - 0.3).rotateX(-Math.PI / 2), this.lambert(0x4a3322));
-    soil.position.y = 0.61;
-    g.add(box, soil);
-    const plants = new THREE.Group();
-    plants.name = 'plants';
     const along = w >= h;
     const length = along ? w : h;
-    const leaf = this.lambert(0x5fa83f);
-    for (let t = 0.6; t < length - 0.3; t += 1.1) {
-      const p = new THREE.Mesh(new THREE.IcosahedronGeometry(0.35, 0), leaf);
-      const o = -length / 2 + t;
-      p.position.set(along ? o : 0, 0.8, along ? 0 : o);
-      p.castShadow = true;
-      plants.add(p);
+    const depth = along ? h : w;
+    let seed = [...this.def.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) % 9973;
+    const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+    const inner = new THREE.Group();
+    if (!along) inner.rotation.y = Math.PI / 2;
+    g.add(inner);
+    const add = (geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z: number, shadow = true) => {
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(x, y, z);
+      m.castShadow = shadow;
+      m.receiveShadow = true;
+      inner.add(m);
+      return m;
+    };
+    // Bretter (3 Lagen, leicht unterschiedliche Holztöne, dunkle Fugen)
+    const woods = [0x7a5634, 0x6e4c2e, 0x85603a].map((c) => this.lambert(c));
+    for (let layer = 0; layer < 3; layer++) {
+      const y = 0.1 + layer * 0.2;
+      const mat = woods[(layer + Math.floor(rnd() * 3)) % 3];
+      for (const side of [-1, 1]) {
+        add(new THREE.BoxGeometry(length, 0.18, 0.06), mat, 0, y, side * (depth / 2 - 0.03));
+        add(new THREE.BoxGeometry(0.06, 0.18, depth - 0.12), mat, side * (length / 2 - 0.03), y, 0);
+      }
     }
-    g.add(plants);
+    // Eckpfosten und Abschlussbrett
+    const post = this.lambert(0x5a3c22);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) add(new THREE.BoxGeometry(0.1, 0.72, 0.1), post, sx * (length / 2 - 0.05), 0.36, sz * (depth / 2 - 0.05));
+    for (const side of [-1, 1]) add(new THREE.BoxGeometry(length + 0.08, 0.04, 0.14), post, 0, 0.66, side * (depth / 2 - 0.03), false);
+    // Erde mit Krümeln
+    const soilMat = this.lambert(0x3a2818);
+    add(new THREE.BoxGeometry(length - 0.12, 0.04, depth - 0.12), soilMat, 0, 0.6, 0, false);
+    const crumb = new THREE.DodecahedronGeometry(0.05, 0);
+    const crumbMat = this.lambert(0x4a3322);
+    for (let i = 0; i < length * 6; i++) add(crumb, crumbMat, (rnd() - 0.5) * (length - 0.3), 0.62, (rnd() - 0.5) * (depth - 0.3), false);
+
+    // Pflanzen: Art nach Beet
+    const plants = new THREE.Group();
+    plants.name = 'plants';
+    inner.add(plants);
+    const kind = ['cabbage', 'lettuce', 'tomato', 'pumpkin', 'leek', 'cabbage'][Math.abs(seed) % 5];
+    // Pflanzen wachsen vom Erdboden aus (Gruppe auf Erdhöhe, damit das Schrumpfen nicht im Kasten versinkt)
+    plants.position.y = 0.62;
+    const plantMats = new Map<number, THREE.MeshLambertMaterial>();
+    const P = (geo: THREE.BufferGeometry, color: number, x: number, y: number, z: number) => {
+      if (!plantMats.has(color)) plantMats.set(color, this.lambert(color));
+      const m = new THREE.Mesh(geo, plantMats.get(color)!);
+      m.position.set(x, y - 0.62, z);
+      m.castShadow = true;
+      plants.add(m);
+      return m;
+    };
+    const rows = depth > 1.2 ? [-depth / 4, depth / 4] : [0];
+    for (const z of rows) {
+      for (let x = -length / 2 + 0.45; x < length / 2 - 0.3; x += kind === 'pumpkin' ? 1.4 : kind === 'leek' ? 0.35 : 0.7) {
+        const jx = x + (rnd() - 0.5) * 0.12;
+        switch (kind) {
+          case 'cabbage':
+            P(new THREE.IcosahedronGeometry(0.2, 1), 0x6fa84a, jx, 0.78, z).scale.set(1, 0.85, 1);
+            for (let i = 0; i < 4; i++) {
+              const leaf = P(new THREE.SphereGeometry(0.17, 6, 4), 0x4f8a36, jx + Math.cos(i * 1.6) * 0.14, 0.7, z + Math.sin(i * 1.6) * 0.14);
+              leaf.scale.set(1, 0.35, 1);
+            }
+            break;
+          case 'lettuce':
+            for (let i = 0; i < 5; i++) {
+              const leaf = P(new THREE.SphereGeometry(0.13, 6, 4), i % 2 ? 0x8fcf5a : 0x7aba48, jx + (rnd() - 0.5) * 0.15, 0.72, z + (rnd() - 0.5) * 0.15);
+              leaf.scale.set(1, 0.55, 1);
+            }
+            break;
+          case 'tomato': {
+            P(new THREE.CylinderGeometry(0.015, 0.015, 1.1, 4), 0x8a6a45, jx, 1.15, z);
+            P(new THREE.IcosahedronGeometry(0.22, 0), 0x3f7a30, jx, 1.0, z).scale.set(0.8, 1.6, 0.8);
+            for (let i = 0; i < 3; i++) P(new THREE.SphereGeometry(0.06, 6, 4), 0xd8302a, jx + (rnd() - 0.5) * 0.25, 0.85 + rnd() * 0.4, z + (rnd() - 0.5) * 0.25);
+            break;
+          }
+          case 'pumpkin': {
+            const pk = P(new THREE.SphereGeometry(0.3, 10, 7), 0xe07a1f, jx, 0.82, z);
+            pk.scale.set(1.15, 0.8, 1.15);
+            P(new THREE.CylinderGeometry(0.03, 0.04, 0.12, 5), 0x4a6a2a, jx, 1.08, z);
+            for (let i = 0; i < 3; i++) {
+              const leaf = P(new THREE.CircleGeometry(0.2, 6).rotateX(-Math.PI / 2), 0x4f8a36, jx + (rnd() - 0.5) * 0.9, 0.66, z + (rnd() - 0.5) * 0.4);
+              leaf.rotation.y = rnd() * 3;
+            }
+            break;
+          }
+          default:
+            P(new THREE.CylinderGeometry(0.035, 0.04, 0.5, 5), 0xd8e0c0, jx, 0.85, z);
+            for (let i = 0; i < 3; i++) {
+              const blade = P(new THREE.BoxGeometry(0.03, 0.45, 0.07), 0x5a8a3a, jx, 1.2, z);
+              blade.rotation.set((rnd() - 0.5) * 0.6, i, (rnd() - 0.5) * 0.6);
+            }
+        }
+      }
+    }
+    // Kleinkram: Schildchen am Kopfende, manchmal Gießkanne oder Harke
+    const sign = add(new THREE.BoxGeometry(0.28, 0.16, 0.02), this.lambert(0xd8c8a0), -length / 2 + 0.25, 0.95, depth / 2 - 0.15, false);
+    sign.rotation.x = -0.3;
+    add(new THREE.BoxGeometry(0.02, 0.35, 0.02), post, -length / 2 + 0.25, 0.78, depth / 2 - 0.15, false);
+    if (rnd() < 0.5) {
+      const can = new THREE.Group();
+      can.add(new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.15, 0.28, 10), this.lambert(0x4f7a8a)));
+      const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.35, 5), this.lambert(0x4f7a8a));
+      spout.position.set(0.18, 0.08, 0);
+      spout.rotation.z = -0.9;
+      can.add(spout);
+      can.position.set(length / 2 + 0.3, 0.14, depth / 2 - 0.1);
+      inner.add(can);
+    } else {
+      const rake = add(new THREE.CylinderGeometry(0.02, 0.02, 1.4, 4), post, length / 2 + 0.15, 0.7, 0, false);
+      rake.rotation.z = 0.35;
+    }
+
     // Zerstört: verdorrte, braune Stängel (ohne Bienenstock wachsen sie nicht nach)
     const withered = new THREE.Group();
     withered.name = 'withered';

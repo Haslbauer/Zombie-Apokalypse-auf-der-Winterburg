@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import type { Brush, DecorDef, Obstacle, SpawnPoint } from '../sim/types';
+import { distanceToObstacle } from '../sim/grid';
+import type { ArenaDef, Brush, DecorDef, Obstacle, SpawnPoint } from '../sim/types';
 
 /**
  * Bausteine der Karte (nur Darstellung): Haus mit Fachwerk und Satteldach,
@@ -76,6 +77,48 @@ export const TEXTURES = {
         }
     }),
   gravel: () => canvasTexture(128, (c, s) => noise(c, s, '#b8a888', ['#a59576', '#cbbd9e', '#948468', '#d6cab0'], 700, [1, 3], 6)),
+  /** Bruchsteinplatten: unregelmäßige Steine (Voronoi), dunkle Fugen mit etwas Moos; kachelbar. */
+  flagstone: () =>
+    canvasTexture(128, (c, s) => {
+      const rnd = rand(11);
+      const pts: { x: number; y: number; g: number }[] = [];
+      for (let i = 0; i < 16; i++) pts.push({ x: rnd() * s, y: rnd() * s, g: 120 + Math.floor(rnd() * 50) });
+      const img = c.createImageData(s, s);
+      for (let y = 0; y < s; y++)
+        for (let x = 0; x < s; x++) {
+          let d1 = Infinity;
+          let d2 = Infinity;
+          let best = pts[0];
+          for (const p of pts)
+            for (const ox of [-s, 0, s])
+              for (const oy of [-s, 0, s]) {
+                const d = Math.hypot(x - p.x - ox, y - p.y - oy);
+                if (d < d1) {
+                  d2 = d1;
+                  d1 = d;
+                  best = p;
+                } else if (d < d2) d2 = d;
+              }
+          const i = (y * s + x) * 4;
+          const joint = d2 - d1 < 2.6;
+          const noiseV = ((x * 13 + y * 7) % 9) - 4;
+          if (joint) {
+            const moss = (x * 31 + y * 17) % 5 === 0;
+            img.data[i] = moss ? 52 : 46;
+            img.data[i + 1] = moss ? 70 : 42;
+            img.data[i + 2] = moss ? 40 : 36;
+          } else {
+            // leichte Wölbung: Rand dunkler
+            const edge = Math.min(1, (d2 - d1) / 10);
+            const g = best.g * (0.82 + 0.18 * edge) + noiseV;
+            img.data[i] = g;
+            img.data[i + 1] = g - 4;
+            img.data[i + 2] = g - 12;
+          }
+          img.data[i + 3] = 255;
+        }
+      c.putImageData(img, 0, 0);
+    }),
   water: () => canvasTexture(128, (c, s) => noise(c, s, '#3f6f7a', ['#4d8592', '#355f69', '#5e98a3'], 150, [4, 14], 7)),
 };
 
@@ -206,6 +249,119 @@ export function house(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chimne
     chimneys.push(new THREE.Vector3(o.x + cx, WALL_H + roofH + 1.4, o.y + cz));
   }
   return g;
+}
+
+/**
+ * Verfallener Hausflügel: Die eine Hälfte steht noch (hohle Mauern, halbes
+ * Dach, kahle Sparren), die andere ist eingestürzt (Mauerstümpfe, Schutt,
+ * Balken, umgekippter Schornstein, Efeu). Die Kollision bleibt das Rechteck.
+ */
+export function ruin(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chimneys: THREE.Vector3[]): THREE.Group {
+  const outer = new THREE.Group();
+  outer.position.set(o.x, 0, o.y);
+  const g = new THREE.Group();
+  outer.add(g);
+  // Lange Achse lokal entlang x; bei Nord-Süd-Flügeln drehen (lokal −x zeigt dann nach Süden)
+  const alongX = o.w >= o.h;
+  if (!alongX) g.rotation.y = Math.PI / 2;
+  const L = Math.max(o.w, o.h);
+  const S = Math.min(o.w, o.h);
+  const hl = L / 2;
+  const hs = S / 2;
+  const rnd = rand(o.x * 7 + o.y * 3);
+  const plaster = mats.textured('plaster', 2, 0xd8ccb0);
+  const timber = mats.lambert(0x3e2a1c);
+  const stone = mats.lambert(0x7d7468);
+  const brick = mats.lambert(0x8a4a38);
+  const dark = mats.lambert(0x15120f);
+  const ivy = mats.lambert(0x2f5a28);
+  const T = 0.32; // Mauerstärke
+  // Sockel und dunkler Boden innen
+  g.add(part(new THREE.BoxGeometry(L + 0.15, 0.45, S + 0.15), stone, 0, 0.22, 0));
+  g.add(part(new THREE.BoxGeometry(L - 0.4, 0.02, S - 0.4), dark, 0, 0.46, 0, false));
+
+  // Stehende Hälfte (lokal −x): hohle Mauern in voller Höhe
+  const wall = (len: number, h: number, x: number, z: number, alongLong: boolean) =>
+    g.add(part(new THREE.BoxGeometry(alongLong ? len : T, h, alongLong ? T : len), plaster, x, 0.45 + h / 2, z));
+  for (const side of [-1, 1]) wall(hl, WALL_H, -hl / 2, side * (hs - T / 2), true);
+  wall(S, WALL_H, -hl + T / 2, 0, false);
+  // Fachwerkbalken und leere bzw. vernagelte Fenster auf der stehenden Hälfte
+  for (const side of [-1, 1]) {
+    const z = side * (hs + 0.02);
+    g.add(part(new THREE.BoxGeometry(hl, 0.16, 0.16), timber, -hl / 2, WALL_H - 0.1, z, false));
+    g.add(part(new THREE.BoxGeometry(hl, 0.16, 0.16), timber, -hl / 2, 1.6, z, false));
+    for (let x = -hl; x <= 0.01; x += 2.3) g.add(part(new THREE.BoxGeometry(0.16, WALL_H - 0.5, 0.16), timber, x, 0.5 + (WALL_H - 0.5) / 2, z, false));
+    for (let x = -hl + 1.15; x < -0.5; x += 2.3) {
+      g.add(part(new THREE.BoxGeometry(0.8, 0.95, 0.06), dark, x, 2.35, z + side * 0.02, false));
+      if (rnd() < 0.6) {
+        const plank = part(new THREE.BoxGeometry(1.0, 0.12, 0.05), mats.lambert(0x6a5238), x, 2.35 + (rnd() - 0.5) * 0.4, z + side * 0.06, false);
+        plank.rotation.z = (rnd() - 0.5) * 0.6;
+        g.add(plank);
+      }
+    }
+  }
+  // Halbes Dach über dem stehenden Teil, dahinter kahle, abgebrochene Sparren
+  const roofH = Math.min(2.6, Math.max(0.9, S * 0.42));
+  const roofLen = hl * 0.65;
+  const roof = new THREE.Mesh(gableGeometry(roofLen, S + 0.9, roofH), mats.textured('roof', 1));
+  roof.castShadow = true;
+  roof.position.set(-hl + roofLen / 2 - 0.3, 0.45 + WALL_H - 0.45, 0);
+  g.add(roof);
+  const rafterLen = Math.hypot(hs + 0.45, roofH);
+  const tilt = Math.atan2(roofH, hs + 0.45);
+  for (let x = -hl + roofLen; x < hl * 0.25; x += 0.7) {
+    for (const side of [-1, 1]) {
+      if (rnd() < 0.25) continue; // einzelne Sparren fehlen
+      const len = rafterLen * (x > -0.5 ? 0.4 + rnd() * 0.5 : 1);
+      const r = part(new THREE.BoxGeometry(0.12, len, 0.12), timber, x, 0, 0);
+      r.rotation.x = side * (Math.PI / 2 - tilt);
+      // Fußpunkt auf der Mauerkrone, Richtung First
+      r.position.set(x, WALL_H + 0.45 + Math.sin(tilt) * len / 2 - 0.1, side * (hs + 0.45 - Math.cos(tilt) * len / 2));
+      g.add(r);
+    }
+  }
+  g.add(part(new THREE.BoxGeometry(hl * 0.9, 0.16, 0.16), timber, -hl * 0.45, WALL_H + 0.45 + roofH - 0.1, 0));
+
+  // Eingestürzte Hälfte (lokal +x): gezackte Mauerstümpfe
+  for (const side of [-1, 1]) {
+    for (let x = 0; x < hl; x += 0.55) {
+      const h = Math.max(0.3, (WALL_H - 0.4) * (1 - x / hl) * (0.4 + rnd() * 0.7));
+      g.add(part(new THREE.BoxGeometry(0.56, h, T), rnd() < 0.3 ? brick : plaster, x + 0.27, 0.45 + h / 2, side * (hs - T / 2)));
+      // Efeu an der Außenseite
+      if (rnd() < 0.35) g.add(part(new THREE.BoxGeometry(0.5, h * 0.8, 0.05), ivy, x + 0.27, 0.45 + h * 0.4, side * (hs + 0.02), false));
+    }
+  }
+  const endH = 0.4 + rnd() * 0.6;
+  g.add(part(new THREE.BoxGeometry(T, endH, S), stone, hl - T / 2, 0.45 + endH / 2, 0));
+  // Schutthaufen aus Steinen und Ziegeln
+  const rubble = new THREE.IcosahedronGeometry(1, 0);
+  for (let i = 0; i < 9; i++) {
+    const m = part(rubble, rnd() < 0.5 ? stone : brick, rnd() * (hl - 0.6) + 0.3, 0.45, (rnd() - 0.5) * (S - 1));
+    m.scale.set(0.5 + rnd() * 0.8, 0.3 + rnd() * 0.5, 0.5 + rnd() * 0.7);
+    m.rotation.set(rnd() * 3, rnd() * 3, rnd() * 3);
+    g.add(m);
+  }
+  const brickGeo = new THREE.BoxGeometry(0.28, 0.1, 0.14);
+  for (let i = 0; i < 40; i++) {
+    // auch außerhalb der Mauern verstreut (bis 1,2 m)
+    const b = part(brickGeo, rnd() < 0.7 ? brick : stone, rnd() * (hl + 1) - 0.5, 0.05 + rnd() * 0.5, (rnd() - 0.5) * (S + 2.4), false);
+    b.rotation.set(rnd() * 0.6, rnd() * 3, rnd() * 0.6);
+    g.add(b);
+  }
+  // Herabgestürzte Balken
+  for (let i = 0; i < 5; i++) {
+    const beam = part(new THREE.BoxGeometry(2.4 + rnd() * 2, 0.16, 0.16), timber, rnd() * hl * 0.8 + 0.3, 0.8 + rnd() * 0.8, (rnd() - 0.5) * (S - 1));
+    beam.rotation.set((rnd() - 0.5) * 0.6, rnd() * Math.PI, (rnd() - 0.5) * 0.8);
+    g.add(beam);
+  }
+  // Umgekippter Schornstein auf dem Schutt, aus dem noch Staub steigt
+  const ch = part(new THREE.BoxGeometry(2.2, 0.7, 0.7), mats.lambert(0x8a5a48), hl * 0.55, 1.1, (rnd() - 0.5) * 0.8);
+  ch.rotation.set(0.15, 0.6, 0.35);
+  g.add(ch);
+  g.updateMatrixWorld(true);
+  outer.updateMatrixWorld(true);
+  chimneys.push(new THREE.Vector3(hl * 0.55, 1.2, 0).applyMatrix4(g.matrixWorld));
+  return outer;
 }
 
 /**
@@ -493,15 +649,45 @@ export function decor(d: DecorDef, mats: Mats): THREE.Object3D {
     edge(d.h, d.w / 2, 0, false);
     return g;
   }
-  const mat = mats.textured(d.look === 'cobbles' ? 'cobbles' : 'gravel', 1);
+  const cobbles = d.look === 'cobbles';
+  const mat = mats.textured(cobbles ? 'cobbles' : 'flagstone', 1);
   const geo = new THREE.PlaneGeometry(d.w, d.h).rotateX(-Math.PI / 2);
-  // Textur in Weltmaßen kacheln
+  // Textur in Weltmaßen kacheln (Bruchstein: eine Kachel ≈ 2,5 m)
+  const k = cobbles ? 0.5 : 0.4;
   const uv = geo.attributes.uv;
-  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * d.w * 0.5, uv.getY(i) * d.h * 0.5);
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * d.w * k + d.x * k, uv.getY(i) * d.h * k + d.y * k);
   const mesh = new THREE.Mesh(geo, mat);
   mesh.position.set(d.x, 0.012, d.y);
   mesh.receiveShadow = true;
-  return mesh;
+  if (cobbles) return mesh;
+  // Unregelmäßiger Rand: einzelne Steinplatten neben dem Weg, ein paar fehlen im Weg (Erde)
+  const g = new THREE.Group();
+  g.add(mesh);
+  const rnd = rand(d.x * 3 + d.y * 5);
+  const slab = mats.lambert(0x8f887c);
+  const dirt = mats.lambert(0x4a3a2a);
+  const along = d.w >= d.h;
+  const len = along ? d.w : d.h;
+  const wid = along ? d.h : d.w;
+  for (let t = -len / 2; t < len / 2; t += 0.9 + rnd() * 0.8) {
+    for (const side of [-1, 1]) {
+      if (rnd() < 0.4) continue;
+      const r = 0.22 + rnd() * 0.25;
+      const off = side * (wid / 2 + r * 0.6);
+      const stone = new THREE.Mesh(new THREE.CircleGeometry(r, 5 + Math.floor(rnd() * 3)).rotateX(-Math.PI / 2), slab);
+      stone.position.set(d.x + (along ? t : off), 0.014, d.y + (along ? off : t));
+      stone.rotation.y = rnd() * 3;
+      stone.receiveShadow = true;
+      g.add(stone);
+    }
+    if (rnd() < 0.15) {
+      const hole = new THREE.Mesh(new THREE.CircleGeometry(0.25 + rnd() * 0.2, 6).rotateX(-Math.PI / 2), dirt);
+      const off = (rnd() - 0.5) * (wid - 0.6);
+      hole.position.set(d.x + (along ? t : off), 0.016, d.y + (along ? off : t));
+      g.add(hole);
+    }
+  }
+  return g;
 }
 
 /** Material, dessen Ecken sich im Wind wiegen (je höher, desto mehr). */
@@ -644,5 +830,73 @@ export function thicket(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats): THR
   g.add(bushes);
   const trees = Math.round((o.w * o.h) / 40);
   for (let i = 0; i < trees; i++) g.add(tree(o.x + (rnd() - 0.5) * (o.w - 2), o.y + (rnd() - 0.5) * (o.h - 2), 1.4, mats));
+  return g;
+}
+
+/**
+ * Deko-Gras ohne Spielwirkung: Grasbüschel und Wildblumen entlang von Zäunen,
+ * Hecken, Mauern und Wegrändern (zwei InstancedMeshes, wiegen sich im Wind).
+ */
+export function grassTufts(arena: ArenaDef): THREE.Group {
+  const g = new THREE.Group();
+  const rnd = rand(77);
+  const spots: { x: number; z: number }[] = [];
+  const free = (x: number, z: number) => !arena.obstacles.some((o) => distanceToObstacle({ x, y: z }, o) < 0.12);
+  const edge = (x: number, y: number, w: number, h: number, gap: number) => {
+    const along = w >= h;
+    const len = along ? w : h;
+    const wid = along ? h : w;
+    for (let t = -len / 2; t < len / 2; t += 0.35 + rnd() * 0.5) {
+      for (const side of [-1, 1]) {
+        if (rnd() < 0.35) continue;
+        const off = side * (wid / 2 + gap + rnd() * 0.5);
+        const px = x + (along ? t : off);
+        const pz = y + (along ? off : t);
+        if (free(px, pz)) spots.push({ x: px, z: pz });
+      }
+    }
+  };
+  for (const o of arena.obstacles) {
+    if (o.kind !== 'rect') continue;
+    const look = o.look ?? 'hedge';
+    if (['hedge', 'fence', 'house', 'ruin', 'shed', 'bed'].includes(look)) edge(o.x, o.y, o.w, o.h, 0.08);
+  }
+  for (const d of arena.decor ?? []) if (d.look === 'gravel') edge(d.x, d.y, d.w, d.h, 0.35);
+  for (const p of arena.paths ?? []) edge(p.x, p.y, p.w, p.h, 0.35);
+
+  const m = new THREE.Matrix4();
+  const q = new THREE.Quaternion();
+  const up = new THREE.Vector3(0, 1, 0);
+  const color = new THREE.Color();
+  // Büschel aus drei schmalen Halmen
+  const blade = new THREE.ConeGeometry(0.07, 0.6, 3).translate(0, 0.3, 0);
+  const tuft = new THREE.InstancedMesh(blade, windMaterial(0xffffff, 0.08), spots.length * 3);
+  let n = 0;
+  for (const s of spots) {
+    for (let i = 0; i < 3; i++) {
+      q.setFromAxisAngle(up, rnd() * Math.PI);
+      const tilt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), (rnd() - 0.5) * 0.5);
+      q.multiply(tilt);
+      const k = 0.5 + rnd() * 0.8;
+      m.compose(new THREE.Vector3(s.x + (rnd() - 0.5) * 0.2, 0, s.z + (rnd() - 0.5) * 0.2), q, new THREE.Vector3(1, k, 1));
+      tuft.setMatrixAt(n, m);
+      tuft.setColorAt(n, color.setHSL(0.2 + rnd() * 0.08, 0.5, 0.22 + rnd() * 0.12, THREE.SRGBColorSpace));
+      n++;
+    }
+  }
+  tuft.count = n;
+  g.add(tuft);
+  // Wildblumen (weiß, gelb, violett) an jedem fünften Büschel
+  const flowers = spots.filter(() => rnd() < 0.2);
+  const head = new THREE.SphereGeometry(0.05, 5, 3).translate(0, 0.45, 0);
+  const fl = new THREE.InstancedMesh(head, new THREE.MeshLambertMaterial({ color: 0xffffff }), Math.max(1, flowers.length));
+  const palette = [0xf0f0e8, 0xffd84a, 0xb48cff, 0xff8aa0];
+  flowers.forEach((s, i) => {
+    m.makeTranslation(s.x + (rnd() - 0.5) * 0.3, rnd() * 0.15, s.z + (rnd() - 0.5) * 0.3);
+    fl.setMatrixAt(i, m);
+    fl.setColorAt(i, color.setHex(palette[Math.floor(rnd() * palette.length)]));
+  });
+  fl.count = flowers.length;
+  g.add(fl);
   return g;
 }

@@ -3,7 +3,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { arenaBounds } from '../sim/grid';
 import type { ArenaDef, Obstacle } from '../sim/types';
 import { nightDecor, nightObstacle } from './nightdecor';
-import { brushes, decor, hatch, hedge, house, Mats, obstacleDecor, smoke, thicket, tree, windTime, rathole } from './mapdecor';
+import { brushes, decor, hatch, hedge, house, Mats, obstacleDecor, smoke, thicket, tree, windTime, rathole, ruin, grassTufts } from './mapdecor';
 
 const COLORS = {
   forest: 0x3a6230,
@@ -91,6 +91,7 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   for (const o of arena.obstacles) {
     if (o.kind === 'rect' && o.look === 'house') scene.add(house(o, mats, chimneys));
     else if (o.kind === 'rect' && o.look === 'rathole') scene.add(rathole(o, mats, chimneys));
+    else if (o.kind === 'rect' && o.look === 'ruin') scene.add(ruin(o, mats, chimneys));
     else if (o.look === 'car' || o.look === 'well') {
       const d = nightObstacle(o, mats);
       if (d) scene.add(d);
@@ -127,6 +128,9 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
 
   const live = new THREE.Group();
   const night = nightDecor(scene, live, arena, mats);
+  // Deko-Gras bleibt eigenständig (Grafik „Niedrig“ blendet es aus)
+  const tufts = grassTufts(arena);
+  live.add(tufts);
   target.add(mergeStatic(scene));
   target.add(live);
   const smokes = smoke(chimneys);
@@ -139,6 +143,7 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
     },
     setDetail(on) {
       night.setDetail(on);
+      tufts.visible = on;
       smokes.group.visible = on;
     },
   };

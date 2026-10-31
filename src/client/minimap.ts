@@ -14,6 +14,7 @@ const COLORS = {
   outside: '#3f6b34',
   garden: '#6ea84c',
   house: '#c9b48a',
+  ruin: '#8f8270',
   hedge: '#2f5f2a',
   fence: '#8a6a45',
   blocked: '#557f42',
@@ -244,6 +245,7 @@ export class Minimap {
       if (look === 'objective' || look === 'bed' || look === 'flowers' || look === 'bench' || look === 'wheelbarrow') continue;
       const color =
         look === 'house' ? COLORS.house
+        : look === 'ruin' ? COLORS.ruin
         : look === 'fence' ? COLORS.fence
         : look === 'blocked' ? COLORS.blocked
         : look === 'grave' ? COLORS.grave

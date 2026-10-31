@@ -137,3 +137,28 @@ describe('Nordeingang zum Innenhof', () => {
     expect(h.pos.y).toBeLessThan(9);
   });
 });
+
+describe('Versteckflächen', () => {
+  const arena = gameData.arena;
+  const route = arena.courierRoute ?? [];
+  /** Abstand eines Punkts zur Strecke a–b. */
+  const segDist = (p: { x: number; y: number }, a: { x: number; y: number }, b: { x: number; y: number }) => {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy || 1)));
+    return Math.hypot(p.x - a.x - t * dx, p.y - a.y - t * dy);
+  };
+  it('liegen nicht auf dem Rundweg des Postboten und nicht in den Toren', () => {
+    for (const b of arena.brush ?? []) {
+      const r = b.kind === 'circle' ? b.r : Math.hypot(b.w, b.h) / 2;
+      const c = { x: b.x, y: b.y };
+      for (let i = 0; i < route.length; i++) {
+        // Rechtecke: Mittelpunkt mit halber Diagonale (vorsichtig)
+        expect(segDist(c, route[i], route[(i + 1) % route.length]) - r, `${b.look} ${b.x},${b.y}`).toBeGreaterThan(b.kind === 'circle' ? 0.5 : -1.2);
+      }
+      // Tore West (x 0, y 6–12), Süd (y 71–75, x 35,5–39), Ost (x 61–66, y 30,5–36), Nordeingang (x 38,5–40,5, y 10,5)
+      const inGate = (gx: number, gy: number, w: number, h: number) => Math.abs(b.x - gx) < w / 2 + r && Math.abs(b.y - gy) < h / 2 + r;
+      expect(inGate(0, 9, 2, 6) || inGate(37.25, 73, 3.5, 4) || inGate(63.5, 33.25, 5, 5.5) || inGate(39.5, 10.5, 2, 3), `${b.x},${b.y}`).toBe(false);
+    }
+  });
+});

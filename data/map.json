@@ -216,7 +216,7 @@
       "y": 24.2,
       "w": 5,
       "h": 18.4,
-      "look": "house"
+      "look": "ruin"
     },
     {
       "kind": "rect",
@@ -1159,6 +1159,78 @@
       "y": 82.60000000000001,
       "r": 3.8,
       "look": "reed"
+    },
+    {
+      "kind": "circle",
+      "x": -7,
+      "y": 22,
+      "r": 2,
+      "look": "grass"
+    },
+    {
+      "kind": "circle",
+      "x": -7,
+      "y": 66,
+      "r": 2,
+      "look": "grass"
+    },
+    {
+      "kind": "rect",
+      "x": 16,
+      "y": -6.5,
+      "w": 6,
+      "h": 2.2,
+      "look": "grass"
+    },
+    {
+      "kind": "circle",
+      "x": 73,
+      "y": 14,
+      "r": 1.8,
+      "look": "grass"
+    },
+    {
+      "kind": "circle",
+      "x": 73,
+      "y": 64,
+      "r": 2,
+      "look": "grass"
+    },
+    {
+      "kind": "rect",
+      "x": 50,
+      "y": 81.5,
+      "w": 5,
+      "h": 2.4,
+      "look": "grass"
+    },
+    {
+      "kind": "circle",
+      "x": 11,
+      "y": 79.8,
+      "r": 1.5,
+      "look": "grass"
+    },
+    {
+      "kind": "circle",
+      "x": 46,
+      "y": -6.5,
+      "r": 1.6,
+      "look": "grass"
+    },
+    {
+      "kind": "circle",
+      "x": 23.6,
+      "y": 38.6,
+      "r": 1.2,
+      "look": "grass"
+    },
+    {
+      "kind": "circle",
+      "x": 9,
+      "y": 67.6,
+      "r": 1.5,
+      "look": "grass"
     }
   ],
   "decor": [
@@ -1446,6 +1518,252 @@
       "look": "opengrave",
       "x": 67.8,
       "y": -6.8
+    },
+    {
+      "look": "barbedwire",
+      "x": -3.4,
+      "y": 4.0,
+      "w": 2.4,
+      "rot": 1.571
+    },
+    {
+      "look": "barbedwire",
+      "x": -3.4,
+      "y": 14.0,
+      "w": 2.4,
+      "rot": 1.571
+    },
+    {
+      "look": "barbedwire",
+      "x": 32.6,
+      "y": 76.6,
+      "w": 2.6,
+      "rot": 0
+    },
+    {
+      "look": "barbedwire",
+      "x": 41.9,
+      "y": 76.6,
+      "w": 2.6,
+      "rot": 0
+    },
+    {
+      "look": "barbedwire",
+      "x": 69.5,
+      "y": 28.2,
+      "w": 2.4,
+      "rot": 1.571
+    },
+    {
+      "look": "barbedwire",
+      "x": 69.5,
+      "y": 38.4,
+      "w": 2.4,
+      "rot": 1.571
+    },
+    {
+      "look": "barbedwire",
+      "x": 40,
+      "y": 5.4,
+      "w": 6,
+      "rot": 0
+    },
+    {
+      "look": "barbedwire",
+      "x": 58,
+      "y": -3.4,
+      "w": 3,
+      "rot": 0
+    },
+    {
+      "look": "barbedwire",
+      "x": 37.2,
+      "y": 8.4,
+      "w": 2.2,
+      "rot": 0
+    },
+    {
+      "look": "barbedwire",
+      "x": 41.8,
+      "y": 8.4,
+      "w": 2,
+      "rot": 0
+    },
+    {
+      "look": "planks",
+      "x": 45.7,
+      "y": 14,
+      "w": 1.8,
+      "rot": 1.571
+    },
+    {
+      "look": "planks",
+      "x": 45.7,
+      "y": 20.5,
+      "w": 1.8,
+      "rot": 1.571
+    },
+    {
+      "look": "planks",
+      "x": 36,
+      "y": 30.4,
+      "w": 2,
+      "rot": 0
+    },
+    {
+      "look": "planks",
+      "x": 42.5,
+      "y": 30.4,
+      "w": 2,
+      "rot": 0
+    },
+    {
+      "look": "planks",
+      "x": -0.8,
+      "y": 2.4,
+      "w": 1.6,
+      "rot": 1.571
+    },
+    {
+      "look": "planks",
+      "x": -0.8,
+      "y": 15.6,
+      "w": 1.6,
+      "rot": 1.571
+    },
+    {
+      "look": "planks",
+      "x": 8.3,
+      "y": 64.5,
+      "w": 1.6,
+      "rot": 1.571
+    },
+    {
+      "look": "planks",
+      "x": 37.2,
+      "y": 9.85,
+      "w": 1.6,
+      "rot": 0
+    },
+    {
+      "look": "planks",
+      "x": 24.75,
+      "y": 20,
+      "w": 1.8,
+      "rot": 1.571
+    },
+    {
+      "look": "campfire",
+      "x": 14,
+      "y": 4.6,
+      "w": 0.8
+    },
+    {
+      "look": "campfire",
+      "x": 21,
+      "y": 80,
+      "w": 0.6
+    },
+    {
+      "look": "stump",
+      "x": -5,
+      "y": 18
+    },
+    {
+      "look": "stump",
+      "x": 70,
+      "y": 20
+    },
+    {
+      "look": "stump",
+      "x": 30,
+      "y": -5
+    },
+    {
+      "look": "stump",
+      "x": 62,
+      "y": 82
+    },
+    {
+      "look": "stump",
+      "x": 5,
+      "y": -6.5
+    },
+    {
+      "look": "fern",
+      "x": -7,
+      "y": 35
+    },
+    {
+      "look": "fern",
+      "x": 74,
+      "y": 45
+    },
+    {
+      "look": "fern",
+      "x": 16,
+      "y": -7.5
+    },
+    {
+      "look": "fern",
+      "x": 53,
+      "y": 83
+    },
+    {
+      "look": "fern",
+      "x": -6.5,
+      "y": 69
+    },
+    {
+      "look": "fern",
+      "x": 71,
+      "y": 10
+    },
+    {
+      "look": "fern",
+      "x": -8,
+      "y": 57
+    },
+    {
+      "look": "fern",
+      "x": 57,
+      "y": -9
+    },
+    {
+      "look": "tires",
+      "x": 11,
+      "y": 50
+    },
+    {
+      "look": "tires",
+      "x": 56.5,
+      "y": 24
+    },
+    {
+      "look": "birdbath",
+      "x": 21,
+      "y": 36.5
+    },
+    {
+      "look": "cross",
+      "x": 66.3,
+      "y": -8.2
+    },
+    {
+      "look": "cross",
+      "x": 55.4,
+      "y": -8.3
+    },
+    {
+      "look": "cross",
+      "x": 64.7,
+      "y": -3.8
+    },
+    {
+      "look": "woodstack",
+      "x": 23.9,
+      "y": 29,
+      "rot": 1.571
     }
   ]
 }

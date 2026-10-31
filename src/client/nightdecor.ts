@@ -132,6 +132,7 @@ export function nightObstacle(o: Obstacle, mats: Mats): THREE.Object3D | null {
  */
 export function nightDecor(stat: THREE.Group, live: THREE.Group, arena: ArenaDef, mats: Mats): NightAnimation {
   const flames: { mesh: THREE.Sprite; glow: THREE.Mesh; seed: number }[] = [];
+  const sparks: { s: THREE.Sprite; x: number; z: number; seed: number }[] = [];
   const crows: { bird: THREE.Group; home: THREE.Vector3; seed: number; fly: number }[] = [];
   const wood = mats.lambert(0x5e4429);
   const darkWood = mats.lambert(0x3b2a1c);
@@ -160,6 +161,138 @@ export function nightDecor(stat: THREE.Group, live: THREE.Group, arena: ArenaDef
         live.add(flame, glow);
         flames.push({ mesh: flame, glow, seed: rnd() * 10 });
         continue;
+      }
+      case 'barbedwire': {
+        // Stacheldrahtrolle: gedrehte Drahtschlaufen an Holzpflöcken, mit Stacheln
+        const w = p.w ?? 3;
+        const wire = mats.lambert(0x3a3a3c);
+        const loop = new THREE.TorusGeometry(0.32, 0.012, 3, 14);
+        for (let x = -w / 2; x <= w / 2; x += 0.22) {
+          const l = part(loop, wire, x, 0.34, (rnd() - 0.5) * 0.06, false);
+          l.rotation.set(0, Math.PI / 2 + (rnd() - 0.5) * 0.5, (rnd() - 0.5) * 0.3);
+          g.add(l);
+        }
+        const barb = new THREE.BoxGeometry(0.07, 0.012, 0.012);
+        for (let i = 0; i < w * 6; i++) {
+          const a = rnd() * Math.PI * 2;
+          const b = part(barb, wire, -w / 2 + rnd() * w, 0.34 + Math.sin(a) * 0.32, Math.cos(a) * 0.32, false);
+          b.rotation.set(rnd() * 3, rnd() * 3, rnd() * 3);
+          g.add(b);
+        }
+        for (let x = -w / 2; x <= w / 2 + 0.01; x += Math.max(1, w / 3)) g.add(part(new THREE.CylinderGeometry(0.04, 0.05, 0.85, 5), wood, x, 0.42, 0));
+        break;
+      }
+      case 'planks': {
+        // Bretterbarrikade: Pfosten, kreuz und quer vernagelte Bretter mit Nägeln
+        const w = p.w ?? 2;
+        for (const x of [-w / 2 + 0.1, w / 2 - 0.1]) g.add(part(new THREE.BoxGeometry(0.14, 1.9, 0.14), darkWood, x, 0.95, 0));
+        const nail = new THREE.BoxGeometry(0.03, 0.03, 0.03);
+        for (let i = 0; i < 6; i++) {
+          const len = w * (0.85 + rnd() * 0.35);
+          const y = 0.3 + i * 0.27 + (rnd() - 0.5) * 0.1;
+          const broken = rnd() < 0.2;
+          const plank = part(new THREE.BoxGeometry(broken ? len * 0.55 : len, 0.18, 0.04), rnd() < 0.5 ? wood : mats.lambert(0x7a6448), broken ? -w * 0.2 : 0, y, 0.1 + (i % 2) * 0.03);
+          plank.rotation.z = (rnd() - 0.5) * (i % 3 === 0 ? 0.7 : 0.25);
+          g.add(plank);
+          for (const x of [-w / 2 + 0.1, w / 2 - 0.1]) g.add(part(nail, mats.lambert(0x8a8a8a), x, y, 0.15, false));
+        }
+        break;
+      }
+      case 'campfire': {
+        // Steinkreis, verkohlte Scheite, Sitzstämme, Topf am Dreibein; Flamme und Glut bewegt
+        const r = p.w ?? 0.8;
+        const stoneGeo = new THREE.DodecahedronGeometry(0.17, 0);
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * Math.PI * 2;
+          const s = part(stoneGeo, mats.lambert(0x6f6a64), Math.cos(a) * r, 0.1, Math.sin(a) * r, false);
+          s.scale.set(1, 0.7, 1);
+          s.rotation.set(rnd(), rnd(), rnd());
+          g.add(s);
+        }
+        g.add(part(new THREE.CircleGeometry(r * 0.9, 12).rotateX(-Math.PI / 2), mats.lambert(0x1c1410), 0, 0.02, 0, false));
+        for (let i = 0; i < 4; i++) {
+          const log = part(new THREE.CylinderGeometry(0.06, 0.07, r * 1.3, 6).rotateZ(Math.PI / 2), mats.lambert(0x2a1a10), 0, 0.12, 0, false);
+          log.rotation.y = (i / 4) * Math.PI + rnd() * 0.3;
+          g.add(log);
+        }
+        g.add(part(new THREE.CylinderGeometry(r * 0.45, r * 0.45, 0.04, 10), mats.lambert(0xff6a20, { emissive: 0xff4a10 }), 0, 0.08, 0, false));
+        for (const side of [-1, 1]) {
+          const seat = part(new THREE.CylinderGeometry(0.2, 0.22, 1.6, 8).rotateZ(Math.PI / 2), wood, 0, 0.2, side * (r + 0.9));
+          seat.rotation.y = (rnd() - 0.5) * 0.4;
+          g.add(seat);
+        }
+        for (let i = 0; i < 3; i++) {
+          const a = (i / 3) * Math.PI * 2;
+          const leg = part(new THREE.CylinderGeometry(0.02, 0.02, 1.4, 4), darkWood, Math.cos(a) * 0.45, 0.62, Math.sin(a) * 0.45, false);
+          leg.rotation.set(Math.sin(a) * 0.32, 0, -Math.cos(a) * 0.32);
+          g.add(leg);
+        }
+        g.add(part(new THREE.CylinderGeometry(0.16, 0.12, 0.22, 10), mats.lambert(0x2a2a2a), 0, 0.85, 0, false));
+        stat.add(g);
+        const flame = new THREE.Sprite(flameMat);
+        flame.position.set(p.x, 0.75, p.y);
+        const glow = groundGlow(0xff8a30, 11, 0.6);
+        glow.position.set(p.x, 0.05, p.y);
+        live.add(flame, glow);
+        flames.push({ mesh: flame, glow, seed: rnd() * 10 });
+        // aufsteigende Funken
+        for (let i = 0; i < 6; i++) {
+          const spark = new THREE.Sprite(new THREE.SpriteMaterial({ map: soft(), color: 0xffb060, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+          spark.scale.setScalar(0.08);
+          live.add(spark);
+          sparks.push({ s: spark, x: p.x, z: p.y, seed: rnd() * 10 });
+        }
+        continue;
+      }
+      case 'stump': {
+        g.add(part(new THREE.CylinderGeometry(0.35, 0.45, 0.5, 9), mats.lambert(0x5e4128), 0, 0.25, 0));
+        g.add(part(new THREE.CylinderGeometry(0.33, 0.33, 0.02, 9), mats.lambert(0xb08a5a), 0, 0.51, 0, false));
+        for (let i = 0; i < 3; i++) {
+          const root = part(new THREE.ConeGeometry(0.12, 0.7, 5).rotateZ(Math.PI / 2), mats.lambert(0x4e3520), 0, 0.08, 0, false);
+          root.rotation.y = (i / 3) * Math.PI * 2 + rnd();
+          root.position.set(Math.cos(root.rotation.y) * 0.45, 0.08, -Math.sin(root.rotation.y) * 0.45);
+          g.add(root);
+        }
+        break;
+      }
+      case 'fern': {
+        const frond = new THREE.PlaneGeometry(0.18, 0.9).translate(0, 0.45, 0);
+        const fm = new THREE.MeshLambertMaterial({ color: 0x3f6a2c, side: THREE.DoubleSide });
+        for (let i = 0; i < 9; i++) {
+          const f = new THREE.Mesh(frond, fm);
+          f.rotation.set(-0.9 - rnd() * 0.4, (i / 9) * Math.PI * 2, 0, 'YXZ');
+          g.add(f);
+        }
+        break;
+      }
+      case 'tires': {
+        const tire = new THREE.TorusGeometry(0.32, 0.12, 6, 14).rotateX(Math.PI / 2);
+        const n = 2 + Math.floor(rnd() * 3);
+        for (let i = 0; i < n; i++) g.add(part(tire, mats.lambert(0x1a1a1a), (rnd() - 0.5) * 0.15, 0.12 + i * 0.22, (rnd() - 0.5) * 0.15));
+        break;
+      }
+      case 'birdbath': {
+        g.add(part(new THREE.CylinderGeometry(0.1, 0.18, 0.8, 8), mats.lambert(0x9a958c), 0, 0.4, 0));
+        g.add(part(new THREE.CylinderGeometry(0.42, 0.3, 0.14, 12), mats.lambert(0x9a958c), 0, 0.85, 0));
+        g.add(part(new THREE.CircleGeometry(0.36, 12).rotateX(-Math.PI / 2), mats.lambert(0x2a4048), 0, 0.93, 0, false));
+        break;
+      }
+      case 'cross': {
+        // Holzkreuz mit Helm (Grab)
+        const c = new THREE.Group();
+        c.add(part(new THREE.BoxGeometry(0.1, 1.1, 0.08), darkWood, 0, 0.55, 0));
+        c.add(part(new THREE.BoxGeometry(0.6, 0.1, 0.08), darkWood, 0, 0.8, 0));
+        c.add(part(new THREE.SphereGeometry(0.17, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2), mats.lambert(0x4a5038), 0, 1.08, 0));
+        c.rotation.z = (rnd() - 0.5) * 0.25;
+        g.add(c);
+        g.add(part(new THREE.BoxGeometry(0.7, 0.12, 1.5), mats.lambert(0x4a3322), 0, 0.06, 0.6, false));
+        break;
+      }
+      case 'woodstack': {
+        const log = new THREE.CylinderGeometry(0.12, 0.12, 1.1, 7).rotateX(Math.PI / 2);
+        for (let row = 0; row < 3; row++)
+          for (let i = 0; i < 5 - row; i++) g.add(part(log, rnd() < 0.5 ? wood : darkWood, -0.5 + i * 0.25 + row * 0.12, 0.12 + row * 0.22, 0));
+        break;
       }
       case 'barricade': {
         const w = p.w ?? 2;
@@ -351,6 +484,12 @@ export function nightDecor(stat: THREE.Group, live: THREE.Group, arena: ArenaDef
         const k = 0.75 + 0.25 * Math.sin(time * 13 + f.seed) * Math.sin(time * 7.3 + f.seed * 2);
         f.mesh.scale.set(0.9 + 0.15 * Math.sin(time * 9 + f.seed), 1.2 * (k + 0.15), 1);
         (f.glow.material as THREE.MeshBasicMaterial).opacity = 0.42 + 0.18 * k;
+      }
+      for (const sp of sparks) {
+        // Funken steigen auf und verglühen (Zyklus 1,6 s)
+        const t = (time * 0.62 + sp.seed) % 1;
+        sp.s.position.set(sp.x + Math.sin(sp.seed * 7 + time) * 0.25 * t, 0.6 + t * 2.4, sp.z + Math.cos(sp.seed * 5 + time) * 0.25 * t);
+        (sp.s.material as THREE.SpriteMaterial).opacity = 1 - t;
       }
       for (const w of wisps) {
         const x = ((w.base.x - b.x0 + time * w.speed) % (b.x1 - b.x0)) + b.x0;

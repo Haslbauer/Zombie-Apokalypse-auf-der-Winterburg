@@ -2,7 +2,7 @@
 
 Stand: 31.10.2026. Arbeitsgrundlage für Claude Code.
 
-Änderungen v1.9: Nordeingang zum Innenhof (ersetzt das Rattenloch), Lager weichen aus. Beschwörerzauber wie in LoL (zwei pro Held, vor dem Spiel gewählt, Tasten F/G), siehe Abschnitt 9b.
+Änderungen v1.9: Karte mit mehr Details (Ruine, Stacheldraht, Barrikaden, Feuerstellen, Hochbeete, Bruchsteinwege, Gras), Nordeingang zum Innenhof (ersetzt das Rattenloch), Lager weichen aus. Beschwörerzauber wie in LoL (zwei pro Held, vor dem Spiel gewählt, Tasten F/G), siehe Abschnitt 9b.
 Änderungen v1.8: Figuren laufen sichtbar (ein Skelett pro Figur), Schuss-Animationen mit sichtbaren Geschossen, Grafikstufen und Leistungsanzeige, kleinere Zustandspakete, geduldigerer Herzschlag mit Trennungsgrund.
 Änderungen v1.7: Neue Mixamo-Figuren für Helden und Zombies, schwere Gegner größer und mit Leucht-Ring, neuer Elite Dämon, Boss-Zähler mit Kill-, Assist- und Erstes-Blut-Gold (Anzeigetafel auf Tab), Bots folgen Pings, Rattenloch zum Innenhof, verdorrte Beete, Nachtstimmung mit vielen Details.
 Änderungen v1.6: Karte neu gestaltet (Fachwerkhaus, Bunker als Luke mit Hollywoodschaukel, Garten- und Geländedeko, Grabstätte, Teich, Abendstimmung), Verstecke (Gebüsch, hohes Gras, Schilf), flüssige eigene Bewegung im Mehrspieler.
@@ -323,6 +323,12 @@ Garten mit Haus, Hecken und Zugängen. Umgesetzt in `data/map.json`, 1 Spieleinh
 - **Gelände (v1.6):** Heckenreihen mit Büschen davor, Felsen, umgestürzte Stämme, tote Bäume, eine verwilderte Grabstätte im Norden und ein Teich mit Schilf im Süden (beim Krötentümpel). Wald mit Laub- und Nadelbäumen als Kulisse.
 - **Nacht (v1.7):** kühles Mondlicht, dunkelblauer Himmel, Nebel in der Ferne und ziehende Bodennebel. Warme Lichtinseln: Fenster (einige vernagelt), Laternen, brennende Fässer an den Toren und eine Laterne beim eigenen Helden; jeder Held hat einen schwachen Lichtkreis, Helden ein Randlicht in ihrer Farbe, Zombies glühende Augen.
 - **Details (v1.7, `props` in `data/map.json`, ohne Kollision):** Barrikaden aus Sandsäcken, Kisten und Brettern an den Toren, Vogelscheuche, umgekippter Handwagen, Knochen und Schädel, Blutflecken, leuchtende Pilze und Wurzeln, Spinnweben am Friedhofszaun und am Gartenhaus, eine offene Grube mit Schaufel, Krähen (flattern auf, wenn ein Held nahe kommt). Als Hindernisse: verrostetes Autowrack vor dem Osttor, Brunnen im Garten.
+- **Mehr Details (v1.9):**
+  - **Westflügel als Ruine:** Die Südhälfte steht noch (hohle Mauern, halbes Dach, kahle Sparren), die Nordhälfte ist eingestürzt (Mauerstümpfe, Schutt, Balken, umgekippter Schornstein, Efeu). Die Kollision ist unverändert.
+  - **Deko:** Stacheldraht an Toren, Nordhecke, Friedhof und Nordeingang; Bretterbarrikaden an Haus, Toren und Gartenhütte; zwei Feuerstellen (Garten Nordwest, beim Krötentümpel) mit Funken; Baumstümpfe, Farn, Reifen, Vogeltränke, Holzkreuze mit Helmen, Kaminholz.
+  - **Hochbeete:** Bretterkästen mit Eckpfosten und je Beet anderen Pflanzen (Kohl, Salat, Tomaten, Kürbisse, Lauch), dazu Schild, Gießkanne oder Harke.
+  - **Wege:** Bruchsteinplatten statt Kies, mit unregelmäßigem Rand.
+  - **Gras:** 10 neue Grasflächen zum Verstecken (8 im Gelände, 2 im Garten) und Grasbüschel mit Wildblumen an Zäunen, Hecken, Mauern und Wegen (bei Grafik „Niedrig“ aus).
 - **Nordeingang (v1.9):** 2 m breiter Durchgang in der Nordmauer des Innenhofs (x 38,5–40,5), ersetzt das Rattenloch aus v1.7. Der Innenhof ist damit über den Durchgang im Südwesten und von Norden erreichbar. Kleine Einheiten (`small` in `data/zombies.json`, Ratten) haben weiterhin ein eigenes Wegeraster mit weniger Abstand zu Hindernissen.
 - **Verstecke (wie das Gebüsch in LoL, `brush` in `data/map.json`):** hohes Gras und Büsche im Garten, Büsche an den Hecken und in den Ecken des Geländes, Schilf am Teich. Begehbar, halten keine Schüsse auf.
   - Wer im Versteck steht, wird von Zombies und Lagerbewohnern erst aus nächster Nähe gesehen (2,5 m) oder wenn sie im selben Versteck stehen. Angriff oder Fähigkeit verrät den Helden für 1,5 s.

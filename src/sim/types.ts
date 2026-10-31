@@ -226,6 +226,8 @@ export type ObstacleLook =
   | 'house'
   /** Kellerloch in der Hofmauer: nur kleine Einheiten (Ratten) kommen durch. */
   | 'rathole'
+  /** Verfallener Hausflügel (halb eingestürzt); Kollision wie ein Haus. */
+  | 'ruin'
   | 'car'
   | 'well'
   | 'hedge'
@@ -364,7 +366,27 @@ export interface ArenaDef {
   props?: PropDef[];
 }
 
-export const PROP_LOOKS = ['firebarrel', 'barricade', 'bones', 'blood', 'mushrooms', 'web', 'opengrave', 'scarecrow', 'cart', 'crows'] as const;
+export const PROP_LOOKS = [
+  'firebarrel',
+  'barricade',
+  'bones',
+  'blood',
+  'mushrooms',
+  'web',
+  'opengrave',
+  'scarecrow',
+  'cart',
+  'crows',
+  'barbedwire',
+  'planks',
+  'campfire',
+  'stump',
+  'fern',
+  'tires',
+  'birdbath',
+  'cross',
+  'woodstack',
+] as const;
 
 /** Deko-Objekt an einem Punkt; rot dreht um die Hochachse, w: Breite (Barrikade), h: Höhe (Krähen auf Zaun/Grabstein). */
 export interface PropDef {
