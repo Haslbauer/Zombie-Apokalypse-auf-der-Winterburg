@@ -45,6 +45,8 @@ describe('Begrenzung gleichzeitiger Geräusche', () => {
 
 // ---------- Attrappe des Web-Audio-APIs ----------
 let created = 0;
+/** Gestartete Klangquellen ohne Ende (Dauerquellen). */
+let endless = 0;
 class Param {
   value = 0;
   setValueAtTime(v: number) {
@@ -68,19 +70,25 @@ class Node {
   }
   disconnect() {}
 }
-class Osc extends Node {
+class Source extends Node {
+  private stopped = false;
+  start() {
+    endless++;
+  }
+  stop() {
+    if (!this.stopped) endless--;
+    this.stopped = true;
+  }
+}
+class Osc extends Source {
   type = 'sine';
   frequency = new Param();
   detune = new Param();
-  start() {}
-  stop() {}
 }
-class Src extends Node {
+class Src extends Source {
   buffer: unknown = null;
   loop = false;
   playbackRate = new Param();
-  start() {}
-  stop() {}
 }
 class FakeContext {
   currentTime = 1;
@@ -124,6 +132,33 @@ describe('Audio-Motor', () => {
       ctx.currentTime += 0.05;
       s.update(0.05, { listener: { x: 0, y: 0 }, zombies: [{ x: 3, y: 3 }], wave: i > 50, boss: i > 120, beesAngry: i % 2 === 0 });
     }
+  });
+
+  it('fast still: keine Dauerquellen, in der Pause ohne Kampf kaum Geräusche, Musik nur in der Welle', () => {
+    (globalThis as { window?: unknown }).window = { AudioContext: FakeContext };
+    endless = 0;
+    const s = new Sound();
+    s.setWorld([{ x: 50, y: 50 }], { x: -50, y: -50 }); // Feuer und Stock weit weg
+    s.unlock();
+    const ctx = (s as unknown as { ctx: FakeContext }).ctx;
+    expect(endless).toBe(0);
+    const before = created;
+    const frame = { listener: { x: 0, y: 0 }, zombies: [], wave: false, boss: false, beesAngry: false };
+    for (let i = 0; i < 600; i++) {
+      ctx.currentTime += 1 / 60;
+      s.update(1 / 60, frame);
+    }
+    // 10 s Pause: höchstens eine Windböe (wenige Knoten)
+    expect(created - before).toBeLessThan(15);
+    expect(endless).toBe(0);
+    // In der Welle setzt die Musik ein
+    const inWave = created;
+    for (let i = 0; i < 120; i++) {
+      ctx.currentTime += 1 / 60;
+      s.update(1 / 60, { ...frame, wave: true });
+    }
+    expect(created).toBeGreaterThan(inWave);
+    expect(endless).toBe(0);
   });
 
   it('weit entfernte Geräusche und stumm erzeugen nichts', () => {

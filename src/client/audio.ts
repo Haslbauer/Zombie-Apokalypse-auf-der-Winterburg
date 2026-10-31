@@ -19,7 +19,7 @@ export interface AudioSettings {
   muted: boolean;
 }
 
-export const DEFAULT_AUDIO: AudioSettings = { master: 0.8, effects: 0.9, ambience: 0.6, music: 0.45, ui: 0.8, muted: false };
+export const DEFAULT_AUDIO: AudioSettings = { master: 0.8, effects: 0.9, ambience: 0.4, music: 0.3, ui: 0.8, muted: false };
 const STORAGE = 'winterburg.audio';
 
 /** Einstellungen laden (fehlerhafte Werte → Vorgabe). */
@@ -111,19 +111,19 @@ export class Sound {
   private noiseBuf: AudioBuffer | null = null;
   private readonly limiter = new VoiceLimiter();
   private listener: Vec = { x: 0, y: 0 };
-  // Umgebung
+  // Umgebung: keine Dauerquellen, nur gelegentliche leise Einzelgeräusche
   private fires: Vec[] = [];
   private hive: Vec | null = null;
-  private wind: { gain: GainNode; filter: BiquadFilterNode } | null = null;
-  private fire: { gain: GainNode } | null = null;
-  private bees: { gain: GainNode; osc: OscillatorNode } | null = null;
-  private nextMoan = 0;
-  private nextCrow = 8;
-  // Musik
+  private nextMoan = 2;
+  private nextCrow = 25;
+  private nextGust = 10;
+  private nextCrackle = 0;
+  private nextBuzz = 0;
+  // Musik: weiche Akkorde nur in Wellen, sanft ein- und ausgeblendet
+  private musicGain: GainNode | null = null;
   private musicNext = 0;
   private musicStep = 0;
-  private drone: GainNode | null = null;
-  private intensity = 0;
+  private musicOn = false;
 
   /** Feste Tonquellen der Karte: Feuer und Bienenstock. */
   setWorld(fires: Vec[], hive: Vec | null): void {
@@ -158,8 +158,13 @@ export class Sound {
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
     this.noiseBuf = buf;
     this.applySettings();
-    this.startAmbience();
-    this.startDrone();
+    // Musik-Strang: Tiefpass gegen Schärfe, eigene Lautstärke zum Ein-/Ausblenden
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 1400;
+    this.musicGain = ctx.createGain();
+    this.musicGain.gain.value = 0;
+    this.musicGain.connect(lp).connect(this.buses.get('music')!);
   }
 
   /** Regler übernehmen und speichern. */
@@ -268,140 +273,70 @@ export class Sound {
     const ctx = this.ctx;
     if (!ctx) return;
     this.listener = frame.listener;
-    const t = ctx.currentTime;
-    // Feuer: am nächsten Feuer lauter
-    if (this.fire) {
-      let near = Infinity;
-      for (const f of this.fires) near = Math.min(near, Math.hypot(f.x - this.listener.x, f.y - this.listener.y));
-      this.fire.gain.gain.setTargetAtTime(0.5 / (1 + (near / 5) ** 2), t, 0.3);
-      // einzelnes Knacken
-      if (near < 12 && Math.random() < dt * 4) {
-        const d = this.out('crackle', 'ambience', 0.08, undefined, 0.6 / (1 + (near / 5) ** 2));
-        if (d) this.noise(d, 'highpass', 2500, 1800, t, this.r(0.02, 0.06), 0.5);
-      }
+    const near = (p: Vec) => Math.hypot(p.x - this.listener.x, p.y - this.listener.y);
+    // Feuer: nur leises Knacken, nur ganz nah
+    this.nextCrackle -= dt;
+    if (this.nextCrackle <= 0) {
+      this.nextCrackle = this.r(0.5, 1.2);
+      const fire = this.fires.find((f) => near(f) < 6);
+      if (fire) this.play('crackle', fire, 0.6);
     }
-    // Bienen: Summen nahe dem Stock, wütend lauter und höher
-    if (this.bees && this.hive) {
-      const d = Math.hypot(this.hive.x - this.listener.x, this.hive.y - this.listener.y);
-      this.bees.gain.gain.setTargetAtTime((frame.beesAngry ? 0.16 : 0.07) / (1 + (d / 6) ** 2), t, 0.3);
-      this.bees.osc.frequency.setTargetAtTime(frame.beesAngry ? 230 : 180, t, 0.3);
+    // Bienen: kurzes weiches Summen nahe dem Stock, wütend häufiger und lauter
+    this.nextBuzz -= dt;
+    if (this.nextBuzz <= 0) {
+      this.nextBuzz = frame.beesAngry ? this.r(2, 4) : this.r(4, 8);
+      if (this.hive && near(this.hive) < 6) this.play(frame.beesAngry ? 'buzzAngry' : 'buzz', this.hive);
     }
-    // Wind schwankt langsam
-    if (this.wind) this.wind.filter.frequency.setTargetAtTime(400 + Math.sin(t * 0.13) * 180 + Math.sin(t * 0.37) * 90, t, 1);
-    // Stöhnen naher Zombies und gelegentliche Krähen
+    // Windböe ab und zu
+    this.nextGust -= dt;
+    if (this.nextGust <= 0) {
+      this.nextGust = this.r(20, 45);
+      this.play('gust');
+    }
+    // Stöhnen naher Zombies: selten
     this.nextMoan -= dt;
     if (this.nextMoan <= 0 && frame.zombies.length > 0) {
-      this.nextMoan = this.r(0.7, 2.2) / Math.min(4, 1 + frame.zombies.length / 8);
-      const z = frame.zombies[Math.floor(Math.random() * frame.zombies.length)];
-      this.play('moan', z);
+      this.nextMoan = this.r(2.5, 5);
+      this.play('moan', frame.zombies[Math.floor(Math.random() * frame.zombies.length)], 0.7);
     }
+    // Krähe selten
     this.nextCrow -= dt;
     if (this.nextCrow <= 0) {
-      this.nextCrow = this.r(12, 30);
-      this.play('crow', { x: this.listener.x + this.r(-15, 15), y: this.listener.y + this.r(-15, 15) });
+      this.nextCrow = this.r(30, 60);
+      this.play('crow', { x: this.listener.x + this.r(-12, 12), y: this.listener.y + this.r(-12, 12) }, 0.6);
     }
     this.updateMusic(frame);
   }
 
-  private startAmbience(): void {
-    const ctx = this.ctx!;
-    const bus = this.buses.get('ambience')!;
-    const loop = (filterType: BiquadFilterType, freq: number, q: number, gain: number) => {
-      const src = ctx.createBufferSource();
-      src.buffer = this.noiseBuf;
-      src.loop = true;
-      const f = ctx.createBiquadFilter();
-      f.type = filterType;
-      f.frequency.value = freq;
-      f.Q.value = q;
-      const g = ctx.createGain();
-      g.gain.value = gain;
-      src.connect(f).connect(g).connect(bus);
-      src.start();
-      return { gain: g, filter: f };
-    };
-    this.wind = loop('bandpass', 450, 0.7, 0.18);
-    this.fire = loop('lowpass', 700, 0.5, 0);
-    // Bienen: Sägezahn mit Vibrato durch Tiefpass
-    const osc = ctx.createOscillator();
-    osc.type = 'sawtooth';
-    osc.frequency.value = 180;
-    const lfo = ctx.createOscillator();
-    lfo.frequency.value = 9;
-    const lfoGain = ctx.createGain();
-    lfoGain.gain.value = 12;
-    lfo.connect(lfoGain).connect(osc.frequency);
-    const lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.value = 900;
-    const g = ctx.createGain();
-    g.gain.value = 0;
-    osc.connect(lp).connect(g).connect(bus);
-    osc.start();
-    lfo.start();
-    this.bees = { gain: g, osc };
-  }
-
-  /** Tiefer Bordun-Ton als Grundlage der Musik. */
-  private startDrone(): void {
-    const ctx = this.ctx!;
-    const bus = this.buses.get('music')!;
-    const g = ctx.createGain();
-    g.gain.value = 0.06;
-    const lp = ctx.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.value = 300;
-    for (const [f, det] of [
-      [55, 0],
-      [55, 7],
-      [82.4, -5],
-    ]) {
-      const o = ctx.createOscillator();
-      o.type = 'sawtooth';
-      o.frequency.value = f;
-      o.detune.value = det;
-      o.connect(lp);
-      o.start();
-    }
-    lp.connect(g).connect(bus);
-    this.drone = g;
-  }
-
   /**
-   * Musik: langsame Moll-Akkorde (Am – F – Dm – E) über dem Bordun. In der
-   * Welle kommen Trommeln dazu und es wird schneller, bei Bossen intensiver.
+   * Musik: nur in Wellen leise, weiche Akkorde (Am – F – Dm – E), lang ein- und
+   * ausgeblendet, keine Trommeln; beim Boss kommt ein höherer Ton dazu. In der
+   * Pause ist Stille.
    */
   private updateMusic(frame: AudioFrame): void {
     const ctx = this.ctx!;
-    const target = frame.boss ? 2 : frame.wave ? 1 : 0;
-    this.intensity += (target - this.intensity) * 0.02;
+    const gain = this.musicGain;
+    if (!gain) return;
     const t = ctx.currentTime;
-    if (this.drone) this.drone.gain.setTargetAtTime(0.05 + this.intensity * 0.02, t, 1);
-    const beat = 60 / (70 + this.intensity * 22);
+    if (frame.wave !== this.musicOn) {
+      this.musicOn = frame.wave;
+      gain.gain.setTargetAtTime(frame.wave ? 1 : 0, t, frame.wave ? 1.5 : 1.3);
+      if (frame.wave) this.musicNext = Math.max(this.musicNext, t + 0.1);
+    }
+    if (!this.musicOn) return;
+    const bar = 6;
     while (this.musicNext < t + 0.2) {
       if (this.musicNext < t) this.musicNext = t + 0.05;
-      const step = this.musicStep++;
-      const bus = this.buses.get('music')!;
-      // Akkord alle 8 Schläge
-      if (step % 8 === 0) {
-        const chords = [
-          [220, 261.6, 329.6],
-          [174.6, 220, 261.6],
-          [146.8, 174.6, 220],
-          [164.8, 207.7, 246.9],
-        ];
-        const chord = chords[(step / 8) % chords.length];
-        for (const f of chord) this.tone(bus, 'triangle', f, f, this.musicNext, beat * 8, 0.035, beat * 2);
-      }
-      // Trommeln in der Welle (Kick auf 1 und 3, leiser Schlag auf 2 und 4), beim Boss dichter
-      if (this.intensity > 0.3) {
-        const k = Math.min(1, this.intensity - 0.3);
-        if (step % 2 === 0) {
-          this.tone(bus, 'sine', 120, 45, this.musicNext, 0.25, 0.25 * k);
-          this.noise(bus, 'lowpass', 400, 100, this.musicNext, 0.08, 0.08 * k);
-        } else if (this.intensity > 1.2 || step % 4 === 1) this.noise(bus, 'bandpass', 1800, 900, this.musicNext, 0.06, 0.05 * k, 2);
-      }
-      this.musicNext += beat;
+      const chords = [
+        [110, 220, 261.6, 329.6],
+        [87.3, 174.6, 220, 261.6],
+        [73.4, 146.8, 174.6, 220],
+        [82.4, 164.8, 207.7, 246.9],
+      ];
+      const chord = chords[this.musicStep++ % chords.length];
+      chord.forEach((f, i) => this.tone(gain, i === 0 ? 'sine' : 'triangle', f, f, this.musicNext, bar + 1.5, i === 0 ? 0.05 : 0.022, 2));
+      if (frame.boss) this.tone(gain, 'sine', chord[3] * 2, chord[3] * 2, this.musicNext + bar / 2, bar / 2 + 1, 0.012, 1);
+      this.musicNext += bar;
     }
   }
 }
@@ -419,7 +354,7 @@ export const SOUNDS: Record<string, Recipe> = {
   hit: { ch: 'effects', dur: 0.15, make: (s, d, t, r) => (s.t(d, 'sine', r(150, 190), 60, t, 0.12, 0.45), s.n(d, 'lowpass', 1500, 300, t, 0.08, 0.35)) },
   heroHit: { ch: 'effects', dur: 0.2, make: (s, d, t, r) => (s.t(d, 'sine', r(95, 110), 40, t, 0.18, 0.55), s.n(d, 'bandpass', 500, 300, t, 0.12, 0.3, 2)) },
   // Zombies
-  moan: { ch: 'effects', dur: 1.4, make: (s, d, t, r) => { const f = r(70, 120); s.t(d, 'sawtooth', f, f * r(0.7, 0.95), t, r(0.8, 1.4), 0.07, 0.3); s.n(d, 'bandpass', r(400, 700), r(250, 400), t, 1.1, 0.05, 6, 0.3); } },
+  moan: { ch: 'effects', dur: 1.4, make: (s, d, t, r) => { const f = r(80, 120); s.t(d, 'triangle', f, f * r(0.75, 0.9), t, r(0.9, 1.3), 0.06, 0.35); s.n(d, 'bandpass', r(350, 550), r(250, 350), t, 1, 0.025, 5, 0.35); } },
   zombieAttack: { ch: 'effects', dur: 0.3, make: (s, d, t, r) => (s.t(d, 'sawtooth', r(90, 130), 60, t, 0.25, 0.12), s.n(d, 'bandpass', 600, 300, t, 0.2, 0.25, 3)) },
   zombieDeath: { ch: 'effects', dur: 0.8, make: (s, d, t, r) => (s.t(d, 'sawtooth', r(80, 100), 35, t, 0.7, 0.12, 0.05), s.n(d, 'lowpass', 900, 150, t, 0.6, 0.15)) },
   roar: { ch: 'effects', dur: 1.2, make: (s, d, t) => (s.t(d, 'sawtooth', 70, 45, t, 1.1, 0.25, 0.15), s.n(d, 'lowpass', 1200, 200, t, 1, 0.35, 1, 0.15)) },
@@ -456,6 +391,11 @@ export const SOUNDS: Record<string, Recipe> = {
   exhaust: { ch: 'effects', dur: 0.6, make: (s, d, t) => s.t(d, 'triangle', 300, 120, t, 0.55, 0.15, 0.05) },
   smite: { ch: 'effects', dur: 1.2, make: (s, d, t) => (s.n(d, 'lowpass', 3000, 60, t, 1.1, 0.6, 0.7, 0.005), s.t(d, 'sine', 70, 30, t, 0.8, 0.5)) },
   cleanse: { ch: 'effects', dur: 0.6, make: (s, d, t) => { [1046.5, 1318.5, 1568].forEach((f, i) => s.t(d, 'sine', f, f, t + i * 0.05, 0.5, 0.07)); } },
+  // Umgebung (gelegentlich, leise)
+  gust: { ch: 'ambience', dur: 5, make: (s, d, t, r) => s.n(d, 'lowpass', r(350, 500), r(250, 400), t, r(3.5, 5), 0.06, 0.5, 1.8) },
+  crackle: { ch: 'ambience', dur: 0.1, make: (s, d, t, r) => s.n(d, 'bandpass', r(1800, 3000), 1500, t, r(0.02, 0.05), 0.12, 1.5) },
+  buzz: { ch: 'ambience', dur: 1.6, make: (s, d, t, r) => s.t(d, 'sine', r(210, 240), r(200, 230), t, r(1.1, 1.6), 0.03, 0.4) },
+  buzzAngry: { ch: 'ambience', dur: 1.4, make: (s, d, t, r) => (s.t(d, 'sine', r(260, 300), r(250, 290), t, r(1, 1.4), 0.05, 0.2), s.t(d, 'triangle', r(520, 560), 500, t, 0.9, 0.012, 0.2)) },
   crow: { ch: 'ambience', dur: 0.8, make: (s, d, t, r) => { for (let i = 0; i < 2; i++) { const f = r(700, 900); s.t(d, 'sawtooth', f, f * 0.7, t + i * 0.28, 0.2, 0.06, 0.02); s.n(d, 'bandpass', 1200, 900, t + i * 0.28, 0.2, 0.08, 5); } } },
 };
 
