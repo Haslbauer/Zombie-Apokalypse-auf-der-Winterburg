@@ -14,6 +14,9 @@ export function awardGold(ctx: SimContext, z: Zombie, killer?: Hero, assists: He
   if (def?.courier) {
     const gold = courierGold(ctx, def);
     for (const h of [killer, ...assists]) if (h) giveGold(ctx, h, gold, h.alive ? z.pos : undefined);
+    // Der nächste Postbote kommt erst every Wellen später (stärker, weil die Welle höher ist)
+    const every = ctx.data.waves.courier?.every ?? 3;
+    ctx.state.wave.courierWave = ctx.state.wave.number + every;
     ctx.state.events.push({ type: 'courier', zombieId: z.id, phase: 'caught', gold });
     return;
   }

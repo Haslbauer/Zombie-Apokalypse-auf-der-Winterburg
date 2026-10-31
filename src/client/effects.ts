@@ -175,6 +175,16 @@ export class Effects {
     }
   }
 
+  /** Geworfenes Paket im Bogen von from nach to (Dauer life). */
+  lob(from: Vec2, to: Vec2, life: number): void {
+    const material = new THREE.MeshLambertMaterial({ color: 0xb08850, transparent: true });
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.35, 0.45), material);
+    this.add(mesh, life, (t) => {
+      mesh.position.set(from.x + (to.x - from.x) * t, 1.4 + Math.sin(t * Math.PI) * 2.5 - t * 1.2, from.y + (to.y - from.y) * t);
+      mesh.rotation.set(t * 6, t * 4, 0);
+    });
+  }
+
   /** Grüne Wolke, wenn ein Zombie fällt. */
   deathPuff(p: Vec2): void {
     const material = new THREE.MeshLambertMaterial({ color: 0x9fd36a, transparent: true });

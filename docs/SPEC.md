@@ -222,12 +222,12 @@ Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `
 
 Freiwillige Ziele im Gelände außerhalb des Gartens. Sie bringen Gold und XP, kosten aber Zeit, in der der Garten schwächer verteidigt ist. Alle Neutralen greifen erst an, wenn man sie angreift, und dann gemeinsam mit ihrem Lager. Entfernen sie sich weiter als ihre **Leine** von ihrem Platz (oder ist kein Held mehr in der Nähe), kehren sie um und heilen sich voll (der Postbote heilt sich seit v1.7 nicht mehr). **Ausweichen (v1.9):** Trifft das Lager seinen Angreifer 5 s lang nicht (z. B. Fernkämpfer hinter einem Zaun), setzt es sich zurück wie in LoL: alle Bewohner kehren heim, sind auf dem Rückweg unverwundbar und am Platz wieder voll geheilt (Meldung „… weicht aus und setzt sich zurück“). Beim Verfolgen laufen Neutrale um Hindernisse herum. Bots greifen Neutrale nicht von sich aus an, helfen aber Menschen, die gegen Postbote oder Lager kämpfen (bis 25 m), und folgen einem Angriffs-Ping.
 
-**Zombie-Postbote** (Drache): ein Team-Ziel
-- Erscheint ab Welle 3 in jeder dritten Welle, 20 s nach Wellenbeginn, und läuft seinen **Rundweg** im Gelände (`courierRoute` in `data/map.json`). Nach 120 s ist er weg.
-- 2700 Leben, wachsend mit der Welle (in Welle 3 etwa 4400, in Welle 6 etwa 7000), schlägt hart zurück (45 Schaden, ebenfalls wachsend). Allein kaum zu schaffen, im Team gut.
-- Leine 14 m ab dem Punkt, an dem der Kampf beginnt.
-- **Belohnung:** Jeder Held bekommt 150 + 30 × Welle Gold, egal wo er steht.
-- Zombie in Uniform mit Postmütze und Paket, goldener Ring (auch durch Wände sichtbar), Meldungen beim Auftauchen, Besiegen und Entkommen.
+**Zombie-Postbote** (Drache): ein Team-Ziel (v2.0)
+- Erscheint **ab Welle 6**, 20 s nach Wellenbeginn, und läuft seinen **Rundweg** im Gelände (`courierRoute` in `data/map.json`). Er **bleibt, bis er getötet wird**. Nach seinem Tod kommt **3 Wellen später** ein neuer, stärker, weil sein Leben mit der Welle wächst.
+- Auf Level-6-Helden abgestimmt: in Welle 6 rund 5500 Leben und 60 Schaden pro Schlag. Im Kampf wirft er alle 6 s ein **Paket** auf einen Helden in bis zu 9 m (0,9 s Warnung, 3 m Flächenschaden).
+- Leine 14 m ab dem Punkt, an dem der Kampf beginnt; beim Umkehren heilt er sich nicht.
+- **Belohnung:** Jeder Beteiligte bekommt 150 + 30 × Welle Gold, dazu Boss-Gold für Kill und Assists.
+- Zombie in Uniform mit Postmütze und Paket, goldener Ring (auch durch Wände sichtbar), Meldungen beim Auftauchen und Besiegen.
 
 **Lager** (Dschungel), Werte in `data/zombies.json`, Lage in `data/map.json` (`camps`):
 - **Fledermausschwarm** (Nord und Ost): 5 fliegende Zombie-Fledermäuse, schnell und schwach

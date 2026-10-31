@@ -205,10 +205,10 @@
   {
     "id": "postbote",
     "name": "Zombie-Postbote",
-    "hp": 2700,
+    "hp": 2100,
     "speed": 2.4,
     "radius": 0.45,
-    "damage": 45,
+    "damage": 27,
     "attackRange": 0.6,
     "attackCooldown": 1.5,
     "aggroRange": 0,
@@ -222,8 +222,15 @@
     },
     "courier": {
       "gold": 150,
-      "goldPerWave": 30,
-      "stay": 120
+      "goldPerWave": 30
+    },
+    "special": {
+      "kind": "parcel",
+      "interval": 6,
+      "range": 9,
+      "windup": 0.9,
+      "radius": 3,
+      "damage": 50
     },
     "neutral": {
       "leash": 14

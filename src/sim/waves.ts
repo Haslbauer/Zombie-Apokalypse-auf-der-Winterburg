@@ -97,8 +97,11 @@ export function updateWaves(ctx: SimContext): void {
       w.spawnTimer = 0;
       w.breached = false;
       w.queue = waveQueue(state, w.number, cfg);
+      // Postbote: ab firstWave; nach seinem Tod erst every Wellen später wieder. Lebt er noch, kommt keiner dazu.
       const c = cfg.courier;
-      w.courierAt = c && w.number >= c.firstWave && (w.number - c.firstWave) % c.every === 0 ? state.time + c.delay : null;
+      const alive = state.zombies.some((z) => z.courier && z.hp > 0);
+      w.courierAt = c && !alive && w.number >= (w.courierWave ?? c.firstWave) ? state.time + c.delay : null;
+      if (w.courierAt != null) w.courierWave = Infinity; // bis er stirbt
       state.events.push({ type: 'waveStart', number: w.number });
     }
     return;
@@ -160,7 +163,8 @@ export function spawnCourier(ctx: SimContext): Zombie | null {
   if (!def?.courier || route.length < 2) return null;
   const wp = Math.floor(nextRandom(state) * route.length);
   const z = spawnZombieAt(ctx, def, { ...route[wp] }, 'none');
-  z.courier = { wp: (wp + 1) % route.length, dir: 1, leaveAt: state.time + def.courier.stay };
+  z.courier = { wp: (wp + 1) % route.length, dir: 1, leaveAt: Infinity };
+  state.wave.courierWave = Infinity;
   z.neutral = { campId: null, home: { ...z.pos }, returning: false };
   state.events.push({ type: 'courier', zombieId: z.id, phase: 'arrive', gold: courierGold(ctx, def) });
   return z;

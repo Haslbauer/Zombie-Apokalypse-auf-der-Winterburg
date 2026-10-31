@@ -326,6 +326,7 @@ const EFFECT_COLORS: Record<string, number> = {
   puff: 0xb8b8b8,
   spike: 0xff8a3d,
   leapLand: 0xb04dff,
+  parcelLand: 0xc8a060,
   'rage-haste': 0xffd23f,
   'rage-shield': 0x7fd1ff,
   'rage-heal': 0x7bd36a,
@@ -388,6 +389,7 @@ function abilityEffect(e: Extract<GameEvent, { type: 'effect' }>): void {
       break;
     case 'spike':
     case 'leapLand':
+    case 'parcelLand':
     case 'quake':
     case 'howl':
       effects.disc(e.pos, e.radius, color, 0.35, 0.4);
@@ -496,6 +498,11 @@ function handleEvents(state: GameState): void {
         if (e.assists.includes(heroId)) hud.addPing(`Assist: +${e.assistGold} Gold`, '#ffd166');
         break;
       }
+      case 'parcel':
+        // Paketwurf des Postboten: Landeplatz warnen, Paket fliegt im Bogen
+        effects.warning(e.to, e.radius, 0xc8a060, e.windup + 0.2);
+        effects.lob(e.from, e.to, e.windup);
+        break;
       case 'leap':
         // Höllensprung: Landeplatz warnen, Dämon schreit
         effects.warning(e.to, e.radius, 0xb04dff, e.windup + 0.45);
@@ -505,7 +512,7 @@ function handleEvents(state: GameState): void {
         spellEffect(e);
         break;
       case 'courier':
-        if (e.phase === 'arrive') hud.message(`Zombie-Postbote im Gelände! Besiegt ihn im Team: ${e.gold} Gold für jeden, der mitkämpft`);
+        if (e.phase === 'arrive') hud.message(`Zombie-Postbote im Gelände! Er bleibt, bis ihr ihn besiegt: ${e.gold} Gold für jeden, der mitkämpft`);
         else if (e.phase === 'caught') hud.message(`Paket erbeutet: +${e.gold} Gold für alle Beteiligten!`);
         else hud.message('Der Postbote ist entkommen');
         break;

@@ -67,7 +67,7 @@
   ],
   "courier": {
     "type": "postbote",
-    "firstWave": 3,
+    "firstWave": 6,
     "every": 3,
     "delay": 20
   }

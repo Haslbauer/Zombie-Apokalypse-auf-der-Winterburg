@@ -122,7 +122,8 @@ export interface ZombieDef {
    * Sidequest (Zombie-Postbote): läuft die Route im Gelände ab und zählt nicht
    * zur Welle. Nach stay Sekunden ist er weg. Wer ihn besiegt: Gold für alle Helden.
    */
-  courier?: { gold: number; goldPerWave: number; stay: number };
+  /** Postbote: Paket-Gold (gold + goldPerWave × Welle). stay: veraltet (er bleibt, bis er stirbt). */
+  courier?: { gold: number; goldPerWave: number; stay?: number };
   /**
    * Neutral (Lager, Postbote): greift erst an, wenn er angegriffen wird, dann
    * mit allen aus seinem Lager. Entfernt er sich mehr als leash Meter von
@@ -130,7 +131,7 @@ export interface ZombieDef {
    */
   neutral?: { leash: number };
   /** Elite-Fähigkeit mit ihren Werten. */
-  special?: { kind: 'summon' | 'charge' | 'leap'; interval: number; [key: string]: number | string };
+  special?: { kind: 'summon' | 'charge' | 'leap' | 'parcel'; interval: number; [key: string]: number | string };
 }
 
 export type ItemCategory = 'meleeWeapon' | 'rangedWeapon' | 'armor' | 'stat' | 'consumable';
@@ -227,6 +228,10 @@ export interface WaveConfig {
   /** Diese Welle überstanden = Sieg (fehlt: endlos). */
   victoryWave?: number;
   /** Sidequest: Typ mit courier-Werten, erscheint ab firstWave alle every Wellen, delay Sekunden nach Wellenbeginn. */
+  /**
+   * Sidequest Postbote: erscheint ab firstWave delay Sekunden nach Wellenbeginn
+   * und bleibt, bis er getötet wird; every Wellen nach seinem Tod kommt ein neuer.
+   */
   courier?: { type: string; firstWave: number; every: number; delay: number };
 }
 
@@ -691,6 +696,8 @@ export interface Zombie extends Unit {
   specialTimer?: number;
   /** Schlächter: laufender Anlauf. */
   charge?: { dir: Vec2; remaining: number; hitIds: number[]; windup: number } | null;
+  /** Postbote: geworfenes Paket landet zur Zeit at bei to. */
+  parcel?: { to: Vec2; at: number } | null;
   /** Dämon: Höllensprung von from nach to; erst windup Sekunden Warnung, dann flight Sekunden in der Luft. */
   leap?: { from: Vec2; to: Vec2; windup: number; flight: number; total: number } | null;
   /** Postbote: nächster Wegpunkt, Laufrichtung (+1/−1) und wann er verschwindet. */
@@ -796,6 +803,8 @@ export interface WaveState {
   breached: boolean;
   /** Spielzeit, zu der in dieser Welle der Postbote erscheint (null: keiner). */
   courierAt?: number | null;
+  /** Ab dieser Welle darf der nächste Postbote erscheinen (nach dem Tod des vorigen + every). */
+  courierWave?: number;
 }
 
 export type GameEvent =
@@ -824,6 +833,7 @@ export type GameEvent =
   | { type: 'camp'; campId: string; phase: 'spawn' | 'cleared' | 'reset' }
   | { type: 'ping'; heroId: number; kind: PingKind; pos: Vec2 }
   | { type: 'charge'; zombieId: number; from: Vec2; to: Vec2 }
+  | { type: 'parcel'; zombieId: number; from: Vec2; to: Vec2; radius: number; windup: number }
   | { type: 'leap'; zombieId: number; from: Vec2; to: Vec2; radius: number; windup: number }
   | { type: 'heroStatus'; heroId: number; status: 'rooted' | 'stunned' }
   | { type: 'cast'; heroId: number; slot: number; pos: Vec2 }

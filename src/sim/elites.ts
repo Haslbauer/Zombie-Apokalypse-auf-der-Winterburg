@@ -32,6 +32,10 @@ export function updateElite(ctx: SimContext, z: Zombie, def: ZombieDef, heroes: 
   }
 
   if (sp.kind === 'leap') return updateLeap(ctx, z, sp, heroes);
+  if (sp.kind === 'parcel') {
+    updateParcel(ctx, z, sp, heroes);
+    return false; // er läuft und schlägt normal weiter
+  }
 
   // Anlauf (Schlächter): kurz ausholen, dann geradeaus stürmen.
   if (z.charge) {
@@ -120,4 +124,32 @@ function updateLeap(ctx: SimContext, z: Zombie, sp: NonNullable<ZombieDef['speci
   z.leap = { from: { ...z.pos }, to, windup: sp.windup as number, flight, total: flight };
   ctx.state.events.push({ type: 'leap', zombieId: z.id, from: { ...z.pos }, to: { ...to }, radius: sp.radius as number, windup: sp.windup as number });
   return true;
+}
+
+/**
+ * Paketwurf (Postbote): Im Kampf wirft er alle interval Sekunden ein schweres
+ * Paket auf einen Helden in Reichweite. Der Landeplatz ist windup Sekunden
+ * vorher markiert; wer dann noch im Umkreis radius steht, nimmt Schaden.
+ */
+function updateParcel(ctx: SimContext, z: Zombie, sp: NonNullable<ZombieDef['special']>, heroes: Hero[]): void {
+  const { state } = ctx;
+  if (z.parcel && state.time >= z.parcel.at) {
+    const radius = sp.radius as number;
+    const scale = z.damage / Math.max(1, ctx.zombieDefs.get(z.defId)!.damage);
+    for (const h of heroes) {
+      if (Math.hypot(h.pos.x - z.parcel.to.x, h.pos.y - z.parcel.to.y) - h.radius <= radius) applyDamage(ctx, h, (sp.damage as number) * scale);
+    }
+    state.events.push({ type: 'effect', kind: 'parcelLand', pos: { ...z.parcel.to }, radius });
+    z.parcel = null;
+  }
+  // Nur im Kampf (ein Held hat ihn angegriffen)
+  if (z.targetId === null || z.parcel || (z.specialTimer ?? 0) > 0) return;
+  const range = sp.range as number;
+  const target = heroes.find((h) => h.id === z.targetId && edgeDistance(z, h) <= range) ?? heroes.find((h) => edgeDistance(z, h) <= range && edgeDistance(z, h) > 1.5);
+  if (!target) return;
+  z.specialTimer = sp.interval;
+  const windup = sp.windup as number;
+  z.parcel = { to: { ...target.pos }, at: state.time + windup };
+  face(z, target.pos);
+  state.events.push({ type: 'parcel', zombieId: z.id, from: { ...z.pos }, to: { ...target.pos }, radius: sp.radius as number, windup });
 }

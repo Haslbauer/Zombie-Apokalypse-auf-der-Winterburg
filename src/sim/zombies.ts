@@ -95,16 +95,12 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null, s
   }
 }
 
-/** Postbote: läuft seinen Rundweg ab; nach seiner Zeit ist er verschwunden. */
+/** Postbote: läuft seinen Rundweg ab, bis er getötet wird. */
 function updateCourier(ctx: SimContext, z: Zombie, speed: number): void {
-  const { state } = ctx;
   const c = z.courier!;
   const route = ctx.data.arena.courierRoute ?? [];
-  if (state.time >= c.leaveAt || route.length < 2) {
-    z.hp = 0;
-    state.events.push({ type: 'courier', zombieId: z.id, phase: 'escaped' });
-    return;
-  }
+  // Er bleibt, bis er getötet wird (keine Zeitbegrenzung mehr)
+  if (route.length < 2) return;
   const target = route[c.wp];
   if (dist(z.pos, target) < 0.8) c.wp = (c.wp + c.dir + route.length) % route.length;
   stepToward(z, target, speed * DT);
