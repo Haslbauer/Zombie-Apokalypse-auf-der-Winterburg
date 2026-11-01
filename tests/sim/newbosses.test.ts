@@ -48,7 +48,7 @@ describe('Neue Zwischenbosse', () => {
       h.input = { move: { x: 0, y: 0 }, aim: z.pos, attack: false };
       sim.step();
     }
-    expect(sim.state.zombies.filter((x) => x.defId === 'walker').length).toBe(3);
+    expect(sim.state.zombies.filter((x) => x.defId === 'walker').length).toBe(2);
     expect(sim.state.zombies.length).toBeGreaterThan(before);
   });
 });

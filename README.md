@@ -280,8 +280,8 @@ Sie haben Fähigkeiten wie die Helden. Jede kündigt sich mit einer **Warnung am
 | Rattenkönig | **Pestbiss** (Einschläge bei 2 Helden, bevorzugt hinten, Seuche), **Pestwolke** ab Welle 8 (Fläche um ihn, Seuche), ruft weiter Ratten |
 | Schlächter | **Hackbeil** (schwerer Schlag aufs Ziel), **Fleischwolf** ab Welle 6 (Fläche, Seuche), Anlauf |
 | Dämon | **Klauenhieb** (schwerer Schlag), **Höllenfeuer** ab Welle 7 (3 Einschläge, Seuche), Höllensprung |
-| Vogelscheuche | **Sensenhieb** (schwerer Schlag, breit), **Krähenschwarm** ab Welle 5 (2 Einschläge, Seuche), **Saat der Toten** ab Welle 7 (Fläche um sie; an der Stelle wachsen 3 Zombies aus dem Boden) |
-| Frostriese | **Eisfaust** (schwerer Schlag mit Betäubung), **Frosthauch** (große Fläche, 45 % langsamer für 3 s), **Eiszapfen** ab Welle 8 (3 Einschläge, verlangsamen) |
+| Vogelscheuche | **Sensenhieb** (schwerer Schlag, breit), **Krähenschwarm** ab Welle 5 (2 Einschläge, Seuche), **Saat der Toten** ab Welle 9 (Fläche um sie; an der Stelle wachsen 2 Zombies aus dem Boden) |
+| Frostriese | **Eisfaust** (schwerer Schlag mit Betäubung), **Frosthauch** (große Fläche, 35 % langsamer für 2,5 s), **Eiszapfen** ab Welle 8 (3 Einschläge, verlangsamen) |
 
 **Wut:** Ein Boss, der länger als 30 s lebt, macht jede Sekunde 3,5 % mehr Schaden, höchstens das 2,5-Fache. Er färbt sich dann rot.
 
