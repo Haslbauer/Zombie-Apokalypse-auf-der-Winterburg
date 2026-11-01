@@ -72,6 +72,13 @@ function buildProjectile(look: string): THREE.Group {
       g.add(glow(0x9fe3ff, 0.9), glow(0xffffff, 0.35), trail(0x7fb8ff, 1.4, 0.3));
       break;
     }
+    case 'nugget': {
+      // Goldnugget: unregelmäßiger, glänzender Klumpen mit goldener Spur
+      const n = new THREE.Mesh(new THREE.DodecahedronGeometry(0.13, 0), new THREE.MeshStandardMaterial({ color: 0xffc83d, metalness: 0.9, roughness: 0.3, emissive: 0x7a4e00, emissiveIntensity: 0.6 }));
+      n.scale.set(1.2, 0.85, 1);
+      g.add(n, glow(0xffd166, 0.45), trail(0xffd166, 1.0, 0.12));
+      break;
+    }
     case 'swarm': {
       // Kleiner Bienenschwarm: gelb-schwarze Pünktchen um einen warmen Schimmer
       const bee = new THREE.MeshBasicMaterial({ color: 0xffc83d });
@@ -308,6 +315,19 @@ function buildZone(z: Zone): THREE.Object3D {
     case 'block':
       disc(z.radius, 0x7fd1ff, 0.3);
       break;
+    case 'molten': {
+      // Flüssiges Gold: glühende Fläche mit Blasen
+      disc(z.radius, 0xffa51e, 0.7).name = 'area';
+      const hot = new THREE.MeshBasicMaterial({ color: 0xffe08a });
+      for (let i = 0; i < 9; i++) {
+        const a = i * 2.3;
+        const r = z.radius * (0.15 + ((i * 37) % 10) / 12);
+        const m = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 6).scale(1, 0.5, 1), hot);
+        m.position.set(Math.cos(a) * r, 0.07, Math.sin(a) * r);
+        g.add(m);
+      }
+      break;
+    }
     case 'honey': {
       // Honigfläche: bernsteinfarbener, glänzender Fleck mit Tropfen
       disc(z.radius, 0xd99a1e, 0.55).name = 'area';
@@ -359,6 +379,8 @@ function animateZone(o: THREE.Object3D, z: Zone, simTime: number, time: number):
     cloud.rotation.y = time * 1.4;
     cloud.position.y = Math.sin(time * 5) * 0.12;
     cloud.scale.setScalar(Math.max(0.05, fade));
+  } else if (z.kind === 'molten') {
+    o.scale.setScalar(Math.max(0.05, fade) * (0.97 + Math.sin(time * 6) * 0.03));
   } else if (z.kind === 'honey') {
     o.scale.setScalar(Math.max(0.05, fade));
   } else if (z.kind === 'smoke' || z.kind === 'bigsmoke') {

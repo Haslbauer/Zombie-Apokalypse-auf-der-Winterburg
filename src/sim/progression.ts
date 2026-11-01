@@ -1,4 +1,5 @@
 import type { DataContext, SimContext } from './context';
+import { kitOf } from './heroes/index';
 import { itemStats, refreshMaxHp } from './items';
 import type { Hero, HeroDef, Zombie } from './types';
 import { dist } from './vec';
@@ -70,7 +71,7 @@ export function rankUp(ctx: SimContext, h: Hero, slot: number): boolean {
 /** Schaden eines Helden: Grundwert × Level-Wachstum × Items × Buffs (z. B. Amok). */
 export function heroDamage(ctx: SimContext, h: Hero, base: number): number {
   const def = ctx.heroDefs.get(h.defId)!;
-  let mult = 1;
+  let mult = 1 + (kitOf(h.defId).damageBonus?.(ctx, h) ?? 0);
   for (const b of h.buffs) if (b.kind === 'damageMult') mult *= b.value;
   return base * levelStats(def, h.level).damageFactor * (1 + itemStats(ctx, h).damage) * mult;
 }

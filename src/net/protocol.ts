@@ -166,6 +166,7 @@ const ST_MARKED = 32;
 const ST_BURN = 64;
 const ST_WEAK = 128;
 const ST_ENRAGE = 256;
+const ST_GOLD = 512;
 /** Merkmale: Postbote bzw. neutral (Lager). */
 const F_COURIER = 1;
 const F_NEUTRAL = 2;
@@ -215,7 +216,8 @@ export function encodeSnapshot(state: GameState, events: GameEvent[], zombieType
       (t < st.markedUntil ? ST_MARKED : 0) |
       (t < (st.burnUntil ?? 0) ? ST_BURN : 0) |
       (t < (st.weakUntil ?? 0) ? ST_WEAK : 0) |
-      (t < (st.enrageUntil ?? 0) ? ST_ENRAGE : 0);
+      (t < (st.enrageUntil ?? 0) ? ST_ENRAGE : 0) |
+      (t < (st.goldUntil ?? 0) ? ST_GOLD : 0);
     const flags = (z.courier ? F_COURIER : 0) | (z.neutral ? F_NEUTRAL : 0);
     return [z.id, zombieTypes.indexOf(z.defId), r2(z.pos.x), r2(z.pos.y), r2(z.facing), Math.ceil(z.hp), Math.ceil(z.maxHp), bits, flags];
   });
@@ -295,6 +297,7 @@ export function decodeSnapshot(s: Snapshot, zombieTypes: string[], radius: (defI
         burnUntil: until(bits, ST_BURN),
         weakUntil: until(bits, ST_WEAK),
         enrageUntil: until(bits, ST_ENRAGE),
+        goldUntil: until(bits, ST_GOLD),
       },
       courier: flags & F_COURIER ? { wp: 0, dir: 1, leaveAt: Infinity } : undefined,
       neutral: flags & F_NEUTRAL ? { campId: null, home: { x, y }, returning: false } : undefined,

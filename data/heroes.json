@@ -915,5 +915,145 @@
         }
       }
     ]
+  },
+  {
+    "id": "goldschmied",
+    "name": "Aurelius",
+    "role": "Fernkampf, Gold",
+    "description": "Alter Goldschmied mit runder Brille und Lederschürze. Wirft Goldnuggets und lässt Zombies Gold regnen.",
+    "color": "#d4a017",
+    "figure": "goldsmith",
+    "hp": 500,
+    "hpRegen": 2.3,
+    "speed": 5.2,
+    "radius": 0.46,
+    "hpPerLevel": 50,
+    "regenPerLevel": 0.22,
+    "damagePerLevel": 0.065,
+    "attack": {
+      "type": "ranged",
+      "damage": 25,
+      "range": 9,
+      "cooldown": 0.8,
+      "projectileSpeed": 20,
+      "projectileRadius": 0.18,
+      "look": "nugget",
+      "pierce": 1,
+      "pierceFalloff": 0.6
+    },
+    "passive": {
+      "name": "Feingold",
+      "description": "15 % mehr Gold für seine Kills. Je 100 Gold im Beutel macht er 1 % mehr Schaden (höchstens 25 %).",
+      "values": {
+        "goldBonus": 0.15,
+        "damagePer100": 0.01,
+        "maxDamage": 0.25
+      }
+    },
+    "abilities": [
+      {
+        "id": "loetflamme",
+        "name": "Lötflamme",
+        "description": "Feuerkegel nach vorn: Schaden und Brand über 3 s.",
+        "shape": "cone",
+        "range": 5,
+        "arc": 50,
+        "cooldown": [
+          8,
+          7.5,
+          7,
+          6.5,
+          6
+        ],
+        "values": {
+          "damage": [
+            40,
+            60,
+            80,
+            100,
+            120
+          ],
+          "burn": [
+            30,
+            45,
+            60,
+            75,
+            90
+          ],
+          "burnTime": 3
+        }
+      },
+      {
+        "id": "blattgold",
+        "name": "Blattgold",
+        "description": "Goldener Schild auf den Mitspieler am Zeiger (oder ihn selbst).",
+        "shape": "target",
+        "range": 9,
+        "cooldown": [
+          14,
+          13,
+          12,
+          11,
+          10
+        ],
+        "values": {
+          "shield": [
+            80,
+            110,
+            140,
+            170,
+            200
+          ],
+          "duration": 4
+        }
+      },
+      {
+        "id": "schmelztiegel",
+        "name": "Schmelztiegel",
+        "description": "Kippt flüssiges Gold aus: Fläche, die verlangsamt und Schaden macht.",
+        "shape": "circle",
+        "range": 9,
+        "radius": 2.8,
+        "cooldown": [
+          12,
+          11,
+          10,
+          9,
+          8
+        ],
+        "values": {
+          "dps": [
+            20,
+            27,
+            34,
+            41,
+            48
+          ],
+          "slow": 0.5,
+          "duration": 4
+        }
+      },
+      {
+        "id": "goldrausch",
+        "name": "Goldrausch",
+        "description": "Großer Goldregen: viel Flächenschaden; wer in den nächsten 6 s stirbt, lässt doppeltes Gold fallen.",
+        "shape": "circle",
+        "range": 8,
+        "radius": 5,
+        "cooldown": [
+          90,
+          75,
+          60
+        ],
+        "values": {
+          "damage": [
+            150,
+            250,
+            350
+          ],
+          "duration": 6
+        }
+      }
+    ]
   }
 ]

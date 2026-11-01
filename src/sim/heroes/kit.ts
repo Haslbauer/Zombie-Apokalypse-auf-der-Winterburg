@@ -22,6 +22,10 @@ export interface HeroKit {
   moveSpeedFactor?(ctx: SimContext, h: Hero): number;
   damageReduction?(ctx: SimContext, h: Hero): number;
   regenBonus?(ctx: SimContext, h: Hero): number;
+  /** Zusätzlicher Schadensanteil (z. B. 0.1 = +10 %). */
+  damageBonus?(ctx: SimContext, h: Hero): number;
+  /** Faktor auf Kill-Gold (z. B. 1.15). */
+  goldFactor?(ctx: SimContext, h: Hero): number;
 }
 
 /** Passivwert aus heroes.json. */

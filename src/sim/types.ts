@@ -841,6 +841,8 @@ export interface ZombieStatus {
   weakFactor?: number;
   /** Boss in Wut (zu lange am Leben): bis dahin angezeigt, jeden Tick aufgefrischt. */
   enrageUntil?: number;
+  /** Goldrausch (Aurelius): stirbt der Zombie bis dahin, fällt doppeltes Gold. */
+  goldUntil?: number;
   /** Bienenstiche (Imker): Anzahl, Ablauf, von welchem Helden; Schaden über Zeit je Stich. */
   stings?: { n: number; until: number; by: number } | null;
 }

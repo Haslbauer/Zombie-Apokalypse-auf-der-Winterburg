@@ -315,6 +315,48 @@
           "min": 4
         }
       ]
+    },
+    "goldschmied": {
+      "role": "ranged",
+      "teamRole": "dmg",
+      "skillOrder": [
+        0,
+        2,
+        1
+      ],
+      "buy": [
+        "heiltrank",
+        "pistole",
+        "schrotflinte",
+        "kuechenwecker",
+        "gewehr",
+        "taschenuhr",
+        "jagdgewehr",
+        "lederjacke",
+        "grossvateruhr",
+        "kettenhemd",
+        "lebensamulett",
+        "armbrust",
+        "repetierarmbrust"
+      ],
+      "abilities": [
+        {
+          "use": "cone",
+          "min": 2
+        },
+        {
+          "use": "buff",
+          "min": 2
+        },
+        {
+          "use": "aoe",
+          "min": 3
+        },
+        {
+          "use": "aoe",
+          "min": 5
+        }
+      ]
     }
   }
 }

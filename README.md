@@ -269,6 +269,7 @@ Gold gibt es für Kills und jede überstandene Welle, in der man mitgekämpft ha
 | Ragnar (Rotschopf) | Nahkampf, Berserker | Wuchtschlag, Wutanfall, Ungezielter Sprung, Amok |
 | Somnia (Schläferin) | Kontrolle | Berührung, Gähnen, Powernap, Gute Nacht |
 | Imker | Support (Bienen) | Honigtopf, Smoker, Wachbienen, Schwarm |
+| Aurelius (Goldschmied) | Schaden, Fernkampf | Lötflamme, Blattgold, Schmelztiegel, Goldrausch |
 
 **Imker** (Support):
 - **Angriff:** ein kleiner Bienenschwarm (9 m). Jeder Treffer hinterlässt einen **Stich**, bis zu 5. Die Stiche machen 4 s lang Schaden über Zeit.
@@ -278,6 +279,15 @@ Gold gibt es für Kills und jede überstandene Welle, in der man mitgekämpft ha
 - **Wachbienen:** Bienen schützen einen Mitspieler und stechen jeden Angreifer.
 - **Ultimate „Schwarm“:** großer Schwarm, viel Schaden über Zeit. Zombies darin bekommen volle Stiche, Mitspieler werden von Seuche gereinigt.
 
+**Aurelius** (Goldschmied, Schaden):
+- **Angriff:** wirft Goldnuggets (9 m) mit Durchschlag auf 1 Ziel dahinter.
+- **Passiv „Feingold“:** 15 % mehr Gold für eigene Kills, dazu je 100 Gold im Beutel 1 % mehr Schaden (höchstens 25 %).
+- **Lötflamme:** Feuerkegel, der Zombies in Brand setzt.
+- **Blattgold:** goldener Schild auf einen Mitspieler.
+- **Schmelztiegel:** Fläche mit flüssigem Gold, verlangsamt und macht Schaden.
+- **Ultimate „Goldrausch“:** großer Flächenschaden; Zombies, die in den nächsten 6 s sterben, lassen doppelt Gold fallen und leuchten golden.
+
+Die neuen Helden sind vorerst umgebaute vorhandene Figuren. Der Imker hat einen hellen Anzug mit Imkerhut, Schleier und Smoker; Aurelius trägt runde Brille, Lederschürze und eine Lupe am Gürtel.
 Die Figur ist vorerst eine umgefärbte vorhandene Figur mit Imkerhut, Schleier und Smoker. Das Porträt ist aus dem Modell gerendert (`portrait.html?hero=imker` im Entwicklungsserver, Screenshot per Playwright).
 
 Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.

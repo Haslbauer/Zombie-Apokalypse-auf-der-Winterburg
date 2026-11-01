@@ -31,7 +31,7 @@ function iconMaterial(text: string, color: string): THREE.SpriteMaterial {
   return material;
 }
 
-type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp' | 'beehat' | 'smoker';
+type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp' | 'beehat' | 'smoker' | 'glasses' | 'apron' | 'loupe';
 
 /**
  * Aussehen einer animierten Figur (public/models/<model>.glb). move: Lauf-Clip,
@@ -68,6 +68,8 @@ interface ModelLook {
   handOffset?: number;
   /** Hut höher bzw. tiefer setzen (große Comic-Köpfe), in Metern. */
   headOffset?: number;
+  /** Einfarbig statt Textur (z. B. heller Imkeranzug); Hautfarbe bleibt unter Hut und Schleier verborgen. */
+  plain?: number;
   /** Schwebehöhe über dem Boden (Hornissen). */
   lift?: number;
 }
@@ -117,8 +119,10 @@ const HERO_LOOKS: Record<string, ModelLook> = {
   schlaeferin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1, tint: [1, 1, 1], attacks: ['attack', 'attack2', 'attack3'], attackStart: 0.3, impact: { attack: 0.4, attack2: 0.4, attack3: 0.45 }, props: ['staff'] },
   libero: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.6, scale: 1.02, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.42 },
   pirat: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.5, props: ['hook'] },
+  // Goldschmied Aurelius: umgebaute Figur mit runder Brille, Lederschürze und Lupe am Gürtel
+  goldschmied: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 1.0, tint: [0.85, 0.8, 0.72], attacks: ['attack'], attackStart: 0.3, props: ['glasses', 'apron', 'loupe'] },
   // Imker: umgebaute Figur (heller Anzug), Imkerhut mit Schleier, Smoker in der Hand
-  imker: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.4, scale: 1.0, tint: [1.45, 1.45, 1.4], attacks: ['attack'], attackStart: 0.5, props: ['beehat', 'smoker'], headOffset: 0.02 },
+  imker: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.4, scale: 1.0, tint: [1, 1, 1], plain: 0xddd6c0, attacks: ['attack'], attackStart: 0.5, props: ['beehat', 'smoker'], headOffset: 0.02 },
   gaertnerin: { model: 'gaertnerin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 0.98, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.4, impact: { attack: 0.78 } },
 };
 
@@ -324,19 +328,26 @@ export class UnitView {
     inst.root.position.y = look.lift ?? 0;
     this.body.add(inst.root);
     for (const m of inst.materials) {
+      if (look.plain !== undefined) {
+        (m as THREE.MeshStandardMaterial).map = null;
+        m.color.set(look.plain);
+        m.needsUpdate = true;
+      }
       this.materials.push(m);
       this.baseColors.push(m.color.clone());
     }
     // Requisiten in Metern: Maßstab des Knochens herausrechnen (Mixamo und Quaternius unterscheiden sich)
     inst.root.updateMatrixWorld(true);
     for (const prop of look.props ?? []) {
-      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat' || prop === 'beehat';
-      const bone = inst.root.getObjectByName(head ? (look.headBone ?? 'mixamorigHead') : (look.handBone ?? 'mixamorigRightHand'));
+      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat' || prop === 'beehat' || prop === 'glasses';
+      // Am Körper: Schürze an der Brust, Lupe am Gürtel
+      const body = prop === 'apron' ? 'mixamorigSpine1' : prop === 'loupe' ? 'mixamorigHips' : null;
+      const bone = inst.root.getObjectByName(body ?? (head ? (look.headBone ?? 'mixamorigHead') : (look.handBone ?? 'mixamorigRightHand')));
       if (!bone) continue;
       const mesh = this.propMesh(prop);
       const k = bone.getWorldScale(new THREE.Vector3()).x;
       mesh.scale.setScalar(look.scale / k);
-      mesh.position.y = ((head ? look.headOffset : look.handOffset) ?? 0) * look.scale / k;
+      mesh.position.y = (body ? 0 : ((head ? look.headOffset : look.handOffset) ?? 0)) * look.scale / k;
       bone.add(mesh);
     }
     this.anim = { inst, look, loop: null, loopName: '', once: null, attackIndex: 0, dead: false };
@@ -394,11 +405,35 @@ export class UnitView {
         add(new THREE.CylinderGeometry(0.3, 0.3, 0.02, 20), 0xe9e2c8, 0, 0.16, 0.02);
         add(new THREE.CylinderGeometry(0.12, 0.14, 0.12, 14), 0xe9e2c8, 0, 0.23, 0.02);
         const veil = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.16, 0.24, 0.26, 18, 1, true),
-          new THREE.MeshLambertMaterial({ color: 0x4a4a46, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false }),
+          new THREE.CylinderGeometry(0.15, 0.2, 0.34, 18, 1, true),
+          new THREE.MeshLambertMaterial({ color: 0x2e2e2c, transparent: true, opacity: 0.68, side: THREE.DoubleSide, depthWrite: false }),
         );
-        veil.position.set(0, 0.0, 0.02);
+        veil.position.set(0, -0.02, 0.02);
         g.add(veil);
+        break;
+      }
+      case 'glasses': {
+        // Runde Brille vor den Augen
+        const rim = new THREE.MeshLambertMaterial({ color: 0x8a6a2a });
+        for (const x of [-0.05, 0.05]) {
+          const lens = new THREE.Mesh(new THREE.TorusGeometry(0.035, 0.007, 6, 14), rim);
+          lens.position.set(x, 0.07, 0.11);
+          g.add(lens);
+        }
+        add(new THREE.BoxGeometry(0.03, 0.006, 0.006), 0x8a6a2a, 0, 0.07, 0.11);
+        break;
+      }
+      case 'apron':
+        // Lederschürze über Brust und Bauch
+        add(new THREE.BoxGeometry(0.34, 0.62, 0.03), 0x6b4423, 0, -0.18, 0.13);
+        add(new THREE.BoxGeometry(0.36, 0.02, 0.2), 0x4a2e16, 0, 0.1, 0.05);
+        break;
+      case 'loupe': {
+        // Lupe am Gürtel (Messingring mit Glas)
+        add(new THREE.TorusGeometry(0.05, 0.01, 6, 14), 0xc9a24a, 0.17, -0.02, 0.06);
+        const glass = new THREE.Mesh(new THREE.CircleGeometry(0.045, 14), new THREE.MeshBasicMaterial({ color: 0xbfe4ff, transparent: true, opacity: 0.45 }));
+        glass.position.set(0.17, -0.02, 0.06);
+        g.add(glass);
         break;
       }
       case 'smoker':
@@ -768,7 +803,7 @@ export class UnitView {
     ringMat.depthTest = !(marked || reveal);
     this.ring.renderOrder = marked || reveal ? 5 : 0;
     // Schlafende leicht bläulich, Festgehaltene rötlich
-    const tint = time < (st.enrageUntil ?? 0) ? 0xd01010 : time < (st.burnUntil ?? 0) ? 0xff6a20 : time < st.sleepUntil ? 0x9fc9ff : time < st.rootUntil ? 0xff8a80 : time < (st.weakUntil ?? 0) ? 0x8a90b0 : null;
+    const tint = time < (st.enrageUntil ?? 0) ? 0xd01010 : time < (st.goldUntil ?? 0) ? 0xffc83d : time < (st.burnUntil ?? 0) ? 0xff6a20 : time < st.sleepUntil ? 0x9fc9ff : time < st.rootUntil ? 0xff8a80 : time < (st.weakUntil ?? 0) ? 0x8a90b0 : null;
     if (tint !== null) this.materials.forEach((m) => m.color.lerp(new THREE.Color(tint), 0.35));
   }
 

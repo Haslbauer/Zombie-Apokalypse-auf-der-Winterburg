@@ -187,6 +187,15 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - 3 Wachbienen (9 m): Bienen umkreisen einen Mitspieler (oder ihn) 6 s; jeder Zombie, der ihn angreift, wird gestochen.
 - 4 Schwarm (Fläche 4,5 m, 5 s): Schaden über Zeit, Zombies darin bekommen sofort volle Stiche, Mitspieler darin werden von Seuche gereinigt.
 
+### Goldschmied Aurelius (umgesetzt v2.4, Schaden)
+- Optik: älterer Handwerker mit runder Brille, Lederschürze, Lupe am Gürtel.
+- Angriff: Goldnuggets, 9 m, Durchschlag 1 Ziel dahinter (60 %).
+- Passiv Feingold: +15 % Gold für eigene Kills; je 100 getragenes Gold +1 % Schaden (bis 25 %).
+- 1 Lötflamme (Kegel 5 m, 50°): Schaden und Brand über 3 s.
+- 2 Blattgold (9 m): Schild 80–200 für 4 s auf den Mitspieler am Zeiger.
+- 3 Schmelztiegel (Fläche 2,8 m, 4 s): verlangsamt 50 % und macht Schaden.
+- 4 Goldrausch (Fläche 5 m): 150/250/350 Schaden; wer in 6 s stirbt, lässt doppeltes Gold fallen (golden markiert).
+
 ## 7. Gegner
 
 Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `data/waves.json`.

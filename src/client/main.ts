@@ -77,7 +77,7 @@ hud.onCountdownTick = (left) => {
 /** Bosse und Elites (für die Musik). */
 const BOSS_DEFS = new Set(gameData.zombies.filter((z) => z.rank === 'elite' || z.rank === 'boss').map((z) => z.id));
 /** Klang des Fernkampfgeschosses nach Aussehen. */
-const SHOT_SOUND: Record<string, string> = { stone: 'bow', volley: 'throw', hook: 'hook', star: 'magic', swarm: 'sting' };
+const SHOT_SOUND: Record<string, string> = { stone: 'bow', volley: 'throw', hook: 'hook', star: 'magic', swarm: 'sting', nugget: 'throw' };
 /** Klang der Beschwörerzauber. */
 const SPELL_SOUND: Record<string, string> = {
   blitz: 'blitz',
@@ -399,6 +399,9 @@ const EFFECT_COLORS: Record<string, number> = {
   'rage-shield': 0x7fd1ff,
   'rage-heal': 0x7bd36a,
   honey: 0xf2b230,
+  flame: 0xff7a1e,
+  goldleaf: 0xffd166,
+  goldrush: 0xffc83d,
   swarm: 0xffc83d,
   guardbees: 0xffd166,
 };
@@ -531,7 +534,7 @@ function handleEvents(state: GameState): void {
         const h = state.heroes.find((x) => x.id === e.id);
         if (h) {
           const look = gameData.heroes.find((d) => d.id === h.defId)?.attack.look ?? '';
-          const color = ({ stone: 0xc8f0a0, hook: 0xd8c8a8, star: 0x9fe3ff, volley: 0xff9a4a, swarm: 0xffc83d } as Record<string, number>)[look] ?? 0xffe066;
+          const color = ({ stone: 0xc8f0a0, hook: 0xd8c8a8, star: 0x9fe3ff, volley: 0xff9a4a, swarm: 0xffc83d, nugget: 0xffd166 } as Record<string, number>)[look] ?? 0xffe066;
           effects.flash({ x: h.pos.x + Math.cos(h.facing) * 0.7, y: h.pos.y + Math.sin(h.facing) * 0.7 }, 1.3, color);
           sound.play(SHOT_SOUND[look] ?? 'bow', h.pos, e.id === heroId ? 1 : 0.7);
         }
