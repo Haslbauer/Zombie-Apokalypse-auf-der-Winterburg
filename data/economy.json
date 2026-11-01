@@ -69,7 +69,29 @@
         "x": 37.25,
         "y": 76
       }
-    ]
+    ],
+    "crate": {
+      "radius": 3,
+      "pointsToWin": 100,
+      "perSecond": 1
+    },
+    "roamers": {
+      "first": 25,
+      "every": 35,
+      "min": 3,
+      "max": 5,
+      "types": [
+        "walker",
+        "walker",
+        "runner",
+        "brute"
+      ],
+      "maxAlive": 14,
+      "from": [
+        "bunker",
+        "ost"
+      ]
+    }
   },
   "defenses": {
     "stacheldraht": {

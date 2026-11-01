@@ -245,7 +245,12 @@ export interface EconomyDef {
   /** Verteidigungen für die Pause (Kosten, Höchstzahl, Werte). */
   defenses?: Record<DefenseKind, DefenseDef> & { repairFactor: number; minSpacing: number };
   /** PvP-Modus: Kills zum Sieg, Gold/EP pro Kill und Sekunde, Wiederbelebung, Startplätze je Team. */
-  pvp?: { killsToWin: number; killGold: number; goldPerSecond: number; xpPerSecond: number; killXp: number; respawn: number; startGold: number; spawns: { x: number; y: number }[] };
+  pvp?: { killsToWin: number; killGold: number; goldPerSecond: number; xpPerSecond: number; killXp: number; respawn: number; startGold: number; spawns: { x: number; y: number }[];
+    /** Modus „Kiste erobern“: Umkreis, Punkte zum Sieg, Punkte pro Sekunde, Ort (sonst Mitte zwischen den Basen). */
+    crate?: { radius: number; pointsToWin: number; perSecond: number; pos?: { x: number; y: number } };
+    /** Zombies nebenbei: erste Gruppe nach first s, dann alle every s, Gruppengröße min..max, Typen. */
+    roamers?: { first: number; every: number; min: number; max: number; types: string[]; maxAlive: number; from: string[] };
+  };
   roles?: RolesDef;
   plague?: PlagueDef;
   startGold: number;
@@ -912,6 +917,8 @@ export interface Zombie extends Unit {
   wander: number;
   /** PvP: unsichtbarer Stellvertreter dieses Helden (Ziel für Fähigkeiten des anderen Teams). */
   avatarOf?: number;
+  /** PvP, Zombies nebenbei: Wegpunkt, zu dem der Zombie zieht, wenn er niemanden jagt. */
+  roam?: Vec2;
   /** Spielzeit beim Erscheinen (Wut der Bosse). */
   bornAt?: number;
   /** Bossfähigkeiten: Abklingzeiten und laufende Ausführung (Warnung an points). */
@@ -1033,6 +1040,8 @@ export interface Projectile {
 }
 
 export type WavePhase = 'pause' | 'wave';
+/** PvP-Ziel: Kills sammeln oder die Kiste in der Mitte halten. */
+export type PvpGoal = 'kills' | 'kiste';
 export type WaveEventKind = 'nebel' | 'blutmond' | 'regen';
 
 export interface WaveState {
@@ -1086,6 +1095,7 @@ export type GameEvent =
   | { type: 'bossHit'; zombieId: number; kind: BossAbilityDef['kind']; points: Vec2[]; radius: number }
   | { type: 'defense'; action: 'built' | 'destroyed' | 'repaired' | 'denied'; kind?: DefenseKind; pos?: Vec2; heroId?: number; reason?: string; gold?: number }
   | { type: 'revive'; id: number; by: number }
+  | { type: 'pvpCrate'; holder: number | null; points: [number, number] }
   | { type: 'pvpKill'; killerId: number | null; victimId: number; score: [number, number] }
   | { type: 'teamBuff'; defId: string; name: string; icon: string; duration: number }
   | { type: 'parcel'; zombieId: number; from: Vec2; to: Vec2; radius: number; windup: number }
@@ -1118,7 +1128,18 @@ export interface GameState {
   /** Gewonnen (letzte Welle überstanden)? */
   victory?: boolean;
   /** PvP-Modus: Teams je Platz (−1 = leer), Punktestand, Kills zum Sieg, Gewinner. */
-  pvp?: { teams: number[]; score: [number, number]; killsToWin: number; winner?: number };
+  pvp?: {
+    teams: number[];
+    score: [number, number];
+    killsToWin: number;
+    winner?: number;
+    /** Ziel: Kills (Standard) oder Kiste erobern. */
+    goal?: PvpGoal;
+    /** Kiste erobern: Ort, Punkte je Team, Punkte zum Sieg, haltendes Team (null = frei oder umkämpft). */
+    crate?: { pos: { x: number; y: number }; points: [number, number]; toWin: number; holder: number | null; contested: boolean };
+    /** Zombies laufen nebenbei über die Karte (nächste Gruppe zum Zeitpunkt nextAt). */
+    roamers?: { nextAt: number };
+  };
   /** Schwierigkeitsstufe (Standard normal). */
   level?: GameLevel;
   /** Erwischte Postboten (Endstatistik). */

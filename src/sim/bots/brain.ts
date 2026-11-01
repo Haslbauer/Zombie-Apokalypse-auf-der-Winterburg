@@ -205,6 +205,11 @@ function think(ctx: SimContext, h: Hero, bot: BotState, cmds: Command[]): void {
   const r = nextRandom(state) * diff.aimError;
   bot.aimOffset = { x: Math.cos(a) * r, y: Math.sin(a) * r };
 
+  if (state.pvp) {
+    pvpThink(ctx, h, bot, cmds);
+    return;
+  }
+
   const hpShare = h.hp / h.maxHp;
   const potion = h.consumables.findIndex((c) => c?.itemId === 'heiltrank');
   const healing = h.buffs.some((b) => b.kind === 'heal');
@@ -281,6 +286,70 @@ function think(ctx: SimContext, h: Hero, bot: BotState, cmds: Command[]): void {
   useSpells(ctx, h, bot, target, cmds);
 
   // 8. Heiltrank im Kampf
+  if (hpShare < 0.5 && potion >= 0 && !healing) cmds.push({ heroId: h.id, type: 'use', slot: potion });
+}
+
+/** PvP: so weit sieht ein Bot Gegner (Helden und Zombies nebenbei). */
+const PVP_SIGHT = 13;
+
+/**
+ * Bots im PvP (füllen leere Plätze): state.zombies enthält hier nur die
+ * Stellvertreter der Gegner und die Zombies nebenbei (siehe asTeam).
+ * Wenig Leben: zurück zur Basis und einkaufen; sonst den nächsten Gegner
+ * angreifen. Ohne Gegner in Sicht: zur Kiste (Kiste erobern) bzw. Richtung
+ * Gegner (Kills).
+ */
+function pvpThink(ctx: SimContext, h: Hero, bot: BotState, cmds: Command[]): void {
+  const { state } = ctx;
+  const diff = ctx.data.bots.difficulties[bot.difficulty];
+  const base = ctx.data.economy.pvp?.spawns[h.team ?? 0] ?? ctx.data.arena.heroStart;
+  const hpShare = h.hp / h.maxHp;
+  const potion = h.consumables.findIndex((c) => c?.itemId === 'heiltrank');
+  const healing = h.buffs.some((b) => b.kind === 'heal');
+
+  // An der Basis: einkaufen
+  if (!shopClosedReason(ctx, h)) {
+    const want = nextPurchase(ctx, h);
+    if (want) cmds.push({ heroId: h.id, type: 'buy', itemId: want });
+  }
+  // Rückzug zur Basis (heilt sich dort mit der Zeit, Heiltrank sofort)
+  if (bot.mode === 'retreat' ? hpShare < RETREAT_DONE : hpShare < Math.max(0.25, diff.retreatHp)) {
+    bot.mode = 'retreat';
+    bot.targetId = null;
+    if (potion >= 0 && !healing) cmds.push({ heroId: h.id, type: 'use', slot: potion });
+    setDest(ctx, bot, h, base);
+    useSpells(ctx, h, bot, null, cmds);
+    return;
+  }
+  // Ziel: Gegner in Sicht, schwache und nahe zuerst; Helden vor Zombies
+  let target: Zombie | null = null;
+  let best = -Infinity;
+  for (const z of state.zombies) {
+    if (z.hp <= 0) continue;
+    const d = dist(z.pos, h.pos);
+    if (d > PVP_SIGHT) continue;
+    const score = (z.avatarOf !== undefined ? 30 : 0) - d * 2 - (z.hp / z.maxHp) * 15 + (z.id === bot.targetId ? 8 : 0);
+    if (score > best) {
+      best = score;
+      target = z;
+    }
+  }
+  const pvp = state.pvp!;
+  let fallback: Vec2;
+  if (pvp.crate) {
+    // Kiste: alle Bots eines Teams verteilt um die Kiste
+    const a = (h.slot / 4) * Math.PI * 2;
+    fallback = { x: pvp.crate.pos.x + Math.cos(a) * 1.2, y: pvp.crate.pos.y + Math.sin(a) * 1.2 };
+  } else {
+    const enemies = state.zombies.filter((z) => z.avatarOf !== undefined && z.hp > 0);
+    const nearest = enemies.sort((p, q) => dist(p.pos, h.pos) - dist(q.pos, h.pos))[0];
+    fallback = nearest ? nearest.pos : ctx.data.economy.pvp?.spawns[1 - (h.team ?? 0)] ?? base;
+  }
+  // Kiste wird erobert und kein Gegner direkt dran: lieber auf der Kiste bleiben
+  if (target && pvp.crate && dist(target.pos, pvp.crate.pos) > 8 && dist(h.pos, pvp.crate.pos) < 4) target = null;
+  engage(ctx, h, bot, target, fallback);
+  useAbilities(ctx, h, bot, target, cmds);
+  useSpells(ctx, h, bot, target, cmds);
   if (hpShare < 0.5 && potion >= 0 && !healing) cmds.push({ heroId: h.id, type: 'use', slot: potion });
 }
 

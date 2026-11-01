@@ -9,7 +9,7 @@
  * Server bestätigt die zuletzt angewendete (ack), damit der Client die eigene
  * Bewegung vorhersagen und abgleichen kann.
  */
-import { type BotDifficulty, type Command, type GameEvent, type GameLevel, type GameState, type Hero, type HeroInput, type Objective, PING_KINDS, type Zombie } from '../sim/types';
+import { type BotDifficulty, type Command, type GameEvent, type GameLevel, type GameState, type Hero, type HeroInput, type Objective, PING_KINDS, type PvpGoal, type Zombie } from '../sim/types';
 
 /**
  * Raum: wer welchen Helden steuert. reserved: Platz wartet auf einen Spieler,
@@ -19,6 +19,12 @@ import { type BotDifficulty, type Command, type GameEvent, type GameLevel, type 
  */
 export type GameMode = 'koop' | 'pvp';
 
+export interface PvpOptions {
+  goal: PvpGoal;
+  zombies: boolean;
+  bots: boolean;
+}
+
 export interface RoomInfo {
   code: string;
   difficulty: BotDifficulty;
@@ -27,6 +33,8 @@ export interface RoomInfo {
   mode: GameMode;
   /** Schwierigkeit für Menschen. */
   level?: GameLevel;
+  /** PvP-Einstellungen: Ziel (Kills oder Kiste), Zombies nebenbei, leere Plätze mit Bots. */
+  pvp?: PvpOptions;
   startsIn: number | null;
   slots: { heroId: number; defId: string; human: boolean; reserved: boolean; name: string | null; ready: boolean; spells: [string, string] | null; team: number }[];
 }
@@ -53,6 +61,8 @@ export type ClientMessage =
   | { t: 'mode'; mode: GameMode }
   | { t: 'team'; team: number }
   | { t: 'level'; level: GameLevel }
+  /** Lobby: PvP-Einstellungen (nur Gastgeber). */
+  | ({ t: 'pvpOptions' } & PvpOptions)
   /** Laufzeitmessung: Der Server schickt ts unverändert zurück. */
   | { t: 'ping'; ts: number };
 
@@ -146,6 +156,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return m.team === 0 || m.team === 1 ? { t: 'team', team: m.team } : null;
     case 'level':
       return m.level === 'entspannt' || m.level === 'normal' || m.level === 'albtraum' ? { t: 'level', level: m.level } : null;
+    case 'pvpOptions':
+      return m.goal === 'kills' || m.goal === 'kiste' ? { t: 'pvpOptions', goal: m.goal, zombies: m.zombies === true, bots: m.bots === true } : null;
     case 'resume':
       return str(m.room, 8) && str(m.token, 64) ? { t: 'resume', room: m.room, token: m.token, name } : null;
     case 'input':

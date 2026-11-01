@@ -119,6 +119,9 @@ export class Lobby {
       case 'level':
         client.room?.setLevel(client, msg.level, now);
         break;
+      case 'pvpOptions':
+        client.room?.setPvpOptions(client, msg, now);
+        break;
       case 'ping':
         this.reply(client, { t: 'pong', ts: msg.ts });
         break;

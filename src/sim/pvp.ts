@@ -2,6 +2,7 @@ import type { SimContext } from './context';
 import { giveGold } from './economy';
 import { addXp } from './progression';
 import { emptyStatus, heroCC, addBuff } from './status';
+import { nextRandom } from './rng';
 import { endGame, noteKill } from './stats';
 import { DT, type Hero, type Zombie } from './types';
 
@@ -65,6 +66,8 @@ export function syncAvatars(ctx: SimContext): void {
 /** Stellvertreter, die für einen Helden von Team team Gegner sind (lebend). */
 export function enemyAvatars(ctx: SimContext, all: Zombie[], team: number): Zombie[] {
   return all.filter((z) => {
+    // Zombies nebenbei sind Gegner für beide Teams
+    if (z.avatarOf === undefined) return z.hp > 0;
     const h = avatarHero(ctx, z);
     return !!h && h.alive && h.team !== team;
   });
@@ -126,7 +129,13 @@ export function pvpKill(ctx: SimContext, victim: Hero, killer?: Hero): void {
   const pvp = ctx.state.pvp;
   const cfg = ctx.data.economy.pvp;
   if (!pvp || !cfg) return;
-  const team = killer && killer.team !== victim.team ? killer.team! : 1 - (victim.team ?? 0);
+  victim.respawnAt = ctx.state.time + cfg.respawn;
+  // Von Zombies erwischt: kein Punkt für das andere Team
+  if (!killer || killer.team === victim.team) {
+    ctx.state.events.push({ type: 'pvpKill', killerId: null, victimId: victim.id, score: [pvp.score[0], pvp.score[1]] });
+    return;
+  }
+  const team = killer.team!;
   pvp.score[team]++;
   if (killer && killer.team !== victim.team) {
     killer.score.kills++;
@@ -134,9 +143,8 @@ export function pvpKill(ctx: SimContext, victim: Hero, killer?: Hero): void {
     giveGold(ctx, killer, cfg.killGold, victim.pos);
     addXp(ctx, killer, cfg.killXp);
   }
-  victim.respawnAt = ctx.state.time + cfg.respawn;
   ctx.state.events.push({ type: 'pvpKill', killerId: killer?.id ?? null, victimId: victim.id, score: [pvp.score[0], pvp.score[1]] });
-  if (pvp.score[team] >= pvp.killsToWin && !ctx.state.gameOver) {
+  if (pvp.goal !== 'kiste' && pvp.score[team] >= pvp.killsToWin && !ctx.state.gameOver) {
     pvp.winner = team;
     endGame(ctx, `Team ${team === 0 ? 'Nord' : 'Süd'} gewinnt ${pvp.score[team]} : ${pvp.score[1 - team]}!`, true, team);
   }
@@ -161,4 +169,78 @@ export function handicapFor(teams: number[], team: number): number {
   const own = teams.filter((t) => t === team).length;
   const other = teams.filter((t) => t === 1 - team).length;
   return own > 0 && other > own ? Math.sqrt(other / own) : 1;
+}
+
+/** Kiste erobern: Ort aus den Daten, sonst die Mitte zwischen den beiden Basen. */
+export function cratePos(ctx: SimContext): { x: number; y: number } {
+  const cfg = ctx.data.economy.pvp;
+  if (cfg?.crate?.pos) return { ...cfg.crate.pos };
+  const [a, b] = cfg?.spawns ?? [ctx.data.arena.heroStart, ctx.data.arena.heroStart];
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}
+
+/**
+ * Kiste erobern: Stehen nur Helden eines Teams im Umkreis, sammelt dieses Team
+ * Punkte (perSecond pro Sekunde). Stehen beide Teams dort, ist sie umkämpft.
+ * Sieg bei toWin Punkten.
+ */
+export function updateCrate(ctx: SimContext): void {
+  const pvp = ctx.state.pvp;
+  const crate = pvp?.crate;
+  const cfg = ctx.data.economy.pvp?.crate;
+  if (!pvp || !crate || !cfg || ctx.state.gameOver) return;
+  const near = ctx.state.heroes.filter((h) => h.alive && !h.benched && Math.hypot(h.pos.x - crate.pos.x, h.pos.y - crate.pos.y) <= cfg.radius);
+  const teams = new Set(near.map((h) => h.team ?? 0));
+  const holder = teams.size === 1 ? [...teams][0] : null;
+  const contested = teams.size > 1;
+  if (holder !== crate.holder || contested !== crate.contested) {
+    crate.holder = holder;
+    crate.contested = contested;
+    ctx.state.events.push({ type: 'pvpCrate', holder, points: [Math.floor(crate.points[0]), Math.floor(crate.points[1])] });
+  }
+  if (holder === null) return;
+  crate.points[holder] = Math.min(crate.toWin, crate.points[holder] + cfg.perSecond * DT);
+  if (crate.points[holder] >= crate.toWin - 1e-6) {
+    crate.points[holder] = crate.toWin;
+    pvp.winner = holder;
+    const other = Math.floor(crate.points[1 - holder]);
+    endGame(ctx, `Team ${holder === 0 ? 'Nord' : 'Süd'} erobert die Kiste (${crate.toWin} : ${other})!`, true, holder);
+  }
+}
+
+/**
+ * Zombies nebenbei: ab und zu kommt eine kleine Gruppe von der Seite und zieht
+ * über die Karte (zur Mitte, dann zur anderen Seite). Sie greift beide Teams an
+ * und bringt beim Kill Gold und EP wie im Koop.
+ */
+export function updateRoamers(ctx: SimContext, spawn: (defId: string, pos: { x: number; y: number }) => Zombie | null): void {
+  const pvp = ctx.state.pvp;
+  const cfg = ctx.data.economy.pvp?.roamers;
+  if (!pvp?.roamers || !cfg) return;
+  const state = ctx.state;
+  if (state.time < pvp.roamers.nextAt) return;
+  pvp.roamers.nextAt = state.time + cfg.every;
+  const alive = state.zombies.filter((z) => z.avatarOf === undefined && z.hp > 0).length;
+  const points = ctx.data.arena.spawnPoints.filter((p) => cfg.from.includes(p.id));
+  if (points.length === 0) return;
+  const from = points[Math.floor(nextRandom(state) * points.length) % points.length];
+  const count = Math.min(cfg.maxAlive - alive, cfg.min + Math.floor(nextRandom(state) * (cfg.max - cfg.min + 1)));
+  const center = cratePos(ctx);
+  for (let i = 0; i < count; i++) {
+    const type = cfg.types[Math.floor(nextRandom(state) * cfg.types.length) % cfg.types.length];
+    const z = spawn(type, { x: from.x + (nextRandom(state) - 0.5) * 2, y: from.y + (nextRandom(state) - 0.5) * 2 });
+    if (z) z.roam = { ...center };
+  }
+}
+
+/** Nächster Wegpunkt eines umherziehenden Zombies (Mitte ↔ eine der Seiten). */
+export function nextRoam(ctx: SimContext, z: Zombie): { x: number; y: number } {
+  const center = cratePos(ctx);
+  const atCenter = Math.hypot(z.pos.x - center.x, z.pos.y - center.y) < 4;
+  if (!atCenter) return center;
+  const ids = ctx.data.economy.pvp?.roamers?.from ?? [];
+  const points = ctx.data.arena.spawnPoints.filter((p) => ids.includes(p.id));
+  if (points.length === 0) return center;
+  const p = points[Math.floor(nextRandom(ctx.state) * points.length) % points.length];
+  return { x: p.x, y: p.y };
 }

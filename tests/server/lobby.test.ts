@@ -264,6 +264,7 @@ describe('Netzprotokoll', () => {
       expect(room.mode).toBe('koop'); // nur der Gastgeber
       host.send({ t: 'mode', mode: 'pvp' });
       expect(host.last('room')!.room.mode).toBe('pvp');
+      host.send({ t: 'pvpOptions', goal: 'kills', zombies: false, bots: false });
       guest.send({ t: 'pick', heroId: 'grimm' });
       host.send({ t: 'team', team: 0 });
       guest.send({ t: 'team', team: 0 });
@@ -281,6 +282,30 @@ describe('Netzprotokoll', () => {
       expect(host.last('room')!.room.slots).toHaveLength(4);
       expect(st.heroes.filter((h) => h.bot)).toHaveLength(0);
       expect(st.heroes[2].benched).toBe(true);
+    });
+
+    it('PvP mit Bots: allein gegen Bots, Kiste und Zombies nebenbei', () => {
+      const { host, guest, room, advance, lobby } = lobbyRoom();
+      host.send({ t: 'mode', mode: 'pvp' });
+      guest.send({ t: 'pvpOptions', goal: 'kiste', zombies: true, bots: true });
+      expect(room.pvpOptions.goal).toBe('kills'); // nur der Gastgeber
+      host.send({ t: 'pvpOptions', goal: 'kiste', zombies: true, bots: true });
+      expect(host.last('room')!.room.pvp).toEqual({ goal: 'kiste', zombies: true, bots: true });
+      guest.send({ t: 'pick', heroId: 'grimm' });
+      host.send({ t: 'team', team: 0 });
+      guest.send({ t: 'team', team: 0 });
+      host.send({ t: 'ready', ready: true });
+      guest.send({ t: 'ready', ready: true });
+      // beide in Nord: die Bots stellen Süd
+      expect(host.last('room')!.room.slots.map((s) => s.team)).toEqual([0, 0, 1, 1]);
+      expect(host.last('room')!.room.startsIn).toBeCloseTo(15, 0);
+      advance(16_000);
+      lobby.tick();
+      const st = room.sim.state;
+      expect(st.pvp?.teams).toEqual([0, 0, 1, 1]);
+      expect(st.pvp?.goal).toBe('kiste');
+      expect(st.pvp?.roamers).toBeDefined();
+      expect(st.heroes.filter((h) => h.bot).map((h) => h.team)).toEqual([1, 1]);
     });
 
     it('Raum beginnt in der Lobby; Gastgeber hat seinen Helden, Gast noch keinen; keine Simulation', () => {

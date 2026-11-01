@@ -10,13 +10,13 @@ import { levelStats, levelUp } from './progression';
 import { kitOf } from './heroes/index';
 import { updateDelayed, updateZones } from './zones';
 import { SpatialHash } from './spatial';
-import { type ArenaDef, type BotDifficulty, DT, type Command, type GameData, type GameLevel, type GameState, type Hero, type Zombie } from './types';
+import { type ArenaDef, type BotDifficulty, DT, type Command, type GameData, type GameLevel, type GameState, type Hero, type PvpGoal, type Zombie } from './types';
 import { updateCamps } from './neutrals';
-import { updateWaves } from './waves';
+import { spawnZombieAt, updateWaves } from './waves';
 import { updateZombies } from './zombies';
 import { defaultSpells, updateSpells, validSpells } from './spells';
 import { emptyStats } from './stats';
-import { applyAvatarStatus, asTeam, createAvatars, handicapFor, perTeam, syncAvatars, updatePvp } from './pvp';
+import { applyAvatarStatus, asTeam, cratePos, createAvatars, handicapFor, perTeam, syncAvatars, updateCrate, updatePvp, updateRoamers } from './pvp';
 import { updateRoles } from './roles';
 import { updateMinions } from './minions';
 import { updateRevive } from './revive';
@@ -55,7 +55,7 @@ export interface SimulationOptions {
   /** Schwierigkeit für Menschen (Standard normal). */
   level?: GameLevel;
   /** PvP-Modus: Team je Platz (0 = Nord, 1 = Süd, −1 = Platz bleibt leer). */
-  pvp?: { teams: number[]; killsToWin?: number };
+  pvp?: { teams: number[]; killsToWin?: number; goal?: PvpGoal; zombies?: boolean };
 }
 
 /**
@@ -194,6 +194,13 @@ export class Simulation implements SimContext {
     const cfg = this.data.economy.pvp;
     const teams = this.state.heroes.map((_, i) => opt.teams[i] ?? -1);
     this.state.pvp = { teams, score: [0, 0], killsToWin: opt.killsToWin ?? cfg?.killsToWin ?? 10 };
+    if (opt.goal === 'kiste' && cfg?.crate) {
+      const pos = cratePos(this);
+      resolveObstacles(pos, 0.6, this.arena);
+      this.state.pvp.goal = 'kiste';
+      this.state.pvp.crate = { pos, points: [0, 0], toWin: cfg.crate.pointsToWin, holder: null, contested: false };
+    }
+    if (opt.zombies && cfg?.roamers) this.state.pvp.roamers = { nextAt: cfg.roamers.first };
     for (const h of this.state.heroes) {
       const team = teams[h.slot];
       if (team !== 0 && team !== 1) {
@@ -251,6 +258,30 @@ export class Simulation implements SimContext {
     applyAvatarStatus(this);
     updatePvp(this);
     syncAvatars(this);
+    if (state.pvp?.roamers) this.stepRoamers();
+    updateCrate(this);
+  }
+
+  /** PvP, Zombies nebenbei: neue Gruppen, Zombie-KI nur für die echten Zombies, Gefallene entfernen. */
+  private stepRoamers(): void {
+    const state = this.state;
+    updateRoamers(this, (defId, pos) => {
+      const def = this.zombieDefs.get(defId);
+      if (!def) return null;
+      resolveObstacles(pos, def.radius, this.arena);
+      return spawnZombieAt(this, def, pos, 'none');
+    });
+    const all = state.zombies;
+    const real = all.filter((z) => z.avatarOf === undefined);
+    if (real.length === 0) return;
+    if (state.tick % FIELD_TICKS === 1 || !this.field) {
+      const targets = state.heroes.filter((h) => h.alive && !h.benched).map((h) => h.pos);
+      this.field = targets.length > 0 ? this.grid.distanceField(targets) : null;
+    }
+    state.zombies = real;
+    updateZombies(this, this.field, null);
+    for (const z of real) resolveObstacles(z.pos, z.radius, this.arena);
+    state.zombies = all.filter((z) => z.avatarOf !== undefined || z.hp > 0);
   }
 
   /** Distanzfelder zu jedem Ziel und zu jeder Zielgruppe (nur intakte Mitglieder). */

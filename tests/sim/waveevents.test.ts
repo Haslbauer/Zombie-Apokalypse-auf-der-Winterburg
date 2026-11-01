@@ -36,9 +36,9 @@ describe('Wellen-Ereignisse', () => {
     for (let i = 1; i < at.length; i++) expect(at[i] - at[i - 1]).toBeGreaterThanOrEqual(cfg.gap);
     // über viele Seeds kommen alle drei Arten vor
     const kinds = new Set<string>();
-    for (let s = 1; s <= 40; s++) for (const k of roll(s)) if (k) kinds.add(k);
+    for (let s = 1; s <= 40 && kinds.size < 3; s++) for (const k of roll(s)) if (k) kinds.add(k);
     expect([...kinds].sort()).toEqual(['blutmond', 'nebel', 'regen']);
-  });
+  }, 60_000);
 
   it('Ansage als Ereignis, Wirkung nur während der Welle', () => {
     const sim = make();

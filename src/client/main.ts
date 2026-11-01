@@ -336,6 +336,7 @@ function connect(first: Parameters<typeof RemoteSession.connect>[0], heroes: str
         mode: (mode) => remote.lobby({ t: 'mode', mode }),
         team: (team) => remote.lobby({ t: 'team', team }),
         level: (level) => remote.lobby({ t: 'level', level }),
+        pvpOptions: (opt) => remote.lobby({ t: 'pvpOptions', ...opt }),
         leave: leaveOnline,
       });
       return;
@@ -785,9 +786,16 @@ function handleEvents(state: GameState): void {
         hud.message(`Welle ${e.number} geschafft`);
         sound.play('waveCleared');
         break;
+      case 'pvpCrate': {
+        const mine = myHero()?.team ?? 0;
+        if (e.holder === null) break;
+        hud.message(e.holder === mine ? 'Dein Team hält die Kiste!' : 'Die Gegner erobern die Kiste!');
+        sound.play(e.holder === mine ? 'buy' : 'whoosh');
+        break;
+      }
       case 'pvpKill': {
         const name = (id: number | null) => {
-          if (id === null) return 'Die Umgebung';
+          if (id === null) return 'Die Zombies';
           if (id === heroId) return 'Du';
           const h = state.heroes.find((x) => x.id === id);
           return playerNames()?.get(id) ?? gameData.heroes.find((d) => d.id === h?.defId)?.name ?? '?';

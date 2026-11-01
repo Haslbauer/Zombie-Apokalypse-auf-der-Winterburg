@@ -16,6 +16,7 @@ import { ATTACK_ANIM, heroView, minionView, UnitView, zombieView } from './units
 const CORPSE_TIME = 2.5;
 import { WorldView } from './world';
 import { Weather } from './weather';
+import { CrateView } from './crate';
 
 /** So nah muss ein Held einem Zombie im Gebüsch sein, damit man ihn sieht (m). */
 const BRUSH_REVEAL = 3;
@@ -46,6 +47,8 @@ export class GameRenderer {
   private readonly fog: THREE.Fog;
   private readonly sun: THREE.DirectionalLight;
   private readonly weather: Weather;
+  /** PvP „Kiste erobern“: Kiste mit Eroberungsring (nur in diesem Modus). */
+  private crate: CrateView | null = null;
   private readonly frustum = new THREE.Frustum();
   private readonly projView = new THREE.Matrix4();
   private readonly cullSphere = new THREE.Sphere(new THREE.Vector3(), 2.5);
@@ -130,6 +133,7 @@ export class GameRenderer {
     this.corpses.clear();
     this.world.reset();
     this.preview.hide();
+    if (this.crate) this.crate.group.visible = false;
   }
 
   /** Szene an den Spielzustand angleichen, zwischen den Ticks interpoliert. */
@@ -254,6 +258,11 @@ export class GameRenderer {
     const wx = mine ? mine.group.position.x : camera.position.x;
     const wz = mine ? mine.group.position.z : camera.position.z;
     this.weather.update(state.wave.phase === 'wave' ? state.wave.event : null, wx, wz, dt);
+    if (state.pvp?.crate && !this.crate) {
+      this.crate = new CrateView(this.data.economy.pvp?.crate?.radius ?? 3);
+      this.scene.add(this.crate.group);
+    }
+    this.crate?.update(state, time);
   }
 
   /** Vorschau einer Fähigkeit (Taste gehalten) oder ausblenden. */

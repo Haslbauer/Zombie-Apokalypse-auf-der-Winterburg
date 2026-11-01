@@ -5,7 +5,7 @@ import type { AudioSettings } from './audio';
 import { formatClock, loadBestTime, recordVictory } from './besttime';
 import { BAR_OPACITY, BAR_SCALE, type BarLayout, clampOffset, DEFAULT_BAR, loadBar, saveBar } from './barlayout';
 import type { BotDifficulty, FinalHeroStats, GameData, GameEvent, GameLevel, GameState, Hero, HeroDef } from '../sim/types';
-import type { RoomInfo } from '../net/protocol';
+import type { PvpOptions, RoomInfo } from '../net/protocol';
 import { type Action, ACTIONS, type Keybindings, keyName } from './keybindings';
 
 const SPELL_STORAGE = 'winterburg.spells';
@@ -317,6 +317,7 @@ export class Hud {
       mode: (mode: 'koop' | 'pvp') => void;
       level: (level: GameLevel) => void;
       team: (team: number) => void;
+      pvpOptions: (opt: PvpOptions) => void;
       leave: () => void;
     },
   ): void {
@@ -337,6 +338,7 @@ export class Hud {
     });
     head.append(el('h1', '', `Lobby ${room.code}`), copy);
     const pvp = room.mode === 'pvp';
+    const opts: PvpOptions = room.pvp ?? { goal: 'kills', zombies: false, bots: true };
     // Spielmodus (Gastgeber): Koop gegen Zombies oder PvP
     const modeRow = el('div', 'hud-difficulty hud-mode');
     modeRow.append(el('span', '', 'Modus:'));
@@ -348,14 +350,36 @@ export class Hud {
       b.addEventListener('click', () => on.mode(m));
       modeRow.append(b);
     }
+    // PvP-Einstellungen (Gastgeber): Ziel, Zombies nebenbei, Bots
+    const pvpRow = el('div', 'hud-difficulty hud-pvp-options');
+    if (pvp) {
+      pvpRow.append(el('span', '', 'Ziel:'));
+      for (const [g, label] of [['kills', '⚔ Kills'], ['kiste', '📦 Kiste erobern']] as const) {
+        const b = el('button', 'hud-diff', label);
+        b.dataset.goal = g;
+        b.classList.toggle('active', opts.goal === g);
+        b.disabled = mySlot !== 0;
+        b.addEventListener('click', () => on.pvpOptions({ ...opts, goal: g }));
+        pvpRow.append(b);
+      }
+      for (const [key, label] of [['zombies', '🧟 Zombies nebenbei'], ['bots', '🤖 Leere Plätze mit Bots']] as const) {
+        const b = el('button', 'hud-diff', `${opts[key] ? '☑' : '☐'} ${label}`);
+        b.dataset.option = key;
+        b.classList.toggle('active', opts[key]);
+        b.disabled = mySlot !== 0;
+        b.addEventListener('click', () => on.pvpOptions({ ...opts, [key]: !opts[key] }));
+        pvpRow.append(b);
+      }
+    }
     box.append(
       head,
       modeRow,
+      ...(pvp ? [pvpRow] : []),
       el(
         'p',
         'hud-small',
         pvp
-          ? 'PvP: Jeder wählt Held und Team (Nord oder Süd) – 1:1, 1:2, 2:2 oder 1:3. Das Team mit zuerst 10 Kills gewinnt; das kleinere Team bekommt einen Ausgleich. Leere Plätze bleiben leer.'
+          ? `PvP: Jeder wählt Held und Team (Nord oder Süd). ${opts.goal === 'kiste' ? 'Wer allein an der Postboten-Kiste in der Mitte steht, sammelt Punkte – 100 Punkte gewinnen.' : 'Das Team mit zuerst 10 Kills gewinnt.'} Das kleinere Team bekommt einen Ausgleich. ${opts.bots ? 'Leere Plätze spielen Bots.' : 'Leere Plätze bleiben leer.'}`
           : 'Schick den Link an deine Freunde. Jeder wählt einen Helden und klickt „Bereit“. Freie Plätze spielen Bots.',
       ),
     );
@@ -370,11 +394,12 @@ export class Hud {
       const img = el('img', 'hud-hero-portrait');
       if (def) img.src = `portraits/${def.id}.jpg`;
       else img.classList.add('empty');
-      const who = s.human || s.reserved ? (s.name ?? 'Spieler') : pvp ? 'Frei' : 'Frei – spielt ein Bot';
-      if (pvp && (s.human || s.reserved)) card.classList.add(s.team === 0 ? 'team-nord' : 'team-sued');
+      const pvpBot = pvp && opts.bots && !s.human && !s.reserved;
+      const who = s.human || s.reserved ? (s.name ?? 'Spieler') : pvp && !opts.bots ? 'Frei' : 'Frei – spielt ein Bot';
+      if (pvp && (s.human || s.reserved || pvpBot)) card.classList.add(s.team === 0 ? 'team-nord' : 'team-sued');
       const status = !s.human && !s.reserved ? '' : s.ready ? '✔ Bereit' : def ? 'Wählt noch …' : 'Wählt einen Helden …';
       const spells = (s.spells ?? []).map((id) => this.data.spells.spells.find((x) => x.id === id)?.icon ?? '').join(' ');
-      card.append(img, el('strong', '', def?.name ?? '—'), def ? this.roleTag(def.id) : el('span', ''), el('small', 'hud-role', pvp && (s.human || s.reserved) ? `${who} · ${s.team === 0 ? 'Nord' : 'Süd'}` : who), el('span', 'hud-hero-desc', `${status}${spells ? ` · ${spells}` : ''}`));
+      card.append(img, el('strong', '', def?.name ?? '—'), def ? this.roleTag(def.id) : el('span', ''), el('small', 'hud-role', pvp && (s.human || s.reserved || pvpBot) ? `${who} · ${s.team === 0 ? 'Nord' : 'Süd'}` : who), el('span', 'hud-hero-desc', `${status}${spells ? ` · ${spells}` : ''}`));
       slots.append(card);
     });
     const humanPicks = room.slots.filter((s) => (s.human || s.reserved) && s.defId).map((s) => s.defId);
@@ -391,9 +416,9 @@ export class Hud {
         b.addEventListener('click', () => on.team(t));
         teamRow.append(b);
       }
-      const humans = room.slots.filter((s) => s.human);
-      const n = humans.filter((s) => s.team === 0).length;
-      const sd = humans.filter((s) => s.team === 1).length;
+      const playing = room.slots.filter((s) => s.human || s.reserved || opts.bots);
+      const n = playing.filter((s) => s.team === 0).length;
+      const sd = playing.filter((s) => s.team === 1).length;
       teamRow.append(el('span', 'hud-small', `Aufstellung ${n} : ${sd}${n === 0 || sd === 0 ? ' – beide Teams brauchen mindestens einen Spieler' : ''}`));
       box.append(teamRow);
     } else box.append(this.roleCheck(humanPicks, botSlots));
@@ -1457,7 +1482,9 @@ export class Hud {
     const pvp = state.pvp;
     this.waveLabel.textContent = pvp ? 'PvP' : `Welle ${w.number}`;
     this.waveInfo.textContent = pvp
-      ? `Nord ${pvp.score[0]} : ${pvp.score[1]} Süd · Sieg bei ${pvp.killsToWin}`
+      ? pvp.crate
+        ? `📦 Nord ${Math.floor(pvp.crate.points[0])} : ${Math.floor(pvp.crate.points[1])} Süd · Ziel ${pvp.crate.toWin}${pvp.crate.contested ? ' · umkämpft!' : pvp.crate.holder !== null ? ` · ${pvp.crate.holder === 0 ? 'Nord' : 'Süd'} hält die Kiste` : ''} · Kills ${pvp.score[0]} : ${pvp.score[1]}`
+        : `Nord ${pvp.score[0]} : ${pvp.score[1]} Süd · Sieg bei ${pvp.killsToWin}`
       : w.phase === 'pause'
         ? `Nächste Welle in ${Math.ceil(w.timer)} s`
         : `Zombies übrig: ${w.queue.length + state.zombies.filter((z) => !z.neutral).length}`;

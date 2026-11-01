@@ -134,6 +134,9 @@ export class Minimap {
 
     // Zombies, Lager, Postbote
     const blink = Math.sin(this.clock * 8) > 0;
+    // PvP: Kiste in der Mitte (Farbe des haltenden Teams)
+    const crate = state.pvp?.crate;
+    if (crate) dot(crate.pos, 5, crate.contested ? '#ffd166' : crate.holder === 0 ? '#4aa8ff' : crate.holder === 1 ? '#ff6a4a' : '#d8d2c0', '#000');
     // Nebelnacht: Zombies nur in der Nähe eines Helden sichtbar
     const foggy = state.wave.phase === 'wave' && state.wave.event === 'nebel';
     const seers = foggy ? state.heroes.filter((h) => h.alive && (h.team ?? 0) === (state.heroes.find((x) => x.id === heroId)?.team ?? 0)) : [];

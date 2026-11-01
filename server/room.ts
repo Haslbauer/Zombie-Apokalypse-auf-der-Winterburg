@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { gameData } from '../src/gameData';
-import { encodeSnapshot, slowKey, stateMessage, type ClientCommand, type GameMode, type RoomInfo } from '../src/net/protocol';
+import { encodeSnapshot, slowKey, stateMessage, type ClientCommand, type GameMode, type PvpOptions, type RoomInfo } from '../src/net/protocol';
 import { createBot } from '../src/sim/bots/brain';
 import { defaultTeam, fillTeam } from '../src/sim/bots/team';
 import { validSpells } from '../src/sim/spells';
@@ -69,6 +69,8 @@ export class Room {
   mode: GameMode = 'koop';
   /** Schwierigkeit für Menschen (legt der Gastgeber fest). */
   level: GameLevel = 'normal';
+  /** PvP: Ziel, Zombies nebenbei, leere Plätze mit Bots (legt der Gastgeber fest). */
+  pvpOptions: PvpOptions = { goal: 'kills', zombies: false, bots: true };
   /** Countdown bis zum Start (ms-Zeitstempel), null = warten, bis alle bereit sind. */
   startsAt: number | null = null;
   /** Bot-Stärke (der Gastgeber kann sie in der Lobby ändern). */
@@ -128,10 +130,10 @@ export class Room {
     this.sim = new Simulation(gameData, {
       seed: (Math.random() * 2 ** 31) | 0,
       heroes: this.team(),
-      bots: this.active.map((s) => (s.player || this.mode === 'pvp' ? null : this.difficulty)),
+      bots: this.active.map((s) => (s.player || (this.mode === 'pvp' && !this.pvpOptions.bots) ? null : this.difficulty)),
       spells: this.active.map((s) => (s.player ? s.spells : null)),
       // PvP: nur Plätze mit Spielern nehmen teil (keine Bots)
-      pvp: this.mode === 'pvp' ? { teams: this.active.map((s) => (s.player ? s.team : -1)) } : undefined,
+      pvp: this.mode === 'pvp' ? { teams: this.pvpTeams(), goal: this.pvpOptions.goal, zombies: this.pvpOptions.zombies } : undefined,
       level: this.level,
     });
     for (const s of this.slots) {
@@ -145,12 +147,14 @@ export class Room {
 
   info(now = Date.now()): RoomInfo {
     const lobby = this.phase === 'lobby';
+    const teams = this.pvpTeams();
     return {
       code: this.code,
       difficulty: this.difficulty,
       phase: this.phase,
       mode: this.mode,
       level: this.level,
+      pvp: { ...this.pvpOptions },
       startsIn: lobby && this.startsAt !== null ? Math.max(0, (this.startsAt - now) / 1000) : null,
       slots: this.active.map((s, i) => {
         const h = this.sim.state.heroes[i];
@@ -163,7 +167,7 @@ export class Room {
           name: s.player || reserved ? s.name : null,
           ready: s.ready,
           spells: s.spells,
-          team: s.team,
+          team: this.mode === 'pvp' ? (teams[i] ?? s.team) : s.team,
         };
       }),
     };
@@ -222,6 +226,33 @@ export class Room {
     this.broadcastRoom(now);
   }
 
+  /**
+   * PvP: Team je Platz. Menschen (und reservierte Plätze) behalten ihr Team;
+   * mit Bots füllen freie Plätze das kleinere Team auf, sonst bleiben sie leer (−1).
+   */
+  private pvpTeams(now = Date.now()): number[] {
+    const taken = (s: Slot) => s.player !== null || (s.reservedUntil !== null && now < s.reservedUntil);
+    const active = this.active;
+    const teams = active.map((s) => (taken(s) ? s.team : -1));
+    if (!this.pvpOptions.bots) return teams;
+    for (let i = 0; i < teams.length; i++) {
+      if (teams[i] !== -1) continue;
+      const north = teams.filter((t) => t === 0).length;
+      const south = teams.filter((t) => t === 1).length;
+      teams[i] = north <= south ? 0 : 1;
+    }
+    return teams;
+  }
+
+  /** Lobby: PvP-Einstellungen (nur Gastgeber). */
+  setPvpOptions(player: Player, opt: PvpOptions, now: number): void {
+    if (this.phase !== 'lobby' || this.slotOf(player) !== 0) return;
+    this.pvpOptions = { goal: opt.goal, zombies: opt.zombies, bots: opt.bots };
+    for (const s of this.slots) s.ready = false;
+    this.updateCountdown(now);
+    this.broadcastRoom(now);
+  }
+
   /** Lobby: eigenes Team im PvP. */
   setTeam(player: Player, team: number, now: number): void {
     const s = this.slots[this.slotOf(player)];
@@ -243,7 +274,9 @@ export class Room {
     if (this.phase !== 'lobby') return;
     const humans = this.slots.filter((s) => s.player);
     // PvP: auf beiden Seiten mindestens ein Spieler
-    const sides = this.mode !== 'pvp' || (humans.some((s) => s.team === 0) && humans.some((s) => s.team === 1));
+    // (mit Bots reicht es, wenn die Bots die andere Seite stellen)
+    const teams = this.pvpTeams(now);
+    const sides = this.mode !== 'pvp' || (teams.includes(0) && teams.includes(1));
     const all = humans.length > 0 && sides && humans.every((s) => s.ready && s.pick);
     if (all && this.startsAt === null) this.startsAt = now + LOBBY_COUNTDOWN_MS;
     if (!all) this.startsAt = null;

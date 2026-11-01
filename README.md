@@ -52,9 +52,17 @@ Im Internet hinter HTTPS betreiben (z. B. Caddy oder ein Tunnel), denn Browser v
 
 ### PvP-Modus
 
-In der Lobby stellt der Gastgeber den Modus auf **PvP: Helden gegeneinander**. Jeder wählt Held und Team (**Nord** oder **Süd**), möglich sind 1:1, 1:2, 2:2 und 1:3.
-- **Start:** Das Spiel startet, wenn beide Seiten mindestens einen Spieler haben und alle bereit sind. Leere Plätze bleiben leer, es gibt keine Bots und keine Zombies.
-- **Sieg:** Das Team, das zuerst **10 Kills** hat, gewinnt.
+In der Lobby stellt der Gastgeber den Modus auf **PvP: Helden gegeneinander**. Jeder wählt Held und Team (**Nord** oder **Süd**), möglich sind 1:1, 1:2, 2:2 und 1:3. Darunter legt der Gastgeber fest:
+
+- **Ziel:**
+  - **⚔ Kills:** Das Team, das zuerst **10 Kills** hat, gewinnt.
+  - **📦 Kiste erobern:** In der Kartenmitte steht eine Postboten-Kiste mit einem Ring von 3 m. Stehen dort nur Helden eines Teams, sammelt dieses Team **1 Punkt pro Sekunde**. Stehen beide Teams im Ring, ist die Kiste **umkämpft**, und niemand bekommt Punkte. **100 Punkte** gewinnen. Gekämpft wird weiter wie gewohnt; Kills zählen mit, entscheiden aber nicht. Der Ring und der Punkt auf der Minimap färben sich blau (Nord), rot (Süd) oder gelb (umkämpft).
+- **🧟 Zombies nebenbei:** Nach 25 s und dann alle 35 s kommt eine kleine Zombiegruppe (3 bis 5 Zombies) vom Bunker oder von Osten und zieht über die Mitte quer über die Karte. Die Zombies greifen **beide Teams** an, und wer sie erlegt, bekommt Gold und Erfahrung. Wer von Zombies erwischt wird, gibt dem Gegner keinen Punkt.
+- **🤖 Leere Plätze mit Bots** (Standard: an): Freie Plätze füllen das kleinere Team mit Bots auf. Damit geht auch **allein gegen Bots**. Die Bots kämpfen gegen gegnerische Helden und Zombies, ziehen sich bei wenig Leben zur Basis zurück, kaufen dort ein und halten im Kistenmodus die Kiste.
+
+Allgemein gilt:
+
+- **Start:** Das Spiel startet, wenn beide Seiten besetzt sind (durch Spieler oder Bots) und alle bereit sind.
 - **Belohnung:** Ein Kill bringt 250 Gold und Erfahrung. Dazu gibt es laufend Gold und Erfahrung, und der Shop ist an der eigenen Basis jederzeit offen.
 - **Wiederbeleben:** Wer fällt, kommt nach 6 s an der eigenen Basis zurück.
 - **Ausgleich:** Das kleinere Team macht mehr Schaden und nimmt weniger, nach der Wurzel des Größenverhältnisses. Bei 1:3 ist das Faktor 1,73.

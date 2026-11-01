@@ -12,6 +12,7 @@ import { brushAt } from './grid';
 import { threatTarget } from './roles';
 import { minionTarget } from './minions';
 import { eventFactor } from './waveevents';
+import { nextRoam } from './pvp';
 import { blockingBarricade, damageDefense } from './defenses';
 import { enrageFactor, updateBossAbilities } from './bossabilities';
 
@@ -101,6 +102,12 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null, s
       continue;
     }
 
+    // PvP, Zombies nebenbei: ohne Opfer über die Karte ziehen
+    if (z.roam) {
+      if (Math.hypot(z.pos.x - z.roam.x, z.pos.y - z.roam.y) < 2) z.roam = nextRoam(ctx, z);
+      if (!rooted) stepToward(z, z.roam, speed * DT * 0.8);
+      continue;
+    }
     const found = currentObjective(ctx, z);
     if (!found) continue;
     let bar: Defense | null = null;
