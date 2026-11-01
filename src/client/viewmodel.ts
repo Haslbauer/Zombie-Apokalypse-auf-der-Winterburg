@@ -131,6 +131,12 @@ const BUILDS: Record<string, Build> = {
     g.add(box(0.05, 0.16, 0.22, mat(0xa0a4a8, { metalness: 0.7, roughness: 0.35 }), 0, 0.5, -0.09));
     return { group: g, melee: true };
   },
+  // Kasimir: Rußball in der Hand
+  schornsteinfeger: (c) => {
+    const g = arm(c, SKIN, 0x111114);
+    g.add(ball(0.09, mat(0x1a1a1a, { roughness: 1 }), 0, 0.08, -0.01));
+    return { group: g, melee: false };
+  },
   // Kapitän Tiefe: Harpune (Messing und Holz)
   taucher: (c) => {
     const g = arm(c, SKIN, 0x3a3a34);

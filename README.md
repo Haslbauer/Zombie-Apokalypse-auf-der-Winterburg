@@ -131,6 +131,7 @@ Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bog
 | Kapitän Tiefe | Harpune |
 | Hedwig | Handglocke |
 | Bruno | Axt |
+| Kasimir | Rußball |
 
 Beim Angriff schlägt die Waffe nach vorn (Nahkampf) bzw. ruckt hoch (Fernkampf). Beim Laufen wippt der Kopf leicht und schwingt die Hand mit; das **Kopfwippen** lässt sich im Esc-Menü abschalten.
 
@@ -155,6 +156,7 @@ Alle Geräusche und die Musik entstehen im Browser (Web-Audio, `src/client/audio
   | Kapitän Tiefe | Blubbern mit metallischem Klong |
   | Hedwig | tiefer Glockenschlag |
   | Bruno | Axthieb ins Holz |
+  | Kasimir | Wusch des Kaminbesens |
 
 - **Spielablauf:** Horn zum Wellenstart, Akkord für „Welle geschafft“, Alarm bei Durchbruch, Fanfare für den Postboten, Boss erlegt, Sieg und Niederlage.
 - **Oberfläche:** Gold, Level-up, Shop, Pings (je Art ein Ton), Countdown in der Lobby.
@@ -457,7 +459,15 @@ Trolle kämpfen selbst; ihr Schaden zählt für Lotte. Zombies greifen Trolle an
 - **Wurzelwerk:** Wurzeln halten Zombies in einem Kreis fest.
 - **Ultimate „Holz fällen“:** Nach kurzem Ausholen (rote Warnlinie) fällt ein Baum in Blickrichtung; viel Schaden und lange Betäubung auf 10 m.
 
-Die neuen Helden sind vorerst umgebaute vorhandene Figuren. Der Imker hat einen hellen Anzug mit Imkerhut, Schleier und Smoker. Aurelius trägt runde Brille, Lederschürze und eine Lupe am Gürtel. Lotte ist eine verkleinerte Figur im gelben Mantel mit Zöpfen und Teddy. Die Trolle sind grün eingefärbte Kürbis-Hulks. Kapitän Tiefe trägt einen schweren Anzug, einen Messinghelm mit Bullauge, eine Sauerstoffflasche und eine Harpune. Hedwig trägt ein violettes Gewand mit weißer Haube und Schultertuch und läutet eine Messing-Handglocke. Bruno trägt eine grüne Jacke, einen Filzhut mit Feder und eine Holzfälleraxt.
+**Kasimir** (Schornsteinfeger, Schaden):
+- **Angriff:** wirft Rußbälle (9 m).
+- **Passiv „Glücksbringer“:** 15 % Chance, dass ein Grundangriff doppelten Schaden macht (goldenes Aufblitzen).
+- **Rußwolke:** Rußkegel nach vorn, Schaden und blendet 2 s.
+- **Kaminsprung:** hoher Sprung über bis zu 7 m, bei der Landung Schaden im Umkreis.
+- **Besenwirbel:** Schaden um ihn herum, stößt Zombies zurück.
+- **Ultimate „Funkenflug“:** große Brandzone für 5 s.
+
+Die neuen Helden sind vorerst umgebaute vorhandene Figuren. Der Imker hat einen hellen Anzug mit Imkerhut, Schleier und Smoker. Aurelius trägt runde Brille, Lederschürze und eine Lupe am Gürtel. Lotte ist eine verkleinerte Figur im gelben Mantel mit Zöpfen und Teddy. Die Trolle sind grün eingefärbte Kürbis-Hulks. Kapitän Tiefe trägt einen schweren Anzug, einen Messinghelm mit Bullauge, eine Sauerstoffflasche und eine Harpune. Hedwig trägt ein violettes Gewand mit weißer Haube und Schultertuch und läutet eine Messing-Handglocke. Bruno trägt eine grüne Jacke, einen Filzhut mit Feder und eine Holzfälleraxt. Kasimir trägt einen schwarzen Anzug mit Zylinder und einen Kaminbesen.
 Die Figur ist vorerst eine umgefärbte vorhandene Figur mit Imkerhut, Schleier und Smoker. Das Porträt ist aus dem Modell gerendert (`portrait.html?hero=imker` im Entwicklungsserver, Screenshot per Playwright).
 
 Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.

@@ -199,6 +199,15 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - 3 Wurzelwerk (Kreis 3 m, Reichweite 8 m): Festhalten 1,2–2 s, Schaden 30–90.
 - 4 Holz fällen (Linie 10 m, 3 m breit): nach 0,9 s Schaden 180–380, Betäubung 1,4–2 s (Ereignis `timber-warn`, dann `timber`).
 
+### Schornsteinfeger Kasimir (umgesetzt v2.6, Schaden)
+- Optik: schwarzer Anzug, Zylinder, Kaminbesen (umgebaute Spike-Figur).
+- Angriff: Rußball (Geschoss), 9 m, 0,8 s.
+- Passiv Glücksbringer: 15 % Chance auf doppelten Schaden beim Grundangriff (Spiel-Zufall).
+- 1 Rußwolke (Kegel 5 m, 55°): Schaden 40–120, blendet 2 s.
+- 2 Kaminsprung (Sprung bis 7 m): bei der Landung Schaden 45–145 im Umkreis 2,2 m.
+- 3 Besenwirbel (um ihn, 3 m): Schaden 35–115, Rückstoß 3 m.
+- 4 Funkenflug (Kreis 4,5 m, Reichweite 9 m): Brandzone 45–95 Schaden/s für 5 s.
+
 ### Imker (umgesetzt v2.4, Support)
 - Optik: heller Anzug, Imkerhut mit Schleier, Smoker in der Hand, ein paar Bienen schwirren um ihn (aus dem früheren Entwurf).
 - Angriff: kleiner Bienenschwarm als Geschoss, 9 m. Jeder Treffer setzt einen Stich (bis 5, je 3 Schaden/s plus 0,4 je Level, 4 s, frischt auf) – der Schaden über Zeit der Bienen aus dem Entwurf.

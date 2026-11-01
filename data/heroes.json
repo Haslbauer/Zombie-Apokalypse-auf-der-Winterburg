@@ -1634,5 +1634,133 @@
         }
       }
     ]
+  },
+  {
+    "id": "schornsteinfeger",
+    "name": "Kasimir",
+    "role": "Fernkampf, Ruß",
+    "description": "Glücksbringer der Winterburg: Schornsteinfeger mit Zylinder und Kaminbesen. Wirft Rußbälle, springt über Dächer und lässt Funken regnen.",
+    "color": "#2a2a2e",
+    "figure": "sweep",
+    "hp": 490,
+    "hpRegen": 2.2,
+    "speed": 5.4,
+    "radius": 0.45,
+    "hpPerLevel": 50,
+    "regenPerLevel": 0.22,
+    "damagePerLevel": 0.07,
+    "attack": {
+      "type": "ranged",
+      "damage": 27,
+      "range": 9,
+      "cooldown": 0.8,
+      "projectileSpeed": 19,
+      "projectileRadius": 0.2,
+      "look": "soot"
+    },
+    "passive": {
+      "name": "Glücksbringer",
+      "description": "15 % Chance, dass ein Grundangriff doppelten Schaden macht.",
+      "values": {
+        "chance": 0.15
+      }
+    },
+    "abilities": [
+      {
+        "id": "russwolke",
+        "name": "Rußwolke",
+        "description": "Rußkegel nach vorn: Schaden und blendet 2 s.",
+        "shape": "cone",
+        "range": 5,
+        "arc": 55,
+        "cooldown": [
+          9,
+          8.5,
+          8,
+          7.5,
+          7
+        ],
+        "values": {
+          "damage": [
+            40,
+            60,
+            80,
+            100,
+            120
+          ],
+          "blind": 2
+        }
+      },
+      {
+        "id": "kaminsprung",
+        "name": "Kaminsprung",
+        "description": "Hoher Sprung über bis zu 7 m; bei der Landung Schaden im Umkreis.",
+        "shape": "circle",
+        "range": 7,
+        "radius": 2.2,
+        "cooldown": [
+          12,
+          11,
+          10,
+          9,
+          8
+        ],
+        "values": {
+          "damage": [
+            45,
+            70,
+            95,
+            120,
+            145
+          ]
+        }
+      },
+      {
+        "id": "besenwirbel",
+        "name": "Besenwirbel",
+        "description": "Wirbelt den Besen: Schaden und stößt Zombies um ihn herum zurück.",
+        "shape": "self",
+        "range": 0,
+        "radius": 3,
+        "cooldown": [
+          11,
+          10,
+          9,
+          8,
+          7
+        ],
+        "values": {
+          "damage": [
+            35,
+            55,
+            75,
+            95,
+            115
+          ],
+          "push": 3
+        }
+      },
+      {
+        "id": "funkenflug",
+        "name": "Funkenflug",
+        "description": "Lässt aus dem Kamin Funken regnen: große Brandzone für 5 s.",
+        "shape": "circle",
+        "range": 9,
+        "radius": 4.5,
+        "cooldown": [
+          90,
+          75,
+          60
+        ],
+        "values": {
+          "dps": [
+            45,
+            70,
+            95
+          ],
+          "duration": 5
+        }
+      }
+    ]
   }
 ]

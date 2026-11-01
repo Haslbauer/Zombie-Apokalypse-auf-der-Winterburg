@@ -515,6 +515,48 @@
           "min": 4
         }
       ]
+    },
+    "schornsteinfeger": {
+      "role": "ranged",
+      "teamRole": "dmg",
+      "skillOrder": [
+        0,
+        2,
+        1
+      ],
+      "buy": [
+        "heiltrank",
+        "pistole",
+        "schrotflinte",
+        "kuechenwecker",
+        "gewehr",
+        "taschenuhr",
+        "jagdgewehr",
+        "lederjacke",
+        "grossvateruhr",
+        "kettenhemd",
+        "lebensamulett",
+        "armbrust",
+        "repetierarmbrust"
+      ],
+      "abilities": [
+        {
+          "use": "cone",
+          "min": 2
+        },
+        {
+          "use": "escape",
+          "hp": 0.35
+        },
+        {
+          "use": "buff",
+          "min": 3
+        },
+        {
+          "use": "aoe",
+          "min": 4
+        }
+      ]
     }
   }
 }

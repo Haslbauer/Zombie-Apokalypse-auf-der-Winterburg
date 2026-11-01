@@ -85,6 +85,11 @@ function buildProjectile(look: string): THREE.Group {
       g.add(new THREE.Mesh(new THREE.DodecahedronGeometry(0.09, 0), new THREE.MeshLambertMaterial({ color: 0x9a968a })), trail(0xd8d4c8, 0.7, 0.08));
       break;
     }
+    case 'soot': {
+      // Rußball: schwarze Kugel mit grauer Rauchspur
+      g.add(new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), new THREE.MeshLambertMaterial({ color: 0x1a1a1a })), trail(0x6a6a6a, 0.9, 0.14));
+      break;
+    }
     case 'chime': {
       // Schallwelle der Glocke: violetter Ring mit Schimmer
       const ring = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.03, 6, 18), new THREE.MeshBasicMaterial({ color: 0xc7b8ff, transparent: true, opacity: 0.85 }));
@@ -451,6 +456,22 @@ function buildZone(z: Zone): THREE.Object3D {
       }
       break;
     }
+    case 'sparks': {
+      // Funkenflug: glühender Boden mit Funken
+      disc(z.radius, 0xff6a1e, 0.45).name = 'area';
+      const spark = new THREE.MeshBasicMaterial({ color: 0xffd27a });
+      const cloud = new THREE.Group();
+      cloud.name = 'cloud';
+      for (let i = 0; i < 40; i++) {
+        const a = i * 2.39996;
+        const r = z.radius * Math.sqrt(((i * 61) % 100) / 100);
+        const m = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 3), spark);
+        m.position.set(Math.cos(a) * r, 0.3 + ((i * 17) % 10) * 0.2, Math.sin(a) * r);
+        cloud.add(m);
+      }
+      g.add(cloud);
+      break;
+    }
     case 'honey': {
       // Honigfläche: bernsteinfarbener, glänzender Fleck mit Tropfen
       disc(z.radius, 0xd99a1e, 0.55).name = 'area';
@@ -502,6 +523,11 @@ function animateZone(o: THREE.Object3D, z: Zone, simTime: number, time: number):
     cloud.rotation.y = time * 1.4;
     cloud.position.y = Math.sin(time * 5) * 0.12;
     cloud.scale.setScalar(Math.max(0.05, fade));
+  } else if (z.kind === 'sparks') {
+    const cloud = o.getObjectByName('cloud')!;
+    cloud.position.y = -((time * 1.5) % 1) * 0.6;
+    cloud.rotation.y = time * 0.6;
+    o.scale.setScalar(Math.max(0.05, fade));
   } else if (z.kind === 'molten') {
     o.scale.setScalar(Math.max(0.05, fade) * (0.97 + Math.sin(time * 6) * 0.03));
   } else if (z.kind === 'honey') {
