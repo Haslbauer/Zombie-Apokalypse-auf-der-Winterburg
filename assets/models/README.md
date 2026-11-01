@@ -2,7 +2,7 @@
 
 Quellen:
 - [Mixamo](https://www.mixamo.com) (Adobe): die fünf Menschen-Helden, alle menschlichen Zombies und ihre Animationen. Figuren und Animationen von Mixamo dürfen laut Adobe lizenzfrei in eigenen Projekten und Spielen verwendet werden (nicht als Rohdateien weiterverkauft).
-- [Quaternius](https://quaternius.com), Lizenz CC0 (gemeinfrei): Schäferhund (`grimm`, aus dem Zombie Apocalypse Kit), Ratte (`rat`), Wespe (`wasp`), Spinne (`spider`) und Frosch (`frog`, als Riesen-Zombiekröte), aus den Animated Animals. Die vier Quaternius-Zombies (`zombie-basic`, `zombie-arm`, `zombie-ribcage`, `zombie-chubby`) sind seit v1.7 nicht mehr im Spiel; ihre Quellen bleiben, `model.json` heißt dort `model.json.unused`.
+- [Quaternius](https://quaternius.com), Lizenz CC0 (gemeinfrei): Schäferhund (`grimm`, aus dem Zombie Apocalypse Kit), Ratte (`rat`), Wespe (`wasp`), Spinne (`spider`) und Frosch (`frog`, als Riesen-Zombiekröte), aus den Animated Animals. Die Schlange (`snake`) aus derselben Reihe liegt für später bereit, ist aber nicht im Spiel. Die vier Quaternius-Zombies (`zombie-basic`, `zombie-arm`, `zombie-ribcage`, `zombie-chubby`) sind seit v1.7 nicht mehr im Spiel; ihre Quellen bleiben, `model.json` heißt dort `model.json.unused`.
 
 ## Aufbau
 
@@ -78,5 +78,6 @@ Die Animationsdateien stammen noch vom Mixamo-Mocap-Anzug; die Figur selbst komm
 | grimm (german-shepherd.gltf) | run, walk, idle, attack, ability1 Run_Jump, ability2 Idle_2_HeadLow, ability3 Idle_2, ability4 Attack, use Eating, death | Grimm; stirbt mit `death` und bleibt bis zum Respawn liegen |
 | rat (rat.fbx) | run, walk, idle, attack, attack2 (Sprung), death | Ratte, Rattenkönig (3-fach, mit Krone am Knochen `Head`) |
 | wasp (wasp.fbx) | fly, attack, death | Hornisse (schwebt 0,9 m über dem Boden) |
+| snake (snake.fbx) | walk, idle, attack, attack2 (Sprung); **keine Todesanimation** | **Abgelegt für später, nicht im Spiel.** Quaternius (CC0). `model.json.unused` in `model.json` umbenennen und `npm run models snake` aufrufen, um sie zu verwenden |
 
 Ergebnis: je Modell ca. 1–3,5 MB (Ragnar mit mehreren Texturen am größten), 4.000–16.000 Dreiecke. Die Originale in `assets/models/` sind zusammen gut 400 MB groß.

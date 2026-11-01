@@ -1,0 +1,20 @@
+{
+  "base": "snake.fbx",
+  "clips": {
+    "walk": {
+      "clip": "Snake_Walk"
+    },
+    "idle": {
+      "clip": "Snake_Idle"
+    },
+    "attack": {
+      "clip": "Snake_Attack"
+    },
+    "attack2": {
+      "clip": "Snake_Jump"
+    }
+  },
+  "textureSize": 512,
+  "simplifyRatio": 1,
+  "output": "public/models/snake.glb"
+}
