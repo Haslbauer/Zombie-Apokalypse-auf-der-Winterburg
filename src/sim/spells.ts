@@ -2,6 +2,7 @@ import { applyDamage } from './combat';
 import type { DataContext, SimContext } from './context';
 import { resolveObstacles } from './grid';
 import { healHero, statsOf } from './stats';
+import { eventFactor } from './waveevents';
 import { addBuff, hasBuff, slow } from './status';
 import { DT, type Hero, type SpellDef, type Zombie } from './types';
 import { dist, type Vec2 } from './vec';
@@ -213,6 +214,6 @@ export function updateSpells(ctx: SimContext): void {
   for (const z of state.zombies) {
     if (!z.st.burnUntil || state.time > z.st.burnUntil || z.hp <= 0) continue;
     const by = state.heroes.find((x) => x.id === z.st.burnBy);
-    applyDamage(ctx, z, (z.st.burnDps ?? 0) * BURN_TICK, by);
+    applyDamage(ctx, z, (z.st.burnDps ?? 0) * BURN_TICK * eventFactor(ctx, 'burn'), by);
   }
 }

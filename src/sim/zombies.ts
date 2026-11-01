@@ -11,6 +11,7 @@ import { dist, type Vec2 } from './vec';
 import { brushAt } from './grid';
 import { threatTarget } from './roles';
 import { minionTarget } from './minions';
+import { eventFactor } from './waveevents';
 import { blockingBarricade, damageDefense } from './defenses';
 import { enrageFactor, updateBossAbilities } from './bossabilities';
 
@@ -40,7 +41,7 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null, s
     const def = zombieDefs.get(z.defId)!;
     const blind = isBlind(ctx, z);
     const rooted = isRooted(ctx, z);
-    const speed = z.speed * slowFactor(ctx, z.pos) * statusSpeedFactor(ctx, z) * (blind ? BLIND_SPEED : 1);
+    const speed = z.speed * slowFactor(ctx, z.pos) * statusSpeedFactor(ctx, z) * (blind ? BLIND_SPEED : 1) * eventFactor(ctx, 'speed');
 
     if (isFeared(ctx, z)) {
       z.charge = null;
@@ -62,7 +63,7 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null, s
     // Bosse und Elites gehen auf einen Tank in der Nähe (Bedrohung), sonst wie gewohnt
     const tank = blind ? null : threatTarget(ctx, z, seen);
     if (tank) z.targetId = tank.id;
-    const hero = tank ?? chaseTarget(ctx, z, seen, blind ? BLIND_SIGHT : def.aggroRange, def.provokeOnly ?? false);
+    const hero = tank ?? chaseTarget(ctx, z, seen, blind ? BLIND_SIGHT : def.aggroRange * eventFactor(ctx, 'aggro'), def.provokeOnly ?? false);
     // Trolle (Lotte): Brückentroll zieht Zombies an, sonst wird ein Troll direkt daneben angegriffen
     const troll = z.neutral ? null : minionTarget(ctx, z);
     if (troll && (!hero || edgeDistance(z, troll) < edgeDistance(z, hero))) {

@@ -367,6 +367,13 @@ export interface WaveConfig {
   elites?: { fromWave?: number; every: number; everyFrom?: number; countPerWaves?: number; countEvery?: number; hpPerWave?: number; types: string[] };
   /** Schwierigkeitsstufen für Menschen (getrennt von der Bot-Stärke): Faktoren für Anzahl, Boss-Leben, Schaden. */
   levels?: Record<GameLevel, { name: string; count: number; bossHp: number; damage: number }>;
+  /** Zufällige Wellen-Ereignisse ab fromWave mit Wahrscheinlichkeit chance, höchstens alle gap Wellen. */
+  events?: {
+    fromWave: number;
+    chance: number;
+    gap: number;
+    list: Record<WaveEventKind, { name: string; icon: string; text: string; aggro?: number; elites?: number; gold?: number; speed?: number; burn?: number }>;
+  };
   /** Endgegner: ab fromWave in jeder Welle (Sieg erst, wenn er in der letzten Welle fällt). */
   finalBoss?: { type: string; fromWave: number };
   /** Wut: Bosse, die länger als after Sekunden leben, machen je Sekunde perSecond mehr Schaden (bis max). */
@@ -1026,6 +1033,7 @@ export interface Projectile {
 }
 
 export type WavePhase = 'pause' | 'wave';
+export type WaveEventKind = 'nebel' | 'blutmond' | 'regen';
 
 export interface WaveState {
   /** Nummer der laufenden oder als Nächstes kommenden Welle. */
@@ -1042,6 +1050,9 @@ export interface WaveState {
   courierAt?: number | null;
   /** Ab dieser Welle darf der nächste Postbote erscheinen (nach dem Tod des vorigen + every). */
   courierWave?: number;
+  /** Laufendes Wellen-Ereignis (Nebelnacht, Blutmond, Regen) und Welle des letzten. */
+  event?: WaveEventKind | null;
+  lastEventWave?: number;
 }
 
 export type GameEvent =
@@ -1051,6 +1062,7 @@ export type GameEvent =
   | { type: 'swing'; id: number; facing: number; range: number; arc: number }
   | { type: 'shot'; id: number }
   | { type: 'waveStart'; number: number }
+  | { type: 'waveEvent'; kind: WaveEventKind; name: string; text: string }
   | { type: 'waveCleared'; number: number }
   | { type: 'breach'; objectiveId: string }
   | { type: 'objectiveHit'; objectiveId: string; amount: number }

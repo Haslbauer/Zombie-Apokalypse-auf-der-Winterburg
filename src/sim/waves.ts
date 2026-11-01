@@ -5,6 +5,7 @@ import { emptyStatus } from './status';
 import { awardWaveBonus, courierGold } from './economy';
 import { harvest, objectivesFor } from './objectives';
 import { endGame } from './stats';
+import { eventFactor, rollWaveEvent } from './waveevents';
 import { DT, type GameState, type SpawnPoint, type WaveConfig, type Zombie, type ZombieDef } from './types';
 import type { Vec2 } from './vec';
 
@@ -111,7 +112,14 @@ export function updateWaves(ctx: SimContext): void {
       w.timer = 0;
       w.spawnTimer = 0;
       w.breached = false;
+      rollWaveEvent(ctx);
       w.queue = waveQueue(state, w.number, cfg);
+      // Blutmond: zusätzliche Zwischenbosse
+      const extraElites = Math.round((eventFactor(ctx, 'elites') - 1) * waveElites(w.number, cfg).length);
+      if (extraElites > 0 && w.number >= (cfg.elites?.fromWave ?? 99)) {
+        const types = cfg.elites!.types;
+        for (let i = 0; i < extraElites; i++) w.queue.splice(Math.floor(w.queue.length / 2), 0, `elite:${types[(w.number + i + 1) % types.length]}`);
+      }
       // Postbote: ab firstWave; nach seinem Tod erst every Wellen später wieder. Lebt er noch, kommt keiner dazu.
       const c = cfg.courier;
       const alive = state.zombies.some((z) => z.courier && z.hp > 0);
@@ -143,6 +151,7 @@ export function updateWaves(ctx: SimContext): void {
     }
     harvest(ctx);
     w.number++;
+    w.event = null;
     w.phase = 'pause';
     w.timer = cfg.pauseDuration;
   }

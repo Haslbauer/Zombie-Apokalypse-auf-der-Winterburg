@@ -10,7 +10,7 @@ import { applyDamage } from '../sim/combat';
 import { repairCost } from '../sim/defenses';
 import { defaultTeam } from '../sim/bots/team';
 import { canRankUp } from '../sim/progression';
-import type { BotDifficulty, DefenseKind, GameEvent, GameState } from '../sim/types';
+import type { BotDifficulty, DefenseKind, GameEvent, GameState, WaveEventKind } from '../sim/types';
 import { Effects } from './effects';
 import { Hud } from './hud';
 import { Quality, QUALITY_LABELS } from './quality';
@@ -620,6 +620,10 @@ function handleEvents(state: GameState): void {
           effects.coins(e.pos ?? null, coinCount(e.amount), me, () => sound.play('gold', undefined, 0.6));
         }
         break;
+      case 'waveEvent':
+        hud.message(`${gameData.waves.events?.list[e.kind]?.icon ?? ''} ${e.text}`);
+        sound.play(e.kind === 'blutmond' ? 'roar' : 'whoosh');
+        break;
       case 'shopDenied':
         if (e.heroId === heroId) hud.message(e.reason);
         break;
@@ -992,6 +996,23 @@ if (params.has('debug')) {
         if (yaw !== undefined) cam.yaw = yaw;
         if (pitch !== undefined) cam.pitch = pitch;
         return { firstPerson: cam.firstPerson, yaw: cam.yaw, pitch: cam.pitch, locked: input.mouseLocked };
+      },
+      // Einzelspieler: Wellen-Ereignis erzwingen (nebel, blutmond, regen; null = keins) und Welle starten
+      waveEvent: (kind: string | null) => {
+        if (!(session instanceof LocalSession)) return;
+        const sim = session.sim;
+        const w = sim.state.wave;
+        if (w.phase === 'pause') w.timer = Math.min(w.timer, 0.05);
+        // Nach dem Tick, in dem die Welle beginnt, das Ereignis setzen
+        const step = sim.step;
+        sim.step = (commands) => {
+          step.call(sim, commands);
+          if (w.phase !== 'wave') return;
+          sim.step = step;
+          w.event = kind as WaveEventKind | null;
+          const e = kind ? gameData.waves.events?.list[kind as WaveEventKind] : undefined;
+          if (e) sim.state.events.push({ type: 'waveEvent', kind: kind as WaveEventKind, name: e.name, text: e.text });
+        };
       },
       // Einzelspieler: Spiel sofort beenden (Sieg bzw. Niederlage), z. B. um die Endstatistik zu prüfen
       finish: (victory: boolean) => {

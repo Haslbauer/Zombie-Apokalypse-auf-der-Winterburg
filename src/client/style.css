@@ -1659,3 +1659,6 @@ html, body {
   text-align: center;
   opacity: 0.75;
 }
+.hud-wave[data-event='blutmond'] { color: #ff6b5a; text-shadow: 0 0 8px rgba(255, 60, 40, 0.6); }
+.hud-wave[data-event='nebel'] { color: #c3cbd8; }
+.hud-wave[data-event='regen'] { color: #9fc4ff; }

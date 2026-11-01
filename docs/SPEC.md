@@ -289,6 +289,14 @@ Freiwillige Ziele im Gelände außerhalb des Gartens. Sie bringen Gold und XP, k
 - **Grenzen:** je Art 6/6/3 fürs Team, mindestens 1,2 m Abstand (Barrikaden 2,2 m), nicht auf Hindernissen, Zielen oder Helden.
 - **Reparieren:** fehlender Anteil × Neupreis × 0,5 Gold, zahlt der auslösende Held.
 
+## 8f. Wellen-Ereignisse (v2.6)
+
+- **Auslosung:** zu Wellenbeginn mit dem Spiel-Zufall (`rollWaveEvent`, `src/sim/waveevents.ts`). Ab `fromWave` 4 mit `chance` 0,25, höchstens alle `gap` 3 Wellen, nie im PvP. Der Zustand `wave.event` wird übertragen; das Ereignis `waveEvent` löst die Ansage aus.
+- **Nebelnacht:** Aggro-Reichweite der Zombies ×0,7. Der Client verkürzt den Nebel, die Minimap zeigt Zombies nur in 15 m um das eigene Team.
+- **Blutmond:** Zwischenbosse ×2 (zusätzliche `elite:`-Einträge in der Warteschlange), Kill-Gold ×1,5; rotes Licht.
+- **Regen:** Tempo von Helden und Zombies ×0,85, Brand ×0,5; Regenpartikel.
+- **Ende:** Die Wirkung gilt nur in der Phase `wave` (`eventFactor`); beim Wechsel in die Pause wird `wave.event` gelöscht.
+
 ## 9. Gold, Shop und Items
 
 Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.

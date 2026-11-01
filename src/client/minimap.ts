@@ -134,8 +134,12 @@ export class Minimap {
 
     // Zombies, Lager, Postbote
     const blink = Math.sin(this.clock * 8) > 0;
+    // Nebelnacht: Zombies nur in der Nähe eines Helden sichtbar
+    const foggy = state.wave.phase === 'wave' && state.wave.event === 'nebel';
+    const seers = foggy ? state.heroes.filter((h) => h.alive && (h.team ?? 0) === (state.heroes.find((x) => x.id === heroId)?.team ?? 0)) : [];
     for (const z of state.zombies) {
       if (!zombieRevealed(this.data, state, z)) continue;
+      if (foggy && !z.courier && !seers.some((h) => Math.hypot(h.pos.x - z.pos.x, h.pos.y - z.pos.y) <= 15)) continue;
       const def = this.data.zombies.find((d) => d.id === z.defId);
       if (z.courier) dot(z.pos, blink ? 4 : 3, COLORS.courier, '#000');
       else if (z.neutral) dot(z.pos, def?.rank ? 2.6 : 1.8, COLORS.neutral);

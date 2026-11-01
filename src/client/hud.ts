@@ -1461,6 +1461,10 @@ export class Hud {
       : w.phase === 'pause'
         ? `Nächste Welle in ${Math.ceil(w.timer)} s`
         : `Zombies übrig: ${w.queue.length + state.zombies.filter((z) => !z.neutral).length}`;
+    // Wellen-Ereignis (Nebelnacht, Blutmond, Regen) neben der Wellennummer
+    const ev = !pvp && w.phase === 'wave' && w.event ? this.data.waves.events?.list[w.event] : undefined;
+    if (ev) this.waveLabel.textContent = `Welle ${w.number} · ${ev.icon} ${ev.name}`;
+    this.waveLabel.dataset.event = ev ? w.event! : '';
     this.startWaveBtn.textContent = `Jetzt starten (${keyName(this.bindings.get('startWave'))})`;
     this.startWaveBtn.style.display = w.phase === 'pause' && !state.gameOver && !pvp ? '' : 'none';
     // PvP: keine Ziele (Vorrat, Stock, Beete) in der Kopfleiste

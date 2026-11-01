@@ -15,6 +15,7 @@ import { ATTACK_ANIM, heroView, minionView, UnitView, zombieView } from './units
 /** So lange bleibt ein toter Zombie liegen (s), die letzte Sekunde versinkt er. */
 const CORPSE_TIME = 2.5;
 import { WorldView } from './world';
+import { Weather } from './weather';
 
 /** So nah muss ein Held einem Zombie im Gebüsch sein, damit man ihn sieht (m). */
 const BRUSH_REVEAL = 3;
@@ -44,6 +45,7 @@ export class GameRenderer {
   private readonly mapAnimation: MapAnimation;
   private readonly fog: THREE.Fog;
   private readonly sun: THREE.DirectionalLight;
+  private readonly weather: Weather;
   private readonly frustum = new THREE.Frustum();
   private readonly projView = new THREE.Matrix4();
   private readonly cullSphere = new THREE.Sphere(new THREE.Vector3(), 2.5);
@@ -79,7 +81,8 @@ export class GameRenderer {
     this.scene.background = new THREE.Color(night);
     this.fog = new THREE.Fog(night, 40, 95);
     this.scene.fog = this.fog;
-    this.scene.add(new THREE.HemisphereLight(0x7d8fc4, 0x1a2018, 0.8));
+    const hemi = new THREE.HemisphereLight(0x7d8fc4, 0x1a2018, 0.8);
+    this.scene.add(hemi);
     const sun = new THREE.DirectionalLight(0xaebfff, 1.15);
     const b = arenaBounds(data.arena);
     const cx = (b.x0 + b.x1) / 2;
@@ -93,6 +96,7 @@ export class GameRenderer {
     Object.assign(sun.shadow.camera, { left: -s, right: s, top: s, bottom: -s, near: 1, far: 130 });
     this.scene.add(sun, sun.target);
     this.sun = sun;
+    this.weather = new Weather(this.scene, this.fog, hemi, sun);
 
     this.mapAnimation = buildMap(this.scene, data.arena);
     // Laterne des eigenen Helden: warmes Licht, das mitläuft
@@ -246,6 +250,10 @@ export class GameRenderer {
     const mine = this.playerId !== null ? this.units.get(this.playerId) : undefined;
     this.lantern.visible = !!mine;
     if (mine) this.lantern.position.set(mine.group.position.x, 2.6, mine.group.position.z);
+    // Wetter der Wellen-Ereignisse (Nebel, Blutmond, Regen) um den Helden bzw. die Kamera
+    const wx = mine ? mine.group.position.x : camera.position.x;
+    const wz = mine ? mine.group.position.z : camera.position.z;
+    this.weather.update(state.wave.phase === 'wave' ? state.wave.event : null, wx, wz, dt);
   }
 
   /** Vorschau einer Fähigkeit (Taste gehalten) oder ausblenden. */
@@ -391,8 +399,12 @@ export class GameRenderer {
     // Nebel beginnt ein Stück hinter dem Fokus, sonst wäre die Übersicht nur grau
     const d = this.cam.distance;
     // Ego-Sicht: näherer Nebel, stimmungsvoll und schneller
-    this.fog.near = this.cam.inFirstPerson ? 6 : d + 10;
-    this.fog.far = this.cam.inFirstPerson ? 40 : d * 1.6 + 50;
+    const near = this.cam.inFirstPerson ? 6 : d + 10;
+    const far = this.cam.inFirstPerson ? 40 : d * 1.6 + 50;
+    // Nebelnacht: Sicht deutlich kürzer (weich überblendet)
+    const f = this.weather.fogAmount;
+    this.fog.near = near + (Math.min(near, this.cam.inFirstPerson ? 2 : d * 0.55) - near) * f;
+    this.fog.far = far + (Math.min(far, this.cam.inFirstPerson ? 16 : d + 16) - far) * f;
     this.renderer.render(this.scene, this.cam.camera);
   }
 }

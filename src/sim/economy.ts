@@ -2,6 +2,7 @@ import type { DataContext, SimContext } from './context';
 import { buildPlan, itemDef, refreshMaxHp } from './items';
 import { kitOf } from './heroes/index';
 import { statsOf } from './stats';
+import { eventFactor } from './waveevents';
 import { addBuff, hasBuff } from './status';
 import type { Hero, Zombie, ZombieDef } from './types';
 import { dist } from './vec';
@@ -25,7 +26,8 @@ export function awardGold(ctx: SimContext, z: Zombie, killer?: Hero, assists: He
   }
   if (!def || def.gold <= 0) return;
   // Goldrausch (Aurelius): markierte Zombies lassen doppelt Gold fallen
-  const rush = ctx.state.time < (z.st.goldUntil ?? 0) ? 2 : 1;
+  // Blutmond: mehr Gold
+  const rush = (ctx.state.time < (z.st.goldUntil ?? 0) ? 2 : 1) * eventFactor(ctx, 'gold');
   if (killer) giveGold(ctx, killer, Math.round(def.gold * rush * (kitOf(killer.defId).goldFactor?.(ctx, killer) ?? 1)), z.pos);
   const share = Math.round(def.gold * rush * ctx.data.economy.rewards.assistGold);
   if (share > 0) for (const h of assists) giveGold(ctx, h, share, z.pos);

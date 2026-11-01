@@ -206,6 +206,18 @@ Team-Buffs von Bossen haben breitere Ringe mit leuchtenden Punkten. In den letzt
 
 **Zähler:** In der Kopfleiste, auf der Anzeigetafel (Tab) und in der Endstatistik zählen als **Kills** nur Bosse und Zwischenbosse (☠). Die erlegten Zombies haben ihren eigenen Zähler (🧟).
 
+## Wellen-Ereignisse
+
+Ab Welle 4 kann eine Welle mit einem besonderen Ereignis beginnen. Die Wahrscheinlichkeit liegt bei 25 %, und zwischen zwei Ereignissen liegen mindestens 3 Wellen. Zu Wellenbeginn erscheint eine Ansage, und die Kopfleiste zeigt das Ereignis neben der Wellennummer (z. B. „Welle 7 · 🌕 Blutmond“). Mit dem Ende der Welle ist es vorbei.
+
+| Ereignis | Wirkung | Darstellung |
+|---|---|---|
+| 🌫 **Nebelnacht** | Zombies bemerken Helden erst aus 70 % der üblichen Entfernung | dichter grauer Nebel; die Minimap zeigt Zombies nur im Umkreis von 15 m um das eigene Team |
+| 🌕 **Blutmond** | doppelt so viele Zwischenbosse, Gold für Kills ×1,5 | rotes Licht |
+| 🌧 **Regen** | Helden und Zombies 15 % langsamer, Brand halb so stark | Regen fällt um den Helden |
+
+Das Ereignis wird mit dem festen Zufall der Partie gezogen. Im Mehrspieler sehen deshalb alle dasselbe, und im PvP gibt es keine Ereignisse. Die Werte stehen in `data/waves.json` unter `events`.
+
 ## Zwischenbosse und Team-Buffs
 
 Zwischenbosse (Rattenkönig, Schlächter, Dämon) kommen ab Welle 3 jede zweite Welle und ab Welle 10 in jeder Welle. Alle 5 Wellen kommt einer mehr dazu, und mit jeder Welle haben sie zusätzlich mehr Leben.

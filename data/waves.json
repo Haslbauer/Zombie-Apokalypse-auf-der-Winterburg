@@ -102,5 +102,32 @@
       "bossHp": 1.35,
       "damage": 1.3
     }
+  },
+  "events": {
+    "fromWave": 4,
+    "chance": 0.25,
+    "gap": 3,
+    "list": {
+      "nebel": {
+        "name": "Nebelnacht",
+        "icon": "🌫",
+        "text": "Nebelnacht – Zombies tauchen erst spät aus dem Dunst auf",
+        "aggro": 0.7
+      },
+      "blutmond": {
+        "name": "Blutmond",
+        "icon": "🌕",
+        "text": "Blutmond – doppelt so viele Zwischenbosse, aber 50 % mehr Gold",
+        "elites": 2,
+        "gold": 1.5
+      },
+      "regen": {
+        "name": "Regen",
+        "icon": "🌧",
+        "text": "Regen – alle sind langsamer, Feuer brennt schwächer",
+        "speed": 0.85,
+        "burn": 0.5
+      }
+    }
   }
 }

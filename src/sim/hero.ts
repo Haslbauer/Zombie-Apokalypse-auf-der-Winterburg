@@ -1,3 +1,4 @@
+import { eventFactor } from './waveevents';
 import { build, repair } from './defenses';
 import { tryCast, updateDash } from './abilities';
 import { heroAttack } from './combat';
@@ -101,7 +102,7 @@ function ping(ctx: SimContext, h: Hero, kind: unknown, pos: unknown): void {
  */
 export function moveHero(ctx: SimContext, h: Hero, move: Vec2): void {
   const kit = kitOf(h.defId);
-  const speed = h.speed * (1 + buffSum(h, 'haste') + itemStats(ctx, h).moveSpeed) * (kit.moveSpeedFactor?.(ctx, h) ?? 1);
+  const speed = h.speed * (1 + buffSum(h, 'haste') + itemStats(ctx, h).moveSpeed) * (kit.moveSpeedFactor?.(ctx, h) ?? 1) * eventFactor(ctx, 'speed');
   h.pos.x += move.x * speed * DT;
   h.pos.y += move.y * speed * DT;
 }
