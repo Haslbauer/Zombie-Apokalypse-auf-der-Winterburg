@@ -208,6 +208,15 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - 3 Besenwirbel (um ihn, 3 m): Schaden 35–115, Rückstoß 3 m.
 - 4 Funkenflug (Kreis 4,5 m, Reichweite 9 m): Brandzone 45–95 Schaden/s für 5 s.
 
+### Bäckerin Frieda (umgesetzt v2.6, Schaden)
+- Optik: helles Kleid, Kochmütze, Schürze, Nudelholz (umgebaute Somnia-Figur).
+- Angriff: Nahkampf (Nudelholz), 2,8 m, Bogen 100°, 0,95 s.
+- Passiv Frisch aus dem Ofen: alle 6 s +60 % Schaden beim nächsten Hieb und Heilung 30 (+6 je Level).
+- 1 Brezelwurf (Linie 8 m, 0,8 m breit): Schaden 45–145 an allen auf der Linie.
+- 2 Mehlstaub (Kreis 3 m, Reichweite 7 m): blendet 1,5–2,7 s, verlangsamt 35 %.
+- 3 Ofenhitze (selbst): +30–50 % Angriffstempo, +15 % Tempo für 5 s.
+- 4 Großes Backblech (Kreis 4 m, Reichweite 8 m): nach 0,8 s Schaden 170–350, Betäubung 1,2–1,8 s.
+
 ### Imker (umgesetzt v2.4, Support)
 - Optik: heller Anzug, Imkerhut mit Schleier, Smoker in der Hand, ein paar Bienen schwirren um ihn (aus dem früheren Entwurf).
 - Angriff: kleiner Bienenschwarm als Geschoss, 9 m. Jeder Treffer setzt einen Stich (bis 5, je 3 Schaden/s plus 0,4 je Level, 4 s, frischt auf) – der Schaden über Zeit der Bienen aus dem Entwurf.

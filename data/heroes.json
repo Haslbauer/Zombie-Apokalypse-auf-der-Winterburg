@@ -1762,5 +1762,139 @@
         }
       }
     ]
+  },
+  {
+    "id": "baeckerin",
+    "name": "Frieda",
+    "role": "Nahkampf, Schaden",
+    "description": "Die Burgbäckerin mit Kochmütze und Schürze. Haut mit dem Nudelholz zu, wirft Brezeln und hüllt Zombies in Mehlstaub.",
+    "color": "#e8d8b0",
+    "figure": "baker",
+    "hp": 600,
+    "hpRegen": 2.8,
+    "speed": 5.3,
+    "radius": 0.46,
+    "hpPerLevel": 62,
+    "regenPerLevel": 0.27,
+    "damagePerLevel": 0.07,
+    "attack": {
+      "type": "melee",
+      "damage": 36,
+      "range": 2.8,
+      "arc": 100,
+      "cooldown": 0.95
+    },
+    "passive": {
+      "name": "Frisch aus dem Ofen",
+      "description": "Alle 6 s macht der nächste Hieb 60 % mehr Schaden und heilt sie um 30 Leben (+6 je Level).",
+      "values": {
+        "cooldown": 6,
+        "bonus": 0.6,
+        "heal": 30,
+        "healPerLevel": 6
+      }
+    },
+    "abilities": [
+      {
+        "id": "brezelwurf",
+        "name": "Brezelwurf",
+        "description": "Wirft eine harte Brezel geradeaus: trifft alle auf der Linie.",
+        "shape": "line",
+        "range": 8,
+        "width": 0.8,
+        "cooldown": [
+          7,
+          6.5,
+          6,
+          5.5,
+          5
+        ],
+        "values": {
+          "damage": [
+            45,
+            70,
+            95,
+            120,
+            145
+          ]
+        }
+      },
+      {
+        "id": "mehlstaub",
+        "name": "Mehlstaub",
+        "description": "Mehlwolke am Ziel: blendet und verlangsamt Zombies.",
+        "shape": "circle",
+        "range": 7,
+        "radius": 3,
+        "cooldown": [
+          13,
+          12,
+          11,
+          10,
+          9
+        ],
+        "values": {
+          "blind": [
+            1.5,
+            1.8,
+            2.1,
+            2.4,
+            2.7
+          ],
+          "slow": 0.35
+        }
+      },
+      {
+        "id": "ofenhitze",
+        "name": "Ofenhitze",
+        "description": "Volle Hitze: 5 s lang schneller zuschlagen und laufen.",
+        "shape": "self",
+        "range": 0,
+        "cooldown": [
+          15,
+          14,
+          13,
+          12,
+          11
+        ],
+        "values": {
+          "attackSpeed": [
+            0.3,
+            0.35,
+            0.4,
+            0.45,
+            0.5
+          ],
+          "haste": 0.15,
+          "duration": 5
+        }
+      },
+      {
+        "id": "backblech",
+        "name": "Großes Backblech",
+        "description": "Nach kurzer Warnung schlägt das große Backblech auf: viel Schaden und Betäubung im Kreis.",
+        "shape": "circle",
+        "range": 8,
+        "radius": 4,
+        "cooldown": [
+          90,
+          75,
+          60
+        ],
+        "values": {
+          "delay": 0.8,
+          "damage": [
+            170,
+            260,
+            350
+          ],
+          "stun": [
+            1.2,
+            1.5,
+            1.8
+          ]
+        }
+      }
+    ]
   }
 ]

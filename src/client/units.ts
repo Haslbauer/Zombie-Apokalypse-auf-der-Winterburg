@@ -32,7 +32,7 @@ function iconMaterial(text: string, color: string): THREE.SpriteMaterial {
   return material;
 }
 
-type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp' | 'beehat' | 'smoker' | 'glasses' | 'apron' | 'loupe' | 'pigtails' | 'teddy' | 'divehelm' | 'airtank' | 'harpoongun' | 'bonnet' | 'handbell' | 'shawl' | 'felthat' | 'axe' | 'scythe' | 'icecrown' | 'tophat' | 'broom';
+type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp' | 'beehat' | 'smoker' | 'glasses' | 'apron' | 'loupe' | 'pigtails' | 'teddy' | 'divehelm' | 'airtank' | 'harpoongun' | 'bonnet' | 'handbell' | 'shawl' | 'felthat' | 'axe' | 'scythe' | 'icecrown' | 'tophat' | 'broom' | 'chefhat' | 'rollingpin';
 
 /**
  * Aussehen einer animierten Figur (public/models/<model>.glb). move: Lauf-Clip,
@@ -144,6 +144,8 @@ const HERO_LOOKS: Record<string, ModelLook> = {
   foerster: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.0, scale: 1.1, tint: [1, 1, 1], plain: 0x4a5a2c, attacks: ['attack'], attackStart: 0.35, props: ['felthat', 'axe'] },
   // Schornsteinfeger Kasimir: umgebaute Figur (schwarzer Anzug), Zylinder, Kaminbesen
   schornsteinfeger: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.4, scale: 1.0, tint: [1, 1, 1], plain: 0x222226, attacks: ['attack'], attackStart: 0.42, props: ['tophat', 'broom'] },
+  // Bäckerin Frieda: umgebaute Figur (helles Kleid), Kochmütze, Schürze, Nudelholz
+  baeckerin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 1.0, tint: [1, 1, 1], plain: 0xc9a27a, attacks: ['attack'], attackStart: 0.3, props: ['chefhat', 'apron', 'rollingpin'] },
   gaertnerin: { model: 'gaertnerin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 0.98, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.4, impact: { attack: 0.78 } },
 };
 
@@ -361,7 +363,7 @@ export class UnitView {
     // Requisiten in Metern: Maßstab des Knochens herausrechnen (Mixamo und Quaternius unterscheiden sich)
     inst.root.updateMatrixWorld(true);
     for (const prop of look.props ?? []) {
-      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat' || prop === 'beehat' || prop === 'glasses' || prop === 'pigtails' || prop === 'divehelm' || prop === 'bonnet' || prop === 'felthat' || prop === 'icecrown' || prop === 'tophat';
+      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat' || prop === 'beehat' || prop === 'glasses' || prop === 'pigtails' || prop === 'divehelm' || prop === 'bonnet' || prop === 'felthat' || prop === 'icecrown' || prop === 'tophat' || prop === 'chefhat';
       // Am Körper: Schürze an der Brust, Lupe am Gürtel
       const body = prop === 'apron' || prop === 'airtank' || prop === 'shawl' ? 'mixamorigSpine1' : prop === 'loupe' ? 'mixamorigHips' : null;
       const bone = inst.root.getObjectByName(body ?? (head ? (look.headBone ?? 'mixamorigHead') : (look.handBone ?? 'mixamorigRightHand')));
@@ -541,6 +543,17 @@ export class UnitView {
         add(new THREE.CylinderGeometry(0.04, 0.04, 0.3, 8), 0x5a3a20, 0, 0.2, 0);
         add(new THREE.BoxGeometry(0.3, 0.12, 0.2), 0x2a2a2a, 0, 0.4, 0);
         add(new THREE.BoxGeometry(0.32, 0.03, 0.22), 0xc0302a, 0, 0.47, 0);
+        break;
+      case 'chefhat':
+        // Weiße Kochmütze
+        add(new THREE.CylinderGeometry(0.12, 0.13, 0.12, 14), 0xfaf8f2, 0, 0.24, -0.04);
+        add(new THREE.SphereGeometry(0.15, 12, 8), 0xfaf8f2, 0, 0.37, -0.04);
+        break;
+      case 'rollingpin':
+        // Nudelholz mit zwei Griffen
+        add(new THREE.CylinderGeometry(0.045, 0.045, 0.42, 10), 0xd8b080, 0, 0.3, 0);
+        add(new THREE.CylinderGeometry(0.02, 0.02, 0.16, 6), 0xa07040, 0, 0.05, 0);
+        add(new THREE.CylinderGeometry(0.02, 0.02, 0.12, 6), 0xa07040, 0, 0.56, 0);
         break;
       case 'tophat':
         // Schwarzer Zylinder

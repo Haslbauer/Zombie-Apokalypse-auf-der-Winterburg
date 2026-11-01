@@ -137,6 +137,13 @@ const BUILDS: Record<string, Build> = {
     g.add(ball(0.09, mat(0x1a1a1a, { roughness: 1 }), 0, 0.08, -0.01));
     return { group: g, melee: false };
   },
+  // Frieda: Nudelholz
+  baeckerin: (c) => {
+    const g = arm(c);
+    g.add(cyl(0.05, 0.46, mat(0xd8b080), 0, 0.3, 0));
+    g.add(cyl(0.022, 0.12, mat(0xa07040), 0, 0.03, 0));
+    return { group: g, melee: true };
+  },
   // Kapitän Tiefe: Harpune (Messing und Holz)
   taucher: (c) => {
     const g = arm(c, SKIN, 0x3a3a34);

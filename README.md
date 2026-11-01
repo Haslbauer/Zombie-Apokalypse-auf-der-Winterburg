@@ -132,6 +132,7 @@ Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bog
 | Hedwig | Handglocke |
 | Bruno | Axt |
 | Kasimir | Rußball |
+| Frieda | Nudelholz |
 
 Beim Angriff schlägt die Waffe nach vorn (Nahkampf) bzw. ruckt hoch (Fernkampf). Beim Laufen wippt der Kopf leicht und schwingt die Hand mit; das **Kopfwippen** lässt sich im Esc-Menü abschalten.
 
@@ -157,6 +158,7 @@ Alle Geräusche und die Musik entstehen im Browser (Web-Audio, `src/client/audio
   | Hedwig | tiefer Glockenschlag |
   | Bruno | Axthieb ins Holz |
   | Kasimir | Wusch des Kaminbesens |
+  | Frieda | dumpfes Klopfen auf Teig |
 
 - **Spielablauf:** Horn zum Wellenstart, Akkord für „Welle geschafft“, Alarm bei Durchbruch, Fanfare für den Postboten, Boss erlegt, Sieg und Niederlage.
 - **Oberfläche:** Gold, Level-up, Shop, Pings (je Art ein Ton), Countdown in der Lobby.
@@ -467,7 +469,15 @@ Trolle kämpfen selbst; ihr Schaden zählt für Lotte. Zombies greifen Trolle an
 - **Besenwirbel:** Schaden um ihn herum, stößt Zombies zurück.
 - **Ultimate „Funkenflug“:** große Brandzone für 5 s.
 
-Die neuen Helden sind vorerst umgebaute vorhandene Figuren. Der Imker hat einen hellen Anzug mit Imkerhut, Schleier und Smoker. Aurelius trägt runde Brille, Lederschürze und eine Lupe am Gürtel. Lotte ist eine verkleinerte Figur im gelben Mantel mit Zöpfen und Teddy. Die Trolle sind grün eingefärbte Kürbis-Hulks. Kapitän Tiefe trägt einen schweren Anzug, einen Messinghelm mit Bullauge, eine Sauerstoffflasche und eine Harpune. Hedwig trägt ein violettes Gewand mit weißer Haube und Schultertuch und läutet eine Messing-Handglocke. Bruno trägt eine grüne Jacke, einen Filzhut mit Feder und eine Holzfälleraxt. Kasimir trägt einen schwarzen Anzug mit Zylinder und einen Kaminbesen.
+**Frieda** (Bäckerin, Schaden):
+- **Angriff:** Nudelholz im Nahkampf (2,8 m).
+- **Passiv „Frisch aus dem Ofen“:** Alle 6 s macht der nächste Hieb 60 % mehr Schaden und heilt sie um 30 Leben (+6 je Level).
+- **Brezelwurf:** harte Brezel geradeaus, trifft alle auf der Linie.
+- **Mehlstaub:** Mehlwolke am Ziel, blendet und verlangsamt.
+- **Ofenhitze:** 5 s lang schneller zuschlagen (+30–50 %) und laufen.
+- **Ultimate „Großes Backblech“:** Nach kurzer Warnung schlägt das Blech auf; viel Schaden und Betäubung im Kreis von 4 m.
+
+Die neuen Helden sind vorerst umgebaute vorhandene Figuren. Der Imker hat einen hellen Anzug mit Imkerhut, Schleier und Smoker. Aurelius trägt runde Brille, Lederschürze und eine Lupe am Gürtel. Lotte ist eine verkleinerte Figur im gelben Mantel mit Zöpfen und Teddy. Die Trolle sind grün eingefärbte Kürbis-Hulks. Kapitän Tiefe trägt einen schweren Anzug, einen Messinghelm mit Bullauge, eine Sauerstoffflasche und eine Harpune. Hedwig trägt ein violettes Gewand mit weißer Haube und Schultertuch und läutet eine Messing-Handglocke. Bruno trägt eine grüne Jacke, einen Filzhut mit Feder und eine Holzfälleraxt. Kasimir trägt einen schwarzen Anzug mit Zylinder und einen Kaminbesen. Frieda trägt Kochmütze und Schürze und schwingt ein Nudelholz.
 Die Figur ist vorerst eine umgefärbte vorhandene Figur mit Imkerhut, Schleier und Smoker. Das Porträt ist aus dem Modell gerendert (`portrait.html?hero=imker` im Entwicklungsserver, Screenshot per Playwright).
 
 Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.

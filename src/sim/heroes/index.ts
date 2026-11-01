@@ -7,13 +7,14 @@ import { taucher } from './taucher';
 import { gloecknerin } from './gloecknerin';
 import { foerster } from './foerster';
 import { schornsteinfeger } from './schornsteinfeger';
+import { baeckerin } from './baeckerin';
 import type { HeroKit } from './kit';
 import { libero } from './libero';
 import { pirat } from './pirat';
 import { rotschopf } from './rotschopf';
 import { schlaeferin } from './schlaeferin';
 
-const KITS: Record<string, HeroKit> = { grimm, gaertnerin, pirat, libero, rotschopf, schlaeferin, imker, goldschmied, lotte, taucher, gloecknerin, foerster, schornsteinfeger };
+const KITS: Record<string, HeroKit> = { grimm, gaertnerin, pirat, libero, rotschopf, schlaeferin, imker, goldschmied, lotte, taucher, gloecknerin, foerster, schornsteinfeger, baeckerin };
 
 /** Helden ohne eigenes Modul (z. B. in Tests) haben keine Fähigkeiten. */
 const NONE: HeroKit = { cast: () => false };

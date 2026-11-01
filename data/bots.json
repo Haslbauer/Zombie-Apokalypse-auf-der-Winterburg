@@ -557,6 +557,44 @@
           "min": 4
         }
       ]
+    },
+    "baeckerin": {
+      "role": "melee",
+      "teamRole": "dmg",
+      "skillOrder": [
+        0,
+        2,
+        1
+      ],
+      "buy": [
+        "heiltrank",
+        "arbeitshandschuhe",
+        "kuechenwecker",
+        "lederjacke",
+        "taschenuhr",
+        "kettenhemd",
+        "lebensamulett",
+        "grossvateruhr",
+        "ritterruestung"
+      ],
+      "abilities": [
+        {
+          "use": "line",
+          "min": 2
+        },
+        {
+          "use": "aoe",
+          "min": 3
+        },
+        {
+          "use": "buff",
+          "min": 2
+        },
+        {
+          "use": "aoe",
+          "min": 4
+        }
+      ]
     }
   }
 }
