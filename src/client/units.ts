@@ -3,6 +3,7 @@ import type { BuffRing } from './buffrings';
 import { tickMarks } from './hpticks';
 import type { Hero, HeroDef, Minion, Unit, Zombie, ZombieDef } from '../sim/types';
 import { instantiate, type ModelInstance, type RiggedModel } from './models';
+import { recolorTexture } from './recolor';
 import { groundGlow } from './nightdecor';
 import type { Snapshot } from './renderer';
 
@@ -71,6 +72,10 @@ interface ModelLook {
   headOffset?: number;
   /** Einfarbig statt Textur (z. B. heller Imkeranzug); Hautfarbe bleibt unter Hut und Schleier verborgen. */
   plain?: number;
+  /** Kleidung umfärben, Haut und Gesicht bleiben (Textur bleibt, siehe recolor.ts). */
+  recolor?: { color: number; strength?: number; keepSkin?: boolean; flat?: number };
+  /** Farbe je Material (Figuren mit getrennten Materialien, z. B. Hose, Schuhe). */
+  materialColors?: Record<string, number>;
   /** Schwebehöhe über dem Boden (Hornissen). */
   lift?: number;
 }
@@ -137,21 +142,21 @@ const HERO_LOOKS: Record<string, ModelLook> = {
   libero: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.6, scale: 1.02, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.42 },
   pirat: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.5, props: ['hook'] },
   // Lotte: kleines Mädchen (verkleinerte Figur) im gelben Regenmantel, Zöpfe, Teddy im Arm
-  lotte: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 4.6, scale: 0.72, tint: [1, 1, 1], plain: 0xf0c020, attacks: ['attack'], attackStart: 0.3, props: ['pigtails', 'teddy'] },
+  lotte: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 4.6, scale: 0.72, tint: [1, 1, 1], recolor: { color: 0xf0c020, flat: 0.4 }, attacks: ['attack'], attackStart: 0.3, props: ['pigtails', 'teddy'] },
   // Taucher Kapitän Tiefe: schwerer Anzug (einfarbig), Messinghelm, Sauerstoffflasche, Harpune
-  taucher: { model: 'rotschopf', move: 'run', idle: 'idle', refSpeed: 4.8, scale: 1.08, tint: [1, 1, 1], plain: 0x34423c, attacks: ['attack'], attackStart: 0.25, props: ['divehelm', 'airtank', 'harpoongun'] },
+  taucher: { model: 'rotschopf', move: 'run', idle: 'idle', refSpeed: 4.8, scale: 1.08, tint: [1, 1, 1], recolor: { color: 0x3a4a40, keepSkin: false }, materialColors: { MaleBruteA_Shoes6: 0x1e1e1c }, attacks: ['attack'], attackStart: 0.25, props: ['divehelm', 'airtank', 'harpoongun'] },
   // Goldschmied Aurelius: umgebaute Figur mit runder Brille, Lederschürze und Lupe am Gürtel
   goldschmied: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 1.0, tint: [0.85, 0.8, 0.72], attacks: ['attack'], attackStart: 0.3, props: ['glasses', 'apron', 'loupe'] },
   // Imker: umgebaute Figur (heller Anzug), Imkerhut mit Schleier, Smoker in der Hand
-  imker: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.4, scale: 1.0, tint: [1, 1, 1], plain: 0xddd6c0, attacks: ['attack'], attackStart: 0.5, props: ['beehat', 'smoker'], headOffset: 0.02 },
+  imker: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.4, scale: 1.0, tint: [1, 1, 1], recolor: { color: 0xe4ddc4, flat: 0.65 }, attacks: ['attack'], attackStart: 0.5, props: ['beehat', 'smoker'], headOffset: 0.02 },
   // Glöcknerin Hedwig: umgebaute Figur (violettes Gewand), Haube, Schultertuch, Handglocke
-  gloecknerin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.1, scale: 0.96, tint: [1, 1, 1], plain: 0x4b3d6e, attacks: ['attack'], attackStart: 0.3, props: ['bonnet', 'shawl', 'handbell'] },
+  gloecknerin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.1, scale: 0.96, tint: [1, 1, 1], recolor: { color: 0x5a4a86 }, attacks: ['attack'], attackStart: 0.3, props: ['bonnet', 'shawl', 'handbell'] },
   // Förster Bruno: umgebaute Figur (grüne Jacke), Filzhut mit Feder, Axt
-  foerster: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.0, scale: 1.1, tint: [1, 1, 1], plain: 0x4a5a2c, attacks: ['attack'], attackStart: 0.35, props: ['felthat', 'axe'] },
+  foerster: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.0, scale: 1.1, tint: [1, 1, 1], recolor: { color: 0x55692f }, attacks: ['attack'], attackStart: 0.35, props: ['felthat', 'axe'] },
   // Schornsteinfeger Kasimir: umgebaute Figur (schwarzer Anzug), Zylinder, Kaminbesen
-  schornsteinfeger: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.4, scale: 1.0, tint: [1, 1, 1], plain: 0x222226, attacks: ['attack'], attackStart: 0.42, props: ['tophat', 'broom'] },
-  // Bäckerin Frieda: umgebaute Figur (helles Kleid), Kochmütze, Schürze, Nudelholz
-  baeckerin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 1.0, tint: [1, 1, 1], plain: 0xc9a27a, attacks: ['attack'], attackStart: 0.3, props: ['chefhat', 'apron', 'rollingpin'] },
+  schornsteinfeger: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.4, scale: 1.0, tint: [1, 1, 1], recolor: { color: 0x2c2c32, strength: 0.9 }, attacks: ['attack'], attackStart: 0.42, props: ['tophat', 'broom'] },
+  // Bäckerin Frieda: umgebaute Figur ohne Kapuze (helles Kleid), Kochmütze, Schürze, Nudelholz
+  baeckerin: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 1.0, tint: [1, 1, 1], recolor: { color: 0xece2cc, flat: 0.6 }, attacks: ['attack'], attackStart: 0.3, props: ['chefhat', 'apron', 'rollingpin'] },
   gaertnerin: { model: 'gaertnerin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 0.98, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.4, impact: { attack: 0.78 } },
 };
 
@@ -358,9 +363,19 @@ export class UnitView {
     inst.root.position.y = look.lift ?? 0;
     this.body.add(inst.root);
     for (const m of inst.materials) {
+      const std = m as THREE.MeshStandardMaterial;
       if (look.plain !== undefined) {
-        (m as THREE.MeshStandardMaterial).map = null;
+        std.map = null;
         m.color.set(look.plain);
+        m.needsUpdate = true;
+      } else if (look.recolor && std.map) {
+        std.map = recolorTexture(std.map, look.recolor.color, look.recolor.strength, look.recolor.keepSkin, look.recolor.flat);
+        m.needsUpdate = true;
+      }
+      const own = look.materialColors?.[m.name];
+      if (own !== undefined) {
+        std.map = null;
+        m.color.set(own);
         m.needsUpdate = true;
       }
       this.materials.push(m);
@@ -512,9 +527,9 @@ export class UnitView {
         break;
       case 'handbell':
         // Messing-Handglocke mit Holzgriff
-        add(new THREE.CylinderGeometry(0.02, 0.025, 0.14, 8), 0x6b4a2b, 0, 0.13, 0.04);
-        add(new THREE.ConeGeometry(0.1, 0.14, 14, 1, true), 0xc9a24a, 0, 0.0, 0.04, 0x3a2a00);
-        add(new THREE.SphereGeometry(0.025, 6, 4), 0x8a6a2a, 0, -0.07, 0.04);
+        add(new THREE.CylinderGeometry(0.015, 0.018, 0.1, 8), 0x6b4a2b, 0, 0.09, 0.03);
+        add(new THREE.ConeGeometry(0.045, 0.07, 14, 1, true), 0xc9a24a, 0, 0.0, 0.03, 0x3a2a00);
+        add(new THREE.SphereGeometry(0.018, 6, 4), 0x8a6a2a, 0, -0.05, 0.03);
         break;
       case 'felthat':
         // Grüner Filzhut mit Krempe und Feder
@@ -562,14 +577,14 @@ export class UnitView {
         break;
       case 'chefhat':
         // Weiße Kochmütze
-        add(new THREE.CylinderGeometry(0.12, 0.13, 0.12, 14), 0xfaf8f2, 0, 0.24, -0.04);
-        add(new THREE.SphereGeometry(0.15, 12, 8), 0xfaf8f2, 0, 0.37, -0.04);
+        add(new THREE.CylinderGeometry(0.11, 0.12, 0.11, 14), 0xfaf8f2, 0, 0.17, 0.0);
+        add(new THREE.SphereGeometry(0.14, 12, 8), 0xfaf8f2, 0, 0.29, 0.0);
         break;
       case 'rollingpin':
         // Nudelholz mit zwei Griffen
-        add(new THREE.CylinderGeometry(0.045, 0.045, 0.42, 10), 0xd8b080, 0, 0.3, 0);
-        add(new THREE.CylinderGeometry(0.02, 0.02, 0.16, 6), 0xa07040, 0, 0.05, 0);
-        add(new THREE.CylinderGeometry(0.02, 0.02, 0.12, 6), 0xa07040, 0, 0.56, 0);
+        add(new THREE.CylinderGeometry(0.032, 0.032, 0.3, 10), 0xd8b080, 0, 0.22, 0);
+        add(new THREE.CylinderGeometry(0.015, 0.015, 0.1, 6), 0xa07040, 0, 0.03, 0);
+        add(new THREE.CylinderGeometry(0.015, 0.015, 0.08, 6), 0xa07040, 0, 0.41, 0);
         break;
       case 'tophat':
         // Schwarzer Zylinder
@@ -580,7 +595,7 @@ export class UnitView {
       case 'broom':
         // Kaminbesen: Seil mit runder Bürste und Kugel
         add(new THREE.CylinderGeometry(0.012, 0.012, 0.5, 5), 0x8a7a5a, 0, 0.15, 0);
-        add(new THREE.SphereGeometry(0.12, 10, 6), 0x1a1a1a, 0, 0.45, 0);
+        add(new THREE.SphereGeometry(0.075, 10, 6), 0x1a1a1a, 0, 0.42, 0);
         add(new THREE.SphereGeometry(0.05, 8, 6), 0x5a5a60, 0, -0.12, 0);
         break;
       case 'scythe':
