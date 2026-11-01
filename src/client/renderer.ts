@@ -186,7 +186,9 @@ export class GameRenderer {
       const roleIcon = roleDef ? { icon: roleDef.icon, color: role === 'tank' ? '#9fdcff' : role === 'dmg' ? '#ffa092' : '#a9eb98' } : undefined;
       const view = upsert(h, () => heroView(h, def, h.id === this.playerId, this.models, enemy, roleIcon), lift);
       const speed = h.alive ? view.measureSpeed(dt) : 0;
-      if (!h.alive) {
+      // Niederlage: alle Helden des verlierenden Teams fallen um und bleiben liegen
+      const lost = heroLost(state, h);
+      if (!h.alive || lost) {
         // Menschen liegen (down), Grimm spielt seine Sterbe-Animation und bleibt liegen
         if (view.hasClip('down')) view.animate(dt, 0, false, 'down');
         else {
@@ -197,7 +199,7 @@ export class GameRenderer {
         view.ring.visible = false;
         view.showBuffs([], time, h.radius);
         // Wiederbeleben: Ring zeigt den Fortschritt, solange er am Boden liegt
-        view.showRevive((h.downUntil ?? 0) > state.time ? (h.reviveProgress ?? 0) : null);
+        view.showRevive(!lost && (h.downUntil ?? 0) > state.time ? (h.reviveProgress ?? 0) : null);
         continue;
       }
       view.revive();
@@ -210,7 +212,9 @@ export class GameRenderer {
       view.showBuffs(hidden ? [] : buffRings(h, state.time), time, h.radius);
       if (h.defId === 'imker') view.orbitBees(time);
       const hold = h.channel?.tag === 'nap' ? 'ability3' : undefined;
-      view.animate(dt, speed, state.gameOver, hold, view.movingBackward(h.facing));
+      // Sieg: stehen bleiben (Ruhe-Animation) statt mitten im Schritt einzufrieren
+      if (state.gameOver) view.animate(dt, 0, false);
+      else view.animate(dt, speed, false, hold, view.movingBackward(h.facing));
     }
     // Lottes Trolle (Verbündete)
     for (const m of state.minions ?? []) {
@@ -459,4 +463,14 @@ export class GameRenderer {
     }
     this.renderer.render(this.scene, this.cam.camera);
   }
+}
+
+/**
+ * Hat dieser Held verloren (Spiel vorbei, Niederlage)? Koop: alle Helden bei
+ * einer Niederlage. PvP: die Helden des Teams, das nicht gewonnen hat.
+ */
+export function heroLost(state: Pick<GameState, 'gameOver' | 'victory' | 'pvp'>, h: Pick<Hero, 'team'>): boolean {
+  if (!state.gameOver) return false;
+  if (state.pvp) return state.pvp.winner !== undefined && (h.team ?? 0) !== state.pvp.winner;
+  return !state.victory;
 }
