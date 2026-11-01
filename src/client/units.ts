@@ -4,6 +4,7 @@ import { tickMarks } from './hpticks';
 import type { Hero, HeroDef, Minion, Unit, Zombie, ZombieDef } from '../sim/types';
 import { instantiate, type ModelInstance, type RiggedModel } from './models';
 import { recolorTexture } from './recolor';
+import { type FxKind, StatusFx } from './statusfx';
 import { groundGlow } from './nightdecor';
 import type { Snapshot } from './renderer';
 
@@ -270,9 +271,16 @@ export class UnitView {
   private shownVel = { x: 0, z: 0 };
   /** Ruheanimation dieser Figur (Zombies: zufällig eine von zwei Varianten). */
   idleClip: string | null = null;
+  /** Zustands-Effekte (Heilung, Seuche, Brand, Verlangsamung, Betäubung); erst bei Bedarf angelegt. */
+  private fxView: StatusFx | null = null;
+  private lastHp = -1;
+  private unitRadius = 0.5;
+  /** War im letzten Bild betäubt (zum Zusammenzucken beim Beginn). */
+  wasStunned = false;
 
   constructor(radius: number, color: string, barColor: number, height = UNIT_HEIGHT, figure?: string, model?: RiggedModel | null) {
     this.height = height;
+    this.unitRadius = radius;
     this.group.add(this.body);
     this.hero = !!figure?.startsWith('h:');
     const look = figure?.startsWith('z:') ? ZOMBIE_LOOKS[figure.slice(2)] : figure?.startsWith('h:') ? HERO_LOOKS[figure.slice(2)] : undefined;
@@ -1169,11 +1177,10 @@ export class UnitView {
   }
 
   showHero(h: Hero, shield: number, opacity: number): void {
-    const stunned = h.buffs.some((b) => b.kind === 'stunned');
+    // Betäubt: kreisende Sterne (Zustands-Effekte), festgehalten: Symbol
     const rooted = h.buffs.some((b) => b.kind === 'rooted');
-    this.icon.visible = stunned || rooted;
-    if (stunned) this.icon.material = iconMaterial(ICONS.stun[0], ICONS.stun[1]);
-    else if (rooted) this.icon.material = iconMaterial(ICONS.rooted[0], ICONS.rooted[1]);
+    this.icon.visible = rooted;
+    if (rooted) this.icon.material = iconMaterial(ICONS.rooted[0], ICONS.rooted[1]);
     if (shield > 0 && !this.shield) {
       this.shield = new THREE.Mesh(
         new THREE.SphereGeometry(Math.max(0.9, h.radius * 2), 16, 12),
@@ -1191,6 +1198,43 @@ export class UnitView {
 
   hit(): void {
     this.flash = 1;
+  }
+
+  /**
+   * Zustands-Effekte zeigen: active enthält je Wirkung eine Stärke 0..1.
+   * Ohne aktive Wirkung und ohne laufende Partikel wird nichts angelegt.
+   */
+  updateFx(dt: number, time: number, active: Partial<Record<FxKind, number>>): void {
+    const any = Object.values(active).some((v) => (v ?? 0) > 0);
+    if (!this.fxView && !any) return;
+    if (!this.fxView) {
+      this.fxView = new StatusFx(this.height, this.unitRadius);
+      this.group.add(this.fxView.group);
+    }
+    this.fxView.update(dt, time, active);
+  }
+
+  /** Schub von Partikeln (z. B. Heilung erhalten). */
+  burstFx(kind: 'heal' | 'plague' | 'burn' | 'slow', n: number): void {
+    if (!this.fxView) {
+      this.fxView = new StatusFx(this.height, this.unitRadius);
+      this.group.add(this.fxView.group);
+    }
+    this.fxView.burst(kind, n);
+  }
+
+  /** Lebensänderung seit dem letzten Aufruf (erster Aufruf: 0). */
+  hpDelta(hp: number): number {
+    const d = this.lastHp < 0 ? 0 : hp - this.lastHp;
+    this.lastHp = hp;
+    return d;
+  }
+
+  /** Harter Treffer: kurz zusammenzucken (nur, wenn gerade keine andere Aktion läuft). */
+  flinch(): void {
+    const a = this.anim;
+    if (!a || a.dead || a.once || !this.hasClip('hit')) return;
+    this.playOnce('hit', 0.55, 0.05);
   }
 
   /**

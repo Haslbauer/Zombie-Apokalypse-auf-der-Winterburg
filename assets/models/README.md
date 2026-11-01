@@ -94,7 +94,8 @@ Alle vier stehen mit `moves/standing-idle` (echtes Stehen statt Standbild).
 | melee-kick | Standing Melee Attack Kick Ver. 1 | zweiter Angriff von Frieda und Tiefe |
 | melee-360 | Standing Melee Attack 360 High | Kasimirs Besenwirbel |
 | standing-jump | Standing Jump | Kaminsprung, Tauchgang |
-| react-gut, react-left, react-right | Standing React Large … | noch ungenutzt (Treffer-Reaktion) |
+| react-gut | Standing React Large Gut | `hit` in allen Menschen-Helden: Zusammenzucken bei harten Treffern und beim Betäuben |
+| react-left, react-right | Standing React Large From Left/Right | noch ungenutzt |
 | run-back | Standing Run Back | `runBack` in allen Menschen-Helden: rückwärts laufen, während der Held nach vorn zielt |
 | walk-back, walk-left, walk-right | Standing Walk … | noch ungenutzt (seitlich laufen) |
 | idle-looking | Standing Idle Looking Ver. 1 | noch ungenutzt (Umschauen) |

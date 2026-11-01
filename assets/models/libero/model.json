@@ -27,6 +27,9 @@
     },
     "runBack": {
       "file": "../moves/run-back.fbx"
+    },
+    "hit": {
+      "file": "../moves/react-gut.fbx"
     }
   },
   "inPlace": true,

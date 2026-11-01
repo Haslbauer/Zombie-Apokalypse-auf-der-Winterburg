@@ -211,6 +211,20 @@ export class GameRenderer {
       // Aktive Buffs als drehende, farbige Ringe um den Helden
       view.showBuffs(hidden ? [] : buffRings(h, state.time), time, h.radius);
       if (h.defId === 'imker') view.orbitBees(time);
+      // Zustands-Effekte: Heilung, Seuche, Verlangsamung, Betäubung; harte Treffer lassen zusammenzucken
+      const dHp = view.hpDelta(h.hp);
+      if (dHp >= Math.max(12, h.maxHp * 0.02)) view.burstFx('heal', Math.min(6, 2 + Math.round((dHp / h.maxHp) * 20)));
+      if (-dHp >= h.maxHp * 0.08) view.flinch();
+      const now = state.time;
+      const stunned = h.buffs.some((b) => b.kind === 'stunned' && b.until > now);
+      if (stunned && !view.wasStunned) view.flinch();
+      view.wasStunned = stunned;
+      view.updateFx(dt, time, {
+        heal: h.buffs.some((b) => b.kind === 'heal' && b.value > 0 && b.until > now) ? 0.5 : 0,
+        plague: h.plague && h.plague.until > now ? Math.min(1, 0.3 + h.plague.stacks / 6) : 0,
+        slow: h.buffs.some((b) => b.kind === 'haste' && b.value < 0 && b.until > now) ? 1 : 0,
+        stun: stunned ? 1 : 0,
+      });
       const hold = h.channel?.tag === 'nap' ? 'ability3' : undefined;
       // Sieg: stehen bleiben (Ruhe-Animation) statt mitten im Schritt einzufrieren
       if (state.gameOver) view.animate(dt, 0, false);
@@ -238,6 +252,8 @@ export class GameRenderer {
       const far = this.cam.distance > 0 && Math.hypot(gp.x - camera.position.x, gp.z - camera.position.z) > 38;
       const lod = view.isDying ? 0 : !onScreen ? 2 : far ? 1 : 0;
       view.animateLod(dt, speed, state.time < z.st.sleepUntil || state.time < z.st.stunUntil || state.gameOver, lod);
+      // Brand und Verlangsamung als Partikel (nur nah und im Bild, spart Rechenzeit bei vielen Zombies)
+      if (lod === 0) view.updateFx(dt, time, { burn: state.time < (z.st.burnUntil ?? 0) ? 0.8 : 0, slow: state.time < z.st.slowUntil ? 0.6 : 0 });
     }
     for (const [id, view] of this.units) {
       if (!seen.has(id)) {

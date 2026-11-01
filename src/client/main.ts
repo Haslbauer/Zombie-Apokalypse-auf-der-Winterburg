@@ -1110,6 +1110,11 @@ if (params.has('debug')) {
         if (h) h.buffs.push({ kind: kind as never, value, until: session!.state.time + seconds, source });
       },
       // Ego-Sicht: Zustand lesen bzw. Blickrichtung setzen (Tests)
+      // Einzelspieler: dem eigenen Helden Seuche geben (Zustands-Effekte prüfen)
+      plague: (stacks: number, seconds = 10) => {
+        const h = session instanceof LocalSession ? session.sim.hero(heroId) : undefined;
+        if (h) h.plague = { stacks, until: session!.state.time + seconds };
+      },
       // Laufende Animation des eigenen Helden (z. B. runBack beim Rückwärtslaufen)
       heroLoop: () => renderer.unitLoop(heroId),
       view: (yaw?: number, pitch?: number) => {

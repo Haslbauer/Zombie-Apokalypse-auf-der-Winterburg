@@ -248,6 +248,21 @@ Im Esc-Menü unter Grafik lassen sich die Zahlen abschalten.
 
 **Lebensbalken** haben wie in LoL einen Strich je 100 Leben und einen dickeren je 1000 Leben.
 
+## Zustands-Effekte
+
+Was gerade auf eine Figur wirkt, sieht man an kleinen Effekten:
+
+| Zustand | Darstellung |
+|---|---|
+| Heilung erhalten | grüne Plus-Zeichen steigen auf (ein Schub je Heilung, leise, solange ein Heil-Buff wirkt) |
+| Seuche | giftgrüne Blasen steigen auf; je mehr Stapel, desto mehr |
+| Betäubt | Sterne kreisen über dem Kopf, der Held zuckt zu Beginn zusammen |
+| Verlangsamt | blaue Eiskristalle an den Füßen |
+| Brand (Zombies) | orange Funken |
+| Harter Treffer (ab 8 % Leben) | der Held zuckt zusammen (Animation „React Large Gut“) |
+
+Die Partikel sind je Figur begrenzt; bei Zombies erscheinen sie nur nah und im Bild (`src/client/statusfx.ts`).
+
 ## Buff-Ringe und Münzen
 
 **Buff-Ringe:** Aktive Wirkungen erscheinen wie in LoL als farbige, sich drehende Ringe um die Füße eines Helden. Das gilt für alle Helden, auch für Mitspieler und Gegner im PvP.
