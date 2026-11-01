@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { BuffRing } from './buffrings';
+import { tickMarks } from './hpticks';
 import type { Hero, HeroDef, Minion, Unit, Zombie, ZombieDef } from '../sim/types';
 import { instantiate, type ModelInstance, type RiggedModel } from './models';
 import { groundGlow } from './nightdecor';
@@ -257,6 +258,7 @@ export class UnitView {
     this.barFill = new THREE.Mesh(new THREE.PlaneGeometry(w, 0.13).translate(w / 2, 0, 0), new THREE.MeshBasicMaterial({ color: barColor }));
     this.barFill.position.set(-w / 2, 0, 0.01);
     this.bar.add(bg, this.barFill);
+    this.barW = w;
     this.bar.position.y = height + 0.45;
     this.group.add(this.bar);
 
@@ -818,6 +820,7 @@ export class UnitView {
     this.body.rotation.y = -unit.facing;
     this.bar.quaternion.copy(camera.quaternion);
     this.barFill.scale.x = Math.max(0.001, unit.hp / unit.maxHp);
+    if (this.bar.visible && unit.maxHp !== this.ticksFor) this.buildTicks(unit.maxHp);
     if (unit.hp < unit.maxHp) this.bar.visible = true;
     this.flash = Math.max(0, this.flash - dt * 6);
     this.materials.forEach((m, i) => m.color.copy(this.baseColors[i]).lerp(WHITE, this.flash));
@@ -953,6 +956,36 @@ export class UnitView {
       const blink = r.left < 5 ? 0.35 + 0.5 * Math.abs(Math.sin(time * 7)) : 0.85;
       for (const m of v.mats) m.opacity = blink;
     });
+  }
+
+  private barW = 1;
+  private ticksFor = 0;
+  private ticks: THREE.Mesh | null = null;
+  /** Striche je 100 Leben (dicker je 1000) auf dem Lebensbalken. */
+  private buildTicks(maxHp: number): void {
+    this.ticksFor = maxHp;
+    if (this.ticks) {
+      this.bar.remove(this.ticks);
+      (this.ticks.material as THREE.MeshBasicMaterial).map?.dispose();
+      this.ticks.geometry.dispose();
+      this.ticks = null;
+    }
+    const marks = tickMarks(maxHp);
+    if (!marks.length) return;
+    const c = document.createElement('canvas');
+    c.width = 256;
+    c.height = 8;
+    const g = c.getContext('2d')!;
+    for (const m of marks) {
+      g.fillStyle = m.major ? 'rgba(0,0,0,0.95)' : 'rgba(0,0,0,0.6)';
+      const x = Math.round(m.at * 256);
+      g.fillRect(x - (m.major ? 1 : 0), m.major ? 0 : 2, m.major ? 2 : 1, m.major ? 8 : 6);
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.minFilter = THREE.LinearFilter;
+    this.ticks = new THREE.Mesh(new THREE.PlaneGeometry(this.barW, 0.13), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+    this.ticks.position.z = 0.02;
+    this.bar.add(this.ticks);
   }
 
   private reviveRing: THREE.Mesh | null = null;

@@ -1043,7 +1043,7 @@ export interface WaveState {
 }
 
 export type GameEvent =
-  | { type: 'hit'; targetId: number; amount: number; pos: Vec2 }
+  | { type: 'hit'; targetId: number; amount: number; pos: Vec2; bonus?: boolean }
   | { type: 'death'; id: number; pos: Vec2 }
   | { type: 'attack'; id: number; targetId: number }
   | { type: 'swing'; id: number; facing: number; range: number; arc: number }

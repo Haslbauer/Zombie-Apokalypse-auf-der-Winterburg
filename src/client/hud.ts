@@ -1009,6 +1009,15 @@ export class Hud {
    * Menü „Tastenbelegung“: Klick auf eine Taste, dann die neue Taste oder
    * Maustaste drücken. startCapture wartet auf diese Eingabe.
    */
+  /** Schadenszahlen über Gegnern anzeigen (Esc-Menü, gespeichert). */
+  damageNumbers: boolean = (() => {
+    try {
+      return localStorage.getItem('winterburg.dmgnums') !== '0';
+    } catch {
+      return true;
+    }
+  })();
+
   /** Schwierigkeit für Menschen (Solo; online legt sie der Gastgeber fest). */
   level: GameLevel = (() => {
     try {
@@ -1079,7 +1088,21 @@ export class Hud {
         perf.checked = q.showPerf;
         perf.addEventListener('change', () => q.setShowPerf(perf.checked));
         perfLabel.append(perf, el('span', '', ' Leistung anzeigen (fps, Ping)'));
-        row.append(el('span', '', 'Qualität'), select, perfLabel);
+        const dmgLabel = el('label', 'hud-check');
+        const dmg = el('input', '');
+        dmg.type = 'checkbox';
+        dmg.checked = this.damageNumbers;
+        dmg.dataset.setting = 'damageNumbers';
+        dmg.addEventListener('change', () => {
+          this.damageNumbers = dmg.checked;
+          try {
+            localStorage.setItem('winterburg.dmgnums', dmg.checked ? '1' : '0');
+          } catch {
+            // ohne Speicher
+          }
+        });
+        dmgLabel.append(dmg, el('span', '', ' Schadenszahlen'));
+        row.append(el('span', '', 'Qualität'), select, perfLabel, dmgLabel);
         box.append(row);
       }
       // Skillleiste: Größe und Deckkraft

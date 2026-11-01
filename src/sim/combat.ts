@@ -43,7 +43,8 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
   }
   if (source) source.lastCombatAt = state.time;
   // Rollen: Tank nimmt weniger Schaden, Schaden-Rolle trifft Bosse härter
-  amount *= roleDamageFactor(ctx, target, source);
+  const roleF = roleDamageFactor(ctx, target, source);
+  amount *= roleF;
 
   if ('alive' in target) {
     target.lastCombatAt = state.time;
@@ -75,7 +76,7 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
   // Endstatistik: Schaden an Zombies bzw. erlittener Schaden
   if ('alive' in target) statsOf(target).damageTaken += dealt;
   else if (source) statsOf(source).damage += dealt;
-  state.events.push({ type: 'hit', targetId: target.id, amount: dealt, pos: { ...target.pos } });
+  state.events.push(roleF > 1 ? { type: 'hit', targetId: target.id, amount: dealt, pos: { ...target.pos }, bonus: true } : { type: 'hit', targetId: target.id, amount: dealt, pos: { ...target.pos } });
   if (target.hp > 0) return dealt;
 
   target.hp = 0;

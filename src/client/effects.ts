@@ -137,11 +137,11 @@ export class Effects {
   }
 
   /** Aufsteigende Zahl, z. B. „+8“ Gold. */
-  floatingText(p: Vec2, text: string, color: string, height = 1.8): void {
+  floatingText(p: Vec2, text: string, color: string, height = 1.8, size = 0.8, drift = 0): void {
     const sprite = textSprite(text, color);
-    sprite.scale.set(0.8, 0.8, 1);
+    sprite.scale.set(size, size, 1);
     this.add(sprite, 0.9, (t) => {
-      sprite.position.set(p.x, height + t * 1.2, p.y);
+      sprite.position.set(p.x + drift * t, height + t * 1.2, p.y);
       sprite.material.opacity = 1 - t * t;
     });
   }

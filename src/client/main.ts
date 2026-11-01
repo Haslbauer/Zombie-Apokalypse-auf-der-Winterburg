@@ -24,6 +24,7 @@ import { LocalSession, RemoteSession, type Session } from './session';
 import { ShopView } from './shop';
 import { sound } from './audio';
 import { coinCount } from './buffrings';
+import { HitMerger } from './hpticks';
 
 const renderer = new GameRenderer(document.getElementById('game')!, gameData);
 const effects = new Effects(renderer.scene);
@@ -94,6 +95,22 @@ const SPELL_SOUND: Record<string, string> = {
   reinigen: 'cleanse',
 };
 const PING_SOUND: Record<string, string> = { here: 'pingHere', attack: 'pingAttack', danger: 'pingDanger', help: 'pingHelp', omw: 'pingOmw' };
+/** Schadenszahlen: Treffer je Ziel zusammenfassen, höchstens MAX_DMG_TEXTS gleichzeitig. */
+const hits = new HitMerger(0.15);
+const MAX_DMG_TEXTS = 40;
+let dmgTexts: number[] = [];
+function flushDamageNumbers(): void {
+  const now = performance.now() / 1000;
+  dmgTexts = dmgTexts.filter((t) => now - t < 0.9);
+  for (const p of hits.flush(now)) {
+    if (dmgTexts.length >= MAX_DMG_TEXTS) break;
+    dmgTexts.push(now);
+    const n = Math.round(p.sum);
+    const color = p.own ? '#ff5a4a' : p.bonus ? '#ff9f43' : p.boss ? '#ffd166' : '#f2f2f2';
+    const size = p.own ? 0.75 : p.boss ? 0.95 : Math.min(0.85, 0.55 + n / 400);
+    effects.floatingText(p.pos, p.bonus ? `${n}!` : `${n}`, color, p.own ? 2.3 : 2.0, size, (Math.random() - 0.5) * 0.8);
+  }
+}
 /** Bienen wütend bis (Spielzeit). */
 let beesAngryUntil = 0;
 const myHero = () => session?.state.heroes.find((h) => h.id === heroId);
@@ -524,6 +541,14 @@ function handleEvents(state: GameState): void {
     switch (e.type) {
       case 'hit':
         renderer.flash(e.targetId);
+        // Schadenszahlen: je Ziel kurz sammeln (Brand, Stiche, Durchschlag)
+        if (hud.damageNumbers && e.amount > 0) {
+          const z = state.zombies.find((x) => x.id === e.targetId);
+          const isHero = !z && state.heroes.some((x) => x.id === e.targetId);
+          if (z || e.targetId === heroId) {
+            hits.add(e.targetId, e.amount, e.pos, performance.now() / 1000, { bonus: e.bonus, boss: !!z && BOSS_DEFS.has(z.defId), own: isHero });
+          }
+        }
         // Treffer an Zombies: kleine Funken
         if (e.amount > 0 && state.zombies.some((z) => z.id === e.targetId)) {
           effects.sparks(e.pos, 0xffc070, 4);
@@ -860,6 +885,7 @@ renderer.renderer.setAnimationLoop((now) => {
     sound.update(dt, { listener: focus, zombies: near, wave: state.wave.phase === 'wave', boss, beesAngry: state.time < beesAngryUntil });
   }
 
+  flushDamageNumbers();
   effects.update(dt);
   hud.updateLobbyCountdown();
   quality.frame(dt);

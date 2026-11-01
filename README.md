@@ -166,6 +166,21 @@ Bot-Partien mit drei Bots auf „schwer“ (je 3 Läufe, `BALANCE_TEAM=… npm r
 
 Die Heldenwahl und die Lobby zeigen die Rolle jedes Helden und warnen, wenn eine Rolle fehlt. Bots füllen zuerst die fehlenden Rollen auf.
 
+## Schadenszahlen und Lebensbalken
+
+Über getroffenen Gegnern steigen **Schadenszahlen** auf. Treffer in kurzer Folge werden je Ziel zusammengefasst, damit Brand, Stiche und Durchschlag lesbar bleiben.
+
+| Farbe | Bedeutung |
+|---|---|
+| Weiß | normaler Schaden |
+| Gelb, größer | Schaden an Bossen |
+| Orange mit „!“ | Rollenbonus, etwa Schaden-Rolle an Bossen |
+| Rot | Schaden an dir |
+
+Im Esc-Menü unter Grafik lassen sich die Zahlen abschalten.
+
+**Lebensbalken** haben wie in LoL einen Strich je 100 Leben und einen dickeren je 1000 Leben.
+
 ## Buff-Ringe und Münzen
 
 **Buff-Ringe:** Aktive Wirkungen erscheinen wie in LoL als farbige, sich drehende Ringe um die Füße eines Helden. Das gilt für alle Helden, auch für Mitspieler und Gegner im PvP.
