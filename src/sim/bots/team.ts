@@ -9,7 +9,8 @@ const ROLES: TeamRole[] = ['tank', 'dmg', 'support'];
  */
 export function defaultTeam(bots: BotsDef, playerHeroId: string | null): string[] {
   const ids = Object.keys(bots.heroes).filter((id) => id !== playerHeroId);
-  const size = playerHeroId ? 3 : 4;
+  // Koop mit drei Helden: Spieler + 2 Bots bzw. 3 Bots
+  const size = playerHeroId ? 2 : 3;
   return fillTeam(bots, playerHeroId ? [playerHeroId] : [], ids, size + (playerHeroId ? 1 : 0)).filter((id) => id !== playerHeroId);
 }
 

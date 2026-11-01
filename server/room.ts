@@ -104,22 +104,32 @@ export class Room {
    * Helden der Partie: gewählte Helden auf ihren Plätzen, freie Plätze mit dem
    * Wunsch-Team des Gastgebers bzw. passenden Rollen auffüllen (keine doppelten).
    */
+  /** Plätze im aktuellen Modus: Koop 3 (Tank, Schaden, Support), PvP 4. */
+  get slotCount(): number {
+    return this.mode === 'pvp' ? 4 : 3;
+  }
+
+  /** Die Plätze, die im aktuellen Modus mitspielen. */
+  private get active(): Slot[] {
+    return this.slots.slice(0, this.slotCount);
+  }
+
   private team(): string[] {
-    const picks = this.slots.map((s) => s.pick).filter((h): h is string => !!h);
+    const picks = this.active.map((s) => s.pick).filter((h): h is string => !!h);
     const pool = [...this.heroes, ...defaultTeam(gameData.bots, this.heroes[0] ?? null), ...gameData.heroes.map((h) => h.id)].filter((id) => !picks.includes(id));
     // Bots füllen zuerst die Rollen, die den Menschen fehlen (Tank, Schaden, Support)
-    const extra = fillTeam(gameData.bots, picks, pool, this.slots.length).slice(picks.length);
-    return this.slots.map((s) => s.pick ?? extra.shift()!);
+    const extra = fillTeam(gameData.bots, picks, pool, this.slotCount).slice(picks.length);
+    return this.active.map((s) => s.pick ?? extra.shift()!);
   }
 
   private newSim(): void {
     this.sim = new Simulation(gameData, {
       seed: (Math.random() * 2 ** 31) | 0,
       heroes: this.team(),
-      bots: this.slots.map((s) => (s.player || this.mode === 'pvp' ? null : this.difficulty)),
-      spells: this.slots.map((s) => (s.player ? s.spells : null)),
+      bots: this.active.map((s) => (s.player || this.mode === 'pvp' ? null : this.difficulty)),
+      spells: this.active.map((s) => (s.player ? s.spells : null)),
       // PvP: nur Plätze mit Spielern nehmen teil (keine Bots)
-      pvp: this.mode === 'pvp' ? { teams: this.slots.map((s) => (s.player ? s.team : -1)) } : undefined,
+      pvp: this.mode === 'pvp' ? { teams: this.active.map((s) => (s.player ? s.team : -1)) } : undefined,
     });
     for (const s of this.slots) {
       s.inputs = [];
@@ -138,7 +148,7 @@ export class Room {
       phase: this.phase,
       mode: this.mode,
       startsIn: lobby && this.startsAt !== null ? Math.max(0, (this.startsAt - now) / 1000) : null,
-      slots: this.slots.map((s, i) => {
+      slots: this.active.map((s, i) => {
         const h = this.sim.state.heroes[i];
         const reserved = !s.player && s.reservedUntil !== null && now < s.reservedUntil;
         return {
@@ -188,12 +198,17 @@ export class Room {
 
   /** Bot-Stärke (nur der Gastgeber auf Platz 0, nur in der Lobby). */
   /** Lobby: Spielmodus (nur Gastgeber). */
-  setMode(player: Player, mode: GameMode, now: number): void {
-    if (this.phase !== 'lobby' || this.slotOf(player) !== 0 || this.mode === mode) return;
+  setMode(player: Player, mode: GameMode, now: number): string | null {
+    if (this.phase !== 'lobby' || this.slotOf(player) !== 0 || this.mode === mode) return null;
+    // Koop hat 3 Plätze: nicht wechseln, solange jemand auf Platz 4 ist
+    const fourth = this.slots[3];
+    if (mode === 'koop' && (fourth.player || (fourth.reservedUntil !== null && now < fourth.reservedUntil))) return 'Koop ist für höchstens 3 Spieler';
     this.mode = mode;
     for (const s of this.slots) s.ready = false;
     this.updateCountdown(now);
+    this.newSim();
     this.broadcastRoom(now);
+    return null;
   }
 
   /** Lobby: eigenes Team im PvP. */
@@ -252,7 +267,8 @@ export class Room {
    */
   join(player: Player, slot: number, now: number, token?: string): { heroId: number; token: string; slot: number } | string {
     // Lobby: ohne festen Platz den nächsten freien nehmen
-    if (slot < 0) slot = this.slots.findIndex((x) => !x.player && !(x.reservedUntil !== null && now < x.reservedUntil));
+    if (slot < 0) slot = this.active.findIndex((x) => !x.player && !(x.reservedUntil !== null && now < x.reservedUntil));
+    if (slot >= this.slotCount) return 'Diesen Platz gibt es nicht';
     if (slot < 0) return 'Der Raum ist voll';
     const hero = this.sim.state.heroes[slot];
     const s = this.slots[slot];

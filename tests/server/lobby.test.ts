@@ -38,14 +38,14 @@ function twoPlayers() {
 }
 
 describe('Server: Räume', () => {
-  it('Raum erstellen: Host steuert Platz 0, die übrigen drei Plätze Bots', () => {
+  it('Raum erstellen: Host steuert Platz 0, die übrigen zwei Plätze Bots (Koop zu dritt)', () => {
     const { lobby, player } = setup();
     const host = player();
     host.send({ t: 'create', heroes: ['rotschopf'], difficulty: 'schwer', name: 'Anna' });
     const joined = host.last('joined')!;
     expect(joined.room.code).toMatch(/^[A-Z2-9]{4}$/);
     expect(joined.token).toMatch(/^[0-9a-f]{32}$/);
-    expect(joined.room.slots).toHaveLength(4);
+    expect(joined.room.slots).toHaveLength(3);
     expect(joined.room.slots[0]).toMatchObject({ defId: 'rotschopf', human: true, name: 'Anna' });
     expect(joined.room.slots.slice(1).every((s) => !s.human)).toBe(true);
     const room = lobby.rooms.get(joined.room.code)!;
@@ -278,6 +278,7 @@ describe('Netzprotokoll', () => {
       lobby.tick();
       const st = room.sim.state;
       expect(st.pvp?.teams).toEqual([0, 1, -1, -1]);
+      expect(host.last('room')!.room.slots).toHaveLength(4);
       expect(st.heroes.filter((h) => h.bot)).toHaveLength(0);
       expect(st.heroes[2].benched).toBe(true);
     });
@@ -330,8 +331,9 @@ describe('Netzprotokoll', () => {
       expect(room.phase).toBe('playing');
       const heroes = room.sim.state.heroes;
       expect(heroes.map((h) => h.defId).slice(0, 3)).toEqual(['rotschopf', 'gaertnerin', 'grimm']);
-      expect(new Set(heroes.map((h) => h.defId)).size).toBe(4);
-      expect(heroes[3].bot).toBeDefined();
+      // Koop zu dritt: alle Plätze mit Menschen, keine Bots
+      expect(heroes).toHaveLength(3);
+      expect(heroes.every((h) => !h.bot)).toBe(true);
       expect(heroes[0].bot).toBeUndefined();
       expect(heroes[1].spells).toEqual(['geist', 'barriere']);
       // Jeder Mensch bekommt seinen Helden mitgeteilt

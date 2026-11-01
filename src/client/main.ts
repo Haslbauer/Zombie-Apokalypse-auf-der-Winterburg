@@ -40,7 +40,7 @@ const startLevel = Math.max(1, Math.min(18, Number(params.get('level')) || 1));
 /** Entwicklermodus: ?wave=5 beginnt mit Welle 5. */
 const startWave = Math.max(1, Number(params.get('wave')) || 1);
 /** Entwicklermodus: ?bots=4 – vier Bots spielen allein (Zuschauen, Kamera von oben). */
-const spectate = params.get('bots') === '4';
+const spectate = params.get('bots') === '4' || params.get('bots') === '3';
 const spectateDifficulty = (params.get('difficulty') ?? 'mittel') as BotDifficulty;
 /** Entwicklermodus: ?zoom=12 holt die Kamera näher heran (Standard 34). */
 const zoom = Number(params.get('zoom')) || 0;

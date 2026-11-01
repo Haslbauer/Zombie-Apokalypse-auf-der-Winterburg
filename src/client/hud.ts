@@ -149,7 +149,7 @@ export class Hud {
     const team = defaultTeam(this.data.bots, playerId);
     let difficulty: BotDifficulty = 'mittel';
     const box = el('div', 'hud-box hud-start');
-    box.append(el('h1', '', 'Dein Team'), el('p', '', 'Drei Bots spielen mit. Klick auf eine Bot-Karte tauscht den Helden.'));
+    box.append(el('h1', '', 'Dein Team'), el('p', '', 'Zwei Bots spielen mit – zusammen mit dir Tank, Schaden und Support. Klick auf eine Bot-Karte tauscht den Helden.'));
     const row = el('div', 'hud-heroes');
     const card = (id: string, label: string) => {
       const def = this.data.heroes.find((h) => h.id === id)!;

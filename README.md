@@ -20,7 +20,7 @@ Dann http://localhost:5173 öffnen. Weitere Befehle: `npm test` (Simulationstest
 
 ## Mehrspieler
 
-Bis zu vier Spieler, freie Plätze spielen Bots. Der Server rechnet das Spiel (samt Bots) und liefert es auch aus. Alles kostenlos.
+Koop für bis zu drei Spieler (Tank, Schaden, Support), freie Plätze spielen Bots; im PvP bis zu vier. Der Server rechnet das Spiel (samt Bots) und liefert es auch aus. Alles kostenlos.
 
 ### Mit Freunden spielen (vom eigenen Rechner)
 
@@ -121,15 +121,30 @@ Die Winterburg: U-förmiges Haus mit dem **Lebensmittelvorrat** im Innenhof (err
 
 Neutrale Lager lassen sich nicht über den Zaun hinweg „abfarmen“: Erreichen sie ihren Angreifer 5 s lang nicht, kehren sie unverwundbar heim und heilen sich. Es ist Nacht: Mondlicht, Nebel, brennende Fässer, Stacheldraht und Bretterbarrikaden an den Toren, Feuerstellen, Krähen, Knochen und ein Autowrack vor dem Osttor. Der Westflügel des Hauses ist eine halb eingestürzte Ruine, die Wege sind aus Bruchstein. Ohne Bienenstock wachsen zerstörte Beete nicht mehr nach (verdorrte Stängel, Hinweis in der Kopfleiste). Rund um den Garten liegt Gelände mit Büschen, Hecken, einer alten Grabstätte und einem Teich. **Verstecke** wie das Gebüsch in LoL: Im hohen Gras, in Büschen und im Schilf sehen Zombies einen Helden erst aus nächster Nähe – bis er angreift. Umgekehrt sieht man Zombies im Gebüsch erst, wenn man selbst nah dran ist.
 
-Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben, `?level=6` startet auf Level 6, `?wave=5` mit Welle 5 (kombinierbar: `?wave=5&level=8`), `?bots=4` lässt vier Bots allein spielen (Zuschauen, optional `&difficulty=schwer`). `?camera=x,y,abstand` richtet die Kamera fest auf einen Punkt (z. B. `?bots=4&camera=37,22,30` fürs Haus), `?debug` gibt Testhilfen frei.
+Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben, `?level=6` startet auf Level 6, `?wave=5` mit Welle 5 (kombinierbar: `?wave=5&level=8`), `?bots=3` (oder `?bots=4`) lässt drei Bots allein spielen (Zuschauen, optional `&difficulty=schwer`). `?camera=x,y,abstand` richtet die Kamera fest auf einen Punkt (z. B. `?bots=4&camera=37,22,30` fürs Haus), `?debug` gibt Testhilfen frei.
 
 ## Team und Bots
 
-Du wählst deinen Helden, drei Bots spielen mit (je ein Nahkämpfer, Fernkämpfer und eine Kontrolle; per Klick tauschbar). Die Bot-Stärke (leicht, mittel, schwer) stellst du auf dem Startbildschirm ein. Links zeigt die Teamleiste Level, Leben und erlegte Bosse aller vier Helden; Bots haben einen blauen Ring.
+Du wählst deinen Helden, zwei Bots spielen mit und ergänzen die fehlenden Rollen (Tank, Schaden, Support; per Klick tauschbar). Die Bot-Stärke (leicht, mittel, schwer) stellst du auf dem Startbildschirm ein. Links zeigt die Teamleiste Level, Leben und erlegte Bosse aller drei Helden; Bots haben einen blauen Ring.
 
 **Bots folgen Pings:** „Angriff!“ schickt alle Bots auf das Ziel (auch Postbote und Lager), „Hilfe!“ holt sie zu dir, „Hier!“ schickt die zwei nächsten an den Ort, „Gefahr!“ lässt sie den Bereich meiden. Sie antworten mit „Bin unterwegs“. Kämpfst du gegen Postbote oder Lager, helfen Bots in der Nähe auch ohne Ping.
 
-`npm run balance` lässt vier Bots ohne Spieler über mehrere Seeds spielen und gibt die erreichte Welle aus (Optionen: `BALANCE_SEEDS=5`, `BALANCE_DIFF=mittel`).
+`npm run balance` lässt drei Bots ohne Spieler über mehrere Seeds spielen und gibt die erreichte Welle aus (Optionen: `BALANCE_SEEDS=5`, `BALANCE_DIFF=mittel`).
+
+## Reichweite und Durchschlag
+
+Angriffe reichen weiter als früher (die Karte ist größer). Manche Schüsse treffen auch Gegner dahinter, mit weniger Schaden:
+
+| Held | Angriff | Reichweite | Durchschlag |
+|---|---|---|---|
+| Ragnar | Hammer (Bogen 120°) | 3,1 m | Wucht: bis 1 m dahinter im 60°-Kegel 50 % |
+| Grimm | Biss (Bogen 90°) | 2,5 m | trifft alle im Bogen |
+| Hagedorn | Stein | 10 m | 1 dahinter mit 60 %; Pfeilschuss: 2 dahinter mit 75 % |
+| Somnia | Stern | 10 m | 1 dahinter mit 70 % |
+| Spike | Ball | 9 m | 2 dahinter mit 50 % |
+| Rauchbart | Haken | 7,5 m | bleibt im ersten Ziel hängen |
+
+Fähigkeiten reichen 15 % weiter.
 
 ## Rollen
 

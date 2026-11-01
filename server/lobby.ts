@@ -108,9 +108,11 @@ export class Lobby {
       case 'difficulty':
         client.room?.setDifficulty(client, msg.difficulty, now);
         break;
-      case 'mode':
-        client.room?.setMode(client, msg.mode, now);
+      case 'mode': {
+        const err = client.room?.setMode(client, msg.mode, now);
+        if (err) this.reply(client, { t: 'error', msg: err });
         break;
+      }
       case 'team':
         client.room?.setTeam(client, msg.team, now);
         break;
@@ -152,9 +154,9 @@ export class Lobby {
     const ids = new Set(gameData.heroes.map((h) => h.id));
     const list = heroes.filter((h) => ids.has(h));
     if (list.length === 0) return this.reply(client, { t: 'error', msg: 'Kein gültiger Held gewählt' });
-    // Auf vier Helden auffüllen (wie im Einzelspieler), keine doppelten
-    const team = [...new Set(list)].slice(0, 4);
-    for (const id of defaultTeam(gameData.bots, team[0])) if (team.length < 4 && !team.includes(id)) team.push(id);
+    // Auf drei Helden auffüllen (wie im Einzelspieler: Tank, Schaden, Support), keine doppelten
+    const team = [...new Set(list)].slice(0, 3);
+    for (const id of defaultTeam(gameData.bots, team[0])) if (team.length < 3 && !team.includes(id)) team.push(id);
     const diff = DIFFICULTIES.includes(difficulty) ? difficulty : 'mittel';
     this.leaveRoom(client);
     const room = new Room(this.newCode(), team, diff, this.skipLobby);

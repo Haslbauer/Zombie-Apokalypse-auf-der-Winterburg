@@ -5,7 +5,7 @@ import { arenaData, input, makeSim, noWaves, placeZombie, run } from './helpers'
 const still = { x: 0, y: 0 };
 
 /** Simulation mit einem Helden ohne Wellen; Zombies stehen still. */
-function setup(heroId: 'rotschopf' | 'gaertnerin') {
+function setup(heroId: string) {
   const sim = makeSim(heroId, 1, arenaData(noWaves));
   const h = sim.state.heroes[0];
   const zombie = (dx: number, dy: number, defId = 'brute') => {

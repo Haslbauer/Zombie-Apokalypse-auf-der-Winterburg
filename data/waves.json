@@ -1,7 +1,7 @@
 {
   "victoryWave": 20,
-  "baseCount": 16,
-  "countPerWave": 5.5,
+  "baseCount": 12,
+  "countPerWave": 4.12,
   "hpScalePerWave": 0.32,
   "damageScalePerWave": 0.25,
   "spawnInterval": 0.35,
