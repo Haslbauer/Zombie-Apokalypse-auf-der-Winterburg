@@ -1734,10 +1734,10 @@ body.touch .hud-wave { font-size: 16px; }
 .hud-heroes .hud-hero-desc {
   display: none;
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   left: 50%;
   width: 190px;
-  margin-top: 4px;
+  margin-bottom: 4px;
   transform: translateX(-50%);
   padding: 8px 10px;
   background: #16231a;

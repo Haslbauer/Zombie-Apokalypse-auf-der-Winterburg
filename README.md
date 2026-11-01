@@ -448,7 +448,7 @@ Gold gibt es für Kills und jede überstandene Welle, in der man mitgekämpft ha
 - **Wachbienen:** Bienen schützen einen Mitspieler und stechen jeden Angreifer.
 - **Ultimate „Schwarm“:** großer Schwarm, viel Schaden über Zeit. Zombies darin bekommen volle Stiche, Mitspieler werden von Seuche gereinigt.
 
-**Aurelius** (Goldschmied, Schaden):
+**Aurelius** (Goldschmied mit Lockenkopf und Brille, Schaden):
 - **Angriff:** wirft Goldnuggets (9 m) mit Durchschlag auf 1 Ziel dahinter.
 - **Passiv „Feingold“:** 15 % mehr Gold für eigene Kills, dazu je 100 Gold im Beutel 1 % mehr Schaden (höchstens 25 %).
 - **Lötflamme:** Feuerkegel, der Zombies in Brand setzt.
@@ -509,7 +509,7 @@ Trolle kämpfen selbst; ihr Schaden zählt für Lotte. Zombies greifen Trolle an
 Im Startbildschirm und in der Lobby sind die Heldenkarten kompakt; fährt man mit der Maus darüber, wird die Karte größer und zeigt die Beschreibung. Das Fenster scrollt, wenn es nicht ganz auf den Bildschirm passt.
 
 Die neuen Helden sind umgebaute vorhandene Figuren. Bruno, Frieda, Kasimir und Kapitän Tiefe haben eigene Modelle mit passenden Animationen (Axthieb, Nudelholz-Schlag und Tritt, Rundumwirbel, Sprung, echtes Stehen); Frieda ist eine eigene Mixamo-Figur (Peasant Girl). Details in `assets/models/README.md`. Ihre Kleidung wird beim Laden umgefärbt (`src/client/recolor.ts`): Die Textur bleibt erhalten, damit Falten und Nähte sichtbar bleiben, und Haut und Gesicht behalten ihre Farbe. Kapitän Tiefe wird ganz eingefärbt (Anzug unter dem Helm). Der Imker hat einen hellen Anzug mit Imkerhut, Schleier und Smoker. Aurelius trägt runde Brille, Lederschürze und eine Lupe am Gürtel. Lotte ist eine verkleinerte Figur im gelben Mantel mit Zöpfen und Teddy. Die Trolle sind grün eingefärbte Kürbis-Hulks. Kapitän Tiefe trägt einen schweren Anzug, einen Messinghelm mit Bullauge, eine Sauerstoffflasche und eine Harpune. Hedwig trägt ein violettes Gewand mit weißer Haube und Schultertuch und läutet eine Messing-Handglocke. Bruno trägt eine grüne Jacke, einen Filzhut mit Feder und eine Holzfälleraxt. Kasimir trägt einen schwarzen Anzug mit Zylinder und einen Kaminbesen. Frieda trägt Kochmütze und Schürze und schwingt ein Nudelholz.
-Lotte, der Imker und Aurelius haben gemalte Porträts wie die ursprünglichen Helden. Die übrigen neuen Helden haben vorerst Porträts, die aus dem Modell gerendert sind (`portrait.html?hero=<id>` im Entwicklungsserver, Screenshot per Playwright; Blickwinkel je Held in `PORTRAIT_VIEW`). Prompts für gemalte Porträts stehen in `docs/portrait-prompts.md`.
+Alle neuen Helden haben jetzt gemalte Porträts wie die ursprünglichen Helden (Prompts in `docs/portrait-prompts.md`). Aus dem 3D-Modell gerenderte Porträts gehen weiterhin mit `portrait.html?hero=<id>` im Entwicklungsserver (Blickwinkel je Held in `PORTRAIT_VIEW`).
 
 Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.
 
