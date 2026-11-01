@@ -38,8 +38,16 @@ export class ShopView {
   private readonly root = el('div', 'shop');
   private readonly gold = el('span', 'shop-gold');
   private readonly cards = new Map<string, Card>();
+  /** Verteidigungen (nur in der Pause, nicht im PvP): Karte je Art plus Reparieren. */
+  private readonly defenseBox = el('div', 'shop-defenses');
+  private readonly defenseCards = new Map<string, { card: HTMLButtonElement; price: HTMLElement; note: HTMLElement }>();
+  private readonly repairCard = el('button', 'shop-card shop-repair');
+  private readonly repairPrice = el('span', 'shop-price');
   onBuy: (itemId: string) => void = () => {};
   onClose: () => void = () => {};
+  /** Verteidigung zum Aufstellen wählen (Shop schließt, Baumodus startet). */
+  onDefense: (kind: string) => void = () => {};
+  onRepair: () => void = () => {};
 
   constructor(parent: HTMLElement, data: GameData) {
     const head = el('div', 'shop-head');
@@ -47,6 +55,30 @@ export class ShopView {
     close.addEventListener('click', () => this.onClose());
     head.append(el('strong', '', 'Shop'), this.gold, close);
     this.root.append(head);
+    // Verteidigungen: Stacheldraht, Barrikade, Feuerfass (aufstellen nach dem Kauf per Linksklick)
+    const defs = data.economy.defenses;
+    if (defs) {
+      this.defenseBox.append(el('div', 'shop-cat', 'Verteidigungen (Pause)'));
+      const grid = el('div', 'shop-grid');
+      for (const kind of ['stacheldraht', 'barrikade', 'feuerfass'] as const) {
+        const d = defs[kind];
+        if (!d) continue;
+        const card = el('button', 'shop-card shop-defense');
+        card.dataset.defense = kind;
+        const price = el('span', 'shop-price');
+        const note = el('span', 'shop-note');
+        card.append(el('strong', '', `${d.icon} ${d.name}`), price, el('span', 'shop-desc', d.description), note);
+        card.addEventListener('click', () => this.onDefense(kind));
+        grid.append(card);
+        this.defenseCards.set(kind, { card, price, note });
+      }
+      this.repairCard.dataset.defense = 'repair';
+      this.repairCard.append(el('strong', '', '🔧 Reparieren'), this.repairPrice, el('span', 'shop-desc', 'Bringt alle beschädigten Verteidigungen wieder auf volles Leben.'));
+      this.repairCard.addEventListener('click', () => this.onRepair());
+      grid.append(this.repairCard);
+      this.defenseBox.append(grid);
+      this.root.append(this.defenseBox);
+    }
     const name = (id: string) => data.items.find((i) => i.id === id)?.name ?? id;
     for (const tier of TIERS) {
       const items = data.items
@@ -87,7 +119,7 @@ export class ShopView {
       }
       this.root.append(grid);
     }
-    this.root.append(el('div', 'shop-foot', 'Rezepte wie in LoL: Bauteile im Inventar werden verbraucht und angerechnet. Maus über ein Item zeigt Bauteile und Weiterentwicklungen. Rechtsklick im Inventar verkauft (70 %). B oder Esc schließt.'));
+    this.root.append(el('div', 'shop-foot', 'Rezepte wie in LoL: Bauteile im Inventar werden verbraucht und angerechnet. Maus über ein Item zeigt Bauteile und Weiterentwicklungen. Rechtsklick im Inventar verkauft (70 %). Verteidigungen: anklicken, dann mit Linksklick aufstellen (Gold wird beim Aufstellen abgezogen). B oder Esc schließt.'));
     this.root.style.display = 'none';
     parent.append(this.root);
   }
@@ -102,6 +134,27 @@ export class ShopView {
 
   hide(): void {
     this.root.style.display = 'none';
+  }
+
+  /**
+   * Verteidigungen: Preis, Anzahl, gesperrt (zu wenig Gold, Höchstzahl, nicht
+   * in der Pause). info null: Bereich ausblenden (z. B. PvP).
+   */
+  updateDefenses(info: { gold: number; counts: Record<string, number>; costs: Record<string, { cost: number; max: number }>; repair: number; canBuild: boolean; reason: string } | null): void {
+    if (!this.open) return;
+    this.defenseBox.style.display = info ? '' : 'none';
+    if (!info) return;
+    for (const [kind, c] of this.defenseCards) {
+      const d = info.costs[kind];
+      if (!d) continue;
+      const n = info.counts[kind] ?? 0;
+      c.price.textContent = `${d.cost} Gold · ${n}/${d.max}`;
+      const note = !info.canBuild ? info.reason : n >= d.max ? 'Höchstzahl erreicht' : info.gold < d.cost ? 'zu wenig Gold' : 'Klick: aufstellen';
+      c.note.textContent = note;
+      c.card.classList.toggle('blocked', !info.canBuild || n >= d.max || info.gold < d.cost);
+    }
+    this.repairPrice.textContent = info.repair > 0 ? `${info.repair} Gold` : 'nichts beschädigt';
+    this.repairCard.classList.toggle('blocked', !info.canBuild || info.repair <= 0 || info.gold < info.repair);
   }
 
   /**

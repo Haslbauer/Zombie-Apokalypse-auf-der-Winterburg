@@ -386,7 +386,7 @@ Erfolge, Titel und Laterne bleiben im Browser gespeichert (`winterburg.erfolge`)
 
 ## Verteidigungen bauen (Pause)
 
-In der Pause öffnet **V** die Bauleiste. Dort wählst du eine Verteidigung und stellst sie per **Linksklick** an der Maus auf. **X** dreht die Barrikade, **Esc** bricht ab. Die Höchstzahl gilt fürs ganze Team.
+In der Pause öffnet **V** die Bauleiste. Die Verteidigungen stehen auch ganz oben im **Shop** (B) unter „Verteidigungen“, mit Preis, Anzahl und „Reparieren“. Ein Klick dort schließt den Shop und startet den Baumodus. Du stellst die Verteidigung per **Linksklick** an der Maus auf; erst dabei wird das Gold abgezogen. **X** dreht die Barrikade, **Esc** bricht ab. Die Höchstzahl gilt fürs ganze Team.
 
 | Verteidigung | Kosten | Höchstens | Wirkung |
 |---|---|---|---|

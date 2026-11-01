@@ -130,6 +130,14 @@ hud.onSpell = input.onSpell;
 hud.onChooseSpells = (spells) => cmd({ type: 'chooseSpells', spells });
 shop.onBuy = (itemId) => cmd({ type: 'buy', itemId });
 shop.onClose = () => shop.hide();
+// Verteidigung im Shop gewählt: Shop zu, Baumodus mit dieser Art (Aufstellen per Linksklick)
+shop.onDefense = (kind) => {
+  shop.hide();
+  buildOpen = true;
+  buildKind = kind as DefenseKind;
+  hud.message(`${gameData.economy.defenses?.[kind as DefenseKind]?.name ?? 'Verteidigung'}: Linksklick zum Aufstellen`);
+};
+shop.onRepair = () => cmd({ type: 'repair' });
 hud.onSell = (slot, consumable) => {
   if (shop.open) cmd({ type: 'sell', slot, consumable });
   else hud.message('Verkaufen nur im offenen Shop');
@@ -935,6 +943,18 @@ renderer.renderer.setAnimationLoop((now) => {
     }
     const counts: Record<string, number> = {};
     for (const d of state.defenses ?? []) counts[d.kind] = (counts[d.kind] ?? 0) + 1;
+    shop.updateDefenses(
+      defs && !state.pvp
+        ? {
+            gold: me.gold,
+            counts,
+            costs: { stacheldraht: defs.stacheldraht, barrikade: defs.barrikade, feuerfass: defs.feuerfass },
+            repair: repairCost(ctx()),
+            canBuild,
+            reason: 'nur in der Pause',
+          }
+        : null,
+    );
     hud.setBuildBar(
       buildOpen && defs
         ? {
