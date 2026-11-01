@@ -91,7 +91,7 @@ Beim Entwickeln (`npm run dev`) leitet Vite den Mehrspieler an einen laufenden `
 | F G | Beschwörerzauber (wie D/F in LoL) Richtung Mauszeiger; Rechtsklick auf das Feld in der Pause: tauschen |
 | B | Shop (nur in der Pause im Innenhof) |
 | N | Welle sofort starten (in der Pause) |
-| Rechtsklick | Ping an alle: kurz = „Hier!“, halten und ziehen = Ping-Rad (oben Angriff, rechts Bin unterwegs, unten Hilfe, links Gefahr). Auch auf der Minimap. Bots folgen den Pings (siehe unten). |
+| Rechtsklick | Ping an alle: kurz = „Hier!“, halten und ziehen = Ping-Rad mit fünf Feldern (oben Angriff, rechts Bin unterwegs, rechts unten Brauche Heilung, links unten Hilfe, links Gefahr). „Brauche Heilung“ ruft vor allem Support-Bots. Auch auf der Minimap. Bots folgen den Pings (siehe unten). |
 | Tab (halten) | Anzeigetafel: Kills, Bosse, Assists, Gold und Level aller Helden |
 | M | Ton an/aus |
 | Mausrad | Kamera heran- bzw. herauszoomen. Ganz hinein und weiter: **Ego-Sicht** (Klick fängt die Maus, Maus dreht den Blick, W läuft nach vorn, A/D seitlich, Angriff und Fähigkeiten zielen aufs Fadenkreuz, Rechtsklick pingt „Hier!“). Herausscrollen: zurück |
@@ -159,6 +159,12 @@ Jeder Held hat eine Rolle im Team. Ohne Tank, Schaden und Support ist das Spiel 
 | 🛡 Tank | Ragnar, Spike, Kapitän Tiefe | nimmt 20 % weniger Schaden; Bosse und Elites in 10 m Nähe greifen ihn an statt der anderen |
 | ⚔ Schaden | Grimm, Rauchbart, Aurelius, Lotte | 40 % mehr Schaden an Bossen und Elites |
 | ✚ Support | Hagedorn, Somnia, Imker | heilt Verbündete in 7 m Nähe ständig ein wenig und reinigt sie alle 3 s von **Seuche** |
+
+**Rollen-Kombos:**
+- Die Schaden-Rolle macht 25 % mehr Schaden an Zielen, die gerade betäubt, festgehalten oder eingeschlafen sind, meist durch den Tank.
+- Heilung und Schilde eines Supports wirken auf einem Tank 30 % stärker.
+
+Über den Köpfen der Mitspieler zeigt ein Symbol ihre Rolle (🛡 ⚔ ✚).
 
 **Seuche:** Bossfähigkeiten hinterlassen einen stapelbaren Schaden über Zeit, der nur abklingt, wenn sie eine Weile nicht mehr trifft. Ein Support in der Nähe (oder der Zauber Reinigen) entfernt sie.
 

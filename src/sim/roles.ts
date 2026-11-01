@@ -24,8 +24,19 @@ export function roleDamageFactor(ctx: SimContext, target: Hero | Zombie, source?
   const roles = ctx.data.economy.roles;
   if (!roles) return 1;
   if ('alive' in target) return teamRoleOf(ctx, target.defId) === 'tank' ? 1 - roles.tank.damageReduction : 1;
-  if (source && teamRoleOf(ctx, source.defId) === 'dmg' && isBoss(ctx, target)) return 1 + roles.dmg.bossDamage;
-  return 1;
+  if (!source || teamRoleOf(ctx, source.defId) !== 'dmg') return 1;
+  let f = isBoss(ctx, target) ? 1 + roles.dmg.bossDamage : 1;
+  // Kombo: Ziel ist betäubt, festgehalten oder schläft (meist vom Tank)
+  const t = ctx.state.time;
+  if (roles.combos && (t < target.st.stunUntil || t < target.st.rootUntil || t < target.st.sleepUntil)) f *= 1 + roles.combos.controlledBonus;
+  return f;
+}
+
+/** Kombo: Heilung und Schilde eines Supports wirken auf einem Tank stärker. */
+export function supportOnTankFactor(ctx: DataContext, healer: Hero | undefined, target: Hero): number {
+  const c = ctx.data.economy.roles?.combos;
+  if (!c || !healer || teamRoleOf(ctx, healer.defId) !== 'support' || teamRoleOf(ctx, target.defId) !== 'tank') return 1;
+  return 1 + c.supportOnTank;
 }
 
 /** Bosse und Elites gehen auf einen Tank in der Nähe (Bedrohung), sonst null. */

@@ -1100,7 +1100,7 @@ function heroFigure(heroId: string): string | undefined {
 }
 
 /** Held mit Ring: grün für den eigenen Helden, blau für Bots. Mit Modell, sobald eins geladen ist. */
-export function heroView(h: Hero, def: HeroDef, isPlayer: boolean, models: Map<string, RiggedModel>, enemy = false): UnitView {
+export function heroView(h: Hero, def: HeroDef, isPlayer: boolean, models: Map<string, RiggedModel>, enemy = false, roleIcon?: { icon: string; color: string }): UnitView {
   const look = HERO_LOOKS[def.id];
   const model = look ? models.get(modelName(look, h.id)) : undefined;
   const animated = !!model;
@@ -1112,6 +1112,13 @@ export function heroView(h: Hero, def: HeroDef, isPlayer: boolean, models: Map<s
   view.bar.visible = true;
   (view.ring.material as THREE.MeshBasicMaterial).color.set(color);
   view.ring.visible = true;
+  // Rollen-Symbol über dem Lebensbalken (nicht beim eigenen Helden)
+  if (roleIcon && !isPlayer) {
+    const tag = textSprite(roleIcon.icon, roleIcon.color);
+    tag.scale.set(0.55, 0.55, 1);
+    tag.position.y = height + 0.95;
+    view.group.add(tag);
+  }
   // Schwacher Lichtkreis (Laterne), damit Helden bei Nacht gut zu sehen sind
   view.group.add(groundGlow(0xffc070, isPlayer ? 7 : 5, isPlayer ? 0.32 : 0.22));
   return view;

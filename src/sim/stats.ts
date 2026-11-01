@@ -1,4 +1,5 @@
 import type { DataContext } from './context';
+import { supportOnTankFactor } from './roles';
 import type { FinalHeroStats, Hero, HeroScore, HeroStats, TeamStats } from './types';
 
 /**
@@ -40,6 +41,8 @@ export function noteDeath(h: Hero): void {
  */
 export function healHero(ctx: DataContext, target: Hero, amount: number, by?: Hero | number): number {
   if (amount <= 0 || target.hp <= 0) return 0;
+  const healerHero = typeof by === 'number' ? ctx.state.heroes.find((x) => x.id === by) : by;
+  amount *= supportOnTankFactor(ctx, healerHero, target);
   const healed = Math.min(amount, target.maxHp - target.hp);
   if (healed <= 0) return 0;
   target.hp += healed;

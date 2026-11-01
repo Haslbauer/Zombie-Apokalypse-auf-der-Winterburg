@@ -1,5 +1,6 @@
 import type { SimContext } from './context';
 import { healHero } from './stats';
+import { supportOnTankFactor } from './roles';
 import type { Buff, BuffKind, Hero, Zombie, ZombieStatus } from './types';
 import type { Vec2 } from './vec';
 
@@ -136,6 +137,8 @@ export function heroCC(
 /** Buff setzen; ein Buff gleicher Herkunft und Art wird ersetzt. */
 export function addBuff(ctx: SimContext, h: Hero, kind: BuffKind, value: number, duration: number, source: string, by?: number): void {
   h.buffs = h.buffs.filter((b) => !(b.kind === kind && b.source === source));
+  // Kombo: Schilde eines Supports halten auf einem Tank mehr aus
+  if (kind === 'shield' && by !== undefined) value *= supportOnTankFactor(ctx, ctx.state.heroes.find((x) => x.id === by), h);
   h.buffs.push(by === undefined ? { kind, value, until: ctx.state.time + duration, source } : { kind, value, until: ctx.state.time + duration, source, by });
 }
 

@@ -41,6 +41,10 @@
       "auraRadius": 7,
       "auraHeal": 0.008,
       "cleanseEvery": 3
+    },
+    "combos": {
+      "controlledBonus": 0.25,
+      "supportOnTank": 0.3
     }
   },
   "plague": {

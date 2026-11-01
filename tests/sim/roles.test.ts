@@ -68,3 +68,37 @@ describe('Rollen', () => {
     expect(new Set(team.map((id) => d.bots.heroes[id].teamRole))).toEqual(new Set(['tank', 'dmg', 'support']));
   });
 });
+
+describe('Rollen-Kombos', () => {
+  it('Schaden-Rolle trifft betäubte Ziele härter', () => {
+    const sim = setup(['grimm']);
+    const g = sim.state.heroes[0];
+    const c = sim.data.economy.roles!.combos!;
+    const a = placeZombie(sim, 'walker', 30, 20, 10000);
+    const b = placeZombie(sim, 'walker', 32, 20, 10000);
+    b.st.stunUntil = sim.state.time + 2;
+    expect(applyDamage(sim, b, 100, g) / applyDamage(sim, a, 100, g)).toBeCloseTo(1 + c.controlledBonus, 6);
+  });
+
+  it('Support-Heilung und -Schild wirken auf dem Tank stärker', async () => {
+    const { healHero } = await import('../../src/sim/stats');
+    const { addBuff } = await import('../../src/sim/status');
+    const sim = setup(['gaertnerin', 'rotschopf', 'grimm']);
+    const [sup, tank, dmg] = sim.state.heroes;
+    const c = sim.data.economy.roles!.combos!;
+    tank.hp = dmg.hp = 100;
+    expect(healHero(sim, tank, 100, sup)).toBeCloseTo(100 * (1 + c.supportOnTank), 6);
+    expect(healHero(sim, dmg, 100, sup)).toBeCloseTo(100, 6);
+    addBuff(sim, tank, 'shield', 100, 3, 'test', sup.id);
+    expect(tank.buffs.find((x) => x.source === 'test')!.value).toBeCloseTo(100 * (1 + c.supportOnTank), 6);
+  });
+
+  it('Ping „Brauche Heilung“: nur Support-Bots kommen', async () => {
+    const { orderBots } = await import('../../src/sim/bots/brain');
+    const sim = new Simulation(arenaData(noWaves), { seed: 1, heroes: ['grimm', 'gaertnerin', 'rotschopf'], bots: [null, 'mittel', 'mittel'] });
+    const [me, sup, tank] = sim.state.heroes;
+    orderBots(sim, me, 'heal', me.pos);
+    expect(sup.bot!.order?.kind).toBe('help');
+    expect(tank.bot!.order).toBeFalsy();
+  });
+});

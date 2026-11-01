@@ -64,8 +64,13 @@ export function orderBots(ctx: SimContext, from: Hero, kind: PingKind, pos: Vec2
       }
     }
     order = { kind: 'attack', pos: { ...(target?.pos ?? pos) }, targetId: target?.id ?? null, heroId: from.id, until: t + ATTACK_TIME };
-  } else if (kind === 'help') {
+  } else if (kind === 'help' || kind === 'heal') {
     order = { kind: 'help', pos: { ...from.pos }, targetId: null, heroId: from.id, until: t + HOLD_TIME };
+    // Brauche Heilung: nur Supports kommen (sonst alle wie bei Hilfe)
+    if (kind === 'heal') {
+      const supports = bots.filter((b) => ctx.data.bots.heroes[b.defId]?.teamRole === 'support');
+      if (supports.length) takers = supports;
+    }
   } else {
     takers = [...bots].sort((a, b) => dist(a.pos, pos) - dist(b.pos, pos)).slice(0, 2);
     order = { kind: 'here', pos: { ...pos }, targetId: null, heroId: from.id, until: t + HOLD_TIME };

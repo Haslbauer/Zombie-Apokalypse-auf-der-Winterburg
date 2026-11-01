@@ -158,7 +158,10 @@ export class GameRenderer {
       if (h.benched) continue;
       const myTeam = state.heroes.find((x) => x.id === this.playerId)?.team;
       const enemy = !!state.pvp && myTeam !== undefined && h.team !== myTeam;
-      const view = upsert(h, () => heroView(h, def, h.id === this.playerId, this.models, enemy), lift);
+      const role = this.data.bots.heroes[h.defId]?.teamRole;
+      const roleDef = role ? this.data.economy.roles?.[role] : undefined;
+      const roleIcon = roleDef ? { icon: roleDef.icon, color: role === 'tank' ? '#9fdcff' : role === 'dmg' ? '#ffa092' : '#a9eb98' } : undefined;
+      const view = upsert(h, () => heroView(h, def, h.id === this.playerId, this.models, enemy, roleIcon), lift);
       const speed = h.alive ? view.measureSpeed(dt) : 0;
       if (!h.alive) {
         // Menschen liegen (down), Grimm spielt seine Sterbe-Animation und bleibt liegen

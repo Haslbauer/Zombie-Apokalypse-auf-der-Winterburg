@@ -615,6 +615,8 @@ export interface RolesDef {
   tank: { name: string; icon: string; description: string; damageReduction: number; threatRange: number };
   dmg: { name: string; icon: string; description: string; bossDamage: number };
   support: { name: string; icon: string; description: string; auraRadius: number; auraHeal: number; cleanseEvery: number };
+  /** Kombos: Schaden-Rolle auf betäubte/festgehaltene/schlafende Ziele, Support-Schild und -Heilung auf Tanks. */
+  combos?: { controlledBonus: number; supportOnTank: number };
 }
 
 /** Seuche: Schaden über Zeit durch Bossfähigkeiten, stapelbar; nur Supports (und Reinigen) entfernen sie. */
@@ -691,7 +693,7 @@ export type Command =
   | { heroId: number; type: 'chooseSpells'; spells: [string, string] };
 
 /** Pings für Absprachen im Team (wie in LoL): Hier, Angriff, Bin unterwegs, Hilfe, Gefahr. */
-export const PING_KINDS = ['here', 'attack', 'omw', 'help', 'danger'] as const;
+export const PING_KINDS = ['here', 'attack', 'omw', 'help', 'danger', 'heal'] as const;
 export type PingKind = (typeof PING_KINDS)[number];
 
 // ---------- Spielzustand ----------

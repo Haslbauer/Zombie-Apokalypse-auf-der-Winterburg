@@ -8,15 +8,14 @@ export const PING_STYLE: Record<PingKind, { label: string; color: string; icon: 
   omw: { label: 'Bin unterwegs', color: '#5ad16a', icon: '➜' },
   help: { label: 'Hilfe!', color: '#5aa9ff', icon: '✋' },
   danger: { label: 'Gefahr!', color: '#ffb020', icon: '⚠' },
+  heal: { label: 'Brauche Heilung!', color: '#7bd36a', icon: '✚' },
 };
 
-/** Felder des Rads: oben, rechts, unten, links. */
-const SECTORS: { kind: PingKind; dx: number; dy: number }[] = [
-  { kind: 'attack', dx: 0, dy: -1 },
-  { kind: 'omw', dx: 1, dy: 0 },
-  { kind: 'help', dx: 0, dy: 1 },
-  { kind: 'danger', dx: -1, dy: 0 },
-];
+/** Fünf Felder im Kreis (oben beginnend, im Uhrzeigersinn). */
+const SECTORS: { kind: PingKind; dx: number; dy: number }[] = (['attack', 'omw', 'heal', 'help', 'danger'] as PingKind[]).map((kind, i) => {
+  const a = -Math.PI / 2 + (i * Math.PI * 2) / 5;
+  return { kind, dx: Math.cos(a), dy: Math.sin(a) };
+});
 /** Ab so langem Halten (ms) bzw. so viel Mausweg (px) erscheint das Rad. */
 const HOLD_MS = 200;
 const DRAG_PX = 14;

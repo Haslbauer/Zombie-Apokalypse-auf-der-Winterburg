@@ -94,7 +94,7 @@ const SPELL_SOUND: Record<string, string> = {
   zerschmettern: 'smite',
   reinigen: 'cleanse',
 };
-const PING_SOUND: Record<string, string> = { here: 'pingHere', attack: 'pingAttack', danger: 'pingDanger', help: 'pingHelp', omw: 'pingOmw' };
+const PING_SOUND: Record<string, string> = { here: 'pingHere', attack: 'pingAttack', danger: 'pingDanger', help: 'pingHelp', omw: 'pingOmw', heal: 'heal' };
 /** Schadenszahlen: Treffer je Ziel zusammenfassen, höchstens MAX_DMG_TEXTS gleichzeitig. */
 const hits = new HitMerger(0.15);
 const MAX_DMG_TEXTS = 40;
