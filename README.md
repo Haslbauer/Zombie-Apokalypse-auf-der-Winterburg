@@ -152,9 +152,9 @@ Jeder Held hat eine Rolle im Team. Ohne Tank, Schaden und Support ist das Spiel 
 
 | Rolle | Helden | Wirkung |
 |---|---|---|
-| 🛡 Tank | Ragnar, Spike | nimmt 20 % weniger Schaden; Bosse und Elites in 10 m Nähe greifen ihn an statt der anderen |
-| ⚔ Schaden | Grimm, Rauchbart | 40 % mehr Schaden an Bossen und Elites |
-| ✚ Support | Hagedorn, Somnia | heilt Verbündete in 7 m Nähe ständig ein wenig und reinigt sie alle 3 s von **Seuche** |
+| 🛡 Tank | Ragnar, Spike, Kapitän Tiefe | nimmt 20 % weniger Schaden; Bosse und Elites in 10 m Nähe greifen ihn an statt der anderen |
+| ⚔ Schaden | Grimm, Rauchbart, Aurelius, Lotte | 40 % mehr Schaden an Bossen und Elites |
+| ✚ Support | Hagedorn, Somnia, Imker | heilt Verbündete in 7 m Nähe ständig ein wenig und reinigt sie alle 3 s von **Seuche** |
 
 **Seuche:** Bossfähigkeiten hinterlassen einen stapelbaren Schaden über Zeit, der nur abklingt, wenn sie eine Weile nicht mehr trifft. Ein Support in der Nähe (oder der Zauber Reinigen) entfernt sie.
 
@@ -271,6 +271,7 @@ Gold gibt es für Kills und jede überstandene Welle, in der man mitgekämpft ha
 | Imker | Support (Bienen) | Honigtopf, Smoker, Wachbienen, Schwarm |
 | Aurelius (Goldschmied) | Schaden, Fernkampf | Lötflamme, Blattgold, Schmelztiegel, Goldrausch |
 | Lotte | Schaden, Beschwörerin | Trollruf, Brückentroll, Wutanfall, Trollfamilie |
+| Kapitän Tiefe (Taucher) | Tank | Harpune, Luftblase, Tauchgang, Flutwelle |
 
 **Imker** (Support):
 - **Angriff:** ein kleiner Bienenschwarm (9 m). Jeder Treffer hinterlässt einen **Stich**, bis zu 5. Die Stiche machen 4 s lang Schaden über Zeit.
@@ -298,7 +299,15 @@ Gold gibt es für Kills und jede überstandene Welle, in der man mitgekämpft ha
 
 Trolle kämpfen selbst; ihr Schaden zählt für Lotte. Zombies greifen Trolle an, die ihnen im Weg stehen.
 
-Die neuen Helden sind vorerst umgebaute vorhandene Figuren. Der Imker hat einen hellen Anzug mit Imkerhut, Schleier und Smoker. Aurelius trägt runde Brille, Lederschürze und eine Lupe am Gürtel. Lotte ist eine verkleinerte Figur im gelben Mantel mit Zöpfen und Teddy. Die Trolle sind grün eingefärbte Kürbis-Hulks.
+**Kapitän Tiefe** (Taucher, Tank):
+- **Angriff:** Nahkampf mit Harpunenstoß bzw. Bleistiefel (3 m).
+- **Passiv „Druckanzug“:** 15 % weniger Schaden, kann nicht zurückgestoßen werden, ist dafür langsamer.
+- **Harpune:** zieht den ersten getroffenen Zombie heran und betäubt ihn kurz. Bosse werden nur betäubt.
+- **Luftblase:** Schild für ihn und Mitspieler in 5 m.
+- **Tauchgang:** 0,8 s unverwundbar abtauchen, dann an der Zielstelle auftauchen, die Zombies dort betäuben und treffen.
+- **Ultimate „Flutwelle“:** breite Welle in eine Richtung; Schaden, spült Zombies 5–9 m zurück und verlangsamt sie.
+
+Die neuen Helden sind vorerst umgebaute vorhandene Figuren. Der Imker hat einen hellen Anzug mit Imkerhut, Schleier und Smoker. Aurelius trägt runde Brille, Lederschürze und eine Lupe am Gürtel. Lotte ist eine verkleinerte Figur im gelben Mantel mit Zöpfen und Teddy. Die Trolle sind grün eingefärbte Kürbis-Hulks. Kapitän Tiefe trägt einen schweren Anzug, einen Messinghelm mit Bullauge, eine Sauerstoffflasche und eine Harpune.
 Die Figur ist vorerst eine umgefärbte vorhandene Figur mit Imkerhut, Schleier und Smoker. Das Porträt ist aus dem Modell gerendert (`portrait.html?hero=imker` im Entwicklungsserver, Screenshot per Playwright).
 
 Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.

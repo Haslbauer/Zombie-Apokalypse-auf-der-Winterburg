@@ -122,7 +122,8 @@ export function heroCC(
 ): void {
   if (!h.alive || hasBuff(h, 'unstoppable') || hasBuff(h, 'cleansed')) return;
   addBuff(ctx, h, kind, 1, duration, `cc-${kind}`);
-  if (push) {
+  // Druckanzug (Taucher): kann nicht zurückgestoßen werden
+  if (push && h.defId !== 'taucher') {
     const dx = h.pos.x - push.from.x;
     const dy = h.pos.y - push.from.y;
     const d = Math.hypot(dx, dy) || 1;

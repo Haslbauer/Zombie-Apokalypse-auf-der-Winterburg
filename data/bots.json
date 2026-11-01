@@ -398,6 +398,45 @@
           "min": 4
         }
       ]
+    },
+    "taucher": {
+      "role": "melee",
+      "teamRole": "tank",
+      "skillOrder": [
+        0,
+        1,
+        2
+      ],
+      "buy": [
+        "heiltrank",
+        "lederjacke",
+        "kettenhemd",
+        "lebensamulett",
+        "arbeitshandschuhe",
+        "kuechenwecker",
+        "ritterruestung",
+        "lebensamulett",
+        "taschenuhr",
+        "grossvateruhr"
+      ],
+      "abilities": [
+        {
+          "use": "line",
+          "min": 1
+        },
+        {
+          "use": "buff",
+          "min": 3
+        },
+        {
+          "use": "engage",
+          "min": 2
+        },
+        {
+          "use": "line",
+          "min": 4
+        }
+      ]
     }
   }
 }

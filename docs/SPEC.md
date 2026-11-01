@@ -170,13 +170,14 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - E Powernap: kurz stillstehen, starke Heilung, danach Tempobonus
 - R Gute Nacht: großes Gebiet, alle Zombies schlafen ein
 
-### Taucher
-- Rolle: Nahkampf-Tank, steckt Schaden ein und hält Zombies von den Mitspielern fern. Optik: Tauchanzug, Maske, Sauerstoffflasche auf dem Rücken, Harpune. Spielgefühl: Haken-Tank (Nautilus in LoL).
-- Passiv Luftvorrat: Die Sauerstoffflasche gibt einen Schild, der sich außerhalb des Kampfes wieder auffüllt
-- Q Harpune: Haken, der den ersten getroffenen Zombie heranzieht und kurz betäubt
-- W Druckluft: Schild um sich herum, Zombies in der Nähe werden zurückgestoßen
-- E Strömung: Wasserwelle im Kegel, Schaden und Verlangsamung
-- R Tiefenrausch: 4 s lang greifen alle Zombies in der Nähe nur noch ihn an, er erleidet weniger Schaden und ist immun gegen Rückstoß
+### Taucher Kapitän Tiefe (umgesetzt v2.4, Tank)
+- Optik: schwerer Anzug, alter Messing-Taucherhelm mit Bullauge, Sauerstoffflasche auf dem Rücken (aus dem Entwurf), Harpune.
+- Angriff: Nahkampf (Harpunenstoß/Bleistiefel), 3 m, Bogen 100°.
+- Passiv Druckanzug: 15 % weniger Schaden, kein Rückstoß, langsamer (4,6 m/s).
+- 1 Harpune (Linie 9 m): Schaden, zieht den ersten Zombie heran (nicht Bosse/Neutrale) und betäubt 0,6 s (aus dem Entwurf).
+- 2 Luftblase (5 m): Schild 100–260 für 4 s auf ihn und Mitspieler.
+- 3 Tauchgang (7 m): 0,8 s unverwundbar, unsichtbar und ohne Laufen; taucht am Ziel auf, Schaden und Betäubung 1–1,6 s im Umkreis 2,5 m.
+- 4 Flutwelle (Linie 12 m, 4 m breit): Schaden, spült 5/7/9 m zurück, verlangsamt 3 s.
 
 ### Imker (umgesetzt v2.4, Support)
 - Optik: heller Anzug, Imkerhut mit Schleier, Smoker in der Hand, ein paar Bienen schwirren um ihn (aus dem früheren Entwurf).

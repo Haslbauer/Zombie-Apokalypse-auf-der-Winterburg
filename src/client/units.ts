@@ -31,7 +31,7 @@ function iconMaterial(text: string, color: string): THREE.SpriteMaterial {
   return material;
 }
 
-type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp' | 'beehat' | 'smoker' | 'glasses' | 'apron' | 'loupe' | 'pigtails' | 'teddy';
+type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp' | 'beehat' | 'smoker' | 'glasses' | 'apron' | 'loupe' | 'pigtails' | 'teddy' | 'divehelm' | 'airtank' | 'harpoongun';
 
 /**
  * Aussehen einer animierten Figur (public/models/<model>.glb). move: Lauf-Clip,
@@ -125,6 +125,8 @@ const HERO_LOOKS: Record<string, ModelLook> = {
   pirat: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.5, props: ['hook'] },
   // Lotte: kleines Mädchen (verkleinerte Figur) im gelben Regenmantel, Zöpfe, Teddy im Arm
   lotte: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 4.6, scale: 0.72, tint: [1, 1, 1], plain: 0xf0c020, attacks: ['attack'], attackStart: 0.3, props: ['pigtails', 'teddy'] },
+  // Taucher Kapitän Tiefe: schwerer Anzug (einfarbig), Messinghelm, Sauerstoffflasche, Harpune
+  taucher: { model: 'rotschopf', move: 'run', idle: 'idle', refSpeed: 4.8, scale: 1.08, tint: [1, 1, 1], plain: 0x34423c, attacks: ['attack'], attackStart: 0.25, props: ['divehelm', 'airtank', 'harpoongun'] },
   // Goldschmied Aurelius: umgebaute Figur mit runder Brille, Lederschürze und Lupe am Gürtel
   goldschmied: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 1.0, tint: [0.85, 0.8, 0.72], attacks: ['attack'], attackStart: 0.3, props: ['glasses', 'apron', 'loupe'] },
   // Imker: umgebaute Figur (heller Anzug), Imkerhut mit Schleier, Smoker in der Hand
@@ -345,9 +347,9 @@ export class UnitView {
     // Requisiten in Metern: Maßstab des Knochens herausrechnen (Mixamo und Quaternius unterscheiden sich)
     inst.root.updateMatrixWorld(true);
     for (const prop of look.props ?? []) {
-      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat' || prop === 'beehat' || prop === 'glasses' || prop === 'pigtails';
+      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat' || prop === 'beehat' || prop === 'glasses' || prop === 'pigtails' || prop === 'divehelm';
       // Am Körper: Schürze an der Brust, Lupe am Gürtel
-      const body = prop === 'apron' ? 'mixamorigSpine1' : prop === 'loupe' ? 'mixamorigHips' : null;
+      const body = prop === 'apron' || prop === 'airtank' ? 'mixamorigSpine1' : prop === 'loupe' ? 'mixamorigHips' : null;
       const bone = inst.root.getObjectByName(body ?? (head ? (look.headBone ?? 'mixamorigHead') : (look.handBone ?? 'mixamorigRightHand')));
       if (!bone) continue;
       const mesh = this.propMesh(prop);
@@ -418,6 +420,26 @@ export class UnitView {
         g.add(veil);
         break;
       }
+      case 'divehelm': {
+        // Messing-Taucherhelm mit Bullauge
+        add(new THREE.SphereGeometry(0.24, 16, 12), 0xa07a2a, 0, 0.08, 0.02, 0x1a1000);
+        const port = new THREE.Mesh(new THREE.CircleGeometry(0.1, 16), new THREE.MeshBasicMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.6 }));
+        port.position.set(0, 0.09, 0.245);
+        g.add(port);
+        add(new THREE.TorusGeometry(0.105, 0.02, 6, 16), 0x8a6420, 0, 0.09, 0.245);
+        add(new THREE.CylinderGeometry(0.2, 0.24, 0.08, 14), 0x8a6420, 0, -0.16, 0.02);
+        break;
+      }
+      case 'airtank':
+        // Sauerstoffflasche auf dem Rücken
+        add(new THREE.CylinderGeometry(0.1, 0.1, 0.5, 12), 0x8a8f92, 0, 0.0, -0.2);
+        add(new THREE.CylinderGeometry(0.03, 0.03, 0.08, 8), 0x5a5f62, 0, 0.29, -0.2);
+        break;
+      case 'harpoongun':
+        // Harpune: Schaft mit Spitze
+        add(new THREE.CylinderGeometry(0.025, 0.025, 0.9, 6), 0x6b4a2b, 0, 0.3, 0);
+        add(new THREE.ConeGeometry(0.05, 0.16, 6), 0xc8c8c8, 0, 0.82, 0);
+        break;
       case 'pigtails':
         // Zwei Zöpfe mit roten Schleifen
         for (const x of [-0.13, 0.13]) {

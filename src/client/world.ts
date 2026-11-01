@@ -72,6 +72,14 @@ function buildProjectile(look: string): THREE.Group {
       g.add(glow(0x9fe3ff, 0.9), glow(0xffffff, 0.35), trail(0x7fb8ff, 1.4, 0.3));
       break;
     }
+    case 'harpoon': {
+      // Harpunenspeer
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.9, 5).rotateZ(Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x6b4a2b }));
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.18, 6).rotateZ(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xd8d8d0 }));
+      tip.position.x = 0.5;
+      g.add(shaft, tip, trail(0x9fd8ff, 1.2, 0.1));
+      break;
+    }
     case 'pebble': {
       // Kiesel aus der Steinschleuder
       g.add(new THREE.Mesh(new THREE.DodecahedronGeometry(0.09, 0), new THREE.MeshLambertMaterial({ color: 0x9a968a })), trail(0xd8d4c8, 0.7, 0.08));

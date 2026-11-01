@@ -8,7 +8,7 @@ import { roleDamageFactor } from './roles';
 import { applyTeamBuff } from './bossabilities';
 import { avatarHero, pvpKill } from './pvp';
 import { noteDeath, noteKill, statsOf } from './stats';
-import { absorbWithShield, buffSum } from './status';
+import { absorbWithShield, buffSum, hasBuff } from './status';
 import { DT, type Hero, type Projectile, type Zombie } from './types';
 import { dist, type Vec2 } from './vec';
 
@@ -47,6 +47,7 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
 
   if ('alive' in target) {
     target.lastCombatAt = state.time;
+    if (hasBuff(target, 'invulnerable')) return 0;
     const reduction = Math.min(
       0.8,
       buffSum(target, 'damageReduction') + itemStats(ctx, target).damageReduction + (kitOf(target.defId).damageReduction?.(ctx, target) ?? 0),

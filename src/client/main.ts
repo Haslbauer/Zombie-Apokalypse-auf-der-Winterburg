@@ -77,7 +77,7 @@ hud.onCountdownTick = (left) => {
 /** Bosse und Elites (für die Musik). */
 const BOSS_DEFS = new Set(gameData.zombies.filter((z) => z.rank === 'elite' || z.rank === 'boss').map((z) => z.id));
 /** Klang des Fernkampfgeschosses nach Aussehen. */
-const SHOT_SOUND: Record<string, string> = { stone: 'bow', volley: 'throw', hook: 'hook', star: 'magic', swarm: 'sting', nugget: 'throw', pebble: 'throw' };
+const SHOT_SOUND: Record<string, string> = { stone: 'bow', volley: 'throw', hook: 'hook', star: 'magic', swarm: 'sting', nugget: 'throw', pebble: 'throw', harpoon: 'hook' };
 /** Klang der Beschwörerzauber. */
 const SPELL_SOUND: Record<string, string> = {
   blitz: 'blitz',
@@ -399,6 +399,10 @@ const EFFECT_COLORS: Record<string, number> = {
   'rage-shield': 0x7fd1ff,
   'rage-heal': 0x7bd36a,
   honey: 0xf2b230,
+  bubble: 0x9fd8ff,
+  dive: 0x3b8fbf,
+  surface: 0x7fd1ff,
+  tidalwave: 0x3b9fdf,
   trollcall: 0x9be38a,
   bridgetroll: 0x7fbf6a,
   trollrage: 0xff6a3d,

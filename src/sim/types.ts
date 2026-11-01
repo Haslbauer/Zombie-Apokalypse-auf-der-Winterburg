@@ -686,7 +686,9 @@ export type BuffKind =
   /** Reinigen: kurz immun gegen Festhalten und Betäubung. */
   | 'cleansed'
   /** Wachbienen (Imker): jeder Zombie, der angreift, wird gestochen (value = Schaden). */
-  | 'thorns';
+  | 'thorns'
+  /** Unverwundbar (Tauchgang des Tauchers). */
+  | 'invulnerable';
 
 /** Zeitlich begrenzte Wirkung auf einem Helden. value: Faktor, Schildpunkte oder Heilung pro Sekunde. */
 export interface Buff {
