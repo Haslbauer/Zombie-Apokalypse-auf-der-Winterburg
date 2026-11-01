@@ -130,6 +130,21 @@ Beim Angriff schlägt die Waffe nach vorn (Nahkampf) bzw. ruckt hoch (Fernkampf)
 Alle Geräusche und die Musik entstehen im Browser (Web-Audio, `src/client/audio.ts`): Oszillatoren, Rauschen, Filter und Hüllkurven, jedes Mal leicht anders. Es gibt keine Tondateien und damit keine Lizenzfragen. Der Ton startet beim ersten Klick bzw. Tastendruck, weil Browser das so verlangen.
 
 - **Kampf:** Hiebe, Bogen, Wurf, Enterhaken, Magie, Treffer, Zombie-Bisse, Stöhnen und Todesröcheln, Schreie der Elites, Sprung und Paketwurf.
+- **Helden:** Jeder Held klingt beim Angriff anders:
+
+  | Held | Klang |
+  |---|---|
+  | Ragnar | Hammerschlag mit Nachklingen |
+  | Grimm | Knurren und Zuschnappen |
+  | Hagedorn | Sehne der Schleuder |
+  | Spike | Ball-Plopp |
+  | Rauchbart | rasselnde Kette |
+  | Somnia | Glöckchen |
+  | Imker | Summen |
+  | Aurelius | Klirren von Gold |
+  | Lotte | Flitschen der Schleuder |
+  | Kapitän Tiefe | Blubbern mit metallischem Klong |
+
 - **Spielablauf:** Horn zum Wellenstart, Akkord für „Welle geschafft“, Alarm bei Durchbruch, Fanfare für den Postboten, Boss erlegt, Sieg und Niederlage.
 - **Oberfläche:** Gold, Level-up, Shop, Pings (je Art ein Ton), Countdown in der Lobby.
 - **Zauber:** je Beschwörerzauber ein eigener Klang.

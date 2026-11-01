@@ -22,7 +22,7 @@ import { Minimap } from './minimap';
 import { PING_STYLE } from './pingwheel';
 import { LocalSession, RemoteSession, type Session } from './session';
 import { ShopView } from './shop';
-import { sound } from './audio';
+import { HERO_ATTACK_SOUND, sound } from './audio';
 import { coinCount } from './buffrings';
 import { HitMerger } from './hpticks';
 
@@ -581,7 +581,7 @@ function handleEvents(state: GameState): void {
         const h = state.heroes.find((x) => x.id === e.id);
         if (h) {
           effects.swing(h.pos, e.facing, h.radius + e.range, e.arc);
-          sound.play('swing', h.pos, e.id === heroId ? 1 : 0.7);
+          sound.play(HERO_ATTACK_SOUND[h.defId] ?? 'swing', h.pos, e.id === heroId ? 1 : 0.7);
         }
         renderer.heroAction(e.id, 'attack', attackTime(state, e.id));
         break;
@@ -594,7 +594,7 @@ function handleEvents(state: GameState): void {
           const look = gameData.heroes.find((d) => d.id === h.defId)?.attack.look ?? '';
           const color = ({ stone: 0xc8f0a0, hook: 0xd8c8a8, star: 0x9fe3ff, volley: 0xff9a4a, swarm: 0xffc83d, nugget: 0xffd166 } as Record<string, number>)[look] ?? 0xffe066;
           effects.flash({ x: h.pos.x + Math.cos(h.facing) * 0.7, y: h.pos.y + Math.sin(h.facing) * 0.7 }, 1.3, color);
-          sound.play(SHOT_SOUND[look] ?? 'bow', h.pos, e.id === heroId ? 1 : 0.7);
+          sound.play(HERO_ATTACK_SOUND[h.defId] ?? SHOT_SOUND[look] ?? 'bow', h.pos, e.id === heroId ? 1 : 0.7);
         }
         break;
       }

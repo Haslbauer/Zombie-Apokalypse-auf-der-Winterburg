@@ -175,3 +175,13 @@ describe('Audio-Motor', () => {
     expect(created).toBe(before);
   });
 });
+
+describe('Klänge je Held', () => {
+  it('jeder Held hat einen eigenen, vorhandenen Angriffsklang', async () => {
+    const { HERO_ATTACK_SOUND } = await import('../../src/client/audio');
+    const { testData } = await import('../sim/helpers');
+    const heroes = testData().heroes.map((h) => h.id);
+    for (const id of heroes) expect(SOUNDS[HERO_ATTACK_SOUND[id]], id).toBeDefined();
+    expect(new Set(heroes.map((id) => HERO_ATTACK_SOUND[id])).size).toBe(heroes.length);
+  });
+});
