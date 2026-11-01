@@ -144,7 +144,7 @@ const HERO_LOOKS: Record<string, ModelLook> = {
   // Lotte: kleines Mädchen (verkleinerte Figur) im gelben Regenmantel, Zöpfe, Teddy im Arm
   lotte: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 4.6, scale: 0.72, tint: [1, 1, 1], recolor: { color: 0xf0c020, flat: 0.4 }, attacks: ['attack'], attackStart: 0.3, props: ['pigtails', 'teddy'] },
   // Taucher Kapitän Tiefe: schwerer Anzug (einfarbig), Messinghelm, Sauerstoffflasche, Harpune
-  taucher: { model: 'rotschopf', move: 'run', idle: 'idle', refSpeed: 4.8, scale: 1.08, tint: [1, 1, 1], recolor: { color: 0x3a4a40, keepSkin: false }, materialColors: { MaleBruteA_Shoes6: 0x1e1e1c }, attacks: ['attack'], attackStart: 0.25, props: ['divehelm', 'airtank', 'harpoongun'] },
+  taucher: { model: 'taucher', move: 'run', idle: 'idle', refSpeed: 4.8, scale: 1.08, tint: [1, 1, 1], recolor: { color: 0x3a4a40, keepSkin: false }, materialColors: { MaleBruteA_Shoes6: 0x1e1e1c }, attacks: ['attack', 'attack2'], attackStart: 0.25, props: ['divehelm', 'airtank', 'harpoongun'] },
   // Goldschmied Aurelius: umgebaute Figur mit runder Brille, Lederschürze und Lupe am Gürtel
   goldschmied: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 1.0, tint: [0.85, 0.8, 0.72], attacks: ['attack'], attackStart: 0.3, props: ['glasses', 'apron', 'loupe'] },
   // Imker: umgebaute Figur (heller Anzug), Imkerhut mit Schleier, Smoker in der Hand
@@ -152,11 +152,11 @@ const HERO_LOOKS: Record<string, ModelLook> = {
   // Glöcknerin Hedwig: umgebaute Figur (violettes Gewand), Haube, Schultertuch, Handglocke
   gloecknerin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.1, scale: 0.96, tint: [1, 1, 1], recolor: { color: 0x5a4a86 }, attacks: ['attack'], attackStart: 0.3, props: ['bonnet', 'shawl', 'handbell'] },
   // Förster Bruno: umgebaute Figur (grüne Jacke), Filzhut mit Feder, Axt
-  foerster: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.0, scale: 1.1, tint: [1, 1, 1], recolor: { color: 0x55692f }, attacks: ['attack'], attackStart: 0.35, props: ['felthat', 'axe'] },
+  foerster: { model: 'foerster', move: 'run', idle: 'idle', refSpeed: 5.0, scale: 1.1, tint: [1, 1, 1], recolor: { color: 0x55692f }, attacks: ['attack'], attackStart: 0.35, props: ['felthat', 'axe'] },
   // Schornsteinfeger Kasimir: umgebaute Figur (schwarzer Anzug), Zylinder, Kaminbesen
-  schornsteinfeger: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.4, scale: 1.0, tint: [1, 1, 1], recolor: { color: 0x2c2c32, strength: 0.9 }, attacks: ['attack'], attackStart: 0.42, props: ['tophat', 'broom'] },
-  // Bäckerin Frieda: umgebaute Figur ohne Kapuze (helles Kleid), Kochmütze, Schürze, Nudelholz
-  baeckerin: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 1.0, tint: [1, 1, 1], recolor: { color: 0xece2cc, flat: 0.6 }, attacks: ['attack'], attackStart: 0.3, props: ['chefhat', 'apron', 'rollingpin'] },
+  schornsteinfeger: { model: 'schornsteinfeger', move: 'run', idle: 'idle', refSpeed: 5.4, scale: 1.0, tint: [1, 1, 1], recolor: { color: 0x2c2c32, strength: 0.9 }, attacks: ['attack'], attackStart: 0.42, props: ['tophat', 'broom'] },
+  // Bäckerin Frieda: eigene Figur (Peasant Girl, Mixamo) mit Kochmütze, Schürze und Nudelholz
+  baeckerin: { model: 'baeckerin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 1.0, tint: [1, 1, 1], attacks: ['attack', 'attack2'], attackStart: 0.3, props: ['chefhat', 'apron', 'rollingpin'], headOffset: -0.07 },
   gaertnerin: { model: 'gaertnerin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 0.98, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.4, impact: { attack: 0.78 } },
 };
 

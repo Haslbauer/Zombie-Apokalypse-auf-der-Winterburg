@@ -1,0 +1,40 @@
+{
+  "base": "figur.fbx",
+  "clips": {
+    "run": {
+      "file": "../libero/running.fbx"
+    },
+    "idle": {
+      "file": "../moves/standing-idle.fbx"
+    },
+    "attack": {
+      "file": "../gaertnerin/melee-down.fbx"
+    },
+    "attack2": {
+      "file": "../moves/melee-kick.fbx"
+    },
+    "ability1": {
+      "file": "../pirat/throw-grenade.fbx"
+    },
+    "ability2": {
+      "file": "../shared/toss-grenade.fbx"
+    },
+    "ability3": {
+      "file": "../schlaeferin/cast-spell.fbx"
+    },
+    "ability4": {
+      "file": "../rotschopf/jump-attack.fbx"
+    },
+    "use": {
+      "file": "../shared/pill.fbx"
+    },
+    "down": {
+      "file": "../shared/laying.fbx"
+    }
+  },
+  "inPlace": true,
+  "textureSize": 1024,
+  "simplifyRatio": 0.35,
+  "normalSize": 512,
+  "output": "public/models/baeckerin.glb"
+}

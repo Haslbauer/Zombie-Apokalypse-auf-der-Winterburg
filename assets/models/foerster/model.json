@@ -1,0 +1,37 @@
+{
+  "base": "../pirat/figur.fbx",
+  "clips": {
+    "run": {
+      "file": "../pirat/running.fbx"
+    },
+    "idle": {
+      "file": "../moves/standing-idle.fbx"
+    },
+    "attack": {
+      "file": "../moves/melee-horizontal.fbx"
+    },
+    "ability1": {
+      "file": "../rotschopf/turn180.fbx"
+    },
+    "ability2": {
+      "file": "../rotschopf/flex.fbx"
+    },
+    "ability3": {
+      "file": "../gaertnerin/melee-down.fbx"
+    },
+    "ability4": {
+      "file": "../rotschopf/slash.fbx"
+    },
+    "use": {
+      "file": "../shared/pill.fbx"
+    },
+    "down": {
+      "file": "../shared/laying.fbx"
+    }
+  },
+  "inPlace": true,
+  "textureSize": 1024,
+  "simplifyRatio": 0.35,
+  "normalSize": 512,
+  "output": "public/models/foerster.glb"
+}

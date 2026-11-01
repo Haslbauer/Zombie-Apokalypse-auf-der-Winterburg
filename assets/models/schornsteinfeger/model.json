@@ -1,0 +1,37 @@
+{
+  "base": "../libero/figur.fbx",
+  "clips": {
+    "run": {
+      "file": "../libero/running.fbx"
+    },
+    "idle": {
+      "file": "../moves/standing-idle.fbx"
+    },
+    "attack": {
+      "file": "../libero/goalie-throw.fbx"
+    },
+    "ability1": {
+      "file": "../shared/toss-grenade.fbx"
+    },
+    "ability2": {
+      "file": "../moves/standing-jump.fbx"
+    },
+    "ability3": {
+      "file": "../moves/melee-360.fbx"
+    },
+    "ability4": {
+      "file": "../libero/throw-in.fbx"
+    },
+    "use": {
+      "file": "../shared/pill.fbx"
+    },
+    "down": {
+      "file": "../shared/laying.fbx"
+    }
+  },
+  "inPlace": true,
+  "textureSize": 1024,
+  "simplifyRatio": 0.35,
+  "normalSize": 512,
+  "output": "public/models/schornsteinfeger.glb"
+}

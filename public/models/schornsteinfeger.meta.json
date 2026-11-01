@@ -1,0 +1,9 @@
+{
+ "impacts": {
+  "attack": 0.44,
+  "ability1": 0.56,
+  "ability2": 0.26,
+  "ability3": 0.34,
+  "ability4": 0.56
+ }
+}

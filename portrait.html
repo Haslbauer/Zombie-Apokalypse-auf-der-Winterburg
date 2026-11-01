@@ -22,7 +22,7 @@ scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x2a2a1a, 1.4));
 const key = new THREE.DirectionalLight(0xffe2b0, 2.4); key.position.set(2, 3, 3); scene.add(key);
 const rim = new THREE.DirectionalLight(0x9fc9ff, 1.6); rim.position.set(-3, 2, -2); scene.add(rim);
 const models = new Map();
-const looks = { imker: 'libero', goldschmied: 'pirat', lotte: 'schlaeferin', taucher: 'rotschopf', gloecknerin: 'schlaeferin', foerster: 'pirat', schornsteinfeger: 'libero', baeckerin: 'libero' };
+const looks = { imker: 'libero', goldschmied: 'pirat', lotte: 'schlaeferin', taucher: 'taucher', gloecknerin: 'schlaeferin', foerster: 'foerster', schornsteinfeger: 'schornsteinfeger', baeckerin: 'baeckerin' };
 const modelName = looks[id] ?? id;
 models.set(modelName, await loadRiggedModel(`/models/${modelName}.glb`, 1.8));
 const hero = { id: 1, defId: id, pos: { x: 0, y: 0 }, radius: def.radius, facing: Math.PI / 2, buffs: [], hp: 1, maxHp: 1 };
@@ -30,7 +30,7 @@ const view = heroView(hero, def, false, models);
 view.bar.visible = false; view.ring.visible = false;
 view.group.traverse((o) => { if (o.isLight || o.name === 'glow') o.visible = false; });
 // Kamera je Held (Drehung der Figur, Abstand/Höhe k), damit Kopf und Waffe im Bild sind; URL-Werte gehen vor
-const PORTRAIT_VIEW = { taucher: { rot: 0.55, k: 1.55 }, goldschmied: { rot: 0.5, k: 0.95 }, lotte: { rot: 0.5, k: 0.78 }, foerster: { rot: -0.2, k: 1.25 }, schornsteinfeger: { rot: 0.15, k: 1.15 }, baeckerin: { rot: 0.15, k: 1.12 }, gloecknerin: { rot: 0.4, k: 1.05 }, imker: { rot: 0.35, k: 1.05 } };
+const PORTRAIT_VIEW = { taucher: { rot: 0.5, k: 1.15 }, goldschmied: { rot: 0.5, k: 0.95 }, lotte: { rot: 0.5, k: 0.78 }, foerster: { rot: 0.3, k: 1.05 }, schornsteinfeger: { rot: 0.3, k: 1.0 }, baeckerin: { rot: 0.35, k: 1.0 }, gloecknerin: { rot: 0.4, k: 1.05 }, imker: { rot: 0.35, k: 1.05 } };
 const view0 = PORTRAIT_VIEW[id] ?? {};
 const q = new URLSearchParams(location.search);
 const rot = Number(q.get('rot') ?? view0.rot ?? 0.4);

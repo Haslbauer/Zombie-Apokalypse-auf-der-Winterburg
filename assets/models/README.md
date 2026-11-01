@@ -71,6 +71,32 @@ Alle fünf Menschen-Helden haben einen eigenen Ordner, damit jeder später eine 
 
 Die Animationsdateien stammen noch vom Mixamo-Mocap-Anzug; die Figur selbst kommt aus `figur.fbx` (siehe oben). Für eine andere Figur genügt es, `figur.fbx` zu ersetzen und `npm run models <ordner>` aufzurufen.
 
+## Eigene Modelle der neueren Helden (v2.6)
+
+Diese Helden haben jetzt eigene GLB-Dateien mit passenden Animationen. Die Figur kommt aus einem vorhandenen Ordner (`base: ../<ordner>/figur.fbx`) bzw. für Frieda aus Mixamo:
+
+| Ordner | Figur | Angriff | Fähigkeiten 1–4 |
+|---|---|---|---|
+| foerster (Bruno) | ../pirat/figur.fbx | moves/melee-horizontal (Axthieb) | rotschopf/turn180, rotschopf/flex, gaertnerin/melee-down, rotschopf/slash |
+| baeckerin (Frieda) | **Peasant Girl** (Mixamo) | gaertnerin/melee-down, dazu moves/melee-kick | pirat/throw-grenade, shared/toss-grenade, schlaeferin/cast-spell, rotschopf/jump-attack |
+| schornsteinfeger (Kasimir) | ../libero/figur.fbx | libero/goalie-throw | shared/toss-grenade, moves/standing-jump, moves/melee-360, libero/throw-in |
+| taucher (Kapitän Tiefe) | ../rotschopf/figur.fbx | rotschopf/slash, dazu moves/melee-kick (Bleistiefel) | pirat/throw-grenade, rotschopf/casting, moves/standing-jump, rotschopf/flex |
+
+Alle vier stehen mit `moves/standing-idle` (echtes Stehen statt Standbild).
+
+## moves (gemeinsame Mixamo-Animationen, v2.6)
+
+| Datei | Mixamo | Verwendung |
+|---|---|---|
+| standing-idle | Standing Idle | Stehen (Bruno, Frieda, Kasimir, Tiefe) |
+| melee-horizontal | Standing Melee Attack Horizontal | Brunos Axthieb |
+| melee-kick | Standing Melee Attack Kick Ver. 1 | zweiter Angriff von Frieda und Tiefe |
+| melee-360 | Standing Melee Attack 360 High | Kasimirs Besenwirbel |
+| standing-jump | Standing Jump | Kaminsprung, Tauchgang |
+| react-gut, react-left, react-right | Standing React Large … | noch ungenutzt (Treffer-Reaktion) |
+| walk-back, run-back, walk-left, walk-right | Standing Walk/Run … | noch ungenutzt (Laufen in Zielrichtung) |
+| idle-looking | Standing Idle Looking Ver. 1 | noch ungenutzt (Umschauen) |
+
 ## grimm, rat, wasp (Quaternius)
 
 | Modell | Clips | Verwendung |
