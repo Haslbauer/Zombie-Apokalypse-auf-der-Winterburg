@@ -1675,3 +1675,32 @@ html, body {
 .hud-daily-best { margin: 10px auto; border-collapse: collapse; min-width: 260px; }
 .hud-daily-best caption { font-weight: 700; color: #ffd166; margin-bottom: 4px; }
 .hud-daily-best td { padding: 3px 10px; text-align: left; }
+
+/* Touch-Steuerung */
+.touch-controls { position: fixed; inset: 0; pointer-events: none; z-index: 30; touch-action: none; }
+.touch-stick { position: absolute; bottom: 150px; width: 132px; height: 132px; border-radius: 50%; background: rgba(255, 255, 255, 0.08); border: 2px solid rgba(255, 255, 255, 0.25); pointer-events: auto; touch-action: none; }
+.touch-stick.active { background: rgba(255, 255, 255, 0.16); }
+.touch-stick-left { left: 28px; }
+.touch-stick-right { right: 28px; border-color: rgba(255, 120, 90, 0.5); }
+.touch-knob { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; background: rgba(255, 255, 255, 0.45); transition: transform 0.05s; }
+.touch-stick-right .touch-knob { background: rgba(255, 140, 110, 0.6); }
+.touch-buttons { position: absolute; right: 28px; bottom: 150px; width: 132px; height: 132px; pointer-events: none; }
+.touch-btn { pointer-events: auto; touch-action: none; border-radius: 50%; border: 2px solid rgba(255, 209, 102, 0.7); background: rgba(20, 28, 40, 0.75); color: #ffd166; font-weight: 700; font-size: 16px; width: 46px; height: 46px; position: absolute; }
+.touch-a1 { left: -64px; top: 86px; }
+.touch-a2 { left: -70px; top: 30px; }
+.touch-a3 { left: -48px; top: -24px; }
+.touch-a4 { left: 6px; top: -60px; }
+.touch-f { left: 62px; top: -60px; width: 40px; height: 40px; font-size: 14px; color: #9fe3ff; border-color: rgba(159, 227, 255, 0.6); }
+.touch-g { left: 100px; top: -20px; width: 40px; height: 40px; font-size: 14px; color: #9fe3ff; border-color: rgba(159, 227, 255, 0.6); }
+.touch-top { position: absolute; right: 12px; top: 120px; display: flex; flex-direction: column; gap: 8px; }
+.touch-small { position: static; width: 42px; height: 42px; font-size: 18px; }
+/* Touch-Geräte: Sticks unten an den Seiten, Minimap oben rechts, keine Tastenhilfe */
+body.touch { overflow: hidden; }
+body.touch .hud-help { display: none; }
+body.touch .touch-stick { bottom: 22px; }
+body.touch .touch-buttons { bottom: 22px; }
+body.touch .hud-minimap { top: 56px !important; bottom: auto !important; right: 8px !important; width: 120px !important; height: 120px !important; }
+body.touch .touch-top { top: 12px; left: 12px; right: auto; flex-direction: row; }
+html:has(body.touch) { overflow: hidden; }
+body.touch .hud-top { gap: 10px; padding: 4px 10px; font-size: 12px; max-width: calc(100vw - 24px); flex-wrap: wrap; justify-content: center; white-space: normal; }
+body.touch .hud-wave { font-size: 16px; }

@@ -24,6 +24,7 @@ import { LocalSession, RemoteSession, type Session } from './session';
 import { ShopView } from './shop';
 import { HERO_ATTACK_SOUND, sound } from './audio';
 import { chosenLantern, recordResult } from './unlocks';
+import { TouchControls, wantsTouch } from './touch';
 import { dailySetup, type DailySetup, loadDaily, recordDaily } from './daily';
 import { coinCount } from './buffrings';
 import { HitMerger } from './hpticks';
@@ -935,6 +936,8 @@ renderer.renderer.setAnimationLoop((now) => {
 
   flushDamageNumbers();
   effects.update(dt);
+  // Touch-Sticks nur im laufenden Spiel (nicht in Menüs, Shop oder nach Spielende)
+  if (input.touch) input.touch.visible = !!session && !!myHero() && !spectate && !session.state.gameOver && !shop.open && !hud.menuOpen;
   hud.updateLobbyCountdown();
   quality.frame(dt);
   hud.setPerf(quality.showPerf, quality.fps, QUALITY_LABELS[quality.level], session instanceof RemoteSession ? session.rtt : null);
@@ -970,6 +973,27 @@ for (const [name, height] of Object.entries(MODELS)) {
 }
 
 input.onStartWave = () => cmd({ type: 'startWave' });
+
+// Touch-Steuerung (Handy, Tablet; ?touch erzwingt sie): Sticks und Knöpfe
+if (wantsTouch(params)) {
+  const touch = new TouchControls(document.body);
+  input.touch = touch;
+  touch.origin = () => {
+    const h = myHero();
+    const def = h && gameData.heroes.find((d) => d.id === h.defId);
+    return h && def ? { pos: renderer.unitPosition(heroId) ?? h.pos, range: def.attack.range } : null;
+  };
+  touch.onCast = (slot) => input.onCast(slot);
+  touch.onSpell = (slot) => input.onSpell(slot);
+  touch.onShop = () => input.onShop();
+  touch.onStartWave = () => input.onStartWave();
+  touch.onPing = () => {
+    const at = touch.aim();
+    if (at) input.onPing('here', at);
+  };
+  touch.visible = false;
+  document.body.classList.add('touch');
+}
 input.onMute = () => {
   sound.toggleMute();
   hud.message(sound.settings.muted ? 'Ton aus' : 'Ton an');

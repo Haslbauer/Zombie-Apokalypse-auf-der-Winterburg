@@ -106,6 +106,13 @@ Beim Entwickeln (`npm run dev`) leitet Vite den Mehrspieler an einen laufenden `
 | Griff ⠿ an der Skillleiste | Leiste verschieben (Doppelklick: zurück), „−“/„+“ ändern die Größe; Größe und Deckkraft auch im Esc-Menü |
 | Esc | Pause und Tastenbelegung (alle Tasten frei belegbar); online läuft das Spiel weiter |
 
+**Touch (Handy, Tablet):** Auf Touch-Geräten erscheint die Touch-Steuerung automatisch (erzwingen mit `?touch`, abschalten mit `?touch=0`). Am besten spielt es sich im Querformat.
+
+- **Linker Stick:** laufen.
+- **Rechter Stick:** zielen. Solange er ausgelenkt ist, greift der Held in diese Richtung an, so weit seine Waffe reicht.
+- **Knöpfe 1–4 und F/G** um den rechten Stick: Fähigkeiten und Beschwörerzauber. Sie zielen in die zuletzt gewählte Richtung.
+- **Oben links:** 🛒 Shop, ▶ Welle starten, 📍 Ping „Hier!“.
+
 Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bogen beim Nahkampf, einen Pfeil beim Fernkampf.
 
 **Ego-Sicht:** Unten rechts im Bild hält der Held seine Waffe:

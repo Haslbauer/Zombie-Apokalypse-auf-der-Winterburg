@@ -3,6 +3,7 @@ import type { Vec2 } from '../sim/vec';
 import { type Action, type Keybindings, MENU_KEY } from './keybindings';
 import { PingWheel } from './pingwheel';
 import type { GameRenderer } from './renderer';
+import type { TouchControls } from './touch';
 
 /**
  * Tastatur und Maus, Steuerung wie in Supervive: WASD laufen, Maus zielt,
@@ -48,6 +49,8 @@ export class Input {
   get mouseLocked(): boolean {
     return document.pointerLockElement === this.renderer.canvas;
   }
+  /** Touch-Steuerung (null: aus). Sticks ergänzen Tastatur und Maus. */
+  touch: TouchControls | null = null;
   /** Die Minimap rechnet Bildschirmpunkte über ihr in Orte um (null: Maus nicht über der Minimap). */
   minimapPoint: (x: number, y: number) => Vec2 | null = () => null;
 
@@ -70,6 +73,8 @@ export class Input {
     );
     canvas.addEventListener('pointerdown', (e) => {
       if (this.capture) return;
+      // Touch: Laufen und Angreifen über die Sticks, nicht über Tippen auf die Karte
+      if (this.touch && e.pointerType === 'touch') return;
       // Ego-Sicht: erster Klick fängt die Maus (Browser erlauben das nur nach einem Klick)
       if (this.firstPerson && !this.mouseLocked) {
         canvas.requestPointerLock?.();
@@ -227,6 +232,12 @@ export class Input {
       move = rotateToView(move, this.firstPerson.yaw());
       this.aim = this.firstPerson.aim();
       return { move, aim: { ...this.aim }, attack: this.isDown('attack') };
+    }
+    // Touch: linker Stick läuft (wenn keine Taste gedrückt ist), rechter Stick zielt und greift an
+    if (this.touch) {
+      if (len === 0) move = this.touch.move;
+      this.aim = this.touch.aim() ?? this.aim;
+      return { move, aim: { ...this.aim }, attack: this.isDown('attack') || this.touch.aiming };
     }
     // Jedes Mal neu berechnen: Die Kamera läuft mit, auch wenn die Maus stillsteht.
     this.aim = this.renderer.pickGround(this.mouse.x, this.mouse.y) ?? this.aim;
