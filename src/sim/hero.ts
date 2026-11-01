@@ -4,7 +4,7 @@ import { tryCast, updateDash } from './abilities';
 import { heroAttack } from './combat';
 import { buy, sell, useConsumable } from './economy';
 import { itemStats } from './items';
-import type { SimContext } from './context';
+import type { DataContext, SimContext } from './context';
 import { kitOf } from './heroes/index';
 import { face } from './movement';
 import { levelStats, rankUp } from './progression';
@@ -123,6 +123,8 @@ export function updateHero(ctx: SimContext, h: Hero): void {
   const items = itemStats(ctx, h);
   const regen = levelStats(def, h.level).regen + items.regen + (kit.regenBonus?.(ctx, h) ?? 0);
   h.hp = Math.min(h.maxHp, h.hp + regen * DT);
+  // Rasten am Vorrat: in der Pause schnell heilen
+  if (isResting(ctx, h)) h.hp = Math.min(h.maxHp, h.hp + h.maxHp * ctx.data.economy.rest!.perSecond * DT);
   kit.update?.(ctx, h);
 
   if (h.dash) {
@@ -152,4 +154,16 @@ export function updateHero(ctx: SimContext, h: Hero): void {
     const bonus = buffSum(h, 'attackSpeed') + items.attackSpeed + (kit.attackSpeedBonus?.(ctx, h) ?? 0);
     heroAttack(ctx, h, def.attack.cooldown / (1 + bonus));
   }
+}
+
+/**
+ * Rastet der Held am Vorrat? Nur in der Pause (nicht im PvP), lebend, mit
+ * intaktem Vorrat in Reichweite. Der Client zeigt dann Heil-Partikel.
+ */
+export function isResting(ctx: DataContext, h: Hero): boolean {
+  const cfg = ctx.data.economy.rest;
+  const { state } = ctx;
+  if (!cfg || state.pvp || state.wave.phase !== 'pause' || !h.alive || state.gameOver) return false;
+  const food = state.objectives.find((o) => o.kind === 'food' && !o.destroyed);
+  return !!food && Math.hypot(food.pos.x - h.pos.x, food.pos.y - h.pos.y) <= cfg.range;
 }

@@ -246,6 +246,8 @@ export interface Defense {
 export interface EconomyDef {
   /** Wiederbeleben durch Mitspieler: Zeitfenster am Boden, Dauer (Support schneller), Reichweite, Leben danach, Abfall ohne Helfer. */
   revive?: { window: number; time: number; supportTime: number; range: number; hp: number; decay: number };
+  /** Rasten am Vorrat: In der Pause heilen sich Helden in range m um perSecond (Anteil maxHp) pro Sekunde. */
+  rest?: { range: number; perSecond: number };
   /** Verteidigungen für die Pause (Kosten, Höchstzahl, Werte). */
   defenses?: Record<DefenseKind, DefenseDef> & { repairFactor: number; minSpacing: number };
   /** PvP-Modus: Kills zum Sieg, Gold/EP pro Kill und Sekunde, Wiederbelebung, Startplätze je Team. */

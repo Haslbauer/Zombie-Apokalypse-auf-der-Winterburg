@@ -274,6 +274,13 @@ function think(ctx: SimContext, h: Hero, bot: BotState, cmds: Command[]): void {
       else setDest(ctx, bot, h, ctx.data.arena.heroStart);
       return;
     }
+    // Verletzt: am Vorrat rasten und heilen
+    const food = ctx.data.economy.rest ? state.objectives.find((o) => o.kind === 'food' && !o.destroyed) : undefined;
+    if (food && hpShare < 0.85) {
+      bot.mode = 'post';
+      setDest(ctx, bot, h, food.pos);
+      return;
+    }
     bot.mode = 'post';
     setDest(ctx, bot, h, bot.post);
     return;

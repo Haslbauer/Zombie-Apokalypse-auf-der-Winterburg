@@ -405,6 +405,10 @@ Nach jeder Partie prüft das Spiel acht Erfolge. Neue erscheinen im Endbildschir
 
 Erfolge, Titel und Laterne bleiben im Browser gespeichert (`winterburg.erfolge`) und sind nur auf dem eigenen Bildschirm zu sehen.
 
+## Rasten am Vorrat (Pause)
+
+In der Pause heilt sich jeder Held, der in **5 m** um den Vorrat (das Herz im Innenhof) steht, um **8 % seines Lebens pro Sekunde**, von fast leer bis voll also in gut 12 s. Grüne Plus-Zeichen zeigen das an. Während einer Welle, im PvP und bei zerstörtem Vorrat gibt es das nicht. Verletzte Bots gehen in der Pause von selbst zum Vorrat. Werte in `data/economy.json` unter `rest`.
+
 ## Verteidigungen bauen (Pause)
 
 In der Pause öffnet **V** die Bauleiste. Die Verteidigungen stehen auch ganz oben im **Shop** (B) unter „Verteidigungen“, mit Preis, Anzahl und „Reparieren“. Ein Klick dort schließt den Shop und startet den Baumodus. Du stellst die Verteidigung per **Linksklick** an der Maus auf; erst dabei wird das Gold abgezogen. **X** dreht die Barrikade, **Esc** bricht ab. Die Höchstzahl gilt fürs ganze Team.

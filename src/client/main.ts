@@ -1110,6 +1110,11 @@ if (params.has('debug')) {
         if (h) h.buffs.push({ kind: kind as never, value, until: session!.state.time + seconds, source });
       },
       // Ego-Sicht: Zustand lesen bzw. Blickrichtung setzen (Tests)
+      // Einzelspieler: Leben des eigenen Helden auf einen Anteil setzen (z. B. 0.3)
+      hurt: (share: number) => {
+        const h = session instanceof LocalSession ? session.sim.hero(heroId) : undefined;
+        if (h) h.hp = Math.max(1, h.maxHp * share);
+      },
       // Einzelspieler: dem eigenen Helden Seuche geben (Zustands-Effekte prüfen)
       plague: (stacks: number, seconds = 10) => {
         const h = session instanceof LocalSession ? session.sim.hero(heroId) : undefined;

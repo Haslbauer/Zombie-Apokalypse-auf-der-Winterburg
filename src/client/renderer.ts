@@ -5,6 +5,8 @@ import { hasBuff, shieldAmount } from '../sim/status';
 import { type AbilityDef, type AttackDef, type GameData, type GameState, type Hero, type Zombie } from '../sim/types';
 import type { Vec2 } from '../sim/vec';
 import { GameCamera } from './camera';
+import { isResting } from '../sim/hero';
+import type { DataContext } from '../sim/context';
 import type { QualityLevel } from './quality';
 import { buildMap, type MapAnimation } from './map';
 import { ObjectiveView } from './objectives';
@@ -220,7 +222,7 @@ export class GameRenderer {
       if (stunned && !view.wasStunned) view.flinch();
       view.wasStunned = stunned;
       view.updateFx(dt, time, {
-        heal: h.buffs.some((b) => b.kind === 'heal' && b.value > 0 && b.until > now) ? 0.5 : 0,
+        heal: h.buffs.some((b) => b.kind === 'heal' && b.value > 0 && b.until > now) ? 0.5 : h.hp < h.maxHp && isResting({ state, data: this.data } as DataContext, h) ? 0.8 : 0,
         plague: h.plague && h.plague.until > now ? Math.min(1, 0.3 + h.plague.stacks / 6) : 0,
         slow: h.buffs.some((b) => b.kind === 'haste' && b.value < 0 && b.until > now) ? 1 : 0,
         stun: stunned ? 1 : 0,
