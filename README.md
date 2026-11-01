@@ -121,7 +121,7 @@ Die Winterburg: U-förmiges Haus mit dem **Lebensmittelvorrat** im Innenhof (err
 
 Neutrale Lager lassen sich nicht über den Zaun hinweg „abfarmen“: Erreichen sie ihren Angreifer 5 s lang nicht, kehren sie unverwundbar heim und heilen sich. Es ist Nacht: Mondlicht, Nebel, brennende Fässer, Stacheldraht und Bretterbarrikaden an den Toren, Feuerstellen, Krähen, Knochen und ein Autowrack vor dem Osttor. Der Westflügel des Hauses ist eine halb eingestürzte Ruine, die Wege sind aus Bruchstein. Ohne Bienenstock wachsen zerstörte Beete nicht mehr nach (verdorrte Stängel, Hinweis in der Kopfleiste). Rund um den Garten liegt Gelände mit Büschen, Hecken, einer alten Grabstätte und einem Teich. **Verstecke** wie das Gebüsch in LoL: Im hohen Gras, in Büschen und im Schilf sehen Zombies einen Helden erst aus nächster Nähe – bis er angreift. Umgekehrt sieht man Zombies im Gebüsch erst, wenn man selbst nah dran ist.
 
-Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben, `?level=6` startet auf Level 6, `?wave=5` mit Welle 5 (kombinierbar: `?wave=5&level=8`), `?bots=3` (oder `?bots=4`) lässt drei Bots allein spielen (Zuschauen, optional `&difficulty=schwer`). `?camera=x,y,abstand` richtet die Kamera fest auf einen Punkt (z. B. `?bots=4&camera=37,22,30` fürs Haus), `?debug` gibt Testhilfen frei.
+Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben, `?level=6` startet auf Level 6, `?wave=5` mit Welle 5 (kombinierbar: `?wave=5&level=8`), `?bots=3` (oder `?bots=4`) lässt drei Bots allein spielen (Zuschauen, optional `&difficulty=schwer`). `?camera=x,y,abstand` richtet die Kamera fest auf einen Punkt (z. B. `?bots=4&camera=37,22,30` fürs Haus), `?debug` gibt Testhilfen frei (`winterburg.teleport(x, y)`, `spawnZombie(typ, x, y)`, `buff(art, wert, sekunden)`, `down()`, `finish(sieg)`). `portrait.html?hero=<id>` rendert ein Porträt aus dem Modell.
 
 ## Team und Bots
 
@@ -129,7 +129,7 @@ Du wählst deinen Helden, zwei Bots spielen mit und ergänzen die fehlenden Roll
 
 **Bots folgen Pings:** „Angriff!“ schickt alle Bots auf das Ziel (auch Postbote und Lager), „Hilfe!“ holt sie zu dir, „Hier!“ schickt die zwei nächsten an den Ort, „Gefahr!“ lässt sie den Bereich meiden. Sie antworten mit „Bin unterwegs“. Kämpfst du gegen Postbote oder Lager, helfen Bots in der Nähe auch ohne Ping.
 
-`npm run balance` lässt drei Bots ohne Spieler über mehrere Seeds spielen und gibt die erreichte Welle aus (Optionen: `BALANCE_SEEDS=5`, `BALANCE_DIFF=mittel`).
+`npm run balance` lässt drei Bots ohne Spieler über mehrere Seeds spielen und gibt die erreichte Welle aus (Optionen: `BALANCE_SEEDS=5`, `BALANCE_DIFF=mittel`, `BALANCE_TEAM=rotschopf,grimm,gaertnerin`).
 
 ## Reichweite und Durchschlag
 
@@ -239,7 +239,9 @@ Bots nehmen je nach Rolle Blitz plus Entzünden (Nahkampf), Heilen (Fernkampf), 
 
 ## Sieg und Belohnung
 
-Wer **Welle 20** übersteht, gewinnt. Das Spiel ist auf vier aktive Spieler ausgelegt; fällt einer aus, wird es zu dritt sehr schwer.
+Wer **Welle 20** übersteht und dort das Bauamt besiegt, gewinnt. Das Spiel ist auf drei aktive Spieler (Tank, Schaden, Support) ausgelegt; fällt einer aus, wird es sehr schwer.
+
+**Wiederbeleben:** Gefallene liegen 10 s am Boden. Stellt sich ein Mitspieler daneben, füllt sich ein grüner Ring um den Gefallenen. Nach 3 s (bei Supports nach 2 s) steht er an Ort und Stelle mit 40 % Leben wieder auf. Ohne Helfer leert sich der Ring langsam, und es gilt der normale Respawn-Timer im Innenhof. Bots laufen zu gefallenen Mitspielern in der Nähe und helfen ihnen auf.
 
 Gutes Spielen wird belohnt (wie in LoL): Der letzte Treffer bringt das volle Gold, Mithelfen ein Drittel, Danebenstehen nichts. Erfahrung: Killer voll, Mithelfer die Hälfte, Zuschauer in der Nähe ein Viertel. Den Wellenbonus bekommt nur, wer in der Welle mitgekämpft hat.
 
@@ -337,8 +339,8 @@ Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.
 
 1. M1: Offline-Prototyp (Arena, ein Held, Zombiewellen, Nah- und Fernkampf) ✅
 2. M2: Karte Winterburg mit Herz, Bienenstock und drei Zugängen ✅
-3. M3: Level, XP, Skillpunkte, 6 Helden mit Fähigkeiten ✅
+3. M3: Level, XP, Skillpunkte, 6 Helden mit Fähigkeiten ✅ (inzwischen 10 Helden)
 4. M4: Gold, Shop, Waffen und Items, Elite-Zombies ✅
-5. M5: Bots (Singleplayer mit 3 Bots) ✅
+5. M5: Bots (Singleplayer mit Bots, heute 2 Mitspieler-Bots) ✅
 6. M6: Server und Mehrspieler ✅
-7. M7: Weitere Helden, Boss, Balancing, Feinschliff
+7. M7: Weitere Helden ✅, Bosse ✅ (Zwischenbosse, Bauamt), Rollen ✅, PvP ✅, Verteidigungen ✅, Wiederbeleben ✅; Balancing und Feinschliff laufen weiter

@@ -85,6 +85,9 @@ export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: numb
     const { respawn } = ctx.data.arena;
     target.alive = false;
     noteDeath(target);
+    // Am Boden: Mitspieler können ihn eine Weile wiederbeleben
+    target.downUntil = state.time + (ctx.data.economy.revive?.window ?? 0);
+    target.reviveProgress = 0;
     target.dash = null;
     target.channel = null;
     target.input = { move: { x: 0, y: 0 }, aim: target.input.aim, attack: false };

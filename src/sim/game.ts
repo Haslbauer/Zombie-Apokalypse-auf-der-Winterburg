@@ -19,6 +19,7 @@ import { emptyStats } from './stats';
 import { applyAvatarStatus, asTeam, createAvatars, handicapFor, perTeam, syncAvatars, updatePvp } from './pvp';
 import { updateRoles } from './roles';
 import { updateMinions } from './minions';
+import { updateRevive } from './revive';
 import { barricadeRect, updateDefenses } from './defenses';
 
 /** Das Distanzfeld zu den Helden wird alle so viele Ticks neu berechnet. */
@@ -298,6 +299,7 @@ export class Simulation implements SimContext {
     updateZombies(this, this.field, this.smallField);
     updateSpells(this);
     updateRoles(this);
+    updateRevive(this);
     updateProjectiles(this);
     updateZones(this);
     updateDelayed(this);
@@ -313,6 +315,8 @@ export class Simulation implements SimContext {
     const start = this.data.arena.heroStart;
     if (h.benched) return;
     h.alive = true;
+    h.downUntil = 0;
+    h.reviveProgress = 0;
     h.hp = h.maxHp;
     h.attackTimer = 0;
     h.buffs = [];

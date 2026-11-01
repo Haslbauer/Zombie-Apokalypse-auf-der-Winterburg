@@ -240,6 +240,8 @@ export interface Defense {
 }
 
 export interface EconomyDef {
+  /** Wiederbeleben durch Mitspieler: Zeitfenster am Boden, Dauer (Support schneller), Reichweite, Leben danach, Abfall ohne Helfer. */
+  revive?: { window: number; time: number; supportTime: number; range: number; hp: number; decay: number };
   /** Verteidigungen für die Pause (Kosten, Höchstzahl, Werte). */
   defenses?: Record<DefenseKind, DefenseDef> & { repairFactor: number; minSpacing: number };
   /** PvP-Modus: Kills zum Sieg, Gold/EP pro Kill und Sekunde, Wiederbelebung, Startplätze je Team. */
@@ -798,6 +800,9 @@ export interface Hero extends Unit {
   stats?: HeroStats;
   /** PvP: Team 0 oder 1. */
   team?: number;
+  /** Gefallen: bis dahin können Mitspieler ihn wiederbeleben; Fortschritt 0..1. */
+  downUntil?: number;
+  reviveProgress?: number;
   /** PvP: Platz ohne Spieler (Held nimmt nicht teil). */
   benched?: boolean;
   /** PvP: Ausgleich für das kleinere Team (Schaden ×, erlittener Schaden ÷). */
@@ -1062,6 +1067,7 @@ export type GameEvent =
   | { type: 'bossCast'; zombieId: number; kind: BossAbilityDef['kind']; name: string; points: Vec2[]; radius: number; windup: number }
   | { type: 'bossHit'; zombieId: number; kind: BossAbilityDef['kind']; points: Vec2[]; radius: number }
   | { type: 'defense'; action: 'built' | 'destroyed' | 'repaired' | 'denied'; kind?: DefenseKind; pos?: Vec2; heroId?: number; reason?: string; gold?: number }
+  | { type: 'revive'; id: number; by: number }
   | { type: 'pvpKill'; killerId: number | null; victimId: number; score: [number, number] }
   | { type: 'teamBuff'; defId: string; name: string; icon: string; duration: number }
   | { type: 'parcel'; zombieId: number; from: Vec2; to: Vec2; radius: number; windup: number }

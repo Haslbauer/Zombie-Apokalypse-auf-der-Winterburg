@@ -104,5 +104,13 @@
     },
     "repairFactor": 0.5,
     "minSpacing": 1.2
+  },
+  "revive": {
+    "window": 10,
+    "time": 3,
+    "supportTime": 2,
+    "range": 1.8,
+    "hp": 0.4,
+    "decay": 0.5
   }
 }

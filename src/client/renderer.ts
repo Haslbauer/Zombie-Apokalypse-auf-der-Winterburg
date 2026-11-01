@@ -170,9 +170,12 @@ export class GameRenderer {
         view.bar.visible = false;
         view.ring.visible = false;
         view.showBuffs([], time, h.radius);
+        // Wiederbeleben: Ring zeigt den Fortschritt, solange er am Boden liegt
+        view.showRevive((h.downUntil ?? 0) > state.time ? (h.reviveProgress ?? 0) : null);
         continue;
       }
       view.revive();
+      view.showRevive(null);
       view.ring.visible = true;
       const hidden = (h.brush ?? -1) >= 0 && state.time >= (h.revealedUntil ?? 0);
       view.showHero(h, shieldAmount(h), hasBuff(h, 'invisible') ? 0.3 : hidden ? 0.55 : 1);

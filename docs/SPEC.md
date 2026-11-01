@@ -273,6 +273,13 @@ Freiwillige Ziele im Gelände außerhalb des Gartens. Sie bringen Gold und XP, k
 - Belohnung: Kill-Gold und XP wie bei Zombies für alle Helden in der Nähe.
 - Lager und Postbote zählen nicht zur Welle.
 
+## 8e. Wiederbeleben (v2.5)
+
+- **Am Boden:** Gefallene liegen 10 s am Boden (`revive.window`). Mitspieler in 1,8 m füllen den Fortschritt in 3 s (Supports in 2 s); ohne Helfer sinkt er mit halber Geschwindigkeit.
+- **Aufstehen:** Bei vollem Fortschritt steht der Held an Ort und Stelle mit 40 % Leben auf. Sonst greift der normale Respawn.
+- **Bots:** Sie gehen zu gefallenen Mitspielern in 16 m Umkreis.
+- **Code:** `src/sim/revive.ts`; Werte in `data/economy.json` unter `revive`.
+
 ## 8d. Verteidigungen (v2.5)
 
 - **Bauen:** nur in der Pause, nicht im PvP. Befehle `build {kind, pos, rot}` und `repair`; Werte in `data/economy.json` unter `defenses`, Code in `src/sim/defenses.ts`.

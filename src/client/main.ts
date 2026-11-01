@@ -6,6 +6,7 @@ import { Simulation } from '../sim/game';
 import { buildPlan } from '../sim/items';
 import { spawnZombieAt } from '../sim/waves';
 import { endGame } from '../sim/stats';
+import { applyDamage } from '../sim/combat';
 import { repairCost } from '../sim/defenses';
 import { defaultTeam } from '../sim/bots/team';
 import { canRankUp } from '../sim/progression';
@@ -663,6 +664,12 @@ function handleEvents(state: GameState): void {
           sound.play('buy');
         } else if (e.action === 'denied' && e.heroId === heroId) hud.message(e.reason ?? 'Geht hier nicht');
         break;
+      case 'revive': {
+        const name = (id: number) => (id === heroId ? 'Du' : (playerNames()?.get(id) ?? gameData.heroes.find((d) => d.id === state.heroes.find((x) => x.id === id)?.defId)?.name ?? '?'));
+        hud.message(e.id === heroId ? `${name(e.by)} hat dich wiederbelebt!` : `${name(e.id)} ist wieder auf den Beinen`);
+        sound.play('heal', state.heroes.find((x) => x.id === e.id)?.pos);
+        break;
+      }
       case 'teamBuff':
         hud.message(`${e.icon} Team-Buff: ${e.name} (${e.duration} s)`);
         hud.addPing(`${e.icon} ${e.name} für alle (${e.duration} s)`, '#ffd166');
@@ -732,6 +739,7 @@ function handleEvents(state: GameState): void {
         if (e.id === heroId) hud.message('Zurück im Kampf!');
         break;
       case 'death':
+        if (e.id === heroId && (gameData.economy.revive?.window ?? 0) > 0 && !state.pvp) hud.message('Gefallen! Ein Mitspieler kann dich wiederbeleben');
         renderer.zombieDie(e.id);
         if (state.heroes.some((h) => h.id === e.id)) sound.play('heroHit', e.pos);
         else sound.play('zombieDeath', e.pos, 0.8);
@@ -938,6 +946,13 @@ if (params.has('debug')) {
         if (!(session instanceof LocalSession)) return;
         const def = session.sim.zombieDefs.get(defId);
         if (def) spawnZombieAt(session.sim, def, { x, y });
+      },
+      // Einzelspieler: eigenen Helden fallen lassen (Wiederbeleben prüfen)
+      down: () => {
+        if (!(session instanceof LocalSession)) return;
+        const sim = session.sim;
+        const h = sim.hero(heroId);
+        if (h) applyDamage(sim, h, 1e9);
       },
       // Einzelspieler: dem eigenen Helden Wirkungen geben (Buff-Ringe prüfen), z. B. buff('haste', 0.3, 20, 'team-daemon')
       buff: (kind: string, value: number, seconds: number, source = 'debug') => {

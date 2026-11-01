@@ -9,6 +9,7 @@ import { hasBuff } from '../status';
 import type { BotDifficulty, BotState, Command, Hero, PingKind, Zombie } from '../types';
 import { dist, type Vec2 } from '../vec';
 import { abilityAim } from './abilities';
+import { downedAllies } from '../revive';
 
 /** Pfad wird spätestens nach so vielen Sekunden neu berechnet. */
 const REPATH = 0.5;
@@ -213,6 +214,16 @@ function think(ctx: SimContext, h: Hero, bot: BotState, cmds: Command[]): void {
     bot.targetId = null;
     if (potion >= 0 && !healing) cmds.push({ heroId: h.id, type: 'use', slot: potion });
     setDest(ctx, bot, h, ctx.data.arena.heroStart);
+    useSpells(ctx, h, bot, null, cmds);
+    return;
+  }
+
+  // 2b. Gefallenen Mitspieler in der Nähe wiederbeleben (danebenstellen)
+  const downed = downedAllies(ctx, h).filter((a) => dist(a.pos, h.pos) < 16).sort((p, q) => dist(p.pos, h.pos) - dist(q.pos, h.pos))[0];
+  if (downed) {
+    bot.targetId = null;
+    bot.mode = 'post';
+    setDest(ctx, bot, h, downed.pos);
     useSpells(ctx, h, bot, null, cmds);
     return;
   }
