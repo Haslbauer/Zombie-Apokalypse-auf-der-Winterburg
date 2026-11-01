@@ -48,7 +48,9 @@
     "types": [
       "rattenkoenig",
       "schlaechter",
-      "daemon"
+      "daemon",
+      "vogelscheuche",
+      "frostriese"
     ]
   },
   "packs": [

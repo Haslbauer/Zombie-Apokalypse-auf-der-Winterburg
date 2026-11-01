@@ -239,6 +239,8 @@ Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `
 - **Elites** alle 5 Wellen (⌊Welle/5⌋ Stück, abwechselnd), mit immer sichtbarem Lebensbalken und Ankündigung:
   - **Rattenkönig:** große Ratte mit Krone, ruft alle 8 s vier Ratten herbei
   - **Dämon** (v1.7, ab Welle 15 im Wechsel): schnell, springt alle 8 s auf einen Helden in bis zu 10 m. Vorher markiert ein violetter Kreis 0,7 s lang den Landeplatz; bei der Landung trifft er alle Helden im Umkreis von 2,5 m (55 Schaden, kurz betäubt).
+  - **Vogelscheuche** (v2.6, im Wechsel ab Welle 3): Sensenhieb (slam, Radius 2,2 m), Krähenschwarm ab Welle 5 (bolt, 2 Ziele, Seuche), Saat der Toten ab Welle 7 (nova; Boss-Fähigkeit `summon`: 3 Walker am Einschlagpunkt). Team-Buff Erntedank (0,8 % Leben/s, −8 % Schaden).
+  - **Frostriese** (v2.6, im Wechsel ab Welle 3): Eisfaust (slam, 0,6 s Betäubung), Frosthauch (nova 4 m; Boss-Fähigkeit `slow`: −45 % Tempo für 3 s), Eiszapfen ab Welle 8 (bolt, 3 Ziele, −30 % für 2 s). Team-Buff Frostschutz (−12 % Schaden, +10 % Angriffstempo).
   - **Schlächter:** riesiger Zombie (1,9-fach) mit Hackbeil. Holt alle 8 s aus (rote Warnlinie) und stürmt auf einen Helden in bis zu 8 m. Wer getroffen wird, nimmt Schaden, wird zurückgestoßen und 0,75 s betäubt.
   - Elites schlafen nur halb so lang. Grimms Hetzjagd bevorzugt sie.
   - Optik (v1.7): leuchtender Boden-Ring in eigener Farbe (Schlächter rot, Dämon violett, Rattenkönig gold), glühende Augen, Namensschild über dem großen Lebensbalken. Der Rattenkönig ist dreimal so groß wie eine Ratte.

@@ -32,7 +32,7 @@ function iconMaterial(text: string, color: string): THREE.SpriteMaterial {
   return material;
 }
 
-type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp' | 'beehat' | 'smoker' | 'glasses' | 'apron' | 'loupe' | 'pigtails' | 'teddy' | 'divehelm' | 'airtank' | 'harpoongun' | 'bonnet' | 'handbell' | 'shawl' | 'felthat' | 'axe';
+type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp' | 'beehat' | 'smoker' | 'glasses' | 'apron' | 'loupe' | 'pigtails' | 'teddy' | 'divehelm' | 'airtank' | 'harpoongun' | 'bonnet' | 'handbell' | 'shawl' | 'felthat' | 'axe' | 'scythe' | 'icecrown';
 
 /**
  * Aussehen einer animierten Figur (public/models/<model>.glb). move: Lauf-Clip,
@@ -102,6 +102,10 @@ const ZOMBIE_LOOKS: Record<string, ModelLook> = {
   // Endgegner Bauamt: riesiger Beamter mit Bauhelm und Amtsstempel; Sachbearbeiter mit Klemmbrett
   bauamt: { model: 'zombie-cop', move: 'walk', refSpeed: 1.0, scale: 2.4, tint: [0.95, 0.95, 1.05], ...Z, attacks: ['attack', 'bite'], props: ['hardhat', 'stamp'], handOffset: 0.06 },
   clerk: { model: 'zombie-cop', move: 'walk', refSpeed: 1.4, scale: 1, tint: [0.85, 0.9, 1.05], ...Z, attacks: [...Z.attacks], props: ['clipboard'] },
+  // Vogelscheuche: strohfarbener Zombie mit Sonnenhut und Sense
+  scarecrow: { model: 'zombie-cop', move: 'walk', refSpeed: 1.6, scale: 1.55, tint: [1, 1, 1], plain: 0xb89a52, ...Z, attacks: ['attack', 'bite'], props: ['sunhat', 'scythe'], handOffset: 0.06 },
+  // Frostriese: großer, eisblauer Hüne mit Eiskrone
+  frostgiant: { model: 'zombie-warrok', move: 'walk', refSpeed: 1.0, scale: 2.15, tint: [0.65, 0.95, 1.4], ...Z, attacks: ['attack', 'bite'], props: ['icecrown'] },
   hornet: { model: 'wasp', move: 'fly', idle: 'fly', refSpeed: 4.5, scale: 1.6, tint: [1, 1, 1], attacks: ['attack'], lift: 0.9 },
 };
 
@@ -115,6 +119,8 @@ export const ELITE_COLORS: Record<string, number> = {
   brute: 0xff8a1c,
   bigspider: 0x9be564,
   toad: 0x7fd6a0,
+  scarecrow: 0xe0b040,
+  frostgiant: 0x7fd1ff,
 };
 
 /** Helden mit Modell (assets/models/<held>): Grimm ist ein Schäferhund (Quaternius), die übrigen Mixamo-Figuren mit eigenen Texturen. */
@@ -353,7 +359,7 @@ export class UnitView {
     // Requisiten in Metern: Maßstab des Knochens herausrechnen (Mixamo und Quaternius unterscheiden sich)
     inst.root.updateMatrixWorld(true);
     for (const prop of look.props ?? []) {
-      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat' || prop === 'beehat' || prop === 'glasses' || prop === 'pigtails' || prop === 'divehelm' || prop === 'bonnet' || prop === 'felthat';
+      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat' || prop === 'beehat' || prop === 'glasses' || prop === 'pigtails' || prop === 'divehelm' || prop === 'bonnet' || prop === 'felthat' || prop === 'icecrown';
       // Am Körper: Schürze an der Brust, Lupe am Gürtel
       const body = prop === 'apron' || prop === 'airtank' || prop === 'shawl' ? 'mixamorigSpine1' : prop === 'loupe' ? 'mixamorigHips' : null;
       const bone = inst.root.getObjectByName(body ?? (head ? (look.headBone ?? 'mixamorigHead') : (look.handBone ?? 'mixamorigRightHand')));
@@ -533,6 +539,20 @@ export class UnitView {
         add(new THREE.CylinderGeometry(0.04, 0.04, 0.3, 8), 0x5a3a20, 0, 0.2, 0);
         add(new THREE.BoxGeometry(0.3, 0.12, 0.2), 0x2a2a2a, 0, 0.4, 0);
         add(new THREE.BoxGeometry(0.32, 0.03, 0.22), 0xc0302a, 0, 0.47, 0);
+        break;
+      case 'scythe':
+        // Sense: langer Stiel, gebogenes Blatt
+        add(new THREE.CylinderGeometry(0.025, 0.025, 1.4, 6), 0x6b4a2b, 0, 0.4, 0);
+        add(new THREE.TorusGeometry(0.32, 0.03, 4, 12, Math.PI * 0.6), 0xb8bcc0, 0.0, 1.05, 0.2).rotation.y = Math.PI / 2;
+        break;
+      case 'icecrown':
+        // Krone aus Eiszapfen
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          const m = add(new THREE.ConeGeometry(0.035, 0.18, 5), 0xbfeaff, Math.cos(a) * 0.11, 0.2, Math.sin(a) * 0.11, 0x2a6a9a);
+          m.rotation.z = Math.cos(a) * -0.25;
+          m.rotation.x = Math.sin(a) * 0.25;
+        }
         break;
       case 'sunhat':
         add(new THREE.CylinderGeometry(0.2, 0.2, 0.02, 16), 0x8a7a55, 0, 0.17, 0.02);

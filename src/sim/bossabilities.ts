@@ -5,6 +5,8 @@ import { addPlague } from './roles';
 import { addBuff, heroCC } from './status';
 import { DT, type Hero, type Zombie, type ZombieDef } from './types';
 import { dist, type Vec2 } from './vec';
+import { resolveObstacles } from './grid';
+import { spawnZombieAt } from './waves';
 
 /**
  * Fähigkeiten der Zwischenbosse wie bei den Helden: Abklingzeiten, erst eine
@@ -32,6 +34,19 @@ export function updateBossAbilities(ctx: SimContext, z: Zombie, def: ZombieDef, 
       applyDamage(ctx, h, ab.damage * scale);
       if (ab.plague) addPlague(ctx, h, ab.plague);
       if (ab.stun) heroCC(ctx, h, 'stunned', ab.stun);
+      if (ab.slow) addBuff(ctx, h, 'haste', -ab.slow.factor, ab.slow.duration, `frost-${z.id}`);
+    }
+    // Beschwören: Zombies an den Einschlagpunkten (gezählt für die Welle)
+    const sdef = ab.summon ? ctx.zombieDefs.get(ab.summon.type) : undefined;
+    if (ab.summon && sdef) {
+      for (const p of c.points) {
+        for (let k = 0; k < ab.summon.count; k++) {
+          const a = (k / ab.summon.count) * Math.PI * 2;
+          const at = { x: p.x + Math.cos(a) * 1.2, y: p.y + Math.sin(a) * 1.2 };
+          resolveObstacles(at, sdef.radius, ctx.arena);
+          spawnZombieAt(ctx, sdef, at);
+        }
+      }
     }
     ctx.state.events.push({ type: 'bossHit', zombieId: z.id, kind: ab.kind, points: c.points.map((p) => ({ ...p })), radius: ab.radius });
     a.cast = null;

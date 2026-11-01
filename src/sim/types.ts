@@ -166,6 +166,10 @@ export interface BossAbilityDef {
   count?: number;
   /** Erst ab dieser Welle. */
   fromWave?: number;
+  /** Frost: Getroffene sind duration Sekunden lang um factor (0.4 = 40 %) langsamer. */
+  slow?: { factor: number; duration: number };
+  /** Beschwören: an jedem Einschlagpunkt erscheinen count Zombies dieses Typs. */
+  summon?: { type: string; count: number };
 }
 
 /** Team-Buff durch einen Boss-Kill: Wirkungen für duration Sekunden. */
