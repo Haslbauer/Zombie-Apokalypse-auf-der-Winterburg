@@ -1055,5 +1055,153 @@
         }
       }
     ]
+  },
+  {
+    "id": "lotte",
+    "name": "Lotte",
+    "role": "Beschwörerin, Trolle",
+    "description": "Kleines Mädchen im gelben Regenmantel mit Teddy. Ihre besten Freunde sind Trolle – und die verstehen keinen Spaß.",
+    "color": "#f2c200",
+    "figure": "girl",
+    "hp": 470,
+    "hpRegen": 2.2,
+    "speed": 5.4,
+    "radius": 0.4,
+    "hpPerLevel": 48,
+    "regenPerLevel": 0.22,
+    "damagePerLevel": 0.06,
+    "attack": {
+      "type": "ranged",
+      "damage": 22,
+      "range": 8,
+      "cooldown": 0.75,
+      "projectileSpeed": 20,
+      "projectileRadius": 0.15,
+      "look": "pebble"
+    },
+    "passive": {
+      "name": "Beste Freunde",
+      "description": "Ihre Trolle werden mit jedem Level 6 % stärker (Leben und Schaden). Steht ein Troll in ihrer Nähe, nimmt sie 20 % weniger Schaden.",
+      "values": {
+        "trollPerLevel": 0.06,
+        "guardRange": 5,
+        "guardReduction": 0.2
+      }
+    },
+    "abilities": [
+      {
+        "id": "trollruf",
+        "name": "Trollruf",
+        "description": "Ruft einen kleinen Troll für 12 s, der Zombies angreift.",
+        "shape": "circle",
+        "range": 7,
+        "radius": 1,
+        "cooldown": [
+          14,
+          13,
+          12,
+          11,
+          10
+        ],
+        "values": {
+          "hp": [
+            300,
+            400,
+            500,
+            600,
+            700
+          ],
+          "damage": [
+            20,
+            25,
+            30,
+            35,
+            40
+          ],
+          "duration": 12
+        }
+      },
+      {
+        "id": "brueckentroll",
+        "name": "Brückentroll",
+        "description": "Ein großer Troll setzt sich wie eine Wand in den Weg: Zombies in seiner Nähe greifen nur noch ihn an.",
+        "shape": "circle",
+        "range": 8,
+        "radius": 1.5,
+        "cooldown": [
+          18,
+          17,
+          16,
+          15,
+          14
+        ],
+        "values": {
+          "hp": [
+            600,
+            800,
+            1000,
+            1200,
+            1400
+          ],
+          "damage": 15,
+          "duration": 8,
+          "taunt": 5
+        }
+      },
+      {
+        "id": "wutanfall-troll",
+        "name": "Wutanfall",
+        "description": "Alle ihre Trolle werden 4 s lang 50 % schneller und stärker.",
+        "shape": "self",
+        "range": 0,
+        "radius": 12,
+        "cooldown": [
+          16,
+          15,
+          14,
+          13,
+          12
+        ],
+        "values": {
+          "duration": 4
+        }
+      },
+      {
+        "id": "trollfamilie",
+        "name": "Trollfamilie",
+        "description": "Drei Trolle auf einmal für 15 s, einer davon riesig.",
+        "shape": "circle",
+        "range": 8,
+        "radius": 2.5,
+        "cooldown": [
+          100,
+          85,
+          70
+        ],
+        "values": {
+          "hp": [
+            500,
+            700,
+            900
+          ],
+          "damage": [
+            30,
+            40,
+            50
+          ],
+          "giantHp": [
+            1600,
+            2200,
+            2800
+          ],
+          "giantDamage": [
+            70,
+            95,
+            120
+          ],
+          "duration": 15
+        }
+      }
+    ]
   }
 ]

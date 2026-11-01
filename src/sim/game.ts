@@ -18,6 +18,7 @@ import { defaultSpells, updateSpells, validSpells } from './spells';
 import { emptyStats } from './stats';
 import { applyAvatarStatus, asTeam, createAvatars, handicapFor, perTeam, syncAvatars, updatePvp } from './pvp';
 import { updateRoles } from './roles';
+import { updateMinions } from './minions';
 
 /** Das Distanzfeld zu den Helden wird alle so viele Ticks neu berechnet. */
 const FIELD_TICKS = 5;
@@ -117,6 +118,7 @@ export class Simulation implements SimContext {
       gameOver: false,
       events: [],
       camps: [],
+      minions: [],
     };
 
     this.refreshObjectiveFields();
@@ -275,6 +277,7 @@ export class Simulation implements SimContext {
       const small = state.zombies.some((z) => this.zombieDefs.get(z.defId)?.small);
       this.smallField = small && targets.length > 0 ? this.smallGrid.distanceField(targets) : null;
     }
+    updateMinions(this);
     updateZombies(this, this.field, this.smallField);
     updateSpells(this);
     updateRoles(this);

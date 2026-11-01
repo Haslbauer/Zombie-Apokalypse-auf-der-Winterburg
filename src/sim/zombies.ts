@@ -10,6 +10,7 @@ import { DT, type Hero, type Objective, type Zombie } from './types';
 import { dist, type Vec2 } from './vec';
 import { brushAt } from './grid';
 import { threatTarget } from './roles';
+import { minionTarget } from './minions';
 import { enrageFactor, updateBossAbilities } from './bossabilities';
 
 /** Bis zu diesem Abstand laufen Zombies direkt aufs Ziel zu, sonst entlang des Distanzfelds. */
@@ -61,6 +62,19 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null, s
     const tank = blind ? null : threatTarget(ctx, z, seen);
     if (tank) z.targetId = tank.id;
     const hero = tank ?? chaseTarget(ctx, z, seen, blind ? BLIND_SIGHT : def.aggroRange, def.provokeOnly ?? false);
+    // Trolle (Lotte): Brückentroll zieht Zombies an, sonst wird ein Troll direkt daneben angegriffen
+    const troll = z.neutral ? null : minionTarget(ctx, z);
+    if (troll && (!hero || edgeDistance(z, troll) < edgeDistance(z, hero))) {
+      if (edgeDistance(z, troll) <= def.attackRange + 0.2) {
+        face(z, troll.pos);
+        if (z.attackTimer <= 0) {
+          z.attackTimer = def.attackCooldown;
+          troll.hp -= z.damage * enrageFactor(ctx, z);
+          state.events.push({ type: 'attack', id: z.id, targetId: troll.id });
+        }
+      } else if (!rooted) stepToward(z, troll.pos, speed * DT);
+      continue;
+    }
     if (hero) {
       if (edgeDistance(z, hero) <= def.attackRange) {
         face(z, hero.pos);

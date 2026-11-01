@@ -357,6 +357,47 @@
           "min": 5
         }
       ]
+    },
+    "lotte": {
+      "role": "ranged",
+      "teamRole": "dmg",
+      "skillOrder": [
+        0,
+        1,
+        2
+      ],
+      "buy": [
+        "heiltrank",
+        "pistole",
+        "lederjacke",
+        "kuechenwecker",
+        "schrotflinte",
+        "taschenuhr",
+        "gewehr",
+        "lebensamulett",
+        "grossvateruhr",
+        "kettenhemd",
+        "jagdgewehr",
+        "ritterruestung"
+      ],
+      "abilities": [
+        {
+          "use": "aoe",
+          "min": 1
+        },
+        {
+          "use": "aoe",
+          "min": 3
+        },
+        {
+          "use": "buff",
+          "min": 2
+        },
+        {
+          "use": "aoe",
+          "min": 4
+        }
+      ]
     }
   }
 }

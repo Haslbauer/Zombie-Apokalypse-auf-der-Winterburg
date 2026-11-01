@@ -196,6 +196,16 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - 3 Schmelztiegel (Fläche 2,8 m, 4 s): verlangsamt 50 % und macht Schaden.
 - 4 Goldrausch (Fläche 5 m): 150/250/350 Schaden; wer in 6 s stirbt, lässt doppeltes Gold fallen (golden markiert).
 
+### Lotte (umgesetzt v2.4, Schaden/Beschwörerin)
+- Optik: kleines Mädchen, Zöpfe, gelber Regenmantel, Teddy im Arm. Trolle: grüne Hulks in drei Größen.
+- Angriff: Steinschleuder, 8 m.
+- Passiv Beste Freunde: Trolle +6 % Leben und Schaden je Level; mit einem Troll in 5 m nimmt sie 20 % weniger Schaden.
+- 1 Trollruf (7 m): Troll 300–700 Leben, 20–40 Schaden, 12 s, greift Zombies in 9 m an.
+- 2 Brückentroll (8 m): großer Troll 600–1400 Leben, 8 s, läuft nicht; Zombies in 5 m greifen nur ihn an (Wand).
+- 3 Wutanfall: alle eigenen Trolle 4 s lang 50 % schneller (Bewegung und Angriff) und stärker; nur mit Trollen.
+- 4 Trollfamilie (8 m): zwei Trolle (500–900 Leben) und ein Riese (1600–2800 Leben, 70–120 Schaden) für 15 s.
+- Technik: verbündete Beschwörungen (`state.minions`, `src/sim/minions.ts`); Zombies greifen Trolle an, die näher sind als ein Held oder sie per Brückentroll anziehen.
+
 ## 7. Gegner
 
 Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `data/waves.json`.

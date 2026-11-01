@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { BuffRing } from './buffrings';
-import type { Hero, HeroDef, Unit, Zombie, ZombieDef } from '../sim/types';
+import type { Hero, HeroDef, Minion, Unit, Zombie, ZombieDef } from '../sim/types';
 import { instantiate, type ModelInstance, type RiggedModel } from './models';
 import { groundGlow } from './nightdecor';
 import type { Snapshot } from './renderer';
@@ -31,7 +31,7 @@ function iconMaterial(text: string, color: string): THREE.SpriteMaterial {
   return material;
 }
 
-type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp' | 'beehat' | 'smoker' | 'glasses' | 'apron' | 'loupe';
+type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp' | 'beehat' | 'smoker' | 'glasses' | 'apron' | 'loupe' | 'pigtails' | 'teddy';
 
 /**
  * Aussehen einer animierten Figur (public/models/<model>.glb). move: Lauf-Clip,
@@ -94,6 +94,10 @@ const ZOMBIE_LOOKS: Record<string, ModelLook> = {
   toad: { model: 'frog', move: 'walk', idle: 'idle', refSpeed: 1.6, scale: 2.6, tint: [0.62, 0.62, 0.5], attacks: ['attack'] },
   rat: { model: 'rat', move: 'run', idle: 'idle', refSpeed: 5, scale: 1.2, tint: [1.8, 1.7, 1.6], attacks: ['attack', 'attack2'] },
   ratking: { model: 'rat', move: 'walk', idle: 'idle', refSpeed: 1.2, scale: 3, tint: [1.4, 1.1, 0.8], attacks: ['attack', 'attack2'], props: ['crown'], headBone: 'Head' },
+  // Lottes Trolle: grüner Kürbis-Hulk ohne Kürbis-Ton, je Art größer
+  troll: { model: 'zombie-pumpkin', move: 'walk', refSpeed: 2.4, scale: 0.95, tint: [0.55, 0.95, 0.5], ...Z, attacks: ['attack', 'bite'] },
+  bridgetroll: { model: 'zombie-pumpkin', move: 'walk', refSpeed: 1, scale: 1.7, tint: [0.5, 0.75, 0.55], ...Z, attacks: ['attack', 'bite'] },
+  gianttroll: { model: 'zombie-pumpkin', move: 'walk', refSpeed: 2, scale: 2.3, tint: [0.45, 0.85, 0.45], ...Z, attacks: ['attack', 'bite'] },
   // Endgegner Bauamt: riesiger Beamter mit Bauhelm und Amtsstempel; Sachbearbeiter mit Klemmbrett
   bauamt: { model: 'zombie-cop', move: 'walk', refSpeed: 1.0, scale: 2.4, tint: [0.95, 0.95, 1.05], ...Z, attacks: ['attack', 'bite'], props: ['hardhat', 'stamp'], handOffset: 0.06 },
   clerk: { model: 'zombie-cop', move: 'walk', refSpeed: 1.4, scale: 1, tint: [0.85, 0.9, 1.05], ...Z, attacks: [...Z.attacks], props: ['clipboard'] },
@@ -119,6 +123,8 @@ const HERO_LOOKS: Record<string, ModelLook> = {
   schlaeferin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1, tint: [1, 1, 1], attacks: ['attack', 'attack2', 'attack3'], attackStart: 0.3, impact: { attack: 0.4, attack2: 0.4, attack3: 0.45 }, props: ['staff'] },
   libero: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.6, scale: 1.02, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.42 },
   pirat: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.5, props: ['hook'] },
+  // Lotte: kleines Mädchen (verkleinerte Figur) im gelben Regenmantel, Zöpfe, Teddy im Arm
+  lotte: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 4.6, scale: 0.72, tint: [1, 1, 1], plain: 0xf0c020, attacks: ['attack'], attackStart: 0.3, props: ['pigtails', 'teddy'] },
   // Goldschmied Aurelius: umgebaute Figur mit runder Brille, Lederschürze und Lupe am Gürtel
   goldschmied: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 1.0, tint: [0.85, 0.8, 0.72], attacks: ['attack'], attackStart: 0.3, props: ['glasses', 'apron', 'loupe'] },
   // Imker: umgebaute Figur (heller Anzug), Imkerhut mit Schleier, Smoker in der Hand
@@ -339,7 +345,7 @@ export class UnitView {
     // Requisiten in Metern: Maßstab des Knochens herausrechnen (Mixamo und Quaternius unterscheiden sich)
     inst.root.updateMatrixWorld(true);
     for (const prop of look.props ?? []) {
-      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat' || prop === 'beehat' || prop === 'glasses';
+      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat' || prop === 'beehat' || prop === 'glasses' || prop === 'pigtails';
       // Am Körper: Schürze an der Brust, Lupe am Gürtel
       const body = prop === 'apron' ? 'mixamorigSpine1' : prop === 'loupe' ? 'mixamorigHips' : null;
       const bone = inst.root.getObjectByName(body ?? (head ? (look.headBone ?? 'mixamorigHead') : (look.handBone ?? 'mixamorigRightHand')));
@@ -412,6 +418,20 @@ export class UnitView {
         g.add(veil);
         break;
       }
+      case 'pigtails':
+        // Zwei Zöpfe mit roten Schleifen
+        for (const x of [-0.13, 0.13]) {
+          add(new THREE.CylinderGeometry(0.035, 0.025, 0.26, 6), 0x7a4a22, x, 0.0, -0.06).rotation.z = x > 0 ? -0.35 : 0.35;
+          add(new THREE.SphereGeometry(0.035, 6, 4), 0xd03a2a, x * 1.05, 0.11, -0.06);
+        }
+        break;
+      case 'teddy':
+        // Teddy im Arm
+        add(new THREE.SphereGeometry(0.1, 10, 8), 0x9a6a3a, 0, 0.08, 0.06);
+        add(new THREE.SphereGeometry(0.075, 10, 8), 0x9a6a3a, 0, 0.23, 0.06);
+        for (const x of [-0.05, 0.05]) add(new THREE.SphereGeometry(0.028, 6, 4), 0x7a4a22, x, 0.3, 0.06);
+        add(new THREE.SphereGeometry(0.03, 6, 4), 0xd8c0a0, 0, 0.21, 0.13);
+        break;
       case 'glasses': {
         // Runde Brille vor den Augen
         const rim = new THREE.MeshLambertMaterial({ color: 0x8a6a2a });
@@ -1012,6 +1032,18 @@ export function heroView(h: Hero, def: HeroDef, isPlayer: boolean, models: Map<s
   view.ring.visible = true;
   // Schwacher Lichtkreis (Laterne), damit Helden bei Nacht gut zu sehen sind
   view.group.add(groundGlow(0xffc070, isPlayer ? 7 : 5, isPlayer ? 0.32 : 0.22));
+  return view;
+}
+
+/** Lottes Troll als Figur: grüner Ring und Lebensbalken (Verbündeter), Größe je Art. */
+export function minionView(m: Minion, models: Map<string, RiggedModel>): UnitView {
+  const figure = m.kind === 'bridge' ? 'bridgetroll' : m.kind === 'giant' ? 'gianttroll' : 'troll';
+  const look = ZOMBIE_LOOKS[figure];
+  const model = models.get(modelName(look, m.id));
+  const view = new UnitView(m.radius, '#5f8d3a', 0x9be38a, model ? 1.75 * look.scale : 1.6 * look.scale, `z:${figure}`, model);
+  view.bar.visible = true;
+  (view.ring.material as THREE.MeshBasicMaterial).color.set(0x9be38a);
+  view.ring.visible = true;
   return view;
 }
 

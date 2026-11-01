@@ -938,6 +938,23 @@ export interface Objective {
 }
 
 /** Geschoss, das geradeaus fliegt und den ersten berührten Zombie trifft. */
+/** Verbündete Beschwörung (Troll): kämpft selbst, verschwindet nach until. */
+export interface Minion extends Unit {
+  ownerId: number;
+  /** troll = klein, bridge = Brückentroll (blockiert, zieht Zombies an), giant = riesig. */
+  kind: 'troll' | 'bridge' | 'giant';
+  hp: number;
+  maxHp: number;
+  damage: number;
+  until: number;
+  attackTimer: number;
+  /** Wutanfall: schneller und stärker bis dahin. */
+  rageUntil?: number;
+  targetId: number | null;
+  /** Brückentroll: Zombies in diesem Umkreis greifen ihn an. */
+  taunt?: number;
+}
+
 export interface Projectile {
   id: number;
   ownerId: number;
@@ -1047,6 +1064,8 @@ export interface GameState {
   firstBlood?: boolean;
   /** Neutrale Lager: wann ein geleertes Lager wiederkommt (null: besetzt). */
   camps: { id: string; respawnAt: number | null }[];
+  /** Verbündete Beschwörungen (Lottes Trolle). */
+  minions?: Minion[];
 }
 
 /** Ticks pro Sekunde der Simulation. */

@@ -72,6 +72,11 @@ function buildProjectile(look: string): THREE.Group {
       g.add(glow(0x9fe3ff, 0.9), glow(0xffffff, 0.35), trail(0x7fb8ff, 1.4, 0.3));
       break;
     }
+    case 'pebble': {
+      // Kiesel aus der Steinschleuder
+      g.add(new THREE.Mesh(new THREE.DodecahedronGeometry(0.09, 0), new THREE.MeshLambertMaterial({ color: 0x9a968a })), trail(0xd8d4c8, 0.7, 0.08));
+      break;
+    }
     case 'nugget': {
       // Goldnugget: unregelmäßiger, glänzender Klumpen mit goldener Spur
       const n = new THREE.Mesh(new THREE.DodecahedronGeometry(0.13, 0), new THREE.MeshStandardMaterial({ color: 0xffc83d, metalness: 0.9, roughness: 0.3, emissive: 0x7a4e00, emissiveIntensity: 0.6 }));

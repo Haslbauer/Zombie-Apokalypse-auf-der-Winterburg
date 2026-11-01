@@ -270,6 +270,7 @@ Gold gibt es für Kills und jede überstandene Welle, in der man mitgekämpft ha
 | Somnia (Schläferin) | Kontrolle | Berührung, Gähnen, Powernap, Gute Nacht |
 | Imker | Support (Bienen) | Honigtopf, Smoker, Wachbienen, Schwarm |
 | Aurelius (Goldschmied) | Schaden, Fernkampf | Lötflamme, Blattgold, Schmelztiegel, Goldrausch |
+| Lotte | Schaden, Beschwörerin | Trollruf, Brückentroll, Wutanfall, Trollfamilie |
 
 **Imker** (Support):
 - **Angriff:** ein kleiner Bienenschwarm (9 m). Jeder Treffer hinterlässt einen **Stich**, bis zu 5. Die Stiche machen 4 s lang Schaden über Zeit.
@@ -287,7 +288,17 @@ Gold gibt es für Kills und jede überstandene Welle, in der man mitgekämpft ha
 - **Schmelztiegel:** Fläche mit flüssigem Gold, verlangsamt und macht Schaden.
 - **Ultimate „Goldrausch“:** großer Flächenschaden; Zombies, die in den nächsten 6 s sterben, lassen doppelt Gold fallen und leuchten golden.
 
-Die neuen Helden sind vorerst umgebaute vorhandene Figuren. Der Imker hat einen hellen Anzug mit Imkerhut, Schleier und Smoker; Aurelius trägt runde Brille, Lederschürze und eine Lupe am Gürtel.
+**Lotte** (Schaden, Beschwörerin):
+- **Angriff:** Steinschleuder (8 m).
+- **Passiv „Beste Freunde“:** Ihre Trolle werden mit jedem Level 6 % stärker. Steht ein Troll in ihrer Nähe, nimmt sie 20 % weniger Schaden.
+- **Trollruf:** kleiner Troll für 12 s.
+- **Brückentroll:** großer Troll für 8 s; alle Zombies in 5 m greifen nur ihn an, so blockiert er einen Weg.
+- **Wutanfall:** alle ihre Trolle 4 s lang 50 % schneller und stärker.
+- **Ultimate „Trollfamilie“:** drei Trolle für 15 s, einer davon riesig.
+
+Trolle kämpfen selbst; ihr Schaden zählt für Lotte. Zombies greifen Trolle an, die ihnen im Weg stehen.
+
+Die neuen Helden sind vorerst umgebaute vorhandene Figuren. Der Imker hat einen hellen Anzug mit Imkerhut, Schleier und Smoker. Aurelius trägt runde Brille, Lederschürze und eine Lupe am Gürtel. Lotte ist eine verkleinerte Figur im gelben Mantel mit Zöpfen und Teddy. Die Trolle sind grün eingefärbte Kürbis-Hulks.
 Die Figur ist vorerst eine umgefärbte vorhandene Figur mit Imkerhut, Schleier und Smoker. Das Porträt ist aus dem Modell gerendert (`portrait.html?hero=imker` im Entwicklungsserver, Screenshot per Playwright).
 
 Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.

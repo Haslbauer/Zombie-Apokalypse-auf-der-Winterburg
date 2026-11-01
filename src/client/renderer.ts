@@ -10,7 +10,7 @@ import { buildMap, type MapAnimation } from './map';
 import { ObjectiveView } from './objectives';
 import { AbilityPreview } from './preview';
 import type { RiggedModel } from './models';
-import { ATTACK_ANIM, heroView, UnitView, zombieView } from './units';
+import { ATTACK_ANIM, heroView, minionView, UnitView, zombieView } from './units';
 
 /** So lange bleibt ein toter Zombie liegen (s), die letzte Sekunde versinkt er. */
 const CORPSE_TIME = 2.5;
@@ -182,6 +182,11 @@ export class GameRenderer {
       if (h.defId === 'imker') view.orbitBees(time);
       const hold = h.channel?.tag === 'nap' ? 'ability3' : undefined;
       view.animate(dt, speed, state.gameOver, hold);
+    }
+    // Lottes Trolle (Verbündete)
+    for (const m of state.minions ?? []) {
+      const view = upsert(m as unknown as Zombie, () => minionView(m, this.models));
+      view.animate(dt, view.measureSpeed(dt), state.gameOver);
     }
     for (const z of state.zombies) {
       const def = this.data.zombies.find((d) => d.id === z.defId)!;

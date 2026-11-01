@@ -247,6 +247,7 @@ export function encodeSnapshot(state: GameState, events: GameEvent[], zombieType
     wave: { ...state.wave, queue: state.wave.queue.length },
     kills: state.kills,
     pvp: state.pvp,
+    minions: state.minions,
     gameOver: state.gameOver,
     events,
     camps: state.camps,
