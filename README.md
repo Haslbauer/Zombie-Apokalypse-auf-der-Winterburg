@@ -162,6 +162,25 @@ Bot-Partien auf „schwer“ (je 3 Läufe, `BALANCE_TEAM=… npm run balance`): 
 
 Die Heldenwahl und die Lobby zeigen die Rolle jedes Helden und warnen, wenn eine Rolle fehlt. Bots füllen zuerst die fehlenden Rollen auf.
 
+## Buff-Ringe und Münzen
+
+**Buff-Ringe:** Aktive Wirkungen erscheinen wie in LoL als farbige, sich drehende Ringe um die Füße eines Helden. Das gilt für alle Helden, auch für Mitspieler und Gegner im PvP.
+
+| Ring | Farbe |
+|---|---|
+| mehr Schaden | Rot-Orange |
+| Angriffstempo | Gelb |
+| Lauftempo | Hellblau |
+| Schutz (Schild, weniger Schaden) | Weiß-Blau |
+| Heilung über Zeit | Grün |
+| Seuche (Schwächung) | Giftgrün, gestrichelt und langsam |
+
+Team-Buffs von Bossen haben breitere Ringe mit leuchtenden Punkten. In den letzten 5 s blinkt ein Ring.
+
+**Münzen:** Gold springt als glänzende Münzen aus dem erlegten Gegner und fliegt zum Helden. Beim Wellenbonus regnet es Münzen. Kleine Beträge bringen 1 Münze, ein Boss bis zu 8.
+
+**Zähler:** In der Kopfleiste, auf der Anzeigetafel (Tab) und in der Endstatistik zählen als **Kills** nur Bosse und Zwischenbosse (☠). Die erlegten Zombies haben ihren eigenen Zähler (🧟).
+
 ## Zwischenbosse und Team-Buffs
 
 Zwischenbosse (Rattenkönig, Schlächter, Dämon) kommen ab Welle 3 jede zweite Welle und ab Welle 10 in jeder Welle. Alle 5 Wellen kommt einer mehr dazu, und mit jeder Welle haben sie zusätzlich mehr Leben.

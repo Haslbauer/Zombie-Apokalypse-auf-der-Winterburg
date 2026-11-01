@@ -498,7 +498,8 @@ export class Hud {
     this.scoreKey = key;
     const table = el('table', '');
     const head = el('tr', '');
-    for (const t of ['Held', '', 'Kills', 'Bosse', 'Assists', 'Gold', 'Lv']) head.append(el('th', '', t));
+    // Kills = erlegte Bosse und Zwischenbosse; die Masse der Zombies hat ihren eigenen Zähler
+    for (const t of ['Held', '', 'Kills', 'Zombies', 'Assists', 'Gold', 'Lv']) head.append(el('th', '', t));
     table.append(head);
     for (const r of rows) {
       const tr = el('tr', '');
@@ -508,10 +509,11 @@ export class Hud {
       const name = el('td', 'hud-score-name');
       name.append(img, el('span', '', r.def.name));
       tr.append(name, el('td', 'hud-score-who', r.who));
-      for (const v of [r.s.kills, r.s.bosses, r.s.assists, r.s.gold, r.level]) tr.append(el('td', '', String(v)));
+      for (const v of [r.s.bosses, Math.max(0, r.s.kills - r.s.bosses), r.s.assists, r.s.gold, r.level]) tr.append(el('td', '', String(v)));
       table.append(tr);
     }
-    this.scoreboard.replaceChildren(el('h3', '', `Welle ${state.wave.number} · ${state.kills} Kills`), table);
+    const bosses = state.heroes.reduce((n, h) => n + (h.score?.bosses ?? 0), 0);
+    this.scoreboard.replaceChildren(el('h3', '', `Welle ${state.wave.number} · ${bosses} Bosse · ${state.kills} Zombies`), table);
   }
 
   /** Rollen-Abzeichen eines Helden (🛡 Tank, ⚔ Schaden, ✚ Support). */
@@ -832,24 +834,24 @@ export class Hud {
       if (place === 0) card.append(el('div', 'hud-mvp', 'MVP'));
       card.append(el('div', 'hud-medal', medals[place]), portrait(r, 'hud-podium-portrait'), el('div', 'hud-podium-name', who(r)), el('div', 'hud-podium-hero', `${sub(r)} · Lv ${r.level}`));
       const kda = el('div', 'hud-podium-kda');
-      kda.append(num(r.score.kills), ' / ', num(r.stats.deaths), ' / ', num(r.score.assists));
+      kda.append(num(r.score.bosses), ' / ', num(r.stats.deaths), ' / ', num(r.score.assists));
       const score = el('div', 'hud-podium-score');
       score.append(el('span', '', 'Wertung '), el('b', '', r.mvp.toFixed(1)));
-      card.append(kda, el('div', 'hud-small', 'Kills / Tode / Assists'), score);
+      card.append(kda, el('div', 'hud-small', `Kills / Tode / Assists · ${Math.max(0, r.score.kills - r.score.bosses)} Zombies`), score);
       podium.append(card);
     }
     box.append(podium);
 
     // 3. Auszeichnungen
     const awards: [string, string, (r: FinalHeroStats) => number, string][] = [
-      ['🗡', 'Meiste Kills', (r) => r.score.kills, ''],
+      ['🗡', 'Meiste Kills', (r) => r.score.bosses, ' Bosse'],
+      ['🧟', 'Zombiejäger', (r) => Math.max(0, r.score.kills - r.score.bosses), ' Zombies'],
       ['🤝', 'Meiste Assists', (r) => r.score.assists, ''],
       ['💰', 'Meistes Gold', (r) => r.score.gold, ' Gold'],
       ['💥', 'Meister Schaden', (r) => r.stats.damage, ''],
       ['🛡', 'Bollwerk', (r) => r.stats.damageTaken, ' eingesteckt'],
       ['🌿', 'Heiler', (r) => r.stats.healing, ' geheilt'],
       ['🔥', 'Längste Serie', (r) => r.stats.bestStreak, ' Kills'],
-      ['☠', 'Bossjäger', (r) => r.score.bosses, ' Bosse'],
     ];
     const awardRow = el('div', 'hud-awards');
     for (const [icon, title, value, unit] of awards) {
@@ -868,10 +870,10 @@ export class Hud {
 
     // 4. Rangliste (Klick auf Spaltenkopf sortiert)
     const columns: { label: string; title: string; value: (r: FinalHeroStats) => number; bar?: boolean; text?: (r: FinalHeroStats) => string }[] = [
-      { label: 'K', title: 'Kills', value: (r) => r.score.kills },
+      { label: 'K', title: 'Kills (Bosse und Zwischenbosse)', value: (r) => r.score.bosses },
       { label: 'T', title: 'Tode', value: (r) => r.stats.deaths },
       { label: 'A', title: 'Assists', value: (r) => r.score.assists },
-      { label: 'Bosse', title: 'Bosse und Elites', value: (r) => r.score.bosses },
+      { label: 'Zombies', title: 'Erlegte Zombies (ohne Bosse)', value: (r) => Math.max(0, r.score.kills - r.score.bosses) },
       { label: 'Schaden', title: 'Schaden an Zombies', value: (r) => r.stats.damage, bar: true },
       { label: 'Erlitten', title: 'Erlittener Schaden', value: (r) => r.stats.damageTaken },
       { label: 'Heilung', title: 'Heilung an sich und anderen', value: (r) => r.stats.healing },
@@ -1372,7 +1374,12 @@ export class Hud {
       if (!t.alive && !state.gameOver) r.status.dataset.respawn = `† ${Math.ceil(t.respawnAt - state.time)} s`;
       else delete r.status.dataset.respawn;
     }
-    this.kills.textContent = `Kills: ${state.kills}`;
+    const bossKills = state.heroes.reduce((n, h) => n + (h.score?.bosses ?? 0), 0);
+    const killText = `☠ ${bossKills} · 🧟 ${Math.max(0, state.kills - bossKills)}`;
+    if (this.kills.textContent !== killText) {
+      this.kills.textContent = killText;
+      this.kills.title = 'Kills: erlegte Bosse und Zwischenbosse · Zombies';
+    }
     const clock = `⏱ ${formatClock(state.time)}`;
     if (this.clock.textContent !== clock) this.clock.textContent = clock;
     const best = this.bestTime;

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { BuffRing } from './buffrings';
 import type { Hero, HeroDef, Unit, Zombie, ZombieDef } from '../sim/types';
 import { instantiate, type ModelInstance, type RiggedModel } from './models';
 import { groundGlow } from './nightdecor';
@@ -215,6 +216,8 @@ export class UnitView {
   readonly ring: THREE.Mesh;
   private readonly icon = new THREE.Sprite();
   private shield: THREE.Mesh | null = null;
+  /** Buff-Ringe (LoL-artig): je Art eine drehende Gruppe aus Bogen-Segmenten. */
+  private buffRingViews = new Map<string, { g: THREE.Group; mats: THREE.MeshBasicMaterial[]; index: number; team: boolean }>();
   private flash = 0;
   readonly height: number;
   private hero = false;
@@ -795,6 +798,66 @@ export class UnitView {
   }
 
   /** Held: Schildblase, festgehalten oder betäubt; opacity < 1 bei Unsichtbarkeit (Nebelschritt) bzw. im Versteck. */
+  /**
+   * Buff-Ringe anzeigen: je aktiver Wirkungsart ein farbiger Ring aus drei
+   * Bögen, der sich dreht (Richtung je Ring wechselnd), in den letzten 5 s
+   * blinkt; Team-Buffs von Bossen sind breiter und haben leuchtende Punkte,
+   * Seuche ist gestrichelt und dreht langsamer.
+   */
+  showBuffs(rings: BuffRing[], time: number, radius: number): void {
+    const keep = new Set(rings.map((r) => r.key));
+    for (const [key, v] of this.buffRingViews) {
+      if (keep.has(key as BuffRing['key'])) continue;
+      this.group.remove(v.g);
+      v.g.traverse((o) => o instanceof THREE.Mesh && o.geometry.dispose());
+      v.mats.forEach((m) => m.dispose());
+      this.buffRingViews.delete(key);
+    }
+    rings.forEach((r, index) => {
+      let v = this.buffRingViews.get(r.key);
+      if (!v || v.index !== index || v.team !== r.team) {
+        if (v) {
+          this.group.remove(v.g);
+          v.mats.forEach((m) => m.dispose());
+        }
+        const g = new THREE.Group();
+        const inner = Math.max(0.62, radius * 1.45) + index * 0.17;
+        const width = r.team ? 0.11 : 0.06;
+        const segments = r.debuff ? 6 : 3;
+        const gap = r.debuff ? 0.5 : 0.35;
+        const mats: THREE.MeshBasicMaterial[] = [];
+        for (let i = 0; i < segments; i++) {
+          const mat = new THREE.MeshBasicMaterial({ color: r.color, transparent: true, opacity: 0.85, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+          mats.push(mat);
+          const len = ((Math.PI * 2) / segments) * (1 - gap);
+          const m = new THREE.Mesh(new THREE.RingGeometry(inner, inner + width, 24, 1, (i * Math.PI * 2) / segments, len), mat);
+          m.rotation.x = -Math.PI / 2;
+          g.add(m);
+        }
+        if (r.team) {
+          // Funkelnde Punkte auf dem Ring (Boss-Buff)
+          for (let i = 0; i < 3; i++) {
+            const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending });
+            mats.push(mat);
+            const a = (i / 3) * Math.PI * 2 + 0.6;
+            const dot = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 4), mat);
+            dot.position.set(Math.cos(a) * (inner + width / 2), 0.02, Math.sin(a) * (inner + width / 2));
+            g.add(dot);
+          }
+        }
+        g.position.y = 0.07 + index * 0.025;
+        g.renderOrder = 3;
+        this.group.add(g);
+        v = { g, mats, index, team: r.team };
+        this.buffRingViews.set(r.key, v);
+      }
+      const dir = index % 2 === 0 ? 1 : -1;
+      v.g.rotation.y = time * (r.debuff ? 0.6 : 1.6) * dir;
+      const blink = r.left < 5 ? 0.35 + 0.5 * Math.abs(Math.sin(time * 7)) : 0.85;
+      for (const m of v.mats) m.opacity = blink;
+    });
+  }
+
   showHero(h: Hero, shield: number, opacity: number): void {
     const stunned = h.buffs.some((b) => b.kind === 'stunned');
     const rooted = h.buffs.some((b) => b.kind === 'rooted');

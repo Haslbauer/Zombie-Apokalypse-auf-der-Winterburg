@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { buffRings } from './buffrings';
 import { arenaBounds, brushAt } from '../sim/grid';
 import { hasBuff, shieldAmount } from '../sim/status';
 import { type AbilityDef, type AttackDef, type GameData, type GameState, type Hero, type Zombie } from '../sim/types';
@@ -168,6 +169,7 @@ export class GameRenderer {
         }
         view.bar.visible = false;
         view.ring.visible = false;
+        view.showBuffs([], time, h.radius);
         continue;
       }
       view.revive();
@@ -175,6 +177,8 @@ export class GameRenderer {
       const hidden = (h.brush ?? -1) >= 0 && state.time >= (h.revealedUntil ?? 0);
       view.showHero(h, shieldAmount(h), hasBuff(h, 'invisible') ? 0.3 : hidden ? 0.55 : 1);
       view.group.visible = !(this.hideOwn && h.id === this.playerId);
+      // Aktive Buffs als drehende, farbige Ringe um den Helden
+      view.showBuffs(hidden ? [] : buffRings(h, state.time), time, h.radius);
       const hold = h.channel?.tag === 'nap' ? 'ability3' : undefined;
       view.animate(dt, speed, state.gameOver, hold);
     }

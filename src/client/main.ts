@@ -21,6 +21,7 @@ import { PING_STYLE } from './pingwheel';
 import { LocalSession, RemoteSession, type Session } from './session';
 import { ShopView } from './shop';
 import { sound } from './audio';
+import { coinCount } from './buffrings';
 
 const renderer = new GameRenderer(document.getElementById('game')!, gameData);
 const effects = new Effects(renderer.scene);
@@ -551,7 +552,9 @@ function handleEvents(state: GameState): void {
           // Wellenbonus ohne Ort: über dem eigenen Helden anzeigen
           const at = e.pos ?? state.heroes.find((h) => h.id === heroId)?.pos;
           if (at) effects.floatingText(at, `+${e.amount}`, '#ffd166', e.pos ? 1.8 : 2.6);
-          sound.play('gold', undefined, 0.6);
+          // Münzen springen hoch und fliegen zum Helden; Klang beim Ankommen
+          const me = () => renderer.unitPosition(heroId) ?? myHero()?.pos ?? null;
+          effects.coins(e.pos ?? null, coinCount(e.amount), me, () => sound.play('gold', undefined, 0.6));
         }
         break;
       case 'shopDenied':
@@ -863,6 +866,11 @@ if (params.has('debug')) {
         if (!(session instanceof LocalSession)) return;
         const def = session.sim.zombieDefs.get(defId);
         if (def) spawnZombieAt(session.sim, def, { x, y });
+      },
+      // Einzelspieler: dem eigenen Helden Wirkungen geben (Buff-Ringe prüfen), z. B. buff('haste', 0.3, 20, 'team-daemon')
+      buff: (kind: string, value: number, seconds: number, source = 'debug') => {
+        const h = session instanceof LocalSession ? session.sim.hero(heroId) : undefined;
+        if (h) h.buffs.push({ kind: kind as never, value, until: session!.state.time + seconds, source });
       },
       // Ego-Sicht: Zustand lesen bzw. Blickrichtung setzen (Tests)
       view: (yaw?: number, pitch?: number) => {

@@ -7,7 +7,14 @@ interface Effect {
   age: number;
   life: number;
   update: (t: number) => void;
+  /** Geteilte Geometrie und Material (Münzen): nicht freigeben. */
+  shared?: boolean;
 }
+
+/** Münze: geteilte Form (flacher Zylinder) und glänzendes Gold, das auch nachts leuchtet. */
+let coinGeo: THREE.CylinderGeometry | null = null;
+let coinMat: THREE.MeshStandardMaterial | null = null;
+const MAX_COINS = 40;
 
 let soft: THREE.CanvasTexture | null = null;
 /** Weicher, runder Lichtfleck (für Blitze und Funken). */
@@ -139,6 +146,82 @@ export class Effects {
     });
   }
 
+  /**
+   * Gold als Münzen: springen am Kill-Ort im Bogen hoch (mit Drehung), fliegen
+   * dann zum Helden (target liefert seine aktuelle Lage) und funkeln dort.
+   * Ohne Ort (Wellenbonus): Münzregen von oben. onArrive beim ersten Ankommen.
+   */
+  coins(from: Vec2 | null, count: number, target: () => Vec2 | null, onArrive?: () => void): void {
+    coinGeo ??= new THREE.CylinderGeometry(0.26, 0.26, 0.06, 18);
+    coinMat ??= new THREE.MeshStandardMaterial({ color: 0xffc83d, metalness: 0.85, roughness: 0.28, emissive: 0x7a4e00, emissiveIntensity: 0.7 });
+    const active = this.effects.filter((e) => e.shared).length;
+    const n = Math.min(count, Math.max(0, MAX_COINS - active));
+    let arrived = false;
+    for (let i = 0; i < n; i++) {
+      const mesh = new THREE.Mesh(coinGeo, coinMat);
+      mesh.castShadow = false;
+      const a = (i / Math.max(1, n)) * Math.PI * 2 + Math.random() * 0.8;
+      const spread = 0.5 + Math.random() * 0.7;
+      const delay = i * 0.04;
+      const spin = 10 + Math.random() * 8;
+      const start = from ?? target();
+      if (!start) return;
+      const s0 = { ...start };
+      const life = 0.95 + delay;
+      this.effects.push({
+        mesh,
+        age: 0,
+        life,
+        shared: true,
+        update: (t) => {
+          const time = t * life - delay;
+          if (time < 0) {
+            mesh.visible = false;
+            return;
+          }
+          mesh.visible = true;
+          const k = time / 0.95;
+          const tgt = target() ?? s0;
+          let x: number;
+          let y: number;
+          let z: number;
+          if (from) {
+            if (k < 0.45) {
+              // Hochspringen und auseinander
+              const u = k / 0.45;
+              x = s0.x + Math.cos(a) * spread * u;
+              z = s0.y + Math.sin(a) * spread * u;
+              y = 0.6 + Math.sin(u * Math.PI) * 1.3 + u * 0.3;
+            } else {
+              // Zum Helden ziehen (beschleunigt)
+              const u = (k - 0.45) / 0.55;
+              const e = u * u;
+              const px = s0.x + Math.cos(a) * spread;
+              const pz = s0.y + Math.sin(a) * spread;
+              x = px + (tgt.x - px) * e;
+              z = pz + (tgt.y - pz) * e;
+              y = 0.9 + (1.3 - 0.9) * e + Math.sin(u * Math.PI) * 0.5;
+            }
+          } else {
+            // Münzregen auf den Helden
+            x = tgt.x + Math.cos(a) * 0.4 * (1 - k);
+            z = tgt.y + Math.sin(a) * 0.4 * (1 - k);
+            y = 3.4 - k * 2.2;
+          }
+          mesh.position.set(x, y, z);
+          mesh.rotation.set(Math.PI / 2, 0, time * spin);
+          mesh.scale.setScalar(k > 0.9 ? (1 - k) * 10 : 1);
+          if (k > 0.9 && !arrived) {
+            arrived = true;
+            this.flash(tgt, 1.3, 0xffd166, 0.7, 0.18);
+            onArrive?.();
+          }
+        },
+      });
+      this.scene.add(mesh);
+    }
+  }
+
   /** Eine Biene fliegt vom Stock zum gestochenen Ziel. */
   sting(from: Vec2, to: Vec2, angry: boolean): void {
     const material = new THREE.MeshBasicMaterial({ color: angry ? 0xff3b30 : 0xffd23f });
@@ -209,8 +292,10 @@ export class Effects {
       e.age += dt;
       if (e.age >= e.life) {
         this.scene.remove(e.mesh);
-        if (e.mesh instanceof THREE.Mesh) e.mesh.geometry.dispose();
-        (e.mesh.material as THREE.Material).dispose();
+        if (!e.shared) {
+          if (e.mesh instanceof THREE.Mesh) e.mesh.geometry.dispose();
+          (e.mesh.material as THREE.Material).dispose();
+        }
         this.effects.splice(i, 1);
       } else {
         e.update(e.age / e.life);
