@@ -1,12 +1,12 @@
 {
   "victoryWave": 20,
-  "baseCount": 12,
-  "countPerWave": 4.12,
-  "hpScalePerWave": 0.32,
-  "damageScalePerWave": 0.25,
-  "spawnInterval": 0.35,
-  "firstPauseDuration": 20,
-  "pauseDuration": 25,
+  "baseCount": 10,
+  "countPerWave": 2.6,
+  "hpScalePerWave": 0.2,
+  "damageScalePerWave": 0.4,
+  "spawnInterval": 0.3,
+  "firstPauseDuration": 15,
+  "pauseDuration": 12,
   "mix": [
     {
       "fromWave": 1,
@@ -44,7 +44,7 @@
     "every": 2,
     "everyFrom": 10,
     "countPerWaves": 5,
-    "hpPerWave": 0.05,
+    "hpPerWave": 0.02,
     "types": [
       "rattenkoenig",
       "schlaechter",
@@ -59,14 +59,14 @@
     {
       "type": "ratte",
       "fromWave": 2,
-      "packsPerWave": 0.5,
+      "packsPerWave": 0.3,
       "minSize": 5,
       "maxSize": 8
     },
     {
       "type": "hornisse",
       "fromWave": 1,
-      "packsPerWave": 0.25,
+      "packsPerWave": 0.2,
       "minSize": 2,
       "maxSize": 3,
       "sizePerWave": 0.4

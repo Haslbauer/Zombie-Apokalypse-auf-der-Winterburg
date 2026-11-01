@@ -35,11 +35,11 @@ describe('Neue Gegner und Elites', () => {
   it('Rattenrudel ab Welle 2, Zwischenbosse ab Welle 3, immer mehr', () => {
     expect(packCount(1, cfg, 'ratte')).toBe(0);
     expect(packCount(2, cfg, 'ratte')).toBe(1);
-    expect(packCount(8, cfg, 'ratte')).toBeGreaterThan(2);
+    expect(packCount(9, cfg, 'ratte')).toBeGreaterThan(2);
     // Hornissen ab Welle 1: anfangs ein kleiner Schwarm, mit jeder Welle größer und mehr
     const hornets = cfg.packs!.find((p) => p.type === 'hornisse')!;
     expect(packCount(1, cfg, 'hornisse')).toBe(1);
-    expect(packCount(9, cfg, 'hornisse')).toBe(3);
+    expect(packCount(11, cfg, 'hornisse')).toBe(3);
     expect(packSize(1, hornets, 0)).toBe(2);
     expect(packSize(1, hornets, 0.99)).toBe(3);
     expect(packSize(11, hornets, 0)).toBe(6);

@@ -141,6 +141,6 @@
   },
   "rest": {
     "range": 5,
-    "perSecond": 0.08
+    "perSecond": 0.1
   }
 }

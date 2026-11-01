@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v2.6)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v2.7)
 
 Stand: 01.11.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v2.7: Spieldauer etwa 20 Minuten für 20 Wellen: Pausen 15 s und 12 s, weniger, dafür härter zuschlagende Zombies (+20 % Leben, +40 % Schaden je Welle), schnellere Kriecher, Messlauf `tests/balance/timing.test.ts`.
 Änderungen v2.6: Wellen-Ereignisse (Nebelnacht, Blutmond, Regen), PvP-Varianten (Kiste erobern, Zombies nebenbei, Bots auf leeren Plätzen), Ego-Sicht mit Waffe im Bild und Kopfwippen, Schadenszahlen, Rollen-Kombos.
 Änderungen v2.5: Verteidigungen in der Pause (Stacheldraht, Barrikade, Feuerfass), vier neue Helden (Imker, Aurelius, Lotte, Kapitän Tiefe).
 Änderungen v2.4: Neuer Held Imker (Support), drei Spieler im Koop, Reichweiten und Durchschlag, Münzen und Buff-Ringe.
@@ -74,8 +75,8 @@ Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Ha
 ## 4. Spielablauf
 
 - Wellenphase: Zombies spawnen an den Kartenrändern und laufen zum Haus
-- Pausenphase 25 s (vor Welle 1: 20 s): Shop öffnen, Skillpunkte verteilen, Wiederbeleben. Wer fertig ist, startet die nächste Welle sofort mit N bzw. dem Knopf „Jetzt starten“ (im Mehrspieler später erst, wenn alle Menschen bereit sind).
-- Welle n hat mehr und stärkere Zombies als Welle n-1
+- Pausenphase 12 s (vor Welle 1: 15 s; bis v2.6 waren es 25 s und 20 s): Shop öffnen, Skillpunkte verteilen, Wiederbeleben. Wer fertig ist, startet die nächste Welle sofort mit N bzw. dem Knopf „Jetzt starten“ (im Mehrspieler später erst, wenn alle Menschen bereit sind).
+- Welle n hat mehr und stärkere Zombies als Welle n-1. Ab v2.7 gilt: 10 + 2,6 × (n − 1) einzelne Zombies, Leben ×(1 + 0,2 × (n − 1)), Schaden ×(1 + 0,4 × (n − 1)), Zwischenbosse +2 % Leben je Welle. Ziel: ein erfolgreiches Spiel über 20 Wellen dauert etwa 20 Minuten (Messlauf `tests/balance/timing.test.ts`: 21 bis 24 min mit Bots ohne frühen Start).
 - Elite-Zombie alle 5 Wellen, Boss alle 10 Wellen (Vorschlag)
 - Ziel (nach LoL-Vorbild): Welle 30 überstehen, das dauert ca. 30 bis 40 Minuten wie ein LoL-Spiel. Danach optionaler Endlos-Modus mit Highscore.
 
@@ -250,7 +251,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `data/waves.json`.
 
 - **Walker** (langsam, Masse; Optik v1.7: meist Polizisten-Zombie, sonst Zombie-Mädchen), **Runner** (schnell, wenig Leben; Optik: Parasit oder Skelett-Zombie), **Brute** (Tank; Kürbis-Hulk, 1,5-fach groß)
-- **Kriecher** (ab Welle 3): kriecht am Boden, sehr langsam, viel Leben. Sein Treffer hält den Helden 1 s fest.
+- **Kriecher** (ab Welle 3): kriecht am Boden, langsam (1,15 m/s), viel Leben. Sein Treffer hält den Helden 1 s fest.
 - **Wer greift was an:** Zombies (Walker, Runner, Brute, Kriecher, Elites) jagen Helden in der Nähe und laufen sonst zum Lebensmittelvorrat. Den Bienenstock und die Beete lassen sie in Ruhe.
 - **Ratten (Minions):** klein, sehr schnell, wenig Leben und Schaden. Ab Welle 2 kommen Rudel von 5–8 Ratten gemeinsam an einem Spawnpunkt, mit jeder Welle mehr Rudel. Sie fressen die **Hochbeete** an (60 %, jeweils das nächste intakte Beet), gehen an den **Bienenstock** (20 %) oder an den **Vorrat** (20 %, v1.7). Zum Vorrat kommen sie (wie alle) durch den Durchgang im Südwesten oder den Nordeingang. Helden beißen sie nur, wenn sie gestört werden: Ein Held steht näher als 2 m oder hat sie in den letzten 4 s getroffen.
 - **Hornissen** (ab Welle 1: anfangs ein Schwarm von 2–3, Schwärme wachsen um 0,4 Tiere pro Welle, alle 4 Wellen ein Schwarm mehr): gelb-schwarz, schnell, wenig Leben. Sie fliegen über Hecken, Zäune und das Haus und greifen die Honigkästen des Bienenstocks an. Sie kommen zu 85 % aus dem Spawnpunkt Nordwest. Helden greifen sie wie Ratten nur an, wenn sie gestört werden. Ihr Angriff macht die Bienen wütend.
