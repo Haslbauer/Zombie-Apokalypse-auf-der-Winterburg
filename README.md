@@ -190,6 +190,10 @@ Du wählst deinen Helden, zwei Bots spielen mit und ergänzen die fehlenden Roll
 
 `npm run balance` lässt drei Bots ohne Spieler über mehrere Seeds spielen und gibt die erreichte Welle aus (Optionen: `BALANCE_SEEDS=5`, `BALANCE_DIFF=mittel`, `BALANCE_TEAM=rotschopf,grimm,gaertnerin`).
 
+## Zusammenstöße
+
+Helden können Zombies nicht einfach vor sich herschieben. Läuft ein Held gegen einen Zombie, weicht vor allem der Held zurück. Normale Zombies geben nur etwas nach, Zwischenbosse und Endgegner stehen wie eine Wand, nur kleine Gegner (Ratten, Spinnen) lassen sich wegdrücken. Eine Horde kann einen Helden so auch einkesseln. Sprünge und Fähigkeiten mit Rückstoß wirken wie bisher.
+
 ## Reichweite und Durchschlag
 
 Angriffe reichen weiter als früher (die Karte ist größer). Manche Schüsse treffen auch Gegner dahinter, mit weniger Schaden:

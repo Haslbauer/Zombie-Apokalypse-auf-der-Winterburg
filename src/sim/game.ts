@@ -10,7 +10,7 @@ import { levelStats, levelUp } from './progression';
 import { kitOf } from './heroes/index';
 import { updateDelayed, updateZones } from './zones';
 import { SpatialHash } from './spatial';
-import { type ArenaDef, type BotDifficulty, DT, type Command, type GameData, type GameLevel, type GameState, type Hero, type PvpGoal, type WaveEventKind, type Zombie } from './types';
+import { type ArenaDef, type BotDifficulty, DT, type Command, type GameData, type GameLevel, type GameState, type Hero, type PvpGoal, type WaveEventKind, type Zombie, type ZombieDef } from './types';
 import { updateCamps } from './neutrals';
 import { spawnZombieAt, updateWaves } from './waves';
 import { updateZombies } from './zombies';
@@ -379,9 +379,11 @@ export class Simulation implements SimContext {
         if (other.id > z.id) pushApart(z, other, 0.5);
       }
     }
+    // Helden gegen Zombies: Wer schwerer ist, gibt weniger nach. Nahkämpfer
+    // können Zombies nicht einfach vor sich herschieben; Bosse stehen wie eine Wand.
     for (const h of heroes) {
       if (!h.alive) continue;
-      for (const z of this.hash.query(h.pos, h.radius + 1, this.neighbors)) pushApart(h, z, 0);
+      for (const z of this.hash.query(h.pos, h.radius + 1, this.neighbors)) pushApart(h, z, heroPushShare(this.zombieDefs.get(z.defId), h, z));
     }
     for (const z of zombies) {
       if (this.zombieDefs.get(z.defId)?.flying) {
@@ -393,4 +395,18 @@ export class Simulation implements SimContext {
     }
     for (const h of heroes) if (h.alive) resolveObstacles(h.pos, h.radius, arena);
   }
+}
+
+/**
+ * Anteil, um den der Held beim Zusammenstoß mit einem Zombie zurückweicht
+ * (0 = Held schiebt den Zombie ganz weg, 1 = Zombie bewegt sich gar nicht).
+ * Kleine Gegner (Ratten, Spinnen) lassen sich schieben, normale Zombies geben
+ * wenig nach, Zwischenbosse und Endgegner gar nicht.
+ */
+export function heroPushShare(def: ZombieDef | undefined, h: { radius: number }, z: { radius: number }): number {
+  if (def?.rank === 'elite' || def?.rank === 'boss') return 0.95;
+  if (def?.small) return 0.3;
+  const mz = z.radius * z.radius;
+  const mh = h.radius * h.radius;
+  return Math.max(0.6, Math.min(0.9, 0.75 + ((mz - mh) / (mz + mh)) * 0.3));
 }
