@@ -659,5 +659,141 @@
         "attackSpeed": 0.1
       }
     }
+  },
+  {
+    "id": "totengraeber",
+    "name": "Totengräber",
+    "color": "#5a4630",
+    "hp": 940,
+    "speed": 1.9,
+    "radius": 0.85,
+    "damage": 34,
+    "attackRange": 0.6,
+    "attackCooldown": 1.4,
+    "aggroRange": 9,
+    "xp": 135,
+    "gold": 60,
+    "figure": "gravedigger",
+    "rank": "elite",
+    "targets": {
+      "heart": 1
+    },
+    "abilities": [
+      {
+        "kind": "slam",
+        "name": "Schaufelschlag",
+        "interval": 6,
+        "windup": 0.85,
+        "range": 3,
+        "radius": 1.9,
+        "damage": 75,
+        "stun": 0.4
+      },
+      {
+        "kind": "bolt",
+        "name": "Erdwurf",
+        "interval": 9,
+        "windup": 1.0,
+        "range": 11,
+        "radius": 1.7,
+        "damage": 28,
+        "count": 2,
+        "slow": {
+          "factor": 0.3,
+          "duration": 2
+        }
+      },
+      {
+        "kind": "nova",
+        "name": "Grab öffnen",
+        "interval": 15,
+        "windup": 1.4,
+        "range": 6,
+        "radius": 3,
+        "damage": 20,
+        "summon": {
+          "type": "kriecher",
+          "count": 2
+        },
+        "fromWave": 9
+      }
+    ],
+    "teamBuff": {
+      "name": "Grabesruhe",
+      "icon": "🪦",
+      "duration": 90,
+      "effects": {
+        "damageMult": 1.15
+      }
+    }
+  },
+  {
+    "id": "moorhexe",
+    "name": "Moorhexe",
+    "color": "#4a6a3a",
+    "hp": 820,
+    "speed": 2.1,
+    "radius": 0.7,
+    "damage": 30,
+    "attackRange": 0.6,
+    "attackCooldown": 1.3,
+    "aggroRange": 11,
+    "xp": 135,
+    "gold": 60,
+    "figure": "witch",
+    "rank": "elite",
+    "targets": {
+      "heart": 1
+    },
+    "abilities": [
+      {
+        "kind": "bolt",
+        "name": "Fluchblitz",
+        "interval": 7,
+        "windup": 1.0,
+        "range": 12,
+        "radius": 1.6,
+        "damage": 30,
+        "count": 2,
+        "plague": 1
+      },
+      {
+        "kind": "nova",
+        "name": "Sumpfnebel",
+        "interval": 11,
+        "windup": 1.2,
+        "range": 5,
+        "radius": 3.6,
+        "damage": 20,
+        "slow": {
+          "factor": 0.3,
+          "duration": 2.5
+        }
+      },
+      {
+        "kind": "bolt",
+        "name": "Krötenregen",
+        "interval": 14,
+        "windup": 1.3,
+        "range": 11,
+        "radius": 1.8,
+        "damage": 20,
+        "count": 2,
+        "summon": {
+          "type": "ratte",
+          "count": 2
+        },
+        "fromWave": 10
+      }
+    ],
+    "teamBuff": {
+      "name": "Hexentrank",
+      "icon": "🧪",
+      "duration": 75,
+      "effects": {
+        "heal": 0.01,
+        "attackSpeed": 0.1
+      }
+    }
   }
 ]

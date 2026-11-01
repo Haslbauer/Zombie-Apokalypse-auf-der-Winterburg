@@ -32,7 +32,7 @@ function iconMaterial(text: string, color: string): THREE.SpriteMaterial {
   return material;
 }
 
-type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp' | 'beehat' | 'smoker' | 'glasses' | 'apron' | 'loupe' | 'pigtails' | 'teddy' | 'divehelm' | 'airtank' | 'harpoongun' | 'bonnet' | 'handbell' | 'shawl' | 'felthat' | 'axe' | 'scythe' | 'icecrown' | 'tophat' | 'broom' | 'chefhat' | 'rollingpin';
+type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp' | 'beehat' | 'smoker' | 'glasses' | 'apron' | 'loupe' | 'pigtails' | 'teddy' | 'divehelm' | 'airtank' | 'harpoongun' | 'bonnet' | 'handbell' | 'shawl' | 'felthat' | 'axe' | 'scythe' | 'icecrown' | 'tophat' | 'broom' | 'chefhat' | 'rollingpin' | 'shovel' | 'witchhat';
 
 /**
  * Aussehen einer animierten Figur (public/models/<model>.glb). move: Lauf-Clip,
@@ -106,6 +106,10 @@ const ZOMBIE_LOOKS: Record<string, ModelLook> = {
   scarecrow: { model: 'zombie-cop', move: 'walk', refSpeed: 1.6, scale: 1.55, tint: [1, 1, 1], plain: 0xb89a52, ...Z, attacks: ['attack', 'bite'], props: ['sunhat', 'scythe'], handOffset: 0.06 },
   // Frostriese: großer, eisblauer Hüne mit Eiskrone
   frostgiant: { model: 'zombie-warrok', move: 'walk', refSpeed: 1.0, scale: 2.15, tint: [0.65, 0.95, 1.4], ...Z, attacks: ['attack', 'bite'], props: ['icecrown'] },
+  // Totengräber: erdbrauner Zombie mit Filzhut und Schaufel
+  gravedigger: { model: 'zombie-cop', move: 'walk', refSpeed: 1.5, scale: 1.6, tint: [1, 1, 1], plain: 0x5a4630, ...Z, attacks: ['attack', 'bite'], props: ['felthat', 'shovel'], handOffset: 0.06 },
+  // Moorhexe: grünliche Gestalt mit spitzem Hut
+  witch: { model: 'zombie-girl', move: 'walk', refSpeed: 1.6, scale: 1.45, tint: [1, 1, 1], plain: 0x4a6a3a, ...Z, attacks: ['attack', 'bite'], props: ['witchhat'] },
   hornet: { model: 'wasp', move: 'fly', idle: 'fly', refSpeed: 4.5, scale: 1.6, tint: [1, 1, 1], attacks: ['attack'], lift: 0.9 },
 };
 
@@ -121,6 +125,8 @@ export const ELITE_COLORS: Record<string, number> = {
   toad: 0x7fd6a0,
   scarecrow: 0xe0b040,
   frostgiant: 0x7fd1ff,
+  gravedigger: 0xc8a070,
+  witch: 0x8aff6a,
 };
 
 /** Helden mit Modell (assets/models/<held>): Grimm ist ein Schäferhund (Quaternius), die übrigen Mixamo-Figuren mit eigenen Texturen. */
@@ -363,7 +369,7 @@ export class UnitView {
     // Requisiten in Metern: Maßstab des Knochens herausrechnen (Mixamo und Quaternius unterscheiden sich)
     inst.root.updateMatrixWorld(true);
     for (const prop of look.props ?? []) {
-      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat' || prop === 'beehat' || prop === 'glasses' || prop === 'pigtails' || prop === 'divehelm' || prop === 'bonnet' || prop === 'felthat' || prop === 'icecrown' || prop === 'tophat' || prop === 'chefhat';
+      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat' || prop === 'beehat' || prop === 'glasses' || prop === 'pigtails' || prop === 'divehelm' || prop === 'bonnet' || prop === 'felthat' || prop === 'icecrown' || prop === 'tophat' || prop === 'chefhat' || prop === 'witchhat';
       // Am Körper: Schürze an der Brust, Lupe am Gürtel
       const body = prop === 'apron' || prop === 'airtank' || prop === 'shawl' ? 'mixamorigSpine1' : prop === 'loupe' ? 'mixamorigHips' : null;
       const bone = inst.root.getObjectByName(body ?? (head ? (look.headBone ?? 'mixamorigHead') : (look.handBone ?? 'mixamorigRightHand')));
@@ -543,6 +549,16 @@ export class UnitView {
         add(new THREE.CylinderGeometry(0.04, 0.04, 0.3, 8), 0x5a3a20, 0, 0.2, 0);
         add(new THREE.BoxGeometry(0.3, 0.12, 0.2), 0x2a2a2a, 0, 0.4, 0);
         add(new THREE.BoxGeometry(0.32, 0.03, 0.22), 0xc0302a, 0, 0.47, 0);
+        break;
+      case 'shovel':
+        // Schaufel: Stiel mit Blatt
+        add(new THREE.CylinderGeometry(0.025, 0.025, 1.1, 6), 0x6b4a2b, 0, 0.35, 0);
+        add(new THREE.BoxGeometry(0.22, 0.28, 0.03), 0x8a8a8e, 0, 0.98, 0);
+        break;
+      case 'witchhat':
+        // Spitzer Hexenhut mit breiter Krempe
+        add(new THREE.CylinderGeometry(0.24, 0.24, 0.02, 16), 0x1e2a18, 0, 0.14, 0.02);
+        add(new THREE.ConeGeometry(0.13, 0.42, 12), 0x1e2a18, 0, 0.35, 0.0).rotation.z = 0.15;
         break;
       case 'chefhat':
         // Weiße Kochmütze

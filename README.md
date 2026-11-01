@@ -275,7 +275,7 @@ Das Ereignis wird mit dem festen Zufall der Partie gezogen. Im Mehrspieler sehen
 
 ## Zwischenbosse und Team-Buffs
 
-Zwischenbosse (Rattenkönig, Schlächter, Dämon, Vogelscheuche, Frostriese) kommen im Wechsel ab Welle 3 jede zweite Welle und ab Welle 10 in jeder Welle. Alle 5 Wellen kommt einer mehr dazu, und mit jeder Welle haben sie zusätzlich mehr Leben.
+Zwischenbosse (Rattenkönig, Schlächter, Dämon, Vogelscheuche, Frostriese, Totengräber, Moorhexe) kommen im Wechsel ab Welle 3 jede zweite Welle und ab Welle 10 in jeder Welle. Alle 5 Wellen kommt einer mehr dazu, und mit jeder Welle haben sie zusätzlich mehr Leben.
 
 Sie haben Fähigkeiten wie die Helden. Jede kündigt sich mit einer **Warnung am Boden** an; wer rechtzeitig herausläuft, weicht aus:
 
@@ -285,6 +285,8 @@ Sie haben Fähigkeiten wie die Helden. Jede kündigt sich mit einer **Warnung am
 | Schlächter | **Hackbeil** (schwerer Schlag aufs Ziel), **Fleischwolf** ab Welle 6 (Fläche, Seuche), Anlauf |
 | Dämon | **Klauenhieb** (schwerer Schlag), **Höllenfeuer** ab Welle 7 (3 Einschläge, Seuche), Höllensprung |
 | Vogelscheuche | **Sensenhieb** (schwerer Schlag, breit), **Krähenschwarm** ab Welle 5 (2 Einschläge, Seuche), **Saat der Toten** ab Welle 9 (Fläche um sie; an der Stelle wachsen 2 Zombies aus dem Boden) |
+| Totengräber | **Schaufelschlag** (schwerer Schlag mit kurzer Betäubung), **Erdwurf** (2 Einschläge, verlangsamen), **Grab öffnen** ab Welle 9 (Fläche um ihn; 2 Kriecher kommen aus dem Boden) |
+| Moorhexe | **Fluchblitz** (2 Einschläge, Seuche), **Sumpfnebel** (Fläche um sie, verlangsamt), **Krötenregen** ab Welle 10 (2 Einschläge, an jedem kommen 2 Ratten) |
 | Frostriese | **Eisfaust** (schwerer Schlag mit Betäubung), **Frosthauch** (große Fläche, 35 % langsamer für 2,5 s), **Eiszapfen** ab Welle 8 (3 Einschläge, verlangsamen) |
 
 **Wut:** Ein Boss, der länger als 30 s lebt, macht jede Sekunde 3,5 % mehr Schaden, höchstens das 2,5-Fache. Er färbt sich dann rot.
@@ -306,6 +308,8 @@ Dazu ruft es Sachbearbeiter. Wer es besiegt, bekommt 📜 Baugenehmigung: +25 % 
 | Schlächter | 🩸 Blutrausch: +20 % Schaden, 90 s |
 | Dämon | 🔥 Höllenglut: +10 % Schaden, +12 % Tempo, 90 s |
 | Vogelscheuche | 🌾 Erntedank: 0,8 % Leben pro Sekunde, −8 % erlittener Schaden, 90 s |
+| Totengräber | 🪦 Grabesruhe: +15 % Schaden, 90 s |
+| Moorhexe | 🧪 Hexentrank: 1 % Leben pro Sekunde, +10 % Angriffstempo, 75 s |
 | Frostriese | ❄ Frostschutz: −12 % erlittener Schaden, +10 % Angriffstempo, 90 s |
 | Riesenspinne | 🕷 Spinnenbeine: +15 % Tempo, 75 s |
 | Kröte | 🐸 Krötenschleim: 1 % Leben pro Sekunde, 75 s |
