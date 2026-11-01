@@ -1,6 +1,8 @@
 # Zombie-Apokalypse auf der Winterburg
 
-Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die Winterburg (Haus und Vorgärten) gegen Zombiewellen – Schrägkamera von oben, WASD + Maus, Level, Gold, Shop und KI-Bots für freie Slots.
+**▶ Jetzt spielen: [zombie-apokalypse.onrender.com](https://zombie-apokalypse.onrender.com)** – kostenloser Server; nach einer Weile ohne Besucher schläft er ein, der erste Aufruf dauert dann etwa eine Minute.
+
+Koop-Verteidigungsspiel im Browser. Drei Helden (Tank, Schaden, Support) verteidigen die Winterburg (Haus und Vorgärten) gegen Zombiewellen – Schrägkamera von oben, WASD + Maus, Level, Gold, Shop, Verteidigungen und KI-Bots für freie Plätze. Dazu ein PvP-Modus für bis zu vier Spieler.
 
 - Spezifikation: [docs/SPEC.md](docs/SPEC.md)
 - Referenzbilder (z. B. `hund.jpg` für Grimm, Satellitenbild der Karte): `assets/reference/`
@@ -34,7 +36,7 @@ Im Spiel: Helden wählen, **„Online mit Freunden“**. Oben rechts stehen Raum
 
 ### Dauerhafter Link (Render, Gratis-Tarif)
 
-Bei [render.com](https://render.com) mit GitHub anmelden, **New → Blueprint**, dieses Repo wählen – `render.yaml` erledigt den Rest (Region Frankfurt). Der Gratis-Dienst schläft nach rund 15 Minuten ohne Besucher; der erste Aufruf danach dauert etwa eine Minute, das Spiel zeigt dann „Server wacht auf …“ und versucht es weiter. Laufende Räume gehen beim Einschlafen verloren. (Stand der Anbieterbedingungen kann sich ändern.)
+Das Spiel läuft unter **https://zombie-apokalypse.onrender.com** und wird bei jedem Push auf `main` automatisch neu gebaut. Eigene Instanz: bei [render.com](https://render.com) mit GitHub anmelden, **New → Blueprint**, dieses Repo wählen – `render.yaml` erledigt den Rest (Region Frankfurt). Der Gratis-Dienst schläft nach rund 15 Minuten ohne Besucher; der erste Aufruf danach dauert etwa eine Minute, das Spiel zeigt dann „Server wacht auf …“ und versucht es weiter. Laufende Räume gehen beim Einschlafen verloren. (Stand der Anbieterbedingungen kann sich ändern.)
 
 ### Eigener Server (Docker)
 
