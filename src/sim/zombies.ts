@@ -6,11 +6,12 @@ import { nextRandom } from './rng';
 import { updateElite } from './elites';
 import { updateNeutral } from './neutrals';
 import { hasBuff, heroCC, isBlind, isDisabled, isFeared, isRooted, statusSpeedFactor } from './status';
-import { DT, type Hero, type Objective, type Zombie } from './types';
+import { type Defense, DT, type Hero, type Objective, type Zombie } from './types';
 import { dist, type Vec2 } from './vec';
 import { brushAt } from './grid';
 import { threatTarget } from './roles';
 import { minionTarget } from './minions';
+import { blockingBarricade, damageDefense } from './defenses';
 import { enrageFactor, updateBossAbilities } from './bossabilities';
 
 /** Bis zu diesem Abstand laufen Zombies direkt aufs Ziel zu, sonst entlang des Distanzfelds. */
@@ -101,6 +102,7 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null, s
 
     const found = currentObjective(ctx, z);
     if (!found) continue;
+    let bar: Defense | null = null;
     const obj = found.obj;
     if (objDistance(z, obj) <= def.attackRange) {
       face(z, obj.pos);
@@ -111,6 +113,14 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null, s
       if (z.attackTimer <= 0) {
         z.attackTimer = def.attackCooldown;
         if (!blind || nextRandom(state) >= BLIND_MISS) damageObjective(ctx, obj, z.damage);
+      }
+    } else if (!def.flying && (bar = blockingBarricade(ctx, z, def.attackRange + 0.25))) {
+      // Bretterbarrikade im Weg: kaputtschlagen
+      face(z, bar.pos);
+      if (z.attackTimer <= 0) {
+        z.attackTimer = def.attackCooldown;
+        damageDefense(ctx, bar, z.damage * enrageFactor(ctx, z));
+        state.events.push({ type: 'attack', id: z.id, targetId: bar.id });
       }
     } else if (!rooted) {
       if (blind) stagger(ctx, z, obj.pos, speed * DT);

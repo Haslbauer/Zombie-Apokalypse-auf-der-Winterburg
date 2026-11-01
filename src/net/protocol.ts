@@ -92,6 +92,12 @@ function parseCommand(c: unknown): ClientCommand | null {
       return int(o.slot, 0, 1) ? { type: 'use', slot: o.slot } : null;
     case 'startWave':
       return { type: 'startWave' };
+    case 'build':
+      return ['stacheldraht', 'barrikade', 'feuerfass'].includes(o.kind as string) && vec(o.pos) && (o.rot === 0 || o.rot === 1)
+        ? { type: 'build', kind: o.kind as 'stacheldraht' | 'barrikade' | 'feuerfass', pos: { x: o.pos.x, y: o.pos.y }, rot: o.rot }
+        : null;
+    case 'repair':
+      return { type: 'repair' };
     case 'spell':
       return int(o.slot, 0, 1) && vec(o.aim) ? { type: 'spell', slot: o.slot, aim: { x: o.aim.x, y: o.aim.y } } : null;
     case 'chooseSpells':
@@ -248,6 +254,7 @@ export function encodeSnapshot(state: GameState, events: GameEvent[], zombieType
     kills: state.kills,
     pvp: state.pvp,
     minions: state.minions,
+    defenses: state.defenses,
     gameOver: state.gameOver,
     events,
     camps: state.camps,

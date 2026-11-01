@@ -6,9 +6,10 @@ import { Simulation } from '../sim/game';
 import { buildPlan } from '../sim/items';
 import { spawnZombieAt } from '../sim/waves';
 import { endGame } from '../sim/stats';
+import { repairCost } from '../sim/defenses';
 import { defaultTeam } from '../sim/bots/team';
 import { canRankUp } from '../sim/progression';
-import type { BotDifficulty, GameEvent, GameState } from '../sim/types';
+import type { BotDifficulty, DefenseKind, GameEvent, GameState } from '../sim/types';
 import { Effects } from './effects';
 import { Hud } from './hud';
 import { Quality, QUALITY_LABELS } from './quality';
@@ -127,9 +128,30 @@ function toggleShop(): void {
 input.onShop = toggleShop;
 hud.shopHint.addEventListener('click', toggleShop);
 input.onEscape = () => {
+  // Baumodus zuerst abbrechen, dann die Bauleiste schließen
+  if (buildKind) {
+    buildKind = null;
+    return true;
+  }
+  if (buildOpen) {
+    buildOpen = false;
+    return true;
+  }
   if (!shop.open) return false;
   shop.hide();
   return true;
+};
+
+// ---------- Bauen (Pause): Stacheldraht, Barrikade, Feuerfass ----------
+let buildOpen = false;
+let buildKind: DefenseKind | null = null;
+let buildRot = 0;
+input.onBuild = () => {
+  buildOpen = !buildOpen;
+  if (!buildOpen) buildKind = null;
+};
+input.onRotateBuild = () => {
+  buildRot = 1 - buildRot;
 };
 
 /** Heldenwahl, dann Team-Ansicht, dann Spielstart (allein oder online). */
@@ -629,6 +651,18 @@ function handleEvents(state: GameState): void {
         }
         sound.play('slam', e.points[0], 0.8);
         break;
+      case 'defense':
+        if (e.action === 'built') {
+          if (e.heroId === heroId) sound.play('buy');
+          if (e.pos) effects.ring(e.pos, 1.2, 0xffd166, 0.4);
+        } else if (e.action === 'destroyed') {
+          hud.message(`${gameData.economy.defenses?.[e.kind!]?.name ?? 'Verteidigung'} zerstört`);
+          if (e.pos) effects.deathPuff(e.pos);
+        } else if (e.action === 'repaired') {
+          hud.message(`Verteidigungen repariert (−${e.gold} Gold)`);
+          sound.play('buy');
+        } else if (e.action === 'denied' && e.heroId === heroId) hud.message(e.reason ?? 'Geht hier nicht');
+        break;
       case 'teamBuff':
         hud.message(`${e.icon} Team-Buff: ${e.name} (${e.duration} s)`);
         hud.addPing(`${e.icon} ${e.name} für alle (${e.duration} s)`, '#ffd166');
@@ -782,6 +816,30 @@ renderer.renderer.setAnimationLoop((now) => {
     shop.update(me, def.attack.type, (id) => buildPlan(ctx(), me, id));
     minimap.update(dt, state, heroId, viewCorners());
     if (session instanceof RemoteSession) hud.setPing(session.rtt);
+    // Bauleiste und Vorschau (nur in der Pause, nicht im PvP)
+    const defs = gameData.economy.defenses;
+    const canBuild = !!defs && !state.pvp && state.wave.phase === 'pause' && me.alive && !state.gameOver && !spectate;
+    if (!canBuild) {
+      buildOpen = false;
+      buildKind = null;
+    }
+    const counts: Record<string, number> = {};
+    for (const d of state.defenses ?? []) counts[d.kind] = (counts[d.kind] ?? 0) + 1;
+    hud.setBuildBar(
+      buildOpen && defs
+        ? {
+            defs: { stacheldraht: defs.stacheldraht, barrikade: defs.barrikade, feuerfass: defs.feuerfass },
+            counts,
+            active: buildKind,
+            gold: me.gold,
+            repair: repairCost(ctx()),
+          }
+        : null,
+      { select: (k) => (buildKind = buildKind === k ? null : (k as DefenseKind)), repair: () => cmd({ type: 'repair' }) },
+    );
+    const place = buildKind;
+    input.onPlace = place ? () => cmd({ type: 'build', kind: place, pos: input.aimPoint, rot: buildRot }) : null;
+    renderer.buildGhost(buildKind, buildKind ? input.aimPoint : null, buildRot);
     // Ton: Zuhörer am eigenen Helden bzw. am Kamerafokus
     const near: { x: number; y: number }[] = [];
     let boss = false;

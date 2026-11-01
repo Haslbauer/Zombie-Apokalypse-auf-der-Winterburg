@@ -16,6 +16,8 @@ export interface SimContext {
   smallObjectiveFields: Map<string, Float32Array>;
   /** Felder einer Zielgruppe neu berechnen (z. B. wenn ein Hochbeet zerstört wird oder nachwächst). */
   refreshObjectiveFields(kind: string): void;
+  /** Hindernisse neu berechnen (z. B. Barrikade gebaut oder zerstört). */
+  rebuildCollision?(): void;
   heroDefs: Map<string, HeroDef>;
   zombieDefs: Map<string, ZombieDef>;
 }

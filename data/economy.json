@@ -66,5 +66,43 @@
         "y": 76
       }
     ]
+  },
+  "defenses": {
+    "stacheldraht": {
+      "name": "Stacheldraht",
+      "icon": "🪢",
+      "description": "Verlangsamt Zombies und macht Schaden. Nutzt sich ab, wenn Zombies durchlaufen.",
+      "cost": 60,
+      "max": 6,
+      "hp": 300,
+      "radius": 1.3,
+      "slow": 0.45,
+      "dps": 10,
+      "wear": 4
+    },
+    "barrikade": {
+      "name": "Bretterbarrikade",
+      "icon": "🪵",
+      "description": "Blockiert den Weg. Zombies schlagen sie kaputt.",
+      "cost": 80,
+      "max": 6,
+      "hp": 700,
+      "w": 2.4,
+      "h": 0.5
+    },
+    "feuerfass": {
+      "name": "Feuerfass",
+      "icon": "🛢",
+      "description": "Setzt Zombies in der Nähe in Brand. Brennt langsam herunter.",
+      "cost": 100,
+      "max": 3,
+      "hp": 400,
+      "radius": 1.8,
+      "burnDps": 12,
+      "burnTime": 3,
+      "wear": 3
+    },
+    "repairFactor": 0.5,
+    "minSpacing": 1.2
   }
 }

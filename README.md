@@ -254,6 +254,18 @@ Gutes Spielen wird belohnt (wie in LoL): Der letzte Treffer bringt das volle Gol
 
 Die Wertung funktioniert wie in LoL: Kill 1 Punkt, Boss 5, Assist 0,6, je 400 Schaden 1, je 300 Heilung 1, je 800 eingesteckter Schaden 1, je Tod −1. Die Gewichte lassen sich in `data/economy.json` unter `rewards.mvp` anpassen.
 
+## Verteidigungen bauen (Pause)
+
+In der Pause öffnet **V** die Bauleiste. Dort wählst du eine Verteidigung und stellst sie per **Linksklick** an der Maus auf. **X** dreht die Barrikade, **Esc** bricht ab. Die Höchstzahl gilt fürs ganze Team.
+
+| Verteidigung | Kosten | Höchstens | Wirkung |
+|---|---|---|---|
+| 🪢 Stacheldraht | 60 Gold | 6 | Zombies im Umkreis von 1,3 m sind verlangsamt und nehmen 10 Schaden/s; der Draht nutzt sich ab, je mehr Zombies durchlaufen |
+| 🪵 Bretterbarrikade | 80 Gold | 6 | blockiert den Weg (2,4 m breit, 700 Leben); Zombies laufen außen herum oder schlagen sie kaputt |
+| 🛢 Feuerfass | 100 Gold | 3 | setzt Zombies im Umkreis von 1,8 m 3 s in Brand; brennt langsam herunter |
+
+**🔧 Reparieren** stellt alle beschädigten Verteidigungen wieder her und kostet die Hälfte des Neupreises für den fehlenden Anteil. Den Schaden der Verteidigungen bekommt der Held angerechnet, der sie gebaut hat. Im PvP gibt es keine Verteidigungen.
+
 ## Shop
 
 Gold gibt es für Kills und jede überstandene Welle, in der man mitgekämpft hat. In der Pause im Innenhof öffnet **B** den Shop: Waffen (wirken als Werte-Items), Rüstung, Werte-Items und Verbrauchsgüter für R/T. Rechtsklick auf ein Item im Inventar verkauft es (70 %).

@@ -18,6 +18,8 @@ export const ACTIONS = [
   { id: 'ping', label: 'Ping (halten: Ping-Rad)' },
   { id: 'scoreboard', label: 'Anzeigetafel (halten)' },
   { id: 'mute', label: 'Ton an/aus' },
+  { id: 'build', label: 'Bauen (Pause)' },
+  { id: 'rotateBuild', label: 'Barrikade drehen' },
 ] as const;
 
 export type Action = (typeof ACTIONS)[number]['id'];
@@ -45,6 +47,8 @@ const DEFAULTS: Record<Action, string> = {
   ping: 'Mouse2',
   scoreboard: 'Tab',
   mute: 'KeyM',
+  build: 'KeyV',
+  rotateBuild: 'KeyX',
 };
 
 const STORAGE_KEY = 'winterburg.keybindings';

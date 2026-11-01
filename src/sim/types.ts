@@ -209,7 +209,39 @@ export interface ItemDef {
   use?: { duration: number; heal?: number; haste?: number; attackSpeed?: number };
 }
 
+export type DefenseKind = 'stacheldraht' | 'barrikade' | 'feuerfass';
+export interface DefenseDef {
+  name: string;
+  icon: string;
+  description: string;
+  cost: number;
+  max: number;
+  hp: number;
+  radius?: number;
+  w?: number;
+  h?: number;
+  slow?: number;
+  dps?: number;
+  wear?: number;
+  burnDps?: number;
+  burnTime?: number;
+}
+/** Aufgestellte Verteidigung (Pause: kaufen und platzieren). */
+export interface Defense {
+  id: number;
+  kind: DefenseKind;
+  pos: Vec2;
+  /** Barrikade: quer (0) oder längs (1). */
+  rot: number;
+  hp: number;
+  maxHp: number;
+  ownerId: number;
+  tickTimer: number;
+}
+
 export interface EconomyDef {
+  /** Verteidigungen für die Pause (Kosten, Höchstzahl, Werte). */
+  defenses?: Record<DefenseKind, DefenseDef> & { repairFactor: number; minSpacing: number };
   /** PvP-Modus: Kills zum Sieg, Gold/EP pro Kill und Sekunde, Wiederbelebung, Startplätze je Team. */
   pvp?: { killsToWin: number; killGold: number; goldPerSecond: number; xpPerSecond: number; killXp: number; respawn: number; startGold: number; spawns: { x: number; y: number }[] };
   roles?: RolesDef;
@@ -644,6 +676,8 @@ export type Command =
   | { heroId: number; type: 'use'; slot: number }
   /** Pause beenden und die nächste Welle sofort starten. */
   | { heroId: number; type: 'startWave' }
+  | { heroId: number; type: 'build'; kind: DefenseKind; pos: Vec2; rot: number }
+  | { heroId: number; type: 'repair' }
   | { heroId: number; type: 'ping'; kind: PingKind; pos: Vec2 }
   /** Beschwörerzauber (slot 0 = D, 1 = F) Richtung aim. */
   | { heroId: number; type: 'spell'; slot: number; aim: Vec2 }
@@ -1027,6 +1061,7 @@ export type GameEvent =
   | { type: 'charge'; zombieId: number; from: Vec2; to: Vec2 }
   | { type: 'bossCast'; zombieId: number; kind: BossAbilityDef['kind']; name: string; points: Vec2[]; radius: number; windup: number }
   | { type: 'bossHit'; zombieId: number; kind: BossAbilityDef['kind']; points: Vec2[]; radius: number }
+  | { type: 'defense'; action: 'built' | 'destroyed' | 'repaired' | 'denied'; kind?: DefenseKind; pos?: Vec2; heroId?: number; reason?: string; gold?: number }
   | { type: 'pvpKill'; killerId: number | null; victimId: number; score: [number, number] }
   | { type: 'teamBuff'; defId: string; name: string; icon: string; duration: number }
   | { type: 'parcel'; zombieId: number; from: Vec2; to: Vec2; radius: number; windup: number }
@@ -1068,6 +1103,8 @@ export interface GameState {
   camps: { id: string; respawnAt: number | null }[];
   /** Verbündete Beschwörungen (Lottes Trolle). */
   minions?: Minion[];
+  /** Aufgestellte Verteidigungen (Stacheldraht, Barrikaden, Feuerfässer). */
+  defenses?: Defense[];
 }
 
 /** Ticks pro Sekunde der Simulation. */

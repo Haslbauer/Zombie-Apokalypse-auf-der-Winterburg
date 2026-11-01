@@ -1602,3 +1602,60 @@ html, body {
   color: #b5f07a;
   border-color: rgba(139, 220, 74, 0.5);
 }
+
+/* Bauleiste (Pause) */
+.hud-buildbar {
+  position: absolute;
+  left: 50%;
+  bottom: 200px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: calc(100% - 32px);
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(15, 22, 17, 0.8);
+  pointer-events: auto;
+}
+.hud-buildbar-title {
+  font-weight: 700;
+  color: #ffd166;
+  margin-right: 4px;
+}
+.hud-build-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 92px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px solid #4f7a57;
+  background: #1d2a20;
+  color: #e8f0e0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+.hud-build-btn .icon {
+  font-size: 20px;
+}
+.hud-build-btn.active {
+  border-color: #ffd166;
+  box-shadow: 0 0 10px rgba(255, 209, 102, 0.4);
+}
+.hud-build-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.hud-build-btn.repair {
+  min-width: 0;
+  justify-content: center;
+}
+.hud-buildbar-hint {
+  flex-basis: 100%;
+  text-align: center;
+  opacity: 0.75;
+}

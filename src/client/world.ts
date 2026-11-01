@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { Ball, GameState, Zone } from '../sim/types';
+import type { Ball, Defense, GameState, Zone } from '../sim/types';
 import type { Snapshot } from './renderer';
 
 let glowTex: THREE.CanvasTexture | null = null;
@@ -118,6 +118,55 @@ function buildProjectile(look: string): THREE.Group {
   return g;
 }
 
+/** Modell einer Verteidigung (Spiel-Koordinaten: x/y → Three x/z). */
+function buildDefense(kind: Defense['kind'], rot: number): { g: THREE.Group; flame?: THREE.Object3D } {
+  const g = new THREE.Group();
+  const lam = (c: number, e = 0) => new THREE.MeshLambertMaterial({ color: c, emissive: e });
+  const part = (geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z: number) => {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    m.castShadow = true;
+    g.add(m);
+    return m;
+  };
+  if (kind === 'stacheldraht') {
+    // Drahtrolle im Kreis (Radius ~1,3 m) mit Pflöcken
+    const wire = lam(0x4a4a4c);
+    const loop = new THREE.TorusGeometry(0.28, 0.014, 3, 12);
+    for (let i = 0; i < 18; i++) {
+      const a = (i / 18) * Math.PI * 2;
+      const l = part(loop, wire, Math.cos(a) * 1.05, 0.3, Math.sin(a) * 1.05);
+      l.rotation.y = -a;
+    }
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2 + 0.4;
+      part(new THREE.CylinderGeometry(0.04, 0.05, 0.75, 5), lam(0x6b4a2b), Math.cos(a) * 1.05, 0.37, Math.sin(a) * 1.05);
+    }
+  } else if (kind === 'barrikade') {
+    // Bretterwand 2,4 m breit, quer (rot 0: entlang x) oder längs
+    const w = 2.4;
+    const wood = lam(0x8a6a45);
+    const dark = lam(0x5a4028);
+    for (const x of [-w / 2 + 0.1, w / 2 - 0.1]) part(new THREE.BoxGeometry(0.14, 1.6, 0.14), dark, x, 0.8, 0);
+    for (let i = 0; i < 5; i++) {
+      const p = part(new THREE.BoxGeometry(w, 0.2, 0.06), i % 2 ? wood : lam(0x7a6448), 0, 0.3 + i * 0.28, 0.08);
+      p.rotation.z = (i % 2 ? 1 : -1) * 0.06;
+    }
+    part(new THREE.BoxGeometry(w * 1.05, 0.14, 0.05), wood, 0, 0.85, 0.12).rotation.z = 0.45;
+    g.rotation.y = rot ? Math.PI / 2 : 0;
+  } else {
+    // Feuerfass mit Flamme und Lichtschein
+    part(new THREE.CylinderGeometry(0.36, 0.33, 0.95, 12), lam(0x4a3a30), 0, 0.47, 0);
+    part(new THREE.CylinderGeometry(0.3, 0.3, 0.04, 10), lam(0xff7a20, 0xff5a10), 0, 0.93, 0);
+    const flame = new THREE.Group();
+    flame.add(glow(0xff8a30, 1.1), glow(0xffd166, 0.5));
+    flame.position.y = 1.3;
+    g.add(flame);
+    return { g, flame };
+  }
+  return { g };
+}
+
 /** Zonen, Libero-Ball und Geschosse in der Szene. */
 export class WorldView {
   private readonly zones = new Map<number, THREE.Object3D>();
@@ -135,7 +184,58 @@ export class WorldView {
     this.balls.clear();
   }
 
+  private readonly defenses = new Map<number, { g: THREE.Group; flame?: THREE.Object3D }>();
+  private ghost: { g: THREE.Group; key: string } | null = null;
+
+  /** Aufgestellte Verteidigungen: Stacheldraht, Bretterbarrikade, Feuerfass (Feuer flackert). */
+  private syncDefenses(list: Defense[], time: number): void {
+    const seen = new Set<number>();
+    for (const d of list) {
+      seen.add(d.id);
+      let v = this.defenses.get(d.id);
+      if (!v) {
+        v = buildDefense(d.kind, d.rot);
+        v.g.position.set(d.pos.x, 0, d.pos.y);
+        this.defenses.set(d.id, v);
+        this.scene.add(v.g);
+      }
+      // Beschädigt: sinkt leicht ein
+      v.g.scale.y = 0.55 + 0.45 * Math.max(0, d.hp / d.maxHp);
+      if (v.flame) v.flame.scale.setScalar(0.8 + Math.sin(time * 13 + d.id) * 0.15 + 0.3 * (d.hp / d.maxHp));
+    }
+    for (const [id, v] of this.defenses) {
+      if (seen.has(id)) continue;
+      this.scene.remove(v.g);
+      this.defenses.delete(id);
+    }
+  }
+
+  /** Baumodus: halb durchsichtige Vorschau an der Maus (null = aus). */
+  showGhost(kind: Defense['kind'] | null, pos: { x: number; y: number } | null, rot: number): void {
+    const key = kind ? `${kind}-${rot}` : '';
+    if (this.ghost && this.ghost.key !== key) {
+      this.scene.remove(this.ghost.g);
+      this.ghost = null;
+    }
+    if (!kind || !pos) return;
+    if (!this.ghost) {
+      const g = buildDefense(kind, rot).g;
+      g.traverse((o) => {
+        if (o instanceof THREE.Mesh) {
+          o.material = (o.material as THREE.Material).clone();
+          (o.material as THREE.MeshLambertMaterial).transparent = true;
+          (o.material as THREE.MeshLambertMaterial).opacity = 0.5;
+          o.castShadow = false;
+        }
+      });
+      this.ghost = { g, key };
+      this.scene.add(g);
+    }
+    this.ghost.g.position.set(pos.x, 0, pos.y);
+  }
+
   sync(state: GameState, prev: Map<number, Snapshot>, alpha: number, time: number): void {
+    this.syncDefenses(state.defenses ?? [], time);
     this.syncZones(state.zones, state.time, time);
     this.syncProjectiles(state, prev, alpha);
     const seen = new Set<number>();

@@ -1,3 +1,4 @@
+import { build, repair } from './defenses';
 import { tryCast, updateDash } from './abilities';
 import { heroAttack } from './combat';
 import { buy, sell, useConsumable } from './economy';
@@ -35,6 +36,14 @@ export function applyInputs(ctx: SimContext, commands: readonly Command[]): void
     }
     if (cmd.type === 'buy') {
       buy(ctx, h, cmd.itemId);
+      continue;
+    }
+    if (cmd.type === 'build') {
+      build(ctx, h, cmd.kind, cmd.pos, cmd.rot);
+      continue;
+    }
+    if (cmd.type === 'repair') {
+      repair(ctx, h);
       continue;
     }
     if (cmd.type === 'sell') {

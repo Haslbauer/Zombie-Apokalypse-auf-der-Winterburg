@@ -293,6 +293,11 @@ export class GameRenderer {
   }
 
   /** Markierung unter den Helden legen und zur Maus drehen; kräftiger, wenn der Angriff bereit ist. */
+  /** Baumodus: Vorschau der Verteidigung an der Maus. */
+  buildGhost(kind: 'stacheldraht' | 'barrikade' | 'feuerfass' | null, pos: Vec2 | null, rot: number): void {
+    this.world.showGhost(kind, pos, rot);
+  }
+
   updateAimIndicator(pos: Vec2 | null, facing: number, ready: boolean): void {
     if (!this.aimIndicator) return;
     this.aimIndicator.visible = pos !== null;

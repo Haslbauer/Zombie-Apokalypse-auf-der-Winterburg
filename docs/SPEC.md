@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v2.4)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v2.5)
 
 Stand: 31.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v2.5: Verteidigungen in der Pause (Stacheldraht, Barrikade, Feuerfass), vier neue Helden (Imker, Aurelius, Lotte, Kapitän Tiefe).
 Änderungen v2.4: Neuer Held Imker (Support), drei Spieler im Koop, Reichweiten und Durchschlag, Münzen und Buff-Ringe.
 Änderungen v2.3: Ton fast still (keine Dauerquellen, Musik nur in Wellen), Ego-Sicht beim ganz Hineinzoomen (Maus fangen, Laufen relativ zum Blick, Fadenkreuz).
 Änderungen v2.2: Endstatistik nach Spielende (Podest mit MVP, Auszeichnungen, sortierbare Rangliste, Kills pro Welle).
@@ -271,6 +272,15 @@ Freiwillige Ziele im Gelände außerhalb des Gartens. Sie bringen Gold und XP, k
 - Zu Spielbeginn besetzt. Geleerte Lager kommen nach 75 s (Kröte 90 s) wieder, mit der Stärke der aktuellen Welle.
 - Belohnung: Kill-Gold und XP wie bei Zombies für alle Helden in der Nähe.
 - Lager und Postbote zählen nicht zur Welle.
+
+## 8d. Verteidigungen (v2.5)
+
+- **Bauen:** nur in der Pause, nicht im PvP. Befehle `build {kind, pos, rot}` und `repair`; Werte in `data/economy.json` unter `defenses`, Code in `src/sim/defenses.ts`.
+- **Stacheldraht:** Kreis 1,3 m; verlangsamt (45 %), 10 Schaden/s; Abnutzung 4 Leben/s je Zombie darin (300 Leben).
+- **Bretterbarrikade:** 2,4 × 0,5 m, quer oder längs; Hindernis im Raster und in den Wegefeldern (neu berechnet beim Bauen und Zerstören). Zombies, die zum Ziel laufen und sie berühren, schlagen sie (700 Leben).
+- **Feuerfass:** Kreis 1,8 m; Brand 12 Schaden/s für 3 s; Abnutzung 3 Leben/s je Zombie (400 Leben).
+- **Grenzen:** je Art 6/6/3 fürs Team, mindestens 1,2 m Abstand (Barrikaden 2,2 m), nicht auf Hindernissen, Zielen oder Helden.
+- **Reparieren:** fehlender Anteil × Neupreis × 0,5 Gold, zahlt der auslösende Held.
 
 ## 9. Gold, Shop und Items
 

@@ -640,6 +640,44 @@ export class Hud {
     this.crosshair.classList.toggle('locked', locked);
   }
 
+  private buildBar: HTMLElement | null = null;
+  private buildKey = '';
+  /**
+   * Bauleiste (Pause): Stacheldraht, Barrikade, Feuerfass mit Kosten und
+   * Anzahl, Reparieren. null = ausblenden.
+   */
+  setBuildBar(
+    info: { defs: Record<string, { name: string; icon: string; cost: number; max: number; description: string }>; counts: Record<string, number>; active: string | null; gold: number; repair: number } | null,
+    on: { select: (kind: string) => void; repair: () => void },
+  ): void {
+    if (!this.buildBar) {
+      this.buildBar = el('div', 'hud-buildbar');
+      this.root.append(this.buildBar);
+    }
+    const key = info ? JSON.stringify(info) : '';
+    if (key === this.buildKey) return;
+    this.buildKey = key;
+    this.buildBar.style.display = info ? '' : 'none';
+    if (!info) return;
+    const rows: HTMLElement[] = [el('span', 'hud-buildbar-title', `Bauen (${keyName(this.bindings.get('build'))})`)];
+    for (const [kind, d] of Object.entries(info.defs)) {
+      const n = info.counts[kind] ?? 0;
+      const b = el('button', `hud-build-btn${info.active === kind ? ' active' : ''}`);
+      b.dataset.build = kind;
+      b.title = `${d.description}\nKosten ${d.cost} Gold · höchstens ${d.max}`;
+      b.disabled = n >= d.max || info.gold < d.cost;
+      b.append(el('span', 'icon', d.icon), el('span', '', d.name), el('small', '', `${d.cost} G · ${n}/${d.max}`));
+      b.addEventListener('click', () => on.select(kind));
+      rows.push(b);
+    }
+    const rep = el('button', 'hud-build-btn repair', `🔧 Reparieren${info.repair > 0 ? ` (${info.repair} G)` : ''}`);
+    rep.disabled = info.repair <= 0 || info.gold < info.repair;
+    rep.addEventListener('click', on.repair);
+    rows.push(rep);
+    rows.push(el('small', 'hud-buildbar-hint', info.active ? `Linksklick: platzieren · ${keyName(this.bindings.get('rotateBuild'))}: drehen · Esc: abbrechen` : 'Wähle, was du aufstellen willst'));
+    this.buildBar.replaceChildren(...rows);
+  }
+
   /** Team-Buffs (von Zwischenbossen) mit Restzeit und Seuche-Stapel des eigenen Helden. */
   private updateBuffBar(h: Hero, time: number): void {
     const chips: [string, string, string][] = [];

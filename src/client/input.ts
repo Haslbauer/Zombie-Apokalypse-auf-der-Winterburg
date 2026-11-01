@@ -27,6 +27,10 @@ export class Input {
   onShop: () => void = () => {};
   onStartWave: () => void = () => {};
   onMute: () => void = () => {};
+  /** Bauen: Bauleiste umschalten, Barrikade drehen, Linksklick platziert (statt Angriff). */
+  onBuild: () => void = () => {};
+  onRotateBuild: () => void = () => {};
+  onPlace: (() => void) | null = null;
   /** Mausrad (deltaY > 0: herauszoomen). */
   onZoom: (deltaY: number) => void = () => {};
   /** Esc zuerst hier anbieten (z. B. Shop schließen); true = erledigt. */
@@ -72,6 +76,11 @@ export class Input {
         return;
       }
       const code = `Mouse${e.button}`;
+      // Baumodus: Linksklick platziert die gewählte Verteidigung
+      if (this.onPlace && e.button === 0) {
+        this.onPlace();
+        return;
+      }
       // Ego-Sicht: Rechtsklick = „Hier!“ am Fadenkreuz (kein Ping-Rad mit gefangener Maus)
       if (this.firstPerson && code === this.bindings.get('ping')) {
         this.onPing('here', this.firstPerson.aim());
@@ -125,6 +134,8 @@ export class Input {
         if (e.code === this.bindings.get('spell2')) this.onSpell(1);
         if (e.code === this.bindings.get('shop')) this.onShop();
         if (e.code === this.bindings.get('startWave')) this.onStartWave();
+        if (e.code === this.bindings.get('build')) this.onBuild();
+        if (e.code === this.bindings.get('rotateBuild')) this.onRotateBuild();
         // Stumm nicht beim Tippen (z. B. Name in der Lobby)
         if (e.code === this.bindings.get('mute') && !(e.target instanceof HTMLInputElement && e.target.type === 'text')) this.onMute();
       }

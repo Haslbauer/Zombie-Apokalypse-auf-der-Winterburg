@@ -19,6 +19,7 @@ import { emptyStats } from './stats';
 import { applyAvatarStatus, asTeam, createAvatars, handicapFor, perTeam, syncAvatars, updatePvp } from './pvp';
 import { updateRoles } from './roles';
 import { updateMinions } from './minions';
+import { barricadeRect, updateDefenses } from './defenses';
 
 /** Das Distanzfeld zu den Helden wird alle so viele Ticks neu berechnet. */
 const FIELD_TICKS = 5;
@@ -59,11 +60,11 @@ export interface SimulationOptions {
  * Singleplayer: läuft im Browser. Mehrspieler (M6): dieselbe Klasse auf dem Server.
  */
 export class Simulation implements SimContext {
-  readonly grid: Grid;
-  readonly arena: ArenaDef;
+  grid: Grid;
+  arena: ArenaDef;
   readonly objectiveFields = new Map<string, Float32Array>();
-  readonly smallArena: ArenaDef;
-  readonly smallGrid: Grid;
+  smallArena: ArenaDef;
+  smallGrid: Grid;
   readonly smallObjectiveFields = new Map<string, Float32Array>();
   readonly heroDefs: Map<string, GameData['heroes'][number]>;
   readonly zombieDefs: Map<string, GameData['zombies'][number]>;
@@ -167,6 +168,21 @@ export class Simulation implements SimContext {
     });
     if (options.pvp) this.setupPvp(options.pvp);
     this.state.events = [];
+  }
+
+  /** Hindernisse neu aufbauen: Karte plus aufgestellte Barrikaden (Raster und Wegefelder neu). */
+  rebuildCollision(): void {
+    const base = collisionArena(this.data);
+    const extra = (this.state.defenses ?? []).filter((d) => d.kind === 'barrikade').map((d) => barricadeRect(this, d));
+    this.arena = { ...base, obstacles: [...base.obstacles, ...extra] };
+    this.grid = new Grid(this.arena);
+    this.smallArena = { ...this.arena, obstacles: this.arena.obstacles.filter((o) => o.look !== 'rathole') };
+    this.smallGrid = new Grid(this.smallArena, SMALL_CLEARANCE);
+    this.objectiveFields.clear();
+    this.smallObjectiveFields.clear();
+    this.refreshObjectiveFields();
+    this.field = null;
+    this.smallField = null;
   }
 
   /** PvP: Teams, Startplätze, Ausgleich, Stellvertreter; keine Wellen. */
@@ -278,6 +294,7 @@ export class Simulation implements SimContext {
       this.smallField = small && targets.length > 0 ? this.smallGrid.distanceField(targets) : null;
     }
     updateMinions(this);
+    updateDefenses(this);
     updateZombies(this, this.field, this.smallField);
     updateSpells(this);
     updateRoles(this);
