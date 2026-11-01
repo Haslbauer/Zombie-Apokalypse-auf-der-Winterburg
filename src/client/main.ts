@@ -23,6 +23,7 @@ import { PING_STYLE } from './pingwheel';
 import { LocalSession, RemoteSession, type Session } from './session';
 import { ShopView } from './shop';
 import { HERO_ATTACK_SOUND, sound } from './audio';
+import { chosenLantern, recordResult } from './unlocks';
 import { coinCount } from './buffrings';
 import { HitMerger } from './hpticks';
 
@@ -216,6 +217,7 @@ function begin(isPlayer: boolean): void {
   if (isPlayer && hud.spellPrefs) cmd({ type: 'chooseSpells', spells: hud.spellPrefs });
   hud.buildTeam(session!.state, isPlayer ? heroId : -1, difficulty, playerNames());
   renderer.cam.lookAt(hero.pos.x, hero.pos.y);
+  renderer.setLanternColor(chosenLantern());
   // Entwicklermodus ?camera=x,y,abstand: feste Kamera auf einen Punkt (Nahaufnahmen der Karte)
   const camera = params.get('camera')?.split(',').map(Number);
   if (camera && camera.length === 3 && camera.every(Number.isFinite)) renderer.cam.overview(camera[0], camera[1], camera[2]);
@@ -807,7 +809,10 @@ function handleEvents(state: GameState): void {
       }
       case 'gameOver': {
         // PvP: Sieg, wenn das eigene Team gewonnen hat
-        const end = state.pvp && e.winnerTeam !== undefined ? { ...e, victory: myHero()?.team === e.winnerTeam } : e;
+        const base = state.pvp && e.winnerTeam !== undefined ? { ...e, victory: myHero()?.team === e.winnerTeam } : e;
+        // Erfolge (Titel, Laternenfarben) eintragen; neue zeigt der Endbildschirm
+        const unlocked = recordResult({ victory: !!base.victory, pvp: !!state.pvp, level: state.level ?? 'normal', wave: e.wave, stats: e.stats ?? [], heroId: spectate ? -1 : heroId });
+        const end = { ...base, unlocked };
         sound.play(end.victory ? 'victory' : 'defeat');
         // Endstatistik: Podest, Auszeichnungen, Rangliste; kurzer Klang für den MVP
         hud.showGameOver(state, end, spectate ? -1 : heroId, playerNames(), () => {

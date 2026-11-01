@@ -133,6 +133,11 @@ export class GameRenderer {
     return this.renderer.domElement;
   }
 
+  /** Farbe der Laterne des eigenen Helden (Freischaltbares). */
+  setLanternColor(color: number): void {
+    this.lantern.color.set(color);
+  }
+
   /** Alle Einheiten entfernen (neues Spiel). */
   reset(): void {
     for (const v of [...this.units.values(), ...this.corpses.keys()]) {

@@ -1662,3 +1662,12 @@ html, body {
 .hud-wave[data-event='blutmond'] { color: #ff6b5a; text-shadow: 0 0 8px rgba(255, 60, 40, 0.6); }
 .hud-wave[data-event='nebel'] { color: #c3cbd8; }
 .hud-wave[data-event='regen'] { color: #9fc4ff; }
+.hud-unlocks { margin: 10px 0; text-align: left; }
+.hud-unlocks summary { cursor: pointer; font-weight: 700; color: #ffd166; }
+.hud-unlock-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; margin: 8px 0; }
+.hud-unlock { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border-radius: 8px; background: rgba(255, 255, 255, 0.05); opacity: 0.6; }
+.hud-unlock.got { opacity: 1; background: rgba(255, 209, 102, 0.12); }
+.hud-unlock small { font-size: 11px; }
+.hud-unlock-reward { color: #ffd166; }
+.hud-unlock-pick { flex-wrap: wrap; }
+.hud-swatch { font-size: 18px; line-height: 1; min-width: 34px; }

@@ -333,6 +333,23 @@ Gutes Spielen wird belohnt (wie in LoL): Der letzte Treffer bringt das volle Gol
 
 Die Wertung funktioniert wie in LoL: Kill 1 Punkt, Boss 5, Assist 0,6, je 400 Schaden 1, je 300 Heilung 1, je 800 eingesteckter Schaden 1, je Tod −1. Die Gewichte lassen sich in `data/economy.json` unter `rewards.mvp` anpassen.
 
+## Erfolge und Freischaltbares
+
+Nach jeder Partie prüft das Spiel acht Erfolge. Neue erscheinen im Endbildschirm. Im Startbildschirm klappt „🏆 Erfolge“ die Liste auf; dort wählst du einen **Titel** (steht in der Heldenleiste hinter „Du“) und eine **Laternenfarbe** (das Licht, das deinen Helden begleitet).
+
+| Erfolg | Bedingung | Belohnung |
+|---|---|---|
+| Erste Nacht | Welle 5 erreichen | Titel „Nachtwache“ |
+| Zähe Mauer | Welle 10 erreichen | Laterne Moosgrün |
+| Burgretter | Koop gewinnen | Titel „Burgretter“, Laterne Gold |
+| Albtraum besiegt | Koop auf Albtraum gewinnen | Titel „Albtraumbezwinger“, Laterne Blutrot |
+| Bossjäger | 5 Zwischenbosse in einer Partie selbst erlegen | Titel „Bossjäger“, Laterne Violett |
+| Feldsanitäter | 4000 Leben in einer Partie heilen | Titel „Feldsanitäter“, Laterne Heilgrün |
+| Bester Spieler | MVP einer Partie mit Mitspielern werden | Titel „MVP“, Laterne Türkis |
+| Arenachampion | eine PvP-Partie gewinnen | Titel „Arenachampion“, Laterne Eisblau |
+
+Erfolge, Titel und Laterne bleiben im Browser gespeichert (`winterburg.erfolge`) und sind nur auf dem eigenen Bildschirm zu sehen.
+
 ## Verteidigungen bauen (Pause)
 
 In der Pause öffnet **V** die Bauleiste. Dort wählst du eine Verteidigung und stellst sie per **Linksklick** an der Maus auf. **X** dreht die Barrikade, **Esc** bricht ab. Die Höchstzahl gilt fürs ganze Team.

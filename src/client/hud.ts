@@ -3,6 +3,7 @@ import { defaultTeam } from '../sim/bots/team';
 import { type Quality, QUALITY_LABELS, type QualitySetting } from './quality';
 import type { AudioSettings } from './audio';
 import { formatClock, loadBestTime, recordVictory } from './besttime';
+import { type Achievement, ACHIEVEMENTS, chosenTitle, DEFAULT_LANTERN, loadUnlocks, saveUnlocks } from './unlocks';
 import { BAR_OPACITY, BAR_SCALE, type BarLayout, clampOffset, DEFAULT_BAR, loadBar, saveBar } from './barlayout';
 import type { BotDifficulty, FinalHeroStats, GameData, GameEvent, GameLevel, GameState, Hero, HeroDef } from '../sim/types';
 import type { PvpOptions, RoomInfo } from '../net/protocol';
@@ -796,7 +797,7 @@ export class Hud {
       name.append(el('span', '', def.name), level);
       // Mehrspieler (names gesetzt): Wer nicht in der Raumliste steht, ist ein Bot
       const bot = names ? !names.has(h.id) : !!h.bot;
-      const status = el('div', 'hud-team-status', h.id === playerId ? 'Du' : bot ? `Bot (${difficulty})` : (names?.get(h.id) ?? 'Mitspieler'));
+      const status = el('div', 'hud-team-status', h.id === playerId ? `Du${chosenTitle() ? ` · ${chosenTitle()}` : ''}` : bot ? `Bot (${difficulty})` : (names?.get(h.id) ?? 'Mitspieler'));
       const bar = el('div', 'hud-team-bar');
       const hp = el('div', 'hud-team-hp');
       bar.append(hp);
@@ -829,9 +830,63 @@ export class Hud {
     }
     const help = el('p', 'hud-small');
     help.innerHTML = this.controlsText();
-    box.append(row, help);
+    box.append(row, this.unlockPanel(), help);
     this.overlay.append(box);
     this.overlay.style.display = '';
+  }
+
+  /**
+   * Erfolge und Freischaltbares (Startbildschirm): Liste mit Häkchen bzw.
+   * Schloss, Auswahl des Titels und der Laternenfarbe (nur freigeschaltete).
+   */
+  private unlockPanel(): HTMLElement {
+    const box = el('details', 'hud-unlocks');
+    const s = loadUnlocks();
+    const count = Object.keys(s.done).length;
+    box.append(el('summary', '', `🏆 Erfolge ${count}/${ACHIEVEMENTS.length} – Titel und Laternenfarbe`));
+    const list = el('div', 'hud-unlock-list');
+    for (const a of ACHIEVEMENTS) {
+      const got = !!s.done[a.id];
+      const item = el('div', `hud-unlock${got ? ' got' : ''}`);
+      item.dataset.achievement = a.id;
+      const reward = [a.title ? `Titel „${a.title}“` : '', a.lantern ? `Laterne ${a.lantern.name}` : ''].filter(Boolean).join(' · ');
+      item.append(el('strong', '', `${got ? '✔' : '🔒'} ${a.name}`), el('small', '', a.how), el('small', 'hud-unlock-reward', reward));
+      list.append(item);
+    }
+    const pick = el('div', 'hud-difficulty hud-unlock-pick');
+    const render = () => {
+      const cur = loadUnlocks();
+      pick.replaceChildren(el('span', '', 'Titel:'));
+      for (const a of [null, ...ACHIEVEMENTS.filter((x) => x.title)]) {
+        const b = el('button', 'hud-diff', a ? a.title! : 'keiner');
+        b.dataset.title = a?.id ?? '';
+        b.disabled = !!a && !cur.done[a.id];
+        b.classList.toggle('active', cur.title === (a?.id ?? null));
+        b.addEventListener('click', () => {
+          saveUnlocks({ ...loadUnlocks(), title: a?.id ?? null });
+          render();
+        });
+        pick.append(b);
+      }
+      pick.append(el('span', '', 'Laterne:'));
+      for (const a of [null, ...ACHIEVEMENTS.filter((x) => x.lantern)]) {
+        const color = a?.lantern?.color ?? DEFAULT_LANTERN;
+        const b = el('button', 'hud-diff hud-swatch', '●');
+        b.style.color = `#${color.toString(16).padStart(6, '0')}`;
+        b.title = a ? `${a.lantern!.name}${cur.done[a.id] ? '' : ` (🔒 ${a.how})`}` : 'Warm (Standard)';
+        b.dataset.lantern = a?.id ?? '';
+        b.disabled = !!a && !cur.done[a.id];
+        b.classList.toggle('active', cur.lantern === (a?.id ?? null));
+        b.addEventListener('click', () => {
+          saveUnlocks({ ...loadUnlocks(), lantern: a?.id ?? null });
+          render();
+        });
+        pick.append(b);
+      }
+    };
+    render();
+    box.append(list, pick, el('p', 'hud-small', 'Titel und Laterne sind nur auf deinem Bildschirm zu sehen und bleiben im Browser gespeichert.'));
+    return box;
   }
 
   /**
@@ -900,6 +955,11 @@ export class Hud {
         ? `⏱ Neue Bestzeit: ${formatClock(team.time)}${previous ? ` (vorher ${formatClock(previous.time)})` : ''}`
         : `⏱ Zeit ${formatClock(team.time)} · Bestzeit ${formatClock(previous!.time)} (+${formatClock(team.time - previous!.time)})`;
       box.append(line);
+    }
+    // Neue Erfolge (Titel, Laternenfarben)
+    for (const a of end.unlocked ?? []) {
+      const reward = [a.title ? `Titel „${a.title}“` : '', a.lantern ? `Laterne ${a.lantern.name}` : ''].filter(Boolean).join(' · ');
+      box.append(el('div', 'hud-besttime new hud-unlocked', `🏆 Erfolg: ${a.name}${reward ? ` – ${reward}` : ''} (im Startbildschirm wählbar)`));
     }
 
     // 2. Podest: Platz 2 – 1 – 3
@@ -1581,7 +1641,7 @@ export class Hud {
 }
 
 /** Spielende, wie es das gameOver-Ereignis liefert. */
-export type GameOverInfo = Pick<Extract<GameEvent, { type: 'gameOver' }>, 'reason' | 'victory' | 'stats' | 'team'>;
+export type GameOverInfo = Pick<Extract<GameEvent, { type: 'gameOver' }>, 'reason' | 'victory' | 'stats' | 'team'> & { unlocked?: Achievement[] };
 
 /** Linienfarben der Helden (nach Platz im Team, gut lesbar auf dunklem Grund). */
 const STAT_COLORS = ['#ffd166', '#7fd1ff', '#ff8a7a', '#9be38a'];
