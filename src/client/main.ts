@@ -24,6 +24,7 @@ import { LocalSession, RemoteSession, type Session } from './session';
 import { ShopView } from './shop';
 import { HERO_ATTACK_SOUND, sound } from './audio';
 import { chosenLantern, recordResult } from './unlocks';
+import { dailySetup, type DailySetup, loadDaily, recordDaily } from './daily';
 import { coinCount } from './buffrings';
 import { HitMerger } from './hpticks';
 
@@ -178,7 +179,7 @@ function pickHero(defId: string): void {
   hud.showTeam(
     defId,
     (bots, diff) => startGame(defId, bots, diff),
-    () => hud.showStart(pickHero),
+    () => hud.showStart(pickHero, showDaily),
     (bots, diff, name) => startOnline(defId, bots, diff, name),
   );
 }
@@ -188,6 +189,7 @@ function pickHero(defId: string): void {
  * defId null: nur Bots (Zuschauen).
  */
 function startGame(defId: string | null, bots: string[], diff: BotDifficulty): void {
+  daily = null;
   session?.close();
   team = bots;
   difficulty = diff;
@@ -200,6 +202,31 @@ function startGame(defId: string | null, bots: string[], diff: BotDifficulty): v
   session = local;
   heroId = local.state.heroes[0].id;
   begin(defId !== null);
+  hud.setInvite(null);
+}
+
+/** Tägliche Herausforderung des laufenden Spiels (null = normales Spiel). */
+let daily: DailySetup | null = null;
+
+function showDaily(): void {
+  const setup = dailySetup(gameData.bots, gameData.heroes.map((h) => h.id));
+  hud.showDaily(setup, loadDaily(setup.key), () => startDaily(setup), () => hud.showStart(pickHero, showDaily));
+}
+
+/** Tagesherausforderung: fester Seed, festes Team, Schwierigkeit und Mutator. */
+function startDaily(setup: DailySetup): void {
+  session?.close();
+  daily = setup;
+  team = setup.heroes.slice(1);
+  difficulty = 'mittel';
+  const local = new LocalSession(
+    { seed: setup.seed, heroes: setup.heroes, bots: setup.heroes.map((_, i) => (i === 0 ? null : 'mittel')), level: setup.level, mutator: { event: setup.event } },
+    1,
+    false,
+  );
+  session = local;
+  heroId = local.state.heroes[0].id;
+  begin(true);
   hud.setInvite(null);
 }
 
@@ -401,7 +428,7 @@ function leaveOnline(): void {
   minimap.visible = false;
   hud.setInvite(null);
   history.replaceState(null, '', location.pathname);
-  hud.showStart(pickHero);
+  hud.showStart(pickHero, showDaily);
 }
 
 /** Esc: Pause mit Tastenbelegung öffnen bzw. schließen (online läuft das Spiel weiter). */
@@ -812,14 +839,17 @@ function handleEvents(state: GameState): void {
         const base = state.pvp && e.winnerTeam !== undefined ? { ...e, victory: myHero()?.team === e.winnerTeam } : e;
         // Erfolge (Titel, Laternenfarben) eintragen; neue zeigt der Endbildschirm
         const unlocked = recordResult({ victory: !!base.victory, pvp: !!state.pvp, level: state.level ?? 'normal', wave: e.wave, stats: e.stats ?? [], heroId: spectate ? -1 : heroId });
-        const end = { ...base, unlocked };
+        // Tägliche Herausforderung: Ergebnis in die Tagesliste
+        const dailyRank = daily && !spectate ? recordDaily(daily.key, { wave: e.wave, time: e.team?.time ?? state.time, victory: !!base.victory, hero: heroDefId, date: new Date().toISOString() }) : undefined;
+        const end = { ...base, unlocked, dailyRank };
         sound.play(end.victory ? 'victory' : 'defeat');
         // Endstatistik: Podest, Auszeichnungen, Rangliste; kurzer Klang für den MVP
         hud.showGameOver(state, end, spectate ? -1 : heroId, playerNames(), () => {
           if (session instanceof RemoteSession) {
             // Online: zurück in die Lobby (der Server schickt die Raum-Info)
             session.restart();
-          } else startGame(spectate ? null : heroDefId, team, difficulty);
+          } else if (daily) startDaily(daily);
+          else startGame(spectate ? null : heroDefId, team, difficulty);
         });
         setTimeout(() => sound.play('levelUp'), 900);
         break;
@@ -1053,4 +1083,4 @@ else if (roomCode) {
   if (token) connect({ t: 'resume', room: code, token, name: savedName() }, gameData.heroes.slice(0, 4).map((h) => h.id));
   else void joinRoom(code);
 }
-else hud.showStart(pickHero);
+else hud.showStart(pickHero, showDaily);

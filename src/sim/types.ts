@@ -1142,6 +1142,8 @@ export interface GameState {
   };
   /** Schwierigkeitsstufe (Standard normal). */
   level?: GameLevel;
+  /** Mutator (tägliche Herausforderung): jede Welle mit diesem Wellen-Ereignis. */
+  mutator?: { event?: WaveEventKind };
   /** Erwischte Postboten (Endstatistik). */
   couriersCaught?: number;
   /** Wurde schon ein Boss erlegt? (Erstes Blut gibt es nur einmal.) */

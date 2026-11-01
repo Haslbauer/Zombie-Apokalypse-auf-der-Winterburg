@@ -10,7 +10,7 @@ import { levelStats, levelUp } from './progression';
 import { kitOf } from './heroes/index';
 import { updateDelayed, updateZones } from './zones';
 import { SpatialHash } from './spatial';
-import { type ArenaDef, type BotDifficulty, DT, type Command, type GameData, type GameLevel, type GameState, type Hero, type PvpGoal, type Zombie } from './types';
+import { type ArenaDef, type BotDifficulty, DT, type Command, type GameData, type GameLevel, type GameState, type Hero, type PvpGoal, type WaveEventKind, type Zombie } from './types';
 import { updateCamps } from './neutrals';
 import { spawnZombieAt, updateWaves } from './waves';
 import { updateZombies } from './zombies';
@@ -56,6 +56,8 @@ export interface SimulationOptions {
   level?: GameLevel;
   /** PvP-Modus: Team je Platz (0 = Nord, 1 = Süd, −1 = Platz bleibt leer). */
   pvp?: { teams: number[]; killsToWin?: number; goal?: PvpGoal; zombies?: boolean };
+  /** Mutator: jede Welle mit diesem Wellen-Ereignis (tägliche Herausforderung). */
+  mutator?: { event?: WaveEventKind };
 }
 
 /**
@@ -170,6 +172,7 @@ export class Simulation implements SimContext {
       for (let l = 1; l < (options.startLevel ?? 1); l++) levelUp(this, hero);
     });
     if (options.level) this.state.level = options.level;
+    if (options.mutator) this.state.mutator = { ...options.mutator };
     if (options.pvp) this.setupPvp(options.pvp);
     this.state.events = [];
   }

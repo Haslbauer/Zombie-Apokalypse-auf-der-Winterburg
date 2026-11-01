@@ -1671,3 +1671,7 @@ html, body {
 .hud-unlock-reward { color: #ffd166; }
 .hud-unlock-pick { flex-wrap: wrap; }
 .hud-swatch { font-size: 18px; line-height: 1; min-width: 34px; }
+.hud-daily-btn { margin: 6px auto 10px; font-size: 16px; }
+.hud-daily-best { margin: 10px auto; border-collapse: collapse; min-width: 260px; }
+.hud-daily-best caption { font-weight: 700; color: #ffd166; margin-bottom: 4px; }
+.hud-daily-best td { padding: 3px 10px; text-align: left; }

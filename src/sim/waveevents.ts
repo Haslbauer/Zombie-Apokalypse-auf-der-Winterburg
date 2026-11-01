@@ -13,6 +13,15 @@ export function rollWaveEvent(ctx: SimContext): WaveEventKind | null {
   const cfg = ctx.data.waves.events;
   const w = ctx.state.wave;
   w.event = null;
+  // Mutator: jede Welle dasselbe Ereignis (Ansage nur in der ersten)
+  const forced = ctx.state.mutator?.event;
+  if (forced && cfg?.list[forced] && !ctx.state.pvp) {
+    w.event = forced;
+    w.lastEventWave = w.number;
+    const e = cfg.list[forced];
+    if (w.number === 1) ctx.state.events.push({ type: 'waveEvent', kind: forced, name: e.name, text: e.text });
+    return forced;
+  }
   if (!cfg || ctx.state.pvp || w.number < cfg.fromWave) return null;
   if (w.lastEventWave !== undefined && w.number - w.lastEventWave < cfg.gap) return null;
   if (nextRandom(ctx.state) >= cfg.chance) return null;

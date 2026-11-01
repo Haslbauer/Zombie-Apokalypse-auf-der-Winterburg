@@ -333,6 +333,17 @@ Gutes Spielen wird belohnt (wie in LoL): Der letzte Treffer bringt das volle Gol
 
 Die Wertung funktioniert wie in LoL: Kill 1 Punkt, Boss 5, Assist 0,6, je 400 Schaden 1, je 300 Heilung 1, je 800 eingesteckter Schaden 1, je Tod −1. Die Gewichte lassen sich in `data/economy.json` unter `rewards.mvp` anpassen.
 
+## Tägliche Herausforderung
+
+Im Startbildschirm führt **„📅 Tägliche Herausforderung“** zur Partie des Tages. Für jeden Tag stehen fest:
+
+- **Zufall:** Alle spielen dieselbe Partie, mit denselben Wellen und Ereignissen.
+- **Team:** Tank, Schaden und Support. Du spielst den ersten Helden, die anderen beiden spielen Bots (mittel).
+- **Schwierigkeit:** sonntags Albtraum, sonst Normal.
+- **Mutator:** Jede Welle ist eine Nebelnacht, ein Blutmond oder Regen (siehe Wellen-Ereignisse).
+
+Gewertet wird die höchste erreichte Welle; ein Sieg zählt vor allem anderen, bei Gleichstand die kürzere Zeit. Deine **besten 5 Versuche des Tages** stehen in einer Liste, die im Browser gespeichert wird (`winterburg.daily`, die letzten 14 Tage). Nach dem Spiel zeigt der Endbildschirm deinen Platz, und „Nochmal“ startet die Herausforderung erneut.
+
 ## Erfolge und Freischaltbares
 
 Nach jeder Partie prüft das Spiel acht Erfolge. Neue erscheinen im Endbildschirm. Im Startbildschirm klappt „🏆 Erfolge“ die Liste auf; dort wählst du einen **Titel** (steht in der Heldenleiste hinter „Du“) und eine **Laternenfarbe** (das Licht, das deinen Helden begleitet).

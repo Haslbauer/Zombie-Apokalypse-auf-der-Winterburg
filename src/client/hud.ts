@@ -3,6 +3,7 @@ import { defaultTeam } from '../sim/bots/team';
 import { type Quality, QUALITY_LABELS, type QualitySetting } from './quality';
 import type { AudioSettings } from './audio';
 import { formatClock, loadBestTime, recordVictory } from './besttime';
+import type { DailyResult, DailySetup } from './daily';
 import { type Achievement, ACHIEVEMENTS, chosenTitle, DEFAULT_LANTERN, loadUnlocks, saveUnlocks } from './unlocks';
 import { BAR_OPACITY, BAR_SCALE, type BarLayout, clampOffset, DEFAULT_BAR, loadBar, saveBar } from './barlayout';
 import type { BotDifficulty, FinalHeroStats, GameData, GameEvent, GameLevel, GameState, Hero, HeroDef } from '../sim/types';
@@ -811,12 +812,18 @@ export class Hud {
   }
 
   /** Startbildschirm mit Heldenwahl. */
-  showStart(onPick: (heroId: string) => void): void {
+  showStart(onPick: (heroId: string) => void, onDaily?: () => void): void {
     delete this.overlay.dataset.menu;
     this.showInGame(false);
     this.overlay.replaceChildren();
     const box = el('div', 'hud-box hud-start');
-    box.append(el('h1', '', 'Zombie-Apokalypse'), el('h2', '', 'auf der Winterburg'), el('p', '', 'Wähle deinen Helden:'));
+    box.append(el('h1', '', 'Zombie-Apokalypse'), el('h2', '', 'auf der Winterburg'));
+    if (onDaily) {
+      const daily = el('button', 'hud-diff hud-daily-btn', '📅 Tägliche Herausforderung');
+      daily.addEventListener('click', onDaily);
+      box.append(daily);
+    }
+    box.append(el('p', '', 'Wähle deinen Helden:'));
     const row = el('div', 'hud-heroes');
     for (const h of this.data.heroes) {
       const btn = el('button', 'hud-hero-btn');
@@ -831,6 +838,55 @@ export class Hud {
     const help = el('p', 'hud-small');
     help.innerHTML = this.controlsText();
     box.append(row, this.unlockPanel(), help);
+    this.overlay.append(box);
+    this.overlay.style.display = '';
+  }
+
+  /**
+   * Tägliche Herausforderung: heutiges Team (man spielt den ersten Helden),
+   * Schwierigkeit, Mutator und die eigene Bestenliste des Tages.
+   */
+  showDaily(setup: DailySetup, best: DailyResult[], onStart: () => void, onBack: () => void): void {
+    this.overlay.replaceChildren();
+    const box = el('div', 'hud-box hud-start hud-daily');
+    const ev = this.data.waves.events?.list[setup.event];
+    const lv = { entspannt: 'Entspannt', normal: 'Normal', albtraum: 'Albtraum' }[setup.level];
+    box.append(el('h1', '', '📅 Tägliche Herausforderung'), el('h2', '', setup.key.split('-').reverse().join('.')));
+    const row = el('div', 'hud-heroes');
+    setup.heroes.forEach((id, i) => {
+      const def = this.data.heroes.find((h) => h.id === id);
+      if (!def) return;
+      const card = el('div', 'hud-hero-btn');
+      const img = el('img', 'hud-hero-portrait');
+      img.src = `portraits/${id}.jpg`;
+      card.append(img, el('strong', '', def.name), this.roleTag(id), el('small', 'hud-role', i === 0 ? 'Du spielst' : 'Bot'));
+      if (i === 0) card.classList.add('active');
+      row.append(card);
+    });
+    box.append(
+      row,
+      el('p', '', `Schwierigkeit: ${lv} · Mutator: ${ev ? `${ev.icon} ${ev.name} in jeder Welle` : '—'}`),
+      el('p', 'hud-small', 'Alle spielen heute dieselbe Partie (gleicher Zufall). Gewertet wird die höchste Welle, bei Gleichstand die kürzere Zeit.'),
+    );
+    const table = el('table', 'hud-daily-best');
+    table.append(el('caption', '', 'Deine Bestenliste heute'));
+    if (best.length === 0) {
+      const tr = el('tr', '');
+      tr.append(el('td', 'hud-small', 'Noch kein Versuch.'));
+      table.append(tr);
+    }
+    best.forEach((r, i) => {
+      const tr = el('tr', '');
+      tr.append(el('td', '', `${i + 1}.`), el('td', '', r.victory ? '🏆 Sieg' : `Welle ${r.wave}`), el('td', '', formatClock(r.time)), el('td', 'hud-small', r.date.slice(11, 16)));
+      table.append(tr);
+    });
+    const buttons = el('div', 'hud-buttons');
+    const back = el('button', 'hud-restart', 'Zurück');
+    back.addEventListener('click', onBack);
+    const go = el('button', 'hud-restart hud-go', 'Herausforderung starten');
+    go.addEventListener('click', onStart);
+    buttons.append(back, go);
+    box.append(table, buttons);
     this.overlay.append(box);
     this.overlay.style.display = '';
   }
@@ -956,6 +1012,8 @@ export class Hud {
         : `⏱ Zeit ${formatClock(team.time)} · Bestzeit ${formatClock(previous!.time)} (+${formatClock(team.time - previous!.time)})`;
       box.append(line);
     }
+    // Tägliche Herausforderung: Platz in der Tagesliste
+    if (end.dailyRank !== undefined) box.append(el('div', `hud-besttime${end.dailyRank === 1 ? ' new' : ''}`, end.dailyRank ? `📅 Tägliche Herausforderung: Platz ${end.dailyRank} deiner Tagesliste${end.dailyRank === 1 ? ' – neue Bestleistung!' : ''}` : '📅 Tägliche Herausforderung: nicht unter deinen besten 5 heute'));
     // Neue Erfolge (Titel, Laternenfarben)
     for (const a of end.unlocked ?? []) {
       const reward = [a.title ? `Titel „${a.title}“` : '', a.lantern ? `Laterne ${a.lantern.name}` : ''].filter(Boolean).join(' · ');
@@ -1641,7 +1699,7 @@ export class Hud {
 }
 
 /** Spielende, wie es das gameOver-Ereignis liefert. */
-export type GameOverInfo = Pick<Extract<GameEvent, { type: 'gameOver' }>, 'reason' | 'victory' | 'stats' | 'team'> & { unlocked?: Achievement[] };
+export type GameOverInfo = Pick<Extract<GameEvent, { type: 'gameOver' }>, 'reason' | 'victory' | 'stats' | 'team'> & { unlocked?: Achievement[]; dailyRank?: number | null };
 
 /** Linienfarben der Helden (nach Platz im Team, gut lesbar auf dunklem Grund). */
 const STAT_COLORS = ['#ffd166', '#7fd1ff', '#ff8a7a', '#9be38a'];
