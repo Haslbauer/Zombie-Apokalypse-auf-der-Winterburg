@@ -31,7 +31,7 @@ function iconMaterial(text: string, color: string): THREE.SpriteMaterial {
   return material;
 }
 
-type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp';
+type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp' | 'beehat' | 'smoker';
 
 /**
  * Aussehen einer animierten Figur (public/models/<model>.glb). move: Lauf-Clip,
@@ -117,6 +117,8 @@ const HERO_LOOKS: Record<string, ModelLook> = {
   schlaeferin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1, tint: [1, 1, 1], attacks: ['attack', 'attack2', 'attack3'], attackStart: 0.3, impact: { attack: 0.4, attack2: 0.4, attack3: 0.45 }, props: ['staff'] },
   libero: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.6, scale: 1.02, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.42 },
   pirat: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.5, props: ['hook'] },
+  // Imker: umgebaute Figur (heller Anzug), Imkerhut mit Schleier, Smoker in der Hand
+  imker: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.4, scale: 1.0, tint: [1.45, 1.45, 1.4], attacks: ['attack'], attackStart: 0.5, props: ['beehat', 'smoker'], headOffset: 0.02 },
   gaertnerin: { model: 'gaertnerin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 0.98, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.4, impact: { attack: 0.78 } },
 };
 
@@ -328,7 +330,7 @@ export class UnitView {
     // Requisiten in Metern: Maßstab des Knochens herausrechnen (Mixamo und Quaternius unterscheiden sich)
     inst.root.updateMatrixWorld(true);
     for (const prop of look.props ?? []) {
-      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat';
+      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat' || prop === 'beehat';
       const bone = inst.root.getObjectByName(head ? (look.headBone ?? 'mixamorigHead') : (look.handBone ?? 'mixamorigRightHand'));
       if (!bone) continue;
       const mesh = this.propMesh(prop);
@@ -386,6 +388,24 @@ export class UnitView {
       case 'crown':
         // Der Kopfknochen der Ratte zeigt zur Schnauze: Krone hinter die Ohren, aufgerichtet
         add(new THREE.CylinderGeometry(0.16, 0.14, 0.12, 6, 1, true), 0xffc93c, 0, -0.02, 0.16, 0x6b4a00).rotation.x = Math.PI / 2;
+        break;
+      case 'beehat': {
+        // Imkerhut mit breiter Krempe und Schleier (durchscheinendes Netz)
+        add(new THREE.CylinderGeometry(0.3, 0.3, 0.02, 20), 0xe9e2c8, 0, 0.16, 0.02);
+        add(new THREE.CylinderGeometry(0.12, 0.14, 0.12, 14), 0xe9e2c8, 0, 0.23, 0.02);
+        const veil = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.16, 0.24, 0.26, 18, 1, true),
+          new THREE.MeshLambertMaterial({ color: 0x4a4a46, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false }),
+        );
+        veil.position.set(0, 0.0, 0.02);
+        g.add(veil);
+        break;
+      }
+      case 'smoker':
+        // Smoker: Blechdose mit Tülle und Blasebalg
+        add(new THREE.CylinderGeometry(0.08, 0.08, 0.22, 10), 0xa8a8a0, 0, 0.12, 0.05);
+        add(new THREE.ConeGeometry(0.06, 0.1, 8), 0x8a8a84, 0, 0.28, 0.05);
+        add(new THREE.BoxGeometry(0.03, 0.14, 0.12), 0x7a5632, 0.1, 0.1, 0.05);
         break;
       case 'hardhat':
         // Bauhelm (gelb, mit Krempe und Mittelgrat)
@@ -856,6 +876,29 @@ export class UnitView {
       const blink = r.left < 5 ? 0.35 + 0.5 * Math.abs(Math.sin(time * 7)) : 0.85;
       for (const m of v.mats) m.opacity = blink;
     });
+  }
+
+  private bees: THREE.Group | null = null;
+  /** Imker: ein paar Bienen schwirren ständig um ihn herum. */
+  orbitBees(time: number): void {
+    if (!this.bees) {
+      const g = new THREE.Group();
+      const bee = new THREE.MeshBasicMaterial({ color: 0xffc83d });
+      const dark = new THREE.MeshBasicMaterial({ color: 0x2a2010 });
+      for (let i = 0; i < 6; i++) {
+        const m = new THREE.Mesh(new THREE.SphereGeometry(0.05, 5, 4), i % 3 === 0 ? dark : bee);
+        m.userData.phase = i * 1.05;
+        m.userData.r = 0.55 + (i % 3) * 0.18;
+        g.add(m);
+      }
+      this.group.add(g);
+      this.bees = g;
+    }
+    for (const m of this.bees.children) {
+      const p = time * 3.2 + (m.userData.phase as number);
+      const r = m.userData.r as number;
+      m.position.set(Math.cos(p) * r, 1.1 + Math.sin(p * 2.3) * 0.35, Math.sin(p) * r);
+    }
   }
 
   showHero(h: Hero, shield: number, opacity: number): void {

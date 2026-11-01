@@ -780,5 +780,140 @@
         }
       }
     ]
+  },
+  {
+    "id": "imker",
+    "name": "Imker",
+    "role": "Support, Bienen",
+    "description": "Alter Imker mit Schleier und Smoker. Seine Bienen heilen Freunde, stechen Feinde und schützen den Stock.",
+    "color": "#e8c24a",
+    "figure": "beekeeper",
+    "hp": 520,
+    "hpRegen": 2.5,
+    "speed": 5.2,
+    "radius": 0.48,
+    "hpPerLevel": 52,
+    "regenPerLevel": 0.25,
+    "damagePerLevel": 0.06,
+    "attack": {
+      "type": "ranged",
+      "damage": 14,
+      "range": 9,
+      "cooldown": 0.8,
+      "projectileSpeed": 15,
+      "projectileRadius": 0.3,
+      "look": "swarm"
+    },
+    "passive": {
+      "name": "Mein Volk",
+      "description": "Jeder Treffer seiner Bienen hinterlässt einen Stich (bis 5), der 4 s lang Schaden macht. Nahe am Bienenstock heilt er 30 % stärker; solange er lebt, heilt sich der Stock schneller.",
+      "values": {
+        "stingDps": 3,
+        "stingDpsPerLevel": 0.4,
+        "maxStings": 5,
+        "stingTime": 4,
+        "hiveRange": 12,
+        "healBonus": 0.3,
+        "hiveRegen": 1
+      }
+    },
+    "abilities": [
+      {
+        "id": "honigtopf",
+        "name": "Honigtopf",
+        "description": "Wirft einen Honigtopf: heilt Mitspieler in der Fläche, Zombies darin kleben 3 s fest (verlangsamt).",
+        "shape": "circle",
+        "range": 9,
+        "radius": 3.5,
+        "cooldown": [
+          12,
+          11,
+          10,
+          9,
+          8
+        ],
+        "values": {
+          "heal": [
+            70,
+            105,
+            140,
+            175,
+            210
+          ],
+          "slow": 0.5,
+          "duration": 3
+        }
+      },
+      {
+        "id": "smoker",
+        "name": "Smoker",
+        "description": "Rauchstoß nach vorn: Zombies sind geblendet und verlangsamt.",
+        "shape": "cone",
+        "range": 6,
+        "arc": 70,
+        "cooldown": [
+          10,
+          9,
+          8,
+          7,
+          6
+        ],
+        "values": {
+          "duration": [
+            2,
+            2.25,
+            2.5,
+            2.75,
+            3
+          ],
+          "slow": 0.5
+        }
+      },
+      {
+        "id": "wachbienen",
+        "name": "Wachbienen",
+        "description": "Bienen umkreisen einen Mitspieler (oder ihn selbst) und stechen jeden Zombie, der ihn angreift.",
+        "shape": "target",
+        "range": 9,
+        "cooldown": [
+          14,
+          13,
+          12,
+          11,
+          10
+        ],
+        "values": {
+          "duration": 6,
+          "damage": [
+            14,
+            20,
+            26,
+            32,
+            38
+          ]
+        }
+      },
+      {
+        "id": "schwarm",
+        "name": "Schwarm",
+        "description": "Ein großer Bienenschwarm über einer Fläche: viel Schaden über Zeit, Zombies bekommen volle Stiche, Mitspieler darin werden von Seuche gereinigt.",
+        "shape": "circle",
+        "range": 10,
+        "radius": 4.5,
+        "cooldown": [
+          80,
+          70,
+          60
+        ],
+        "values": {
+          "dps": [
+            40,
+            65,
+            90
+          ],
+          "duration": 5
+        }
+      }
+    ]
   }
 ]

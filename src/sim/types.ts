@@ -684,7 +684,9 @@ export type BuffKind =
   /** Kann nicht laufen, angreifen oder Fähigkeiten nutzen (Schlächter). */
   | 'stunned'
   /** Reinigen: kurz immun gegen Festhalten und Betäubung. */
-  | 'cleansed';
+  | 'cleansed'
+  /** Wachbienen (Imker): jeder Zombie, der angreift, wird gestochen (value = Schaden). */
+  | 'thorns';
 
 /** Zeitlich begrenzte Wirkung auf einem Helden. value: Faktor, Schildpunkte oder Heilung pro Sekunde. */
 export interface Buff {
@@ -839,6 +841,8 @@ export interface ZombieStatus {
   weakFactor?: number;
   /** Boss in Wut (zu lange am Leben): bis dahin angezeigt, jeden Tick aufgefrischt. */
   enrageUntil?: number;
+  /** Bienenstiche (Imker): Anzahl, Ablauf, von welchem Helden; Schaden über Zeit je Stich. */
+  stings?: { n: number; until: number; by: number } | null;
 }
 
 export interface Zombie extends Unit {

@@ -38,6 +38,7 @@ function keyOf(kind: string, value: number): BuffRing['key'] | null {
       return value > 0 ? 'speed' : null;
     case 'damageReduction':
     case 'shield':
+    case 'thorns':
       return value > 0 ? 'guard' : null;
     case 'heal':
       return value > 0 ? 'heal' : null;

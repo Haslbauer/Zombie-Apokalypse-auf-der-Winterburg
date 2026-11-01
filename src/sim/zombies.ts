@@ -70,6 +70,11 @@ export function updateZombies(ctx: SimContext, heroField: Float32Array | null, s
           if (!blind || nextRandom(state) >= BLIND_MISS) {
             applyDamage(ctx, hero, z.damage * (state.time < (z.st.weakUntil ?? 0) ? (z.st.weakFactor ?? 1) : 1) * enrageFactor(ctx, z));
             if (def.rootOnHit) heroCC(ctx, hero, 'rooted', def.rootOnHit);
+            // Wachbienen: der Angreifer wird gestochen
+            for (const b of hero.buffs) {
+              if (b.kind !== 'thorns' || b.until <= state.time) continue;
+              applyDamage(ctx, z, b.value, state.heroes.find((x) => x.id === b.by));
+            }
           }
         }
       } else if (!rooted) {

@@ -179,6 +179,7 @@ export class GameRenderer {
       view.group.visible = !(this.hideOwn && h.id === this.playerId);
       // Aktive Buffs als drehende, farbige Ringe um den Helden
       view.showBuffs(hidden ? [] : buffRings(h, state.time), time, h.radius);
+      if (h.defId === 'imker') view.orbitBees(time);
       const hold = h.channel?.tag === 'nap' ? 'ability3' : undefined;
       view.animate(dt, speed, state.gameOver, hold);
     }

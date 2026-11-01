@@ -268,6 +268,17 @@ Gold gibt es für Kills und jede überstandene Welle, in der man mitgekämpft ha
 | Spike (Libero) | Fernkampf, Support | Aufschlag, Block, Zuspiel, Schmetterball |
 | Ragnar (Rotschopf) | Nahkampf, Berserker | Wuchtschlag, Wutanfall, Ungezielter Sprung, Amok |
 | Somnia (Schläferin) | Kontrolle | Berührung, Gähnen, Powernap, Gute Nacht |
+| Imker | Support (Bienen) | Honigtopf, Smoker, Wachbienen, Schwarm |
+
+**Imker** (Support):
+- **Angriff:** ein kleiner Bienenschwarm (9 m). Jeder Treffer hinterlässt einen **Stich**, bis zu 5. Die Stiche machen 4 s lang Schaden über Zeit.
+- **Passiv „Mein Volk“:** Nahe am Bienenstock heilt er 30 % stärker. Solange er lebt, heilt sich der Stock schneller.
+- **Honigtopf:** heilt Mitspieler in einer Fläche; Zombies darin kleben fest.
+- **Smoker:** Rauchkegel, blendet und verlangsamt.
+- **Wachbienen:** Bienen schützen einen Mitspieler und stechen jeden Angreifer.
+- **Ultimate „Schwarm“:** großer Schwarm, viel Schaden über Zeit. Zombies darin bekommen volle Stiche, Mitspieler werden von Seuche gereinigt.
+
+Die Figur ist vorerst eine umgefärbte vorhandene Figur mit Imkerhut, Schleier und Smoker. Das Porträt ist aus dem Modell gerendert (`portrait.html?hero=imker` im Entwicklungsserver, Screenshot per Playwright).
 
 Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.
 

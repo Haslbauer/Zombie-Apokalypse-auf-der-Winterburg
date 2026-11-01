@@ -116,7 +116,7 @@ export function applyAvatarStatus(ctx: SimContext): void {
       if (st.slowUntil - t > 0) addBuff(ctx, h, 'haste', -(1 - st.slowFactor), st.slowUntil - t, 'pvp-slow');
     }
     // Brand bleibt am Stellvertreter (Schaden über Zeit geht an den Helden)
-    const burn = { burnUntil: st.burnUntil, burnDps: st.burnDps, burnBy: st.burnBy };
+    const burn = { burnUntil: st.burnUntil, burnDps: st.burnDps, burnBy: st.burnBy, stings: st.stings };
     z.st = { ...emptyStatus(), ...burn };
   }
 }

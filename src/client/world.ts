@@ -72,6 +72,21 @@ function buildProjectile(look: string): THREE.Group {
       g.add(glow(0x9fe3ff, 0.9), glow(0xffffff, 0.35), trail(0x7fb8ff, 1.4, 0.3));
       break;
     }
+    case 'swarm': {
+      // Kleiner Bienenschwarm: gelb-schwarze Pünktchen um einen warmen Schimmer
+      const bee = new THREE.MeshBasicMaterial({ color: 0xffc83d });
+      const dark = new THREE.MeshBasicMaterial({ color: 0x2a2010 });
+      for (let i = 0; i < 9; i++) {
+        const a = i * 2.39;
+        const r = 0.12 + (i % 3) * 0.08;
+        const m = new THREE.Mesh(new THREE.SphereGeometry(0.045, 5, 4), i % 3 === 0 ? dark : bee);
+        m.position.set(Math.cos(a) * r * 0.8 - (i % 4) * 0.06, Math.sin(a * 1.3) * 0.12, Math.sin(a) * r);
+        g.add(m);
+      }
+      g.add(glow(0xffd166, 0.5));
+      g.name = 'swarm';
+      break;
+    }
     case 'volley': {
       const ball = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
       g.add(ball, glow(0xff9a4a, 0.8), trail(0xff8a3d, 1.3, 0.25));
@@ -293,6 +308,36 @@ function buildZone(z: Zone): THREE.Object3D {
     case 'block':
       disc(z.radius, 0x7fd1ff, 0.3);
       break;
+    case 'honey': {
+      // Honigfläche: bernsteinfarbener, glänzender Fleck mit Tropfen
+      disc(z.radius, 0xd99a1e, 0.55).name = 'area';
+      const drop = new THREE.MeshLambertMaterial({ color: 0xf2b230, emissive: 0x6a3d00 });
+      for (let i = 0; i < 8; i++) {
+        const a = i * 2.1;
+        const r = z.radius * (0.2 + ((i * 41) % 10) / 13);
+        const m = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6).scale(1, 0.4, 1), drop);
+        m.position.set(Math.cos(a) * r, 0.07, Math.sin(a) * r);
+        g.add(m);
+      }
+      break;
+    }
+    case 'swarm': {
+      // Großer Schwarm: dunkler Schatten am Boden, viele Bienen in der Luft
+      disc(z.radius, 0x3a2a00, 0.3);
+      const cloud = new THREE.Group();
+      cloud.name = 'cloud';
+      const bee = new THREE.MeshBasicMaterial({ color: 0xffc83d });
+      const dark = new THREE.MeshBasicMaterial({ color: 0x1e1608 });
+      for (let i = 0; i < 70; i++) {
+        const a = i * 2.39996;
+        const r = z.radius * Math.sqrt(((i * 61) % 100) / 100);
+        const m = new THREE.Mesh(new THREE.SphereGeometry(0.06, 5, 4), i % 3 === 0 ? dark : bee);
+        m.position.set(Math.cos(a) * r, 0.6 + ((i * 17) % 10) * 0.18, Math.sin(a) * r);
+        cloud.add(m);
+      }
+      g.add(cloud);
+      break;
+    }
   }
   return g;
 }
@@ -309,6 +354,13 @@ function animateZone(o: THREE.Object3D, z: Zone, simTime: number, time: number):
     (o.getObjectByName('area') as THREE.Mesh).visible = grown;
   } else if (z.kind === 'hedge') {
     o.getObjectByName('hedge')!.scale.y = Math.max(0.01, Math.min(1, (simTime - z.activeAt + 0.05) / 0.4) * fade);
+  } else if (z.kind === 'swarm') {
+    const cloud = o.getObjectByName('cloud')!;
+    cloud.rotation.y = time * 1.4;
+    cloud.position.y = Math.sin(time * 5) * 0.12;
+    cloud.scale.setScalar(Math.max(0.05, fade));
+  } else if (z.kind === 'honey') {
+    o.scale.setScalar(Math.max(0.05, fade));
   } else if (z.kind === 'smoke' || z.kind === 'bigsmoke') {
     o.rotation.y = time * 0.2;
     o.scale.setScalar(0.85 + 0.15 * fade);

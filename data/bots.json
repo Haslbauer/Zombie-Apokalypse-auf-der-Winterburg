@@ -275,6 +275,46 @@
         }
       ],
       "teamRole": "support"
+    },
+    "imker": {
+      "role": "ranged",
+      "teamRole": "support",
+      "skillOrder": [
+        0,
+        2,
+        1
+      ],
+      "buy": [
+        "heiltrank",
+        "pistole",
+        "lederjacke",
+        "kuechenwecker",
+        "taschenuhr",
+        "schrotflinte",
+        "lebensamulett",
+        "grossvateruhr",
+        "kettenhemd",
+        "gewehr",
+        "lebensamulett",
+        "ritterruestung"
+      ],
+      "abilities": [
+        {
+          "use": "heal",
+          "hp": 0.7
+        },
+        {
+          "use": "cone",
+          "min": 2
+        },
+        {
+          "use": "buff"
+        },
+        {
+          "use": "aoe",
+          "min": 4
+        }
+      ]
     }
   }
 }

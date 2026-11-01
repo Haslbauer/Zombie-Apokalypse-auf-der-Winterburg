@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v2.3)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v2.4)
 
 Stand: 31.10.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v2.4: Neuer Held Imker (Support), drei Spieler im Koop, Reichweiten und Durchschlag, Münzen und Buff-Ringe.
 Änderungen v2.3: Ton fast still (keine Dauerquellen, Musik nur in Wellen), Ego-Sicht beim ganz Hineinzoomen (Maus fangen, Laufen relativ zum Blick, Fadenkreuz).
 Änderungen v2.2: Endstatistik nach Spielende (Podest mit MVP, Auszeichnungen, sortierbare Rangliste, Kills pro Welle).
 Änderungen v2.1: Lobby vor dem Spiel (freie Heldenwahl, Bereit, Countdown 15 s), erste Geräusche und Musik (im Code erzeugt) mit Lautstärke-Einstellungen.
@@ -177,14 +178,14 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - E Strömung: Wasserwelle im Kegel, Schaden und Verlangsamung
 - R Tiefenrausch: 4 s lang greifen alle Zombies in der Nähe nur noch ihn an, er erleidet weniger Schaden und ist immun gegen Rückstoß
 
-### Imker
-- Rolle: Fernkampf, Schaden über Zeit. Optik: Imkeranzug mit Hut und Schleier, Bienen schwirren um ihn herum.
-- Stiche stapeln sich: Je mehr Stiche ein Zombie hat, desto mehr Schaden nimmt er. Nach 5 Stichen gibt es einen Bonus.
-- Passiv Summen: Ein kleiner Bienenschwarm begleitet ihn und sticht Zombies in der Nähe
-- Q Schwarm: Schwarm fliegt zu einem Ort und bleibt ca. 4 s, Schaden über Zeit an Zombies darin
-- W Bienenstock: stellt einen Stock auf (ca. 10 s), dessen Bienen Zombies in Reichweite stechen
-- E Honigfalle: Honigfläche, Zombies darin sind stark verlangsamt und bekommen schneller Stiche
-- R Königin: riesiger Schwarm über einem großen Gebiet (ca. 8 s), hoher Schaden über Zeit, alle Zombies darin bekommen sofort volle Stiche
+### Imker (umgesetzt v2.4, Support)
+- Optik: heller Anzug, Imkerhut mit Schleier, Smoker in der Hand, ein paar Bienen schwirren um ihn (aus dem früheren Entwurf).
+- Angriff: kleiner Bienenschwarm als Geschoss, 9 m. Jeder Treffer setzt einen Stich (bis 5, je 3 Schaden/s plus 0,4 je Level, 4 s, frischt auf) – der Schaden über Zeit der Bienen aus dem Entwurf.
+- Passiv Mein Volk: in 12 m um den Bienenstock heilt er 30 % stärker; solange er lebt, heilt sich der Stock um 1 Leben/s.
+- 1 Honigtopf (Fläche 3,5 m): heilt Mitspieler, Zombies darin 3 s verlangsamt (Honigfalle aus dem Entwurf).
+- 2 Smoker (Kegel 6 m, 70°): blendet und verlangsamt 2–3 s.
+- 3 Wachbienen (9 m): Bienen umkreisen einen Mitspieler (oder ihn) 6 s; jeder Zombie, der ihn angreift, wird gestochen.
+- 4 Schwarm (Fläche 4,5 m, 5 s): Schaden über Zeit, Zombies darin bekommen sofort volle Stiche, Mitspieler darin werden von Seuche gereinigt.
 
 ## 7. Gegner
 
