@@ -24,6 +24,9 @@
     },
     "down": {
       "file": "../shared/laying.fbx"
+    },
+    "runBack": {
+      "file": "../moves/run-back.fbx"
     }
   },
   "inPlace": true,

@@ -194,6 +194,8 @@ Du wählst deinen Helden, zwei Bots spielen mit und ergänzen die fehlenden Roll
 
 Helden können Zombies nicht einfach vor sich herschieben. Läuft ein Held gegen einen Zombie, weicht vor allem der Held zurück. Normale Zombies geben nur etwas nach, Zwischenbosse und Endgegner stehen wie eine Wand, nur kleine Gegner (Ratten, Spinnen) lassen sich wegdrücken. Eine Horde kann einen Helden so auch einkesseln. Sprünge und Fähigkeiten mit Rückstoß wirken wie bisher.
 
+**Rückwärtslaufen:** Läuft ein Held gegen seine Blickrichtung (er zielt nach vorn und weicht zurück), spielt er eine eigene Rückwärts-Animation, statt nach vorn zu rennen. Zombies stehen mit zwei verschiedenen Ruhe-Animationen herum.
+
 ## Reichweite und Durchschlag
 
 Angriffe reichen weiter als früher (die Karte ist größer). Manche Schüsse treffen auch Gegner dahinter, mit weniger Schaden:
@@ -484,6 +486,8 @@ Trolle kämpfen selbst; ihr Schaden zählt für Lotte. Zombies greifen Trolle an
 - **Mehlstaub:** Mehlwolke am Ziel, blendet und verlangsamt.
 - **Ofenhitze:** 5 s lang schneller zuschlagen (+30–50 %) und laufen.
 - **Ultimate „Großes Backblech“:** Nach kurzer Warnung schlägt das Blech auf; viel Schaden und Betäubung im Kreis von 4 m.
+
+Im Startbildschirm und in der Lobby sind die Heldenkarten kompakt; fährt man mit der Maus darüber, wird die Karte größer und zeigt die Beschreibung. Das Fenster scrollt, wenn es nicht ganz auf den Bildschirm passt.
 
 Die neuen Helden sind umgebaute vorhandene Figuren. Bruno, Frieda, Kasimir und Kapitän Tiefe haben eigene Modelle mit passenden Animationen (Axthieb, Nudelholz-Schlag und Tritt, Rundumwirbel, Sprung, echtes Stehen); Frieda ist eine eigene Mixamo-Figur (Peasant Girl). Details in `assets/models/README.md`. Ihre Kleidung wird beim Laden umgefärbt (`src/client/recolor.ts`): Die Textur bleibt erhalten, damit Falten und Nähte sichtbar bleiben, und Haut und Gesicht behalten ihre Farbe. Kapitän Tiefe wird ganz eingefärbt (Anzug unter dem Helm). Der Imker hat einen hellen Anzug mit Imkerhut, Schleier und Smoker. Aurelius trägt runde Brille, Lederschürze und eine Lupe am Gürtel. Lotte ist eine verkleinerte Figur im gelben Mantel mit Zöpfen und Teddy. Die Trolle sind grün eingefärbte Kürbis-Hulks. Kapitän Tiefe trägt einen schweren Anzug, einen Messinghelm mit Bullauge, eine Sauerstoffflasche und eine Harpune. Hedwig trägt ein violettes Gewand mit weißer Haube und Schultertuch und läutet eine Messing-Handglocke. Bruno trägt eine grüne Jacke, einen Filzhut mit Feder und eine Holzfälleraxt. Kasimir trägt einen schwarzen Anzug mit Zylinder und einen Kaminbesen. Frieda trägt Kochmütze und Schürze und schwingt ein Nudelholz.
 Die Porträts sind aus dem Modell gerendert (`portrait.html?hero=<id>` im Entwicklungsserver, Screenshot per Playwright; Blickwinkel je Held in `PORTRAIT_VIEW`).

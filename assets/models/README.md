@@ -56,6 +56,7 @@ Der Ordner liefert die Zombie-Animationen für alle Zombie-Figuren (eine eigene 
 | bite, bite2, bite3 | bite.fbx, neck-bite.fbx, biting2.fbx | Beißen, zufällige Variante |
 | death, death2 | death.fbx, dying.fbx | Sterben; die Leiche bleibt 2,5 s liegen und versinkt |
 | scream | scream.fbx | Elite-Auftritt, Ausholen des Schlächters, Sprung des Dämons |
+| idle2 | idle2.fbx (Zombie Idle) | zweite Ruhe-Variante; jeder zweite Zombie steht so |
 
 ## Helden
 
@@ -94,7 +95,8 @@ Alle vier stehen mit `moves/standing-idle` (echtes Stehen statt Standbild).
 | melee-360 | Standing Melee Attack 360 High | Kasimirs Besenwirbel |
 | standing-jump | Standing Jump | Kaminsprung, Tauchgang |
 | react-gut, react-left, react-right | Standing React Large … | noch ungenutzt (Treffer-Reaktion) |
-| walk-back, run-back, walk-left, walk-right | Standing Walk/Run … | noch ungenutzt (Laufen in Zielrichtung) |
+| run-back | Standing Run Back | `runBack` in allen Menschen-Helden: rückwärts laufen, während der Held nach vorn zielt |
+| walk-back, walk-left, walk-right | Standing Walk … | noch ungenutzt (seitlich laufen) |
 | idle-looking | Standing Idle Looking Ver. 1 | noch ungenutzt (Umschauen) |
 
 ## grimm, rat, wasp (Quaternius)

@@ -33,6 +33,9 @@
     },
     "scream": {
       "file": "../zombie/scream.fbx"
+    },
+    "idle2": {
+      "file": "../zombie/idle2.fbx"
     }
   },
   "inPlace": true,

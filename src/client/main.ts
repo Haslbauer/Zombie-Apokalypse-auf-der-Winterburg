@@ -1110,6 +1110,8 @@ if (params.has('debug')) {
         if (h) h.buffs.push({ kind: kind as never, value, until: session!.state.time + seconds, source });
       },
       // Ego-Sicht: Zustand lesen bzw. Blickrichtung setzen (Tests)
+      // Laufende Animation des eigenen Helden (z. B. runBack beim Rückwärtslaufen)
+      heroLoop: () => renderer.unitLoop(heroId),
       view: (yaw?: number, pitch?: number) => {
         const cam = renderer.cam;
         if (yaw !== undefined) cam.yaw = yaw;

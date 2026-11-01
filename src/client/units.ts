@@ -266,6 +266,10 @@ export class UnitView {
   private pendingDt = 0;
   private lodTick = false;
   private lastShown: { x: number; z: number } | null = null;
+  /** Geglättete Bewegungsrichtung (Three x/z), für Rückwärtslaufen. */
+  private shownVel = { x: 0, z: 0 };
+  /** Ruheanimation dieser Figur (Zombies: zufällig eine von zwei Varianten). */
+  idleClip: string | null = null;
 
   constructor(radius: number, color: string, barColor: number, height = UNIT_HEIGHT, figure?: string, model?: RiggedModel | null) {
     this.height = height;
@@ -656,6 +660,11 @@ export class UnitView {
   }
 
   /** Hat die Figur eine Animation dieses Namens? */
+  /** Name der laufenden Dauer-Animation (Tests, Debug). */
+  get loopName(): string {
+    return this.anim?.loopName ?? '';
+  }
+
   hasClip(name: string): boolean {
     return !!this.anim?.inst.actions.has(name);
   }
@@ -742,7 +751,7 @@ export class UnitView {
     this.animate(t, speed, frozen);
   }
 
-  animate(dt: number, speed: number, frozen: boolean, hold?: string): void {
+  animate(dt: number, speed: number, frozen: boolean, hold?: string, backward = false): void {
     const a = this.anim;
     if (!a) return;
     if (a.once) {
@@ -757,11 +766,13 @@ export class UnitView {
     if (!a.dead) {
       const look = a.look;
       if (hold && this.hasClip(hold)) this.setLoop(hold);
-      else if (speed < 0.15 && look.idle) this.setLoop(look.idle);
+      else if (speed < 0.15 && look.idle) this.setLoop(this.idleClip && this.hasClip(this.idleClip) ? this.idleClip : look.idle);
       else {
         const fast = look.moveFast && speed > (look.fastAbove ?? Infinity);
         const scale = frozen ? 0 : speed < 0.05 ? 0.25 : Math.min(2.2, Math.max(0.35, speed / look.refSpeed));
-        this.setLoop(fast ? look.moveFast! : look.move, scale);
+        // Rückwärts (zielt nach vorn, läuft nach hinten): eigene Animation, sonst normal laufen
+        const back = backward && this.hasClip('runBack');
+        this.setLoop(back ? 'runBack' : fast ? look.moveFast! : look.move, back ? Math.min(1.6, Math.max(0.5, speed / (look.refSpeed * 0.75))) : scale);
       }
     }
     a.inst.mixer.update(frozen && !a.dead ? 0 : dt);
@@ -776,6 +787,16 @@ export class UnitView {
     a.once = null;
     a.loop?.reset().play();
     this.bar.visible = true;
+  }
+
+  /**
+   * Läuft die Figur rückwärts? (Bewegung gegen die Blickrichtung facing,
+   * Spielwinkel: 0 = +x, π/2 = +y bzw. Three +z)
+   */
+  movingBackward(facing: number): boolean {
+    const v = Math.hypot(this.shownVel.x, this.shownVel.z);
+    if (v < 0.8) return false;
+    return (this.shownVel.x * Math.cos(facing) + this.shownVel.z * Math.sin(facing)) / v < -0.45;
   }
 
   /** Figur aus einem animierten Modell? */
@@ -1179,10 +1200,16 @@ export class UnitView {
   measureSpeed(dt: number): number {
     const p = this.group.position;
     if (this.lastShown && dt > 0) {
-      const v = Math.hypot(p.x - this.lastShown.x, p.z - this.lastShown.z) / dt;
+      const vx = (p.x - this.lastShown.x) / dt;
+      const vz = (p.z - this.lastShown.z) / dt;
+      const v = Math.hypot(vx, vz);
       // Sprünge (Teleport, Respawn) nicht als Tempo werten
       const k = 1 - Math.exp(-dt / 0.12);
-      if (v < 30) this.shownSpeed += (v - this.shownSpeed) * k;
+      if (v < 30) {
+        this.shownSpeed += (v - this.shownSpeed) * k;
+        this.shownVel.x += (vx - this.shownVel.x) * k;
+        this.shownVel.z += (vz - this.shownVel.z) * k;
+      }
     }
     this.lastShown = { x: p.x, z: p.z };
     return this.shownSpeed;
@@ -1251,6 +1278,8 @@ export function zombieView(z: Zombie, def: ZombieDef, models: Map<string, Rigged
   const model = look ? models.get(modelName(look, z.id)) : undefined;
   const height = model && modelName(look, z.id).startsWith('zombie') && def.figure !== 'crawler' ? 1.75 * look.scale : zombieHeight(def.figure, z.radius);
   const view = new UnitView(z.radius, def.color, elite ? 0xff9f1c : 0xff453a, height, `z:${def.figure}`, model);
+  // Zwei Ruhe-Varianten, damit nicht alle Zombies gleich herumstehen
+  if (z.id % 2 === 1 && view.hasClip('idle2')) view.idleClip = 'idle2';
   view.bar.visible = elite;
   if (elite) view.bar.scale.set(1.6, 1.4, 1);
   // Schatten werfen nur große Gegner (spart viel Rechenzeit bei vielen Zombies)

@@ -210,7 +210,7 @@ export class GameRenderer {
       view.showBuffs(hidden ? [] : buffRings(h, state.time), time, h.radius);
       if (h.defId === 'imker') view.orbitBees(time);
       const hold = h.channel?.tag === 'nap' ? 'ability3' : undefined;
-      view.animate(dt, speed, state.gameOver, hold);
+      view.animate(dt, speed, state.gameOver, hold, view.movingBackward(h.facing));
     }
     // Lottes Trolle (Verbündete)
     for (const m of state.minions ?? []) {
@@ -395,6 +395,11 @@ export class GameRenderer {
   }
 
   /** Gerenderte Position einer Einheit (interpoliert). */
+  /** Laufende Dauer-Animation einer Einheit (Debug). */
+  unitLoop(id: number): string {
+    return this.units.get(id)?.loopName ?? '';
+  }
+
   unitPosition(id: number): Vec2 | null {
     const v = this.units.get(id);
     return v ? { x: v.group.position.x, y: v.group.position.z } : null;
