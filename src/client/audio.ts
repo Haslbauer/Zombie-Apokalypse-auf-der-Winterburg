@@ -364,6 +364,7 @@ export const SOUNDS: Record<string, Recipe> = {
   goldClink: { ch: 'effects', dur: 0.3, make: (s, d, t, r) => (s.t(d, 'sine', r(2550, 2700), 2600, t, 0.12, 0.1), s.t(d, 'sine', r(3100, 3200), 3150, t + 0.05, 0.18, 0.08), s.n(d, 'highpass', 5000, 7000, t, 0.03, 0.08)) },
   slingFlick: { ch: 'effects', dur: 0.25, make: (s, d, t, r) => (s.n(d, 'highpass', 1500, 4000, t, 0.12, 0.3, 1, 0.02), s.t(d, 'square', r(900, 1100), 600, t + 0.1, 0.03, 0.06)) },
   bigBell: { ch: 'effects', dur: 1.2, make: (s, d, t, r) => { const f = r(392, 420); s.t(d, 'sine', f, f, t, 1.1, 0.14, 0.004); s.t(d, 'sine', f * 2.76, f * 2.76, t, 0.5, 0.05, 0.004); s.t(d, 'triangle', f / 2, f / 2, t, 0.9, 0.05, 0.01); } },
+  axeChop: { ch: 'effects', dur: 0.4, make: (s, d, t, r) => (s.n(d, 'highpass', 600, 2500, t, 0.12, 0.3, 0.7, 0.03), s.t(d, 'square', r(160, 190), 70, t + 0.12, 0.08, 0.2), s.n(d, 'bandpass', 900, 500, t + 0.12, 0.18, 0.3, 2)) },
   bubble: { ch: 'effects', dur: 0.6, make: (s, d, t, r) => { for (let i = 0; i < 3; i++) s.t(d, 'sine', r(280, 380), r(800, 1000), t + i * 0.07, 0.07, 0.12); s.t(d, 'triangle', 220, 210, t + 0.05, 0.45, 0.08, 0.005); s.t(d, 'triangle', 331, 325, t + 0.05, 0.35, 0.04, 0.005); } },
   // Zombies
   moan: { ch: 'effects', dur: 1.4, make: (s, d, t, r) => { const f = r(80, 120); s.t(d, 'triangle', f, f * r(0.75, 0.9), t, r(0.9, 1.3), 0.06, 0.35); s.n(d, 'bandpass', r(350, 550), r(250, 350), t, 1, 0.025, 5, 0.35); } },
@@ -424,6 +425,7 @@ export const HERO_ATTACK_SOUND: Record<string, string> = {
   lotte: 'slingFlick',
   taucher: 'bubble',
   gloecknerin: 'bigBell',
+  foerster: 'axeChop',
 };
 
 /** Ein gemeinsamer Audio-Motor für das Spiel. */

@@ -32,7 +32,7 @@ function iconMaterial(text: string, color: string): THREE.SpriteMaterial {
   return material;
 }
 
-type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp' | 'beehat' | 'smoker' | 'glasses' | 'apron' | 'loupe' | 'pigtails' | 'teddy' | 'divehelm' | 'airtank' | 'harpoongun' | 'bonnet' | 'handbell' | 'shawl';
+type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp' | 'beehat' | 'smoker' | 'glasses' | 'apron' | 'loupe' | 'pigtails' | 'teddy' | 'divehelm' | 'airtank' | 'harpoongun' | 'bonnet' | 'handbell' | 'shawl' | 'felthat' | 'axe';
 
 /**
  * Aussehen einer animierten Figur (public/models/<model>.glb). move: Lauf-Clip,
@@ -134,6 +134,8 @@ const HERO_LOOKS: Record<string, ModelLook> = {
   imker: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.4, scale: 1.0, tint: [1, 1, 1], plain: 0xddd6c0, attacks: ['attack'], attackStart: 0.5, props: ['beehat', 'smoker'], headOffset: 0.02 },
   // Glöcknerin Hedwig: umgebaute Figur (violettes Gewand), Haube, Schultertuch, Handglocke
   gloecknerin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.1, scale: 0.96, tint: [1, 1, 1], plain: 0x4b3d6e, attacks: ['attack'], attackStart: 0.3, props: ['bonnet', 'shawl', 'handbell'] },
+  // Förster Bruno: umgebaute Figur (grüne Jacke), Filzhut mit Feder, Axt
+  foerster: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.0, scale: 1.1, tint: [1, 1, 1], plain: 0x4a5a2c, attacks: ['attack'], attackStart: 0.35, props: ['felthat', 'axe'] },
   gaertnerin: { model: 'gaertnerin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 0.98, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.4, impact: { attack: 0.78 } },
 };
 
@@ -351,7 +353,7 @@ export class UnitView {
     // Requisiten in Metern: Maßstab des Knochens herausrechnen (Mixamo und Quaternius unterscheiden sich)
     inst.root.updateMatrixWorld(true);
     for (const prop of look.props ?? []) {
-      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat' || prop === 'beehat' || prop === 'glasses' || prop === 'pigtails' || prop === 'divehelm' || prop === 'bonnet';
+      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat' || prop === 'beehat' || prop === 'glasses' || prop === 'pigtails' || prop === 'divehelm' || prop === 'bonnet' || prop === 'felthat';
       // Am Körper: Schürze an der Brust, Lupe am Gürtel
       const body = prop === 'apron' || prop === 'airtank' || prop === 'shawl' ? 'mixamorigSpine1' : prop === 'loupe' ? 'mixamorigHips' : null;
       const bone = inst.root.getObjectByName(body ?? (head ? (look.headBone ?? 'mixamorigHead') : (look.handBone ?? 'mixamorigRightHand')));
@@ -497,6 +499,17 @@ export class UnitView {
         add(new THREE.CylinderGeometry(0.02, 0.025, 0.14, 8), 0x6b4a2b, 0, 0.13, 0.04);
         add(new THREE.ConeGeometry(0.1, 0.14, 14, 1, true), 0xc9a24a, 0, 0.0, 0.04, 0x3a2a00);
         add(new THREE.SphereGeometry(0.025, 6, 4), 0x8a6a2a, 0, -0.07, 0.04);
+        break;
+      case 'felthat':
+        // Grüner Filzhut mit Krempe und Feder
+        add(new THREE.CylinderGeometry(0.19, 0.19, 0.02, 18), 0x2f3b1b, 0, 0.14, 0.02);
+        add(new THREE.CylinderGeometry(0.1, 0.12, 0.12, 14), 0x2f3b1b, 0, 0.2, 0.02);
+        add(new THREE.BoxGeometry(0.015, 0.12, 0.025), 0xc8b070, 0.1, 0.24, -0.02).rotation.z = -0.5;
+        break;
+      case 'axe':
+        // Holzfälleraxt: langer Stiel, breites Blatt
+        add(new THREE.CylinderGeometry(0.025, 0.03, 0.65, 6), 0x7a5532, 0, 0.22, 0);
+        add(new THREE.BoxGeometry(0.05, 0.16, 0.2), 0xa0a4a8, 0, 0.48, 0.09);
         break;
       case 'smoker':
         // Smoker: Blechdose mit Tülle und Blasebalg

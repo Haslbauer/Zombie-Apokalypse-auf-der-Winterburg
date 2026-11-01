@@ -481,6 +481,11 @@ const EFFECT_COLORS: Record<string, number> = {
   trollgone: 0x9be38a,
   flame: 0xff7a1e,
   bellcone: 0xc7b8ff,
+  log: 0x8a6a45,
+  lure: 0xff8a3d,
+  roots: 0x6a8a3a,
+  'timber-warn': 0xff5a36,
+  timber: 0x6b4a2b,
   bellheal: 0x7bd36a,
   bellshield: 0x9fd8ff,
   bellstorm: 0xb39dff,
@@ -534,6 +539,12 @@ function spellEffect(e: Extract<GameEvent, { type: 'spell' }>): void {
 
 function abilityEffect(e: Extract<GameEvent, { type: 'effect' }>): void {
   const color = EFFECT_COLORS[e.kind] ?? 0xffffff;
+  // Linien (Baumstamm, fallender Baum): Streifen von pos nach to; Warnung länger sichtbar
+  if (e.to) {
+    if (e.kind.endsWith('-warn')) effects.warning(e.pos, 0.6, color, 1);
+    effects.line(e.pos, e.to, e.radius * 2, color, e.kind.endsWith('-warn') ? 1 : 0.45);
+    return;
+  }
   if (e.facing !== undefined && e.arc !== undefined) {
     effects.cone(e.pos, e.facing, e.radius, e.arc, color);
     return;

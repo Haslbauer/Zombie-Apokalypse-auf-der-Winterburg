@@ -1486,5 +1486,153 @@
         }
       }
     ]
+  },
+  {
+    "id": "foerster",
+    "name": "Bruno",
+    "role": "Nahkampf, Tank",
+    "description": "Bärtiger Förster mit Axt und Filzhut. Hält ganze Horden mit Baumstämmen, Wurzeln und seinem dicken Fell auf.",
+    "color": "#4f6b2f",
+    "figure": "forester",
+    "hp": 720,
+    "hpRegen": 3.3,
+    "speed": 5.0,
+    "radius": 0.5,
+    "hpPerLevel": 75,
+    "regenPerLevel": 0.32,
+    "damagePerLevel": 0.06,
+    "attack": {
+      "type": "melee",
+      "damage": 32,
+      "range": 3,
+      "arc": 110,
+      "cooldown": 1.15
+    },
+    "passive": {
+      "name": "Dickes Fell",
+      "description": "10 % weniger Schaden; unter 40 % Leben weitere 15 %.",
+      "values": {
+        "reduction": 0.1,
+        "lowHp": 0.4,
+        "lowBonus": 0.15
+      }
+    },
+    "abilities": [
+      {
+        "id": "baumstamm",
+        "name": "Baumstamm",
+        "description": "Rollt einen Stamm geradeaus: Schaden, Rückstoß und Verlangsamung.",
+        "shape": "line",
+        "range": 8,
+        "width": 1.2,
+        "cooldown": [
+          9,
+          8.5,
+          8,
+          7.5,
+          7
+        ],
+        "values": {
+          "damage": [
+            45,
+            70,
+            95,
+            120,
+            145
+          ],
+          "push": 2.5,
+          "slow": 0.4
+        }
+      },
+      {
+        "id": "lockruf",
+        "name": "Lockruf",
+        "description": "Alle Zombies in 5 m greifen ihn an; er bekommt einen Schild, der je Zombie wächst.",
+        "shape": "self",
+        "range": 0,
+        "radius": 5,
+        "cooldown": [
+          14,
+          13,
+          12,
+          11,
+          10
+        ],
+        "values": {
+          "duration": 3,
+          "shield": [
+            60,
+            85,
+            110,
+            135,
+            160
+          ],
+          "shieldPerZombie": [
+            10,
+            14,
+            18,
+            22,
+            26
+          ]
+        }
+      },
+      {
+        "id": "wurzelwerk",
+        "name": "Wurzelwerk",
+        "description": "Wurzeln brechen aus dem Boden und halten Zombies im Kreis fest.",
+        "shape": "circle",
+        "range": 8,
+        "radius": 3,
+        "cooldown": [
+          13,
+          12,
+          11,
+          10,
+          9
+        ],
+        "values": {
+          "root": [
+            1.2,
+            1.4,
+            1.6,
+            1.8,
+            2.0
+          ],
+          "damage": [
+            30,
+            45,
+            60,
+            75,
+            90
+          ]
+        }
+      },
+      {
+        "id": "holzfaellen",
+        "name": "Holz fällen",
+        "description": "Nach kurzem Ausholen fällt ein Baum in Blickrichtung: viel Schaden und lange Betäubung auf der ganzen Länge.",
+        "shape": "line",
+        "range": 10,
+        "width": 3,
+        "cooldown": [
+          95,
+          80,
+          65
+        ],
+        "values": {
+          "delay": 0.9,
+          "damage": [
+            180,
+            280,
+            380
+          ],
+          "stun": [
+            1.4,
+            1.7,
+            2.0
+          ]
+        }
+      }
+    ]
   }
 ]

@@ -1106,7 +1106,7 @@ export type GameEvent =
   | { type: 'xp'; heroId: number; amount: number }
   | { type: 'status'; zombieId: number; status: 'sleep' | 'stun' | 'fear' | 'blind' | 'root' | 'mark' | 'wake' }
   | { type: 'land'; heroId: number; pos: Vec2; tag: string }
-  | { type: 'effect'; kind: string; pos: Vec2; radius: number; facing?: number; arc?: number; heroId?: number }
+  | { type: 'effect'; kind: string; pos: Vec2; radius: number; facing?: number; arc?: number; heroId?: number; to?: Vec2 }
   | { type: 'gameOver'; wave: number; reason: string; victory?: boolean; stats?: FinalHeroStats[]; team?: TeamStats; winnerTeam?: number };
 
 export interface GameState {

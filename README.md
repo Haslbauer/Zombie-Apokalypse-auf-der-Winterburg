@@ -130,6 +130,7 @@ Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bog
 | Lotte | Schleuder |
 | Kapitän Tiefe | Harpune |
 | Hedwig | Handglocke |
+| Bruno | Axt |
 
 Beim Angriff schlägt die Waffe nach vorn (Nahkampf) bzw. ruckt hoch (Fernkampf). Beim Laufen wippt der Kopf leicht und schwingt die Hand mit; das **Kopfwippen** lässt sich im Esc-Menü abschalten.
 
@@ -153,6 +154,7 @@ Alle Geräusche und die Musik entstehen im Browser (Web-Audio, `src/client/audio
   | Lotte | Flitschen der Schleuder |
   | Kapitän Tiefe | Blubbern mit metallischem Klong |
   | Hedwig | tiefer Glockenschlag |
+  | Bruno | Axthieb ins Holz |
 
 - **Spielablauf:** Horn zum Wellenstart, Akkord für „Welle geschafft“, Alarm bei Durchbruch, Fanfare für den Postboten, Boss erlegt, Sieg und Niederlage.
 - **Oberfläche:** Gold, Level-up, Shop, Pings (je Art ein Ton), Countdown in der Lobby.
@@ -443,7 +445,15 @@ Trolle kämpfen selbst; ihr Schaden zählt für Lotte. Zombies greifen Trolle an
 - **Schutzglocke:** Schild für alle Mitspieler in einem kleinen Kreis.
 - **Ultimate „Sturmgeläut“:** Schaden und Furcht um sie herum; Mitspieler laufen 4 s lang 25 % schneller.
 
-Die neuen Helden sind vorerst umgebaute vorhandene Figuren. Der Imker hat einen hellen Anzug mit Imkerhut, Schleier und Smoker. Aurelius trägt runde Brille, Lederschürze und eine Lupe am Gürtel. Lotte ist eine verkleinerte Figur im gelben Mantel mit Zöpfen und Teddy. Die Trolle sind grün eingefärbte Kürbis-Hulks. Kapitän Tiefe trägt einen schweren Anzug, einen Messinghelm mit Bullauge, eine Sauerstoffflasche und eine Harpune. Hedwig trägt ein violettes Gewand mit weißer Haube und Schultertuch und läutet eine Messing-Handglocke.
+**Bruno** (Förster, Tank):
+- **Angriff:** Axthieb im Nahkampf (3 m).
+- **Passiv „Dickes Fell“:** 10 % weniger Schaden, unter 40 % Leben weitere 15 %.
+- **Baumstamm:** rollt einen Stamm geradeaus; Schaden, Rückstoß und Verlangsamung.
+- **Lockruf:** Alle Zombies in 5 m greifen ihn an. Er bekommt einen Schild, der mit jedem Zombie wächst.
+- **Wurzelwerk:** Wurzeln halten Zombies in einem Kreis fest.
+- **Ultimate „Holz fällen“:** Nach kurzem Ausholen (rote Warnlinie) fällt ein Baum in Blickrichtung; viel Schaden und lange Betäubung auf 10 m.
+
+Die neuen Helden sind vorerst umgebaute vorhandene Figuren. Der Imker hat einen hellen Anzug mit Imkerhut, Schleier und Smoker. Aurelius trägt runde Brille, Lederschürze und eine Lupe am Gürtel. Lotte ist eine verkleinerte Figur im gelben Mantel mit Zöpfen und Teddy. Die Trolle sind grün eingefärbte Kürbis-Hulks. Kapitän Tiefe trägt einen schweren Anzug, einen Messinghelm mit Bullauge, eine Sauerstoffflasche und eine Harpune. Hedwig trägt ein violettes Gewand mit weißer Haube und Schultertuch und läutet eine Messing-Handglocke. Bruno trägt eine grüne Jacke, einen Filzhut mit Feder und eine Holzfälleraxt.
 Die Figur ist vorerst eine umgefärbte vorhandene Figur mit Imkerhut, Schleier und Smoker. Das Porträt ist aus dem Modell gerendert (`portrait.html?hero=imker` im Entwicklungsserver, Screenshot per Playwright).
 
 Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.

@@ -190,6 +190,15 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - 3 Schutzglocke (Kreis 2,5 m): Schild 70–170 für 4 s.
 - 4 Sturmgeläut (um sie, 7 m): Schaden 120–240, Furcht 1,5–2,5 s; Mitspieler +25 % Tempo für 4 s.
 
+### Förster Bruno (umgesetzt v2.6, Tank)
+- Optik: grüne Jacke, Filzhut mit Feder, Holzfälleraxt (umgebaute Rauchbart-Figur).
+- Angriff: Nahkampf (Axt), 3 m, Bogen 110°, 1,15 s.
+- Passiv Dickes Fell: 10 % weniger Schaden, unter 40 % Leben +15 %.
+- 1 Baumstamm (Linie 8 m, 1,2 m breit): Schaden 45–145, Rückstoß 2,5 m, Verlangsamung 40 % für 2 s.
+- 2 Lockruf (um ihn, 5 m): Zombies zielen 3 s auf ihn; Schild 60–160 plus 10–26 je Zombie (höchstens 8).
+- 3 Wurzelwerk (Kreis 3 m, Reichweite 8 m): Festhalten 1,2–2 s, Schaden 30–90.
+- 4 Holz fällen (Linie 10 m, 3 m breit): nach 0,9 s Schaden 180–380, Betäubung 1,4–2 s (Ereignis `timber-warn`, dann `timber`).
+
 ### Imker (umgesetzt v2.4, Support)
 - Optik: heller Anzug, Imkerhut mit Schleier, Smoker in der Hand, ein paar Bienen schwirren um ihn (aus dem früheren Entwurf).
 - Angriff: kleiner Bienenschwarm als Geschoss, 9 m. Jeder Treffer setzt einen Stich (bis 5, je 3 Schaden/s plus 0,4 je Level, 4 s, frischt auf) – der Schaden über Zeit der Bienen aus dem Entwurf.

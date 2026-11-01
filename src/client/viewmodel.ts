@@ -124,6 +124,13 @@ const BUILDS: Record<string, Build> = {
     g.add(bell, ball(0.025, mat(0x8a6a2a), 0, 0.16, 0));
     return { group: g, melee: false };
   },
+  // Bruno: Holzfälleraxt
+  foerster: (c) => {
+    const g = arm(c, SKIN, 0x5a3a22);
+    g.add(cyl(0.03, 0.62, mat(0x7a5532), 0, 0.25, 0));
+    g.add(box(0.05, 0.16, 0.22, mat(0xa0a4a8, { metalness: 0.7, roughness: 0.35 }), 0, 0.5, -0.09));
+    return { group: g, melee: true };
+  },
   // Kapitän Tiefe: Harpune (Messing und Holz)
   taucher: (c) => {
     const g = arm(c, SKIN, 0x3a3a34);
