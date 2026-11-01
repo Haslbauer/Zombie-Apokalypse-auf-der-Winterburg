@@ -393,9 +393,11 @@ function affordableStep(ctx: SimContext, h: Hero, id: string): string | null {
 function pickTarget(ctx: SimContext, h: Hero, bot: BotState): Zombie | null {
   const { state } = ctx;
   // Bedrohte Ziele: Vorrat vor Bienenstock vor Hochbeeten
+  // Vorrat und Bienenstock haben Vorrang: dorthin auch von weit her zurücklaufen
   const guarded = state.objectives
     .filter((o) => !o.destroyed)
-    .map((o) => ({ o, value: o.kind === 'food' ? 100 : o.kind === 'hive' ? 80 : 40, range: o.kind === 'food' ? 9 : 4 }));
+    .map((o) => ({ o, value: o.kind === 'food' ? 170 : o.kind === 'hive' ? 140 : 45, range: o.kind === 'food' ? 10 : o.kind === 'hive' ? 6 : 4 }));
+  const core = guarded.filter((g) => g.o.kind === 'food' || g.o.kind === 'hive');
   let best: Zombie | null = null;
   let bestScore = 0;
   for (const z of state.zombies) {
@@ -405,14 +407,18 @@ function pickTarget(ctx: SimContext, h: Hero, bot: BotState): Zombie | null {
     if (avoided(bot, z.pos, state.time)) continue;
     let score = 0;
     for (const g of guarded) if (objDistance(z, g.o) < g.range) score = Math.max(score, g.value);
+    const threat = score >= 140;
     const victim = z.targetId !== null ? state.heroes.find((x) => x.id === z.targetId) : undefined;
+    // Nicht weit hinterherjagen: Zombies weit weg von Vorrat und Stock nur, wenn sie nah sind oder jemanden angreifen
+    const nearCore = core.some((g) => objDistance(z, g.o) < 16);
+    if (!nearCore && !threat && dist(z.pos, h.pos) > 7 && !(victim && victim.alive && edgeDistance(z, victim) < 3) && !z.neutral) continue;
     if (victim && victim.alive && edgeDistance(z, victim) < 2) score += 50;
     if ((ctx.zombieDefs.get(z.defId)?.rank ?? 'normal') !== 'normal') score += 30;
     if (dist(z.pos, bot.post) < POST_LEASH) score += 20;
     if (dist(z.pos, h.pos) < 6) score += 25;
     if (score === 0) continue;
     score += focusBonus(ctx, h, z);
-    score -= dist(h.pos, z.pos) * 2;
+    score -= dist(h.pos, z.pos) * (threat ? 0.7 : 2);
     if (z.id === bot.targetId) score += 15; // Ziel nicht ständig wechseln
     if (score > bestScore) {
       bestScore = score;
