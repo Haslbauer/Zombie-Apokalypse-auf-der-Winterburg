@@ -175,7 +175,7 @@ function startGame(defId: string | null, bots: string[], diff: BotDifficulty): v
   difficulty = diff;
   const heroes = defId ? [defId, ...bots] : bots;
   const local = new LocalSession(
-    { seed: (Math.random() * 2 ** 31) | 0, heroes, startLevel, bots: heroes.map((_, i) => (defId && i === 0 ? null : diff)) },
+    { seed: (Math.random() * 2 ** 31) | 0, heroes, startLevel, bots: heroes.map((_, i) => (defId && i === 0 ? null : diff)), level: hud.level },
     startWave,
     !defId,
   );
@@ -318,6 +318,7 @@ function connect(first: Parameters<typeof RemoteSession.connect>[0], heroes: str
         difficulty: (d) => remote.lobby({ t: 'difficulty', difficulty: d }),
         mode: (mode) => remote.lobby({ t: 'mode', mode }),
         team: (team) => remote.lobby({ t: 'team', team }),
+        level: (level) => remote.lobby({ t: 'level', level }),
         leave: leaveOnline,
       });
       return;

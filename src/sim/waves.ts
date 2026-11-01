@@ -5,7 +5,7 @@ import { emptyStatus } from './status';
 import { awardWaveBonus, courierGold } from './economy';
 import { harvest, objectivesFor } from './objectives';
 import { endGame } from './stats';
-import { DT, type SpawnPoint, type WaveConfig, type Zombie, type ZombieDef } from './types';
+import { DT, type GameState, type SpawnPoint, type WaveConfig, type Zombie, type ZombieDef } from './types';
 import type { Vec2 } from './vec';
 
 /** Anzahl der Zombies in Welle n. */
@@ -83,8 +83,11 @@ export function waveElites(n: number, cfg: WaveConfig): string[] {
  * Warteschlange einer Welle: einzelne Zombies, "pack:<typ>" für ein Rattenrudel
  * und "elite:<typ>" für Elites (die kommen in der Mitte der Welle).
  */
-export function waveQueue(state: { rng: number }, n: number, cfg: WaveConfig): string[] {
+export function waveQueue(state: { rng: number; level?: GameState['level'] }, n: number, cfg: WaveConfig): string[] {
   const comp = waveComposition(n, cfg);
+  // Schwierigkeit: mehr bzw. weniger einzelne Zombies
+  const f = cfg.levels?.[state.level ?? 'normal']?.count ?? 1;
+  if (f !== 1) for (const id of Object.keys(comp)) comp[id] = Math.max(id === Object.keys(comp)[0] ? 1 : 0, Math.round(comp[id] * f));
   const queue = Object.entries(comp).flatMap(([id, count]) => Array<string>(count).fill(id));
   for (const p of cfg.packs ?? []) for (let i = 0; i < packCount(n, cfg, p.type); i++) queue.push(`pack:${p.type}`);
   shuffle(state, queue);
@@ -192,7 +195,9 @@ export function spawnZombieAt(ctx: SimContext, def: ZombieDef, pos: Vec2, object
   const scale = waveScaling(state.wave.number, data.waves);
   // Zwischenbosse werden mit jeder Welle zusätzlich stärker
   const extra = def.rank === 'elite' && !def.courier && !def.neutral ? 1 + (data.waves.elites?.hpPerWave ?? 0) * (state.wave.number - 1) : 1;
-  const hp = Math.round(def.hp * scale.hp * extra);
+  const lv = data.waves.levels?.[state.level ?? 'normal'];
+  const bossF = def.rank === 'elite' || def.rank === 'boss' ? (lv?.bossHp ?? 1) : 1;
+  const hp = Math.round(def.hp * scale.hp * extra * bossF);
   const z: Zombie = {
     id: state.nextId++,
     defId: def.id,
@@ -203,7 +208,7 @@ export function spawnZombieAt(ctx: SimContext, def: ZombieDef, pos: Vec2, object
     speed: def.speed,
     facing: 0,
     attackTimer: 0,
-    damage: def.damage * scale.damage,
+    damage: def.damage * scale.damage * (lv?.damage ?? 1),
     targetId: null,
     objectiveId,
     st: emptyStatus(),

@@ -9,7 +9,7 @@
  * Server bestätigt die zuletzt angewendete (ack), damit der Client die eigene
  * Bewegung vorhersagen und abgleichen kann.
  */
-import { type BotDifficulty, type Command, type GameEvent, type GameState, type Hero, type HeroInput, type Objective, PING_KINDS, type Zombie } from '../sim/types';
+import { type BotDifficulty, type Command, type GameEvent, type GameLevel, type GameState, type Hero, type HeroInput, type Objective, PING_KINDS, type Zombie } from '../sim/types';
 
 /**
  * Raum: wer welchen Helden steuert. reserved: Platz wartet auf einen Spieler,
@@ -25,6 +25,8 @@ export interface RoomInfo {
   phase: 'lobby' | 'playing';
   /** Spielmodus: Koop gegen Zombies oder PvP (Helden gegeneinander). */
   mode: GameMode;
+  /** Schwierigkeit für Menschen. */
+  level?: GameLevel;
   startsIn: number | null;
   slots: { heroId: number; defId: string; human: boolean; reserved: boolean; name: string | null; ready: boolean; spells: [string, string] | null; team: number }[];
 }
@@ -50,6 +52,7 @@ export type ClientMessage =
   /** Lobby: Spielmodus (nur Gastgeber), eigenes Team im PvP (0 = Nord, 1 = Süd). */
   | { t: 'mode'; mode: GameMode }
   | { t: 'team'; team: number }
+  | { t: 'level'; level: GameLevel }
   /** Laufzeitmessung: Der Server schickt ts unverändert zurück. */
   | { t: 'ping'; ts: number };
 
@@ -141,6 +144,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return m.mode === 'koop' || m.mode === 'pvp' ? { t: 'mode', mode: m.mode } : null;
     case 'team':
       return m.team === 0 || m.team === 1 ? { t: 'team', team: m.team } : null;
+    case 'level':
+      return m.level === 'entspannt' || m.level === 'normal' || m.level === 'albtraum' ? { t: 'level', level: m.level } : null;
     case 'resume':
       return str(m.room, 8) && str(m.token, 64) ? { t: 'resume', room: m.room, token: m.token, name } : null;
     case 'input':

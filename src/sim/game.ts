@@ -10,7 +10,7 @@ import { levelStats, levelUp } from './progression';
 import { kitOf } from './heroes/index';
 import { updateDelayed, updateZones } from './zones';
 import { SpatialHash } from './spatial';
-import { type ArenaDef, type BotDifficulty, DT, type Command, type GameData, type GameState, type Hero, type Zombie } from './types';
+import { type ArenaDef, type BotDifficulty, DT, type Command, type GameData, type GameLevel, type GameState, type Hero, type Zombie } from './types';
 import { updateCamps } from './neutrals';
 import { updateWaves } from './waves';
 import { updateZombies } from './zombies';
@@ -52,6 +52,8 @@ export interface SimulationOptions {
   bots?: (BotDifficulty | null)[];
   /** Pro Slot: gewählte Beschwörerzauber (sonst die Vorgabe der Rolle). */
   spells?: ([string, string] | null | undefined)[];
+  /** Schwierigkeit für Menschen (Standard normal). */
+  level?: GameLevel;
   /** PvP-Modus: Team je Platz (0 = Nord, 1 = Süd, −1 = Platz bleibt leer). */
   pvp?: { teams: number[]; killsToWin?: number };
 }
@@ -167,6 +169,7 @@ export class Simulation implements SimContext {
       kitOf(defId).init?.(this, hero);
       for (let l = 1; l < (options.startLevel ?? 1); l++) levelUp(this, hero);
     });
+    if (options.level) this.state.level = options.level;
     if (options.pvp) this.setupPvp(options.pvp);
     this.state.events = [];
   }

@@ -4,7 +4,7 @@ import { type Quality, QUALITY_LABELS, type QualitySetting } from './quality';
 import type { AudioSettings } from './audio';
 import { formatClock, loadBestTime, recordVictory } from './besttime';
 import { BAR_OPACITY, BAR_SCALE, type BarLayout, clampOffset, DEFAULT_BAR, loadBar, saveBar } from './barlayout';
-import type { BotDifficulty, FinalHeroStats, GameData, GameEvent, GameState, Hero, HeroDef } from '../sim/types';
+import type { BotDifficulty, FinalHeroStats, GameData, GameEvent, GameLevel, GameState, Hero, HeroDef } from '../sim/types';
 import type { RoomInfo } from '../net/protocol';
 import { type Action, ACTIONS, type Keybindings, keyName } from './keybindings';
 
@@ -200,7 +200,21 @@ export class Hud {
     const go = el('button', 'hud-restart hud-go', 'Allein spielen');
     go.addEventListener('click', () => onStart([...team], difficulty));
     buttons.append(back, go);
-    box.append(row, check, diffRow, this.spellPicker(playerId));
+    const levelHolder = el('div', '');
+    const renderLevel = () =>
+      levelHolder.replaceChildren(
+        this.levelRow(this.level, true, (l) => {
+          this.level = l;
+          try {
+            localStorage.setItem('winterburg.level', l);
+          } catch {
+            // ohne Speicher
+          }
+          renderLevel();
+        }),
+      );
+    renderLevel();
+    box.append(row, check, levelHolder, diffRow, this.spellPicker(playerId));
     if (onOnline) {
       // Mehrspieler: Raum auf dem Server, Freunde übernehmen per Link die Bot-Plätze
       const name = this.nameInput();
@@ -301,6 +315,7 @@ export class Hud {
       ready: (ready: boolean) => void;
       difficulty: (d: BotDifficulty) => void;
       mode: (mode: 'koop' | 'pvp') => void;
+      level: (level: GameLevel) => void;
       team: (team: number) => void;
       leave: () => void;
     },
@@ -411,6 +426,7 @@ export class Hud {
     const diffRow = el('div', 'hud-difficulty');
     diffRow.append(el('span', '', 'Bot-Stärke:'));
     if (pvp) diffRow.style.display = 'none';
+    if (!pvp) box.append(this.levelRow(room.level ?? 'normal', mySlot === 0, (l) => on.level(l)));
     for (const d of ['leicht', 'mittel', 'schwer'] as BotDifficulty[]) {
       const b = el('button', 'hud-diff', d);
       b.classList.toggle('active', d === room.difficulty);
@@ -993,6 +1009,34 @@ export class Hud {
    * Menü „Tastenbelegung“: Klick auf eine Taste, dann die neue Taste oder
    * Maustaste drücken. startCapture wartet auf diese Eingabe.
    */
+  /** Schwierigkeit für Menschen (Solo; online legt sie der Gastgeber fest). */
+  level: GameLevel = (() => {
+    try {
+      const v = localStorage.getItem('winterburg.level');
+      return v === 'entspannt' || v === 'albtraum' ? v : 'normal';
+    } catch {
+      return 'normal';
+    }
+  })();
+
+  /** Knopfreihe Entspannt / Normal / Albtraum. */
+  private levelRow(current: GameLevel, enabled: boolean, onPick: (l: GameLevel) => void): HTMLElement {
+    const row = el('div', 'hud-difficulty hud-gamelevel');
+    row.append(el('span', '', 'Schwierigkeit:'));
+    const levels = this.data.waves.levels;
+    for (const l of ['entspannt', 'normal', 'albtraum'] as GameLevel[]) {
+      const lv = levels?.[l];
+      const b = el('button', 'hud-diff', lv?.name ?? l);
+      b.dataset.level = l;
+      b.title = lv ? `Zombies ×${lv.count}, Boss-Leben ×${lv.bossHp}, Schaden ×${lv.damage}` : '';
+      b.classList.toggle('active', l === current);
+      b.disabled = !enabled;
+      b.addEventListener('click', () => onPick(l));
+      row.append(b);
+    }
+    return row;
+  }
+
   /** Ton-Einstellungen fürs Esc-Menü (gesetzt in main.ts). */
   audio: { settings: AudioSettings; apply: () => void } | null = null;
 

@@ -125,7 +125,9 @@ Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben,
 
 ## Team und Bots
 
-Du wählst deinen Helden, zwei Bots spielen mit und ergänzen die fehlenden Rollen (Tank, Schaden, Support; per Klick tauschbar). Die Bot-Stärke (leicht, mittel, schwer) stellst du auf dem Startbildschirm ein. Links zeigt die Teamleiste Level, Leben und erlegte Bosse aller drei Helden; Bots haben einen blauen Ring.
+Du wählst deinen Helden, zwei Bots spielen mit und ergänzen die fehlenden Rollen (Tank, Schaden, Support; per Klick tauschbar). Die Bot-Stärke (leicht, mittel, schwer) stellst du auf dem Startbildschirm ein. Getrennt davon gibt es die **Schwierigkeit** für alle: **Entspannt** (Zombies, Boss-Leben und Schaden ×0,75), **Normal** und **Albtraum** (Zombies ×1,3, Boss-Leben ×1,35, Schaden ×1,3). Solo wählst du sie auf dem Team-Bildschirm, online legt sie der Gastgeber in der Lobby fest. Links zeigt die Teamleiste Level, Leben und erlegte Bosse aller drei Helden; Bots haben einen blauen Ring.
+
+**Bots verteidigen:** Greifen Zombies den Vorrat oder den Bienenstock an, laufen Bots auch von weit her zurück. Zombies weit weg von den Zielen jagen sie nur, wenn diese nah sind oder einen Helden angreifen.
 
 **Bots folgen Pings:** „Angriff!“ schickt alle Bots auf das Ziel (auch Postbote und Lager), „Hilfe!“ holt sie zu dir, „Hier!“ schickt die zwei nächsten an den Ort, „Gefahr!“ lässt sie den Bereich meiden. Sie antworten mit „Bin unterwegs“. Kämpfst du gegen Postbote oder Lager, helfen Bots in der Nähe auch ohne Ping.
 
@@ -158,7 +160,7 @@ Jeder Held hat eine Rolle im Team. Ohne Tank, Schaden und Support ist das Spiel 
 
 **Seuche:** Bossfähigkeiten hinterlassen einen stapelbaren Schaden über Zeit, der nur abklingt, wenn sie eine Weile nicht mehr trifft. Ein Support in der Nähe (oder der Zauber Reinigen) entfernt sie.
 
-Bot-Partien auf „schwer“ (je 3 Läufe, `BALANCE_TEAM=… npm run balance`): komplettes Team Ø Welle 14,3; ohne Tank 13,0; ohne Support 12,0; ohne Schaden 11,3. Siege schaffen Bots noch keine. Die genaue Abstimmung braucht echte Partien.
+Bot-Partien mit drei Bots auf „schwer“ (je 3 Läufe, `BALANCE_TEAM=… npm run balance`), seit die Bots Vorrat und Bienenstock verteidigen: komplettes Team Ø Welle **15,0**; ohne Tank 12,0; ohne Support 11,3; ohne Schaden 11,3. Siege schaffen Bots noch keine; die genaue Abstimmung braucht echte Partien.
 
 Die Heldenwahl und die Lobby zeigen die Rolle jedes Helden und warnen, wenn eine Rolle fehlt. Bots füllen zuerst die fehlenden Rollen auf.
 

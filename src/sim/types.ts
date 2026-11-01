@@ -365,6 +365,8 @@ export interface WaveConfig {
    * hpPerWave: zusätzlicher Lebensanteil je Welle (stärker als normale Zombies).
    */
   elites?: { fromWave?: number; every: number; everyFrom?: number; countPerWaves?: number; countEvery?: number; hpPerWave?: number; types: string[] };
+  /** Schwierigkeitsstufen für Menschen (getrennt von der Bot-Stärke): Faktoren für Anzahl, Boss-Leben, Schaden. */
+  levels?: Record<GameLevel, { name: string; count: number; bossHp: number; damage: number }>;
   /** Endgegner: ab fromWave in jeder Welle (Sieg erst, wenn er in der letzten Welle fällt). */
   finalBoss?: { type: string; fromWave: number };
   /** Wut: Bosse, die länger als after Sekunden leben, machen je Sekunde perSecond mehr Schaden (bis max). */
@@ -604,6 +606,8 @@ export interface BotsDef {
 
 /** Rolle im Team: ohne Tank, Schaden und Support ist das Spiel kaum zu gewinnen. */
 export type TeamRole = 'tank' | 'dmg' | 'support';
+/** Schwierigkeit für Menschen. */
+export type GameLevel = 'entspannt' | 'normal' | 'albtraum';
 export const TEAM_ROLES: readonly TeamRole[] = ['tank', 'dmg', 'support'];
 
 /** Rollen-Passive (data/economy.json → roles). */
@@ -1101,6 +1105,8 @@ export interface GameState {
   victory?: boolean;
   /** PvP-Modus: Teams je Platz (−1 = leer), Punktestand, Kills zum Sieg, Gewinner. */
   pvp?: { teams: number[]; score: [number, number]; killsToWin: number; winner?: number };
+  /** Schwierigkeitsstufe (Standard normal). */
+  level?: GameLevel;
   /** Erwischte Postboten (Endstatistik). */
   couriersCaught?: number;
   /** Wurde schon ein Boss erlegt? (Erstes Blut gibt es nur einmal.) */

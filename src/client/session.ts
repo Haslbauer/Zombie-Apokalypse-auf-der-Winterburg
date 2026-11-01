@@ -307,7 +307,7 @@ export class RemoteSession implements Session {
   }
 
   /** Lobby: Held wählen, Zauber, bereit, Bot-Stärke. */
-  lobby(msg: Extract<ClientMessage, { t: 'pick' | 'spells' | 'ready' | 'difficulty' | 'mode' | 'team' }>): void {
+  lobby(msg: Extract<ClientMessage, { t: 'pick' | 'spells' | 'ready' | 'difficulty' | 'mode' | 'team' | 'level' }>): void {
     this.sendRaw(msg);
   }
 

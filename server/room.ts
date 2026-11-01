@@ -5,7 +5,7 @@ import { createBot } from '../src/sim/bots/brain';
 import { defaultTeam, fillTeam } from '../src/sim/bots/team';
 import { validSpells } from '../src/sim/spells';
 import { Simulation } from '../src/sim/game';
-import type { BotDifficulty, Command, GameEvent, HeroInput } from '../src/sim/types';
+import type { BotDifficulty, Command, GameEvent, GameLevel, HeroInput } from '../src/sim/types';
 import { DT } from '../src/sim/types';
 
 /** Verbindung eines Spielers, unabhängig vom Transport (WebSocket im Betrieb, Attrappe im Test). */
@@ -67,6 +67,8 @@ export class Room {
   phase: 'lobby' | 'playing' = 'lobby';
   /** Spielmodus: Koop gegen Zombies oder PvP. */
   mode: GameMode = 'koop';
+  /** Schwierigkeit für Menschen (legt der Gastgeber fest). */
+  level: GameLevel = 'normal';
   /** Countdown bis zum Start (ms-Zeitstempel), null = warten, bis alle bereit sind. */
   startsAt: number | null = null;
   /** Bot-Stärke (der Gastgeber kann sie in der Lobby ändern). */
@@ -130,6 +132,7 @@ export class Room {
       spells: this.active.map((s) => (s.player ? s.spells : null)),
       // PvP: nur Plätze mit Spielern nehmen teil (keine Bots)
       pvp: this.mode === 'pvp' ? { teams: this.active.map((s) => (s.player ? s.team : -1)) } : undefined,
+      level: this.level,
     });
     for (const s of this.slots) {
       s.inputs = [];
@@ -147,6 +150,7 @@ export class Room {
       difficulty: this.difficulty,
       phase: this.phase,
       mode: this.mode,
+      level: this.level,
       startsIn: lobby && this.startsAt !== null ? Math.max(0, (this.startsAt - now) / 1000) : null,
       slots: this.active.map((s, i) => {
         const h = this.sim.state.heroes[i];
@@ -209,6 +213,13 @@ export class Room {
     this.newSim();
     this.broadcastRoom(now);
     return null;
+  }
+
+  /** Lobby: Schwierigkeit (nur Gastgeber). */
+  setLevel(player: Player, level: GameLevel, now: number): void {
+    if (this.phase !== 'lobby' || this.slotOf(player) !== 0) return;
+    this.level = level;
+    this.broadcastRoom(now);
   }
 
   /** Lobby: eigenes Team im PvP. */
