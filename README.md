@@ -108,6 +108,23 @@ Beim Entwickeln (`npm run dev`) leitet Vite den Mehrspieler an einen laufenden `
 
 Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bogen beim Nahkampf, einen Pfeil beim Fernkampf.
 
+**Ego-Sicht:** Unten rechts im Bild hält der Held seine Waffe:
+
+| Held | Waffe in der Hand |
+|---|---|
+| Ragnar | Hammer |
+| Grimm | Pfote mit Krallen |
+| Hagedorn | Astgabel-Schleuder |
+| Spike | Volleyball |
+| Rauchbart | Enterhaken |
+| Somnia | Sternenstab |
+| Imker | Smoker |
+| Aurelius | Goldnugget |
+| Lotte | Schleuder |
+| Kapitän Tiefe | Harpune |
+
+Beim Angriff schlägt die Waffe nach vorn (Nahkampf) bzw. ruckt hoch (Fernkampf). Beim Laufen wippt der Kopf leicht und schwingt die Hand mit; das **Kopfwippen** lässt sich im Esc-Menü abschalten.
+
 ## Ton
 
 Alle Geräusche und die Musik entstehen im Browser (Web-Audio, `src/client/audio.ts`): Oszillatoren, Rauschen, Filter und Hüllkurven, jedes Mal leicht anders. Es gibt keine Tondateien und damit keine Lizenzfragen. Der Ton startet beim ersten Klick bzw. Tastendruck, weil Browser das so verlangen.

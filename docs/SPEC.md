@@ -1,7 +1,8 @@
-# Zombie-Apokalypse – Spielspezifikation (Entwurf v2.5)
+# Zombie-Apokalypse – Spielspezifikation (Entwurf v2.6)
 
-Stand: 31.10.2026. Arbeitsgrundlage für Claude Code.
+Stand: 01.11.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v2.6: Wellen-Ereignisse (Nebelnacht, Blutmond, Regen), PvP-Varianten (Kiste erobern, Zombies nebenbei, Bots auf leeren Plätzen), Ego-Sicht mit Waffe im Bild und Kopfwippen, Schadenszahlen, Rollen-Kombos.
 Änderungen v2.5: Verteidigungen in der Pause (Stacheldraht, Barrikade, Feuerfass), vier neue Helden (Imker, Aurelius, Lotte, Kapitän Tiefe).
 Änderungen v2.4: Neuer Held Imker (Support), drei Spieler im Koop, Reichweiten und Durchschlag, Münzen und Buff-Ringe.
 Änderungen v2.3: Ton fast still (keine Dauerquellen, Musik nur in Wellen), Ego-Sicht beim ganz Hineinzoomen (Maus fangen, Laufen relativ zum Blick, Fadenkreuz).

@@ -842,6 +842,7 @@ renderer.renderer.setAnimationLoop((now) => {
     const cam = renderer.cam;
     cam.eyeHeight = heroDefId === 'grimm' ? 0.7 : 1.6;
     renderer.hideOwn = cam.inFirstPerson;
+    renderer.headBob = hud.headBob;
     input.firstPerson = cam.firstPerson ? firstPersonControls : null;
     const mouseNeeded = shop.open || hud.menuOpen || state.gameOver;
     if ((!cam.firstPerson || mouseNeeded) && input.mouseLocked) document.exitPointerLock?.();

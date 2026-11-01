@@ -1043,6 +1043,15 @@ export class Hud {
     }
   })();
 
+  /** Ego-Sicht: Kopfwippen beim Laufen (Esc-Menü, gespeichert). */
+  headBob: boolean = (() => {
+    try {
+      return localStorage.getItem('winterburg.headbob') !== '0';
+    } catch {
+      return true;
+    }
+  })();
+
   /** Schwierigkeit für Menschen (Solo; online legt sie der Gastgeber fest). */
   level: GameLevel = (() => {
     try {
@@ -1127,7 +1136,21 @@ export class Hud {
           }
         });
         dmgLabel.append(dmg, el('span', '', ' Schadenszahlen'));
-        row.append(el('span', '', 'Qualität'), select, perfLabel, dmgLabel);
+        const bobLabel = el('label', 'hud-check');
+        const bob = el('input', '');
+        bob.type = 'checkbox';
+        bob.checked = this.headBob;
+        bob.dataset.setting = 'headBob';
+        bob.addEventListener('change', () => {
+          this.headBob = bob.checked;
+          try {
+            localStorage.setItem('winterburg.headbob', bob.checked ? '1' : '0');
+          } catch {
+            // ohne Speicher
+          }
+        });
+        bobLabel.append(bob, el('span', '', ' Kopfwippen (Ego-Sicht)'));
+        row.append(el('span', '', 'Qualität'), select, perfLabel, dmgLabel, bobLabel);
         box.append(row);
       }
       // Skillleiste: Größe und Deckkraft

@@ -17,6 +17,7 @@ const CORPSE_TIME = 2.5;
 import { WorldView } from './world';
 import { Weather } from './weather';
 import { CrateView } from './crate';
+import { ViewModel } from './viewmodel';
 
 /** So nah muss ein Held einem Zombie im Gebüsch sein, damit man ihn sieht (m). */
 const BRUSH_REVEAL = 3;
@@ -49,6 +50,12 @@ export class GameRenderer {
   private readonly weather: Weather;
   /** PvP „Kiste erobern“: Kiste mit Eroberungsring (nur in diesem Modus). */
   private crate: CrateView | null = null;
+  /** Ego-Sicht: Hand und Waffe im Bild, Kopfwippen beim Laufen (abschaltbar). */
+  private readonly viewModel: ViewModel;
+  headBob = true;
+  private bobPhase = 0;
+  private moving = 0;
+  private readonly lastMine = new THREE.Vector2(NaN, NaN);
   private readonly frustum = new THREE.Frustum();
   private readonly projView = new THREE.Matrix4();
   private readonly cullSphere = new THREE.Sphere(new THREE.Vector3(), 2.5);
@@ -100,6 +107,9 @@ export class GameRenderer {
     this.scene.add(sun, sun.target);
     this.sun = sun;
     this.weather = new Weather(this.scene, this.fog, hemi, sun);
+    // Kamera in die Szene, damit das an ihr hängende Waffenmodell gezeichnet wird
+    this.scene.add(this.cam.camera);
+    this.viewModel = new ViewModel(this.cam.camera);
 
     this.mapAnimation = buildMap(this.scene, data.arena);
     // Laterne des eigenen Helden: warmes Licht, das mitläuft
@@ -263,6 +273,19 @@ export class GameRenderer {
       this.scene.add(this.crate.group);
     }
     this.crate?.update(state, time);
+    // Ego-Sicht: Laufphase aus der Bewegung des eigenen Helden
+    const me = this.playerId !== null ? state.heroes.find((h) => h.id === this.playerId) : undefined;
+    if (mine && me) {
+      const p = mine.group.position;
+      const speed = Number.isNaN(this.lastMine.x) || dt <= 0 ? 0 : Math.hypot(p.x - this.lastMine.x, p.z - this.lastMine.y) / dt;
+      this.lastMine.set(p.x, p.z);
+      const target = Math.min(1, speed / 4);
+      this.moving += (target - this.moving) * Math.min(1, dt * 10);
+      this.bobPhase += dt * Math.min(speed, 8) * 2.1;
+      const def = this.data.heroes.find((d) => d.id === me.defId);
+      if (def) this.viewModel.setHero(def.id, def.color);
+    }
+    this.viewModel.update(this.cam.inFirstPerson && !!me?.alive, dt, this.bobPhase, this.moving);
   }
 
   /** Vorschau einer Fähigkeit (Taste gehalten) oder ausblenden. */
@@ -340,6 +363,7 @@ export class GameRenderer {
   heroAction(id: number, action: 'attack' | 'ability' | 'use', value = 0): void {
     const view = this.units.get(id);
     if (!view) return;
+    if (id === this.playerId && action !== 'use') this.viewModel.kick(action === 'attack' ? value || 0.3 : 0.4);
     if (action === 'attack') view.playAttack(value);
     else if (action === 'ability') view.playAbility(value);
     else view.playOnce('use', 0.9);
@@ -414,6 +438,15 @@ export class GameRenderer {
     const f = this.weather.fogAmount;
     this.fog.near = near + (Math.min(near, this.cam.inFirstPerson ? 2 : d * 0.55) - near) * f;
     this.fog.far = far + (Math.min(far, this.cam.inFirstPerson ? 16 : d + 16) - far) * f;
+    // Kopfwippen: auf und ab, leicht seitlich (nur in der Ego-Sicht, beim Laufen)
+    if (this.cam.inFirstPerson && this.headBob && this.moving > 0.01) {
+      const c = this.cam.camera;
+      const up = Math.sin(this.bobPhase * 2) * 0.045 * this.moving;
+      const side = Math.sin(this.bobPhase) * 0.03 * this.moving;
+      c.position.y += up;
+      c.position.x += -Math.sin(this.cam.yaw) * side;
+      c.position.z += Math.cos(this.cam.yaw) * side;
+    }
     this.renderer.render(this.scene, this.cam.camera);
   }
 }
