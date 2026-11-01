@@ -129,6 +129,7 @@ Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bog
 | Aurelius | Goldnugget |
 | Lotte | Schleuder |
 | Kapitän Tiefe | Harpune |
+| Hedwig | Handglocke |
 
 Beim Angriff schlägt die Waffe nach vorn (Nahkampf) bzw. ruckt hoch (Fernkampf). Beim Laufen wippt der Kopf leicht und schwingt die Hand mit; das **Kopfwippen** lässt sich im Esc-Menü abschalten.
 
@@ -151,6 +152,7 @@ Alle Geräusche und die Musik entstehen im Browser (Web-Audio, `src/client/audio
   | Aurelius | Klirren von Gold |
   | Lotte | Flitschen der Schleuder |
   | Kapitän Tiefe | Blubbern mit metallischem Klong |
+  | Hedwig | tiefer Glockenschlag |
 
 - **Spielablauf:** Horn zum Wellenstart, Akkord für „Welle geschafft“, Alarm bei Durchbruch, Fanfare für den Postboten, Boss erlegt, Sieg und Niederlage.
 - **Oberfläche:** Gold, Level-up, Shop, Pings (je Art ein Ton), Countdown in der Lobby.
@@ -433,7 +435,15 @@ Trolle kämpfen selbst; ihr Schaden zählt für Lotte. Zombies greifen Trolle an
 - **Tauchgang:** 0,8 s unverwundbar abtauchen, dann an der Zielstelle auftauchen, die Zombies dort betäuben und treffen.
 - **Ultimate „Flutwelle“:** breite Welle in eine Richtung; Schaden, spült Zombies 5–9 m zurück und verlangsamt sie.
 
-Die neuen Helden sind vorerst umgebaute vorhandene Figuren. Der Imker hat einen hellen Anzug mit Imkerhut, Schleier und Smoker. Aurelius trägt runde Brille, Lederschürze und eine Lupe am Gürtel. Lotte ist eine verkleinerte Figur im gelben Mantel mit Zöpfen und Teddy. Die Trolle sind grün eingefärbte Kürbis-Hulks. Kapitän Tiefe trägt einen schweren Anzug, einen Messinghelm mit Bullauge, eine Sauerstoffflasche und eine Harpune.
+**Hedwig** (Glöcknerin, Support):
+- **Angriff:** Schallwelle der Handglocke (9 m).
+- **Passiv „Abendläuten“:** Jeder dritte Treffer heilt den schwächsten Mitspieler in 8 m um 25 Leben (+5 je Level).
+- **Weckruf:** Schallkegel nach vorn, Schaden und kurze Betäubung.
+- **Glockenschlag:** heilt alle Mitspieler in einem Kreis.
+- **Schutzglocke:** Schild für alle Mitspieler in einem kleinen Kreis.
+- **Ultimate „Sturmgeläut“:** Schaden und Furcht um sie herum; Mitspieler laufen 4 s lang 25 % schneller.
+
+Die neuen Helden sind vorerst umgebaute vorhandene Figuren. Der Imker hat einen hellen Anzug mit Imkerhut, Schleier und Smoker. Aurelius trägt runde Brille, Lederschürze und eine Lupe am Gürtel. Lotte ist eine verkleinerte Figur im gelben Mantel mit Zöpfen und Teddy. Die Trolle sind grün eingefärbte Kürbis-Hulks. Kapitän Tiefe trägt einen schweren Anzug, einen Messinghelm mit Bullauge, eine Sauerstoffflasche und eine Harpune. Hedwig trägt ein violettes Gewand mit weißer Haube und Schultertuch und läutet eine Messing-Handglocke.
 Die Figur ist vorerst eine umgefärbte vorhandene Figur mit Imkerhut, Schleier und Smoker. Das Porträt ist aus dem Modell gerendert (`portrait.html?hero=imker` im Entwicklungsserver, Screenshot per Playwright).
 
 Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.

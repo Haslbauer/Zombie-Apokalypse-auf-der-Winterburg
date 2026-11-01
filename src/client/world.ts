@@ -85,6 +85,16 @@ function buildProjectile(look: string): THREE.Group {
       g.add(new THREE.Mesh(new THREE.DodecahedronGeometry(0.09, 0), new THREE.MeshLambertMaterial({ color: 0x9a968a })), trail(0xd8d4c8, 0.7, 0.08));
       break;
     }
+    case 'chime': {
+      // Schallwelle der Glocke: violetter Ring mit Schimmer
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.03, 6, 18), new THREE.MeshBasicMaterial({ color: 0xc7b8ff, transparent: true, opacity: 0.85 }));
+      ring.rotation.y = Math.PI / 2;
+      const ring2 = ring.clone();
+      ring2.scale.setScalar(0.6);
+      ring2.position.x = -0.18;
+      g.add(ring, ring2, glow(0xb39dff, 0.5), trail(0x9d8cff, 0.9, 0.1));
+      break;
+    }
     case 'nugget': {
       // Goldnugget: unregelmäßiger, glänzender Klumpen mit goldener Spur
       const n = new THREE.Mesh(new THREE.DodecahedronGeometry(0.13, 0), new THREE.MeshStandardMaterial({ color: 0xffc83d, metalness: 0.9, roughness: 0.3, emissive: 0x7a4e00, emissiveIntensity: 0.6 }));

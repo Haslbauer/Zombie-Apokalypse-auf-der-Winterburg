@@ -22,7 +22,7 @@ scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x2a2a1a, 1.4));
 const key = new THREE.DirectionalLight(0xffe2b0, 2.4); key.position.set(2, 3, 3); scene.add(key);
 const rim = new THREE.DirectionalLight(0x9fc9ff, 1.6); rim.position.set(-3, 2, -2); scene.add(rim);
 const models = new Map();
-const looks = { imker: 'libero', goldschmied: 'pirat', lotte: 'schlaeferin', taucher: 'rotschopf' };
+const looks = { imker: 'libero', goldschmied: 'pirat', lotte: 'schlaeferin', taucher: 'rotschopf', gloecknerin: 'schlaeferin', foerster: 'pirat' };
 const modelName = looks[id] ?? id;
 models.set(modelName, await loadRiggedModel(`/models/${modelName}.glb`, 1.8));
 const hero = { id: 1, defId: id, pos: { x: 0, y: 0 }, radius: def.radius, facing: Math.PI / 2, buffs: [], hp: 1, maxHp: 1 };

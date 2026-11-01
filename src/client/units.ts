@@ -32,7 +32,7 @@ function iconMaterial(text: string, color: string): THREE.SpriteMaterial {
   return material;
 }
 
-type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp' | 'beehat' | 'smoker' | 'glasses' | 'apron' | 'loupe' | 'pigtails' | 'teddy' | 'divehelm' | 'airtank' | 'harpoongun';
+type Prop = 'cleaver' | 'hammer' | 'staff' | 'hook' | 'sling' | 'tricorn' | 'sunhat' | 'crown' | 'parcel' | 'cap' | 'hardhat' | 'clipboard' | 'stamp' | 'beehat' | 'smoker' | 'glasses' | 'apron' | 'loupe' | 'pigtails' | 'teddy' | 'divehelm' | 'airtank' | 'harpoongun' | 'bonnet' | 'handbell' | 'shawl';
 
 /**
  * Aussehen einer animierten Figur (public/models/<model>.glb). move: Lauf-Clip,
@@ -132,6 +132,8 @@ const HERO_LOOKS: Record<string, ModelLook> = {
   goldschmied: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 1.0, tint: [0.85, 0.8, 0.72], attacks: ['attack'], attackStart: 0.3, props: ['glasses', 'apron', 'loupe'] },
   // Imker: umgebaute Figur (heller Anzug), Imkerhut mit Schleier, Smoker in der Hand
   imker: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.4, scale: 1.0, tint: [1, 1, 1], plain: 0xddd6c0, attacks: ['attack'], attackStart: 0.5, props: ['beehat', 'smoker'], headOffset: 0.02 },
+  // Glöcknerin Hedwig: umgebaute Figur (violettes Gewand), Haube, Schultertuch, Handglocke
+  gloecknerin: { model: 'schlaeferin', move: 'run', idle: 'idle', refSpeed: 5.1, scale: 0.96, tint: [1, 1, 1], plain: 0x4b3d6e, attacks: ['attack'], attackStart: 0.3, props: ['bonnet', 'shawl', 'handbell'] },
   gaertnerin: { model: 'gaertnerin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 0.98, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.4, impact: { attack: 0.78 } },
 };
 
@@ -349,9 +351,9 @@ export class UnitView {
     // Requisiten in Metern: Maßstab des Knochens herausrechnen (Mixamo und Quaternius unterscheiden sich)
     inst.root.updateMatrixWorld(true);
     for (const prop of look.props ?? []) {
-      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat' || prop === 'beehat' || prop === 'glasses' || prop === 'pigtails' || prop === 'divehelm';
+      const head = prop === 'tricorn' || prop === 'sunhat' || prop === 'crown' || prop === 'cap' || prop === 'hardhat' || prop === 'beehat' || prop === 'glasses' || prop === 'pigtails' || prop === 'divehelm' || prop === 'bonnet';
       // Am Körper: Schürze an der Brust, Lupe am Gürtel
-      const body = prop === 'apron' || prop === 'airtank' ? 'mixamorigSpine1' : prop === 'loupe' ? 'mixamorigHips' : null;
+      const body = prop === 'apron' || prop === 'airtank' || prop === 'shawl' ? 'mixamorigSpine1' : prop === 'loupe' ? 'mixamorigHips' : null;
       const bone = inst.root.getObjectByName(body ?? (head ? (look.headBone ?? 'mixamorigHead') : (look.handBone ?? 'mixamorigRightHand')));
       if (!bone) continue;
       const mesh = this.propMesh(prop);
@@ -480,6 +482,22 @@ export class UnitView {
         g.add(glass);
         break;
       }
+      case 'bonnet':
+        // Weiße Haube mit Band
+        // Haube: Kappe oben und hinten am Kopf (Gesicht frei)
+        add(new THREE.SphereGeometry(0.135, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.42), 0xf1ece0, 0, 0.1, -0.035);
+        add(new THREE.TorusGeometry(0.12, 0.012, 6, 18), 0x7d6bb0, 0, 0.14, -0.03).rotation.x = Math.PI / 2 + 0.35;
+        break;
+      case 'shawl':
+        // Dunkles Schultertuch
+        add(new THREE.CylinderGeometry(0.2, 0.27, 0.16, 14), 0x2c2440, 0, 0.18, 0.0);
+        break;
+      case 'handbell':
+        // Messing-Handglocke mit Holzgriff
+        add(new THREE.CylinderGeometry(0.02, 0.025, 0.14, 8), 0x6b4a2b, 0, 0.13, 0.04);
+        add(new THREE.ConeGeometry(0.1, 0.14, 14, 1, true), 0xc9a24a, 0, 0.0, 0.04, 0x3a2a00);
+        add(new THREE.SphereGeometry(0.025, 6, 4), 0x8a6a2a, 0, -0.07, 0.04);
+        break;
       case 'smoker':
         // Smoker: Blechdose mit Tülle und Blasebalg
         add(new THREE.CylinderGeometry(0.08, 0.08, 0.22, 10), 0xa8a8a0, 0, 0.12, 0.05);

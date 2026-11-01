@@ -115,6 +115,15 @@ const BUILDS: Record<string, Build> = {
     g.add(box(0.1, 0.01, 0.01, mat(0xd04a4a), 0, 0.28, 0.02));
     return { group: g, melee: false };
   },
+  // Hedwig: Messing-Handglocke
+  gloecknerin: (c) => {
+    const g = arm(c);
+    g.add(cyl(0.022, 0.16, mat(0x6b4a2b), 0, 0.08, 0));
+    const bell = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.16, 16, 1, true), mat(0xc9a24a, { metalness: 0.7, roughness: 0.35, side: THREE.DoubleSide }));
+    bell.position.y = 0.24;
+    g.add(bell, ball(0.025, mat(0x8a6a2a), 0, 0.16, 0));
+    return { group: g, melee: false };
+  },
   // Kapitän Tiefe: Harpune (Messing und Holz)
   taucher: (c) => {
     const g = arm(c, SKIN, 0x3a3a34);

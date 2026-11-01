@@ -1344,5 +1344,147 @@
         }
       }
     ]
+  },
+  {
+    "id": "gloecknerin",
+    "name": "Hedwig",
+    "role": "Support, Glocken",
+    "description": "Die alte Glöcknerin der Burgkapelle. Ihre Glocken heilen Freunde, schützen sie und jagen Zombies in die Flucht.",
+    "color": "#7d6bb0",
+    "figure": "bellringer",
+    "hp": 520,
+    "hpRegen": 2.4,
+    "speed": 5.1,
+    "radius": 0.45,
+    "hpPerLevel": 55,
+    "regenPerLevel": 0.25,
+    "damagePerLevel": 0.05,
+    "attack": {
+      "type": "ranged",
+      "damage": 20,
+      "range": 9,
+      "cooldown": 0.85,
+      "projectileSpeed": 18,
+      "projectileRadius": 0.22,
+      "look": "chime"
+    },
+    "passive": {
+      "name": "Abendläuten",
+      "description": "Jeder dritte Treffer heilt den schwächsten Mitspieler in 8 m um 25 Leben (+5 je Level).",
+      "values": {
+        "heal": 25,
+        "healPerLevel": 5,
+        "range": 8
+      }
+    },
+    "abilities": [
+      {
+        "id": "weckruf",
+        "name": "Weckruf",
+        "description": "Schallkegel nach vorn: Schaden und kurze Betäubung.",
+        "shape": "cone",
+        "range": 5,
+        "arc": 60,
+        "cooldown": [
+          10,
+          9.5,
+          9,
+          8.5,
+          8
+        ],
+        "values": {
+          "damage": [
+            35,
+            55,
+            75,
+            95,
+            115
+          ],
+          "stun": [
+            0.6,
+            0.7,
+            0.8,
+            0.9,
+            1.0
+          ]
+        }
+      },
+      {
+        "id": "glockenschlag",
+        "name": "Glockenschlag",
+        "description": "Heilt alle Mitspieler im Kreis.",
+        "shape": "circle",
+        "range": 9,
+        "radius": 4,
+        "cooldown": [
+          12,
+          11,
+          10,
+          9,
+          8
+        ],
+        "values": {
+          "heal": [
+            70,
+            100,
+            130,
+            160,
+            190
+          ]
+        }
+      },
+      {
+        "id": "schutzglocke",
+        "name": "Schutzglocke",
+        "description": "Glocke aus Licht über Mitspielern im Kreis: Schild für 4 s.",
+        "shape": "circle",
+        "range": 9,
+        "radius": 2.5,
+        "cooldown": [
+          15,
+          14,
+          13,
+          12,
+          11
+        ],
+        "values": {
+          "shield": [
+            70,
+            95,
+            120,
+            145,
+            170
+          ],
+          "duration": 4
+        }
+      },
+      {
+        "id": "sturmgelaeut",
+        "name": "Sturmgeläut",
+        "description": "Alle Glocken auf einmal: Schaden und Furcht um sie herum, Mitspieler laufen 25 % schneller.",
+        "shape": "self",
+        "range": 0,
+        "radius": 7,
+        "cooldown": [
+          100,
+          85,
+          70
+        ],
+        "values": {
+          "damage": [
+            120,
+            180,
+            240
+          ],
+          "fear": [
+            1.5,
+            2,
+            2.5
+          ],
+          "haste": 0.25,
+          "hasteTime": 4
+        }
+      }
+    ]
   }
 ]

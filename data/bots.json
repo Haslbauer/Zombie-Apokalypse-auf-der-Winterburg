@@ -437,6 +437,45 @@
           "min": 4
         }
       ]
+    },
+    "gloecknerin": {
+      "role": "ranged",
+      "teamRole": "support",
+      "skillOrder": [
+        1,
+        2,
+        0
+      ],
+      "buy": [
+        "heiltrank",
+        "pistole",
+        "kuechenwecker",
+        "lederjacke",
+        "taschenuhr",
+        "lebensamulett",
+        "kettenhemd",
+        "grossvateruhr",
+        "gewehr",
+        "schrotflinte"
+      ],
+      "abilities": [
+        {
+          "use": "cone",
+          "min": 2
+        },
+        {
+          "use": "heal",
+          "hp": 0.7
+        },
+        {
+          "use": "heal",
+          "hp": 0.85
+        },
+        {
+          "use": "aoe",
+          "min": 4
+        }
+      ]
     }
   }
 }

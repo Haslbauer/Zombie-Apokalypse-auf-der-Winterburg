@@ -181,6 +181,15 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - 3 Tauchgang (7 m): 0,8 s unverwundbar, unsichtbar und ohne Laufen; taucht am Ziel auf, Schaden und Betäubung 1–1,6 s im Umkreis 2,5 m.
 - 4 Flutwelle (Linie 12 m, 4 m breit): Schaden, spült 5/7/9 m zurück, verlangsamt 3 s.
 
+### Glöcknerin Hedwig (umgesetzt v2.6, Support)
+- Optik: violettes Gewand, weiße Haube, Schultertuch, Messing-Handglocke (umgebaute Somnia-Figur).
+- Angriff: Schallwelle (Geschoss), 9 m, 0,85 s.
+- Passiv Abendläuten: jeder dritte Treffer heilt den schwächsten Mitspieler in 8 m um 25 (+5 je Level).
+- 1 Weckruf (Kegel 5 m, 60°): Schaden 35–115, Betäubung 0,6–1 s.
+- 2 Glockenschlag (Kreis 4 m, Reichweite 9 m): Heilung 70–190 für alle Mitspieler.
+- 3 Schutzglocke (Kreis 2,5 m): Schild 70–170 für 4 s.
+- 4 Sturmgeläut (um sie, 7 m): Schaden 120–240, Furcht 1,5–2,5 s; Mitspieler +25 % Tempo für 4 s.
+
 ### Imker (umgesetzt v2.4, Support)
 - Optik: heller Anzug, Imkerhut mit Schleier, Smoker in der Hand, ein paar Bienen schwirren um ihn (aus dem früheren Entwurf).
 - Angriff: kleiner Bienenschwarm als Geschoss, 9 m. Jeder Treffer setzt einen Stich (bis 5, je 3 Schaden/s plus 0,4 je Level, 4 s, frischt auf) – der Schaden über Zeit der Bienen aus dem Entwurf.
