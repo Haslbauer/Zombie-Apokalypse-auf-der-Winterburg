@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { gameData } from '../gameData';
 import type { ClientCommand, RoomInfo } from '../net/protocol';
 import type { DataContext } from '../sim/context';
@@ -1064,7 +1065,10 @@ function handleEvents(state: GameState): void {
 }
 
 let last = performance.now();
+/** Rechenzeit pro Bild (ms, gleitender Schnitt) für ?debug: winterburg.perf(). */
+let frameMs = 0;
 renderer.renderer.setAnimationLoop((now) => {
+  const frameStart = performance.now();
   const dt = Math.min(0.25, (now - last) / 1000);
   last = now;
   const time = now / 1000;
@@ -1161,6 +1165,7 @@ renderer.renderer.setAnimationLoop((now) => {
   if (input.touch) input.touch.visible = !!session && !!myHero() && !spectate && !session.state.gameOver && !shop.open && !hud.menuOpen;
   hud.updateLobbyCountdown();
   quality.frame(dt);
+  frameMs += (performance.now() - frameStart - frameMs) * 0.05;
   hud.setPerf(quality.showPerf, quality.fps, QUALITY_LABELS[quality.level], session instanceof RemoteSession ? session.rtt : null);
   renderer.render();
 });
@@ -1260,6 +1265,26 @@ if (params.has('debug')) {
       rtt: () => (session instanceof RemoteSession ? session.rtt : null),
       heroId: () => heroId,
       renderInfo: () => ({ ...renderer.renderer.info.render }),
+      // Leistung: Rechenzeit pro Bild, Zeichenaufrufe, Objekte in der Szene, Einheiten
+      perf: () => {
+        let objects = 0;
+        let sprites = 0;
+        renderer.scene.traverse((o) => {
+          objects++;
+          if ((o as { isSprite?: boolean }).isSprite) sprites++;
+        });
+        const skel = new Set<string>();
+        const boneTex = new Set<string>();
+        let skinned = 0;
+        renderer.scene.traverse((o) => {
+          const sm = o as THREE.SkinnedMesh;
+          if (!sm.isSkinnedMesh) return;
+          skinned++;
+          skel.add(sm.skeleton.uuid);
+          if (sm.skeleton.boneTexture) boneTex.add(sm.skeleton.boneTexture.uuid);
+        });
+        return { programs: renderer.renderer.info.programs?.length ?? 0, skinned, skeletons: skel.size, boneTextures: boneTex.size, frameMs: +frameMs.toFixed(2), calls: renderer.renderer.info.render.calls, triangles: renderer.renderer.info.render.triangles, objects, sprites, geometries: renderer.renderer.info.memory.geometries, textures: renderer.renderer.info.memory.textures, zombies: session?.state.zombies.length ?? 0, level: myHero()?.level };
+      },
       drop: () => (session instanceof RemoteSession ? session.dropConnection() : undefined),
       // Einzelspieler: Held an einen Ort setzen bzw. einen Zombie dort erscheinen lassen
       teleport: (x: number, y: number) => {

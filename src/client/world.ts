@@ -265,10 +265,13 @@ export class WorldView {
       }
       placeBall(ball, h.ball, state, time);
     }
+    // Ball ohne Besitzer nur verstecken und sein Licht dunkel stellen: Lichter entfernen oder
+    // hinzufügen ändert die Lichtzahl, und die Grafikkarte übersetzt alle Shader neu (Ruckler)
     for (const [id, b] of this.balls) {
-      if (!seen.has(id)) {
-        this.scene.remove(b);
-        this.balls.delete(id);
+      const on = seen.has(id);
+      for (const c of b.children) {
+        if ((c as THREE.PointLight).isPointLight) (c as THREE.PointLight).intensity = on ? 2 : 0;
+        else c.visible = on;
       }
     }
   }

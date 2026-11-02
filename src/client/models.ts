@@ -83,6 +83,25 @@ function addRimLight(mat: THREE.MeshStandardMaterial, color: THREE.ColorRepresen
  * Eigene Kopie eines Modells. tint multipliziert die Texturfarbe; paint
  * ersetzt die Textur durch eine Farbe; rim gibt ein farbiges Randlicht.
  */
+/**
+ * SkeletonUtils.clone gibt jedem Teil einer Figur ein eigenes Skelett (und damit eine
+ * eigene Knochen-Textur auf der Grafikkarte, die jedes Bild neu hochgeladen wird).
+ * Teile, die im Original dasselbe Skelett haben, teilen es auch in der Kopie.
+ */
+function shareSkeletons(source: THREE.Object3D, clone: THREE.Object3D): void {
+  const src: THREE.SkinnedMesh[] = [];
+  const dst: THREE.SkinnedMesh[] = [];
+  source.traverse((o) => (o as THREE.SkinnedMesh).isSkinnedMesh && src.push(o as THREE.SkinnedMesh));
+  clone.traverse((o) => (o as THREE.SkinnedMesh).isSkinnedMesh && dst.push(o as THREE.SkinnedMesh));
+  if (src.length !== dst.length) return;
+  const shared = new Map<THREE.Skeleton, THREE.Skeleton>();
+  src.forEach((s, i) => {
+    const first = shared.get(s.skeleton);
+    if (!first) shared.set(s.skeleton, dst[i].skeleton);
+    else dst[i].bind(first, dst[i].bindMatrix);
+  });
+}
+
 export function instantiate(
   model: RiggedModel,
   scale = 1,
@@ -91,6 +110,7 @@ export function instantiate(
   rim?: { color: THREE.ColorRepresentation; strength: number },
 ): ModelInstance {
   const inner = cloneSkinned(model.scene);
+  shareSkeletons(model.scene, inner);
   const materials: ModelInstance['materials'] = [];
   const copy = (source: THREE.Material): THREE.MeshStandardMaterial => {
     const mat = (source as THREE.MeshStandardMaterial).clone();
@@ -108,6 +128,8 @@ export function instantiate(
   inner.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh) return;
+    // Die Geometrie teilen sich alle Kopien des Modells: beim Aufräumen nicht freigeben
+    mesh.userData.sharedGeometry = true;
     // Figuren mit mehreren Materialien (z. B. Haut, Kleidung, Haare)
     mesh.material = Array.isArray(mesh.material) ? mesh.material.map(copy) : copy(mesh.material);
   });

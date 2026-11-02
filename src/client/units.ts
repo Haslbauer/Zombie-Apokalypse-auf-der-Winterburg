@@ -188,6 +188,7 @@ function labelSprite(text: string, color: string): THREE.Sprite {
   g.fillStyle = color;
   g.fillText(text, 256, 50);
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), depthTest: false, transparent: true }));
+  s.userData.ownTexture = true;
   s.scale.set(2.4, 0.45, 1);
   s.renderOrder = 10;
   return s;
@@ -1122,6 +1123,7 @@ export class UnitView {
     const tex = new THREE.CanvasTexture(c);
     tex.minFilter = THREE.LinearFilter;
     this.ticks = new THREE.Mesh(new THREE.PlaneGeometry(this.barW, 0.13), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+    this.ticks.userData.ownTexture = true;
     this.ticks.position.z = 0.02;
     this.bar.add(this.ticks);
   }
@@ -1259,11 +1261,25 @@ export class UnitView {
     return this.shownSpeed;
   }
 
+  /**
+   * Aufräumen, wenn die Einheit verschwindet: Skelette (Knochen-Texturen auf der
+   * Grafikkarte), eigene Geometrien, Materialien und eigene Texturen freigeben.
+   * Geteilte Modell-Geometrien und zwischengespeicherte Symbole bleiben.
+   * Ohne das wuchs der Grafikspeicher mit jedem Zombie (Ruckeln ab etwa Welle 10).
+   */
   dispose(): void {
+    this.fxView?.dispose();
     this.group.traverse((o) => {
+      if ((o as THREE.SkinnedMesh).isSkinnedMesh) (o as THREE.SkinnedMesh).skeleton.dispose();
       if (o instanceof THREE.Mesh) {
-        o.geometry.dispose();
-        (o.material as THREE.Material).dispose();
+        if (!o.userData.sharedGeometry) o.geometry.dispose();
+        for (const m of (Array.isArray(o.material) ? o.material : [o.material]) as THREE.MeshBasicMaterial[]) {
+          if (o.userData.ownTexture) m.map?.dispose();
+          m.dispose();
+        }
+      } else if (o instanceof THREE.Sprite && o.userData.ownTexture) {
+        o.material.map?.dispose();
+        o.material.dispose();
       }
     });
   }

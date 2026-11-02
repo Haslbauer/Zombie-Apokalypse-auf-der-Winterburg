@@ -187,8 +187,11 @@ export class Grid {
    * Nachbarzelle mit kleinstem Wert, so kommen viele Zombies mit einer
    * einzigen Berechnung ans Ziel. Mit seedRadius gelten alle freien Zellen in
    * diesem Umkreis als Ziel (z. B. rund um ein Objekt, das selbst blockiert).
+   * maxDist (Meter Weglänge): weiter entfernte Zellen bleiben unendlich; das spart
+   * viel Rechenzeit, wenn nur die Umgebung gebraucht wird (Verfolgen von Helden).
    */
-  distanceField(targets: Vec2[], seedRadius = 0): Float32Array {
+  distanceField(targets: Vec2[], seedRadius = 0, maxDist = Infinity): Float32Array {
+    const limit = maxDist / this.cell;
     const { cols, rows, blocked } = this;
     const n = blocked.length;
     const dist = new Float32Array(n).fill(Infinity);
@@ -233,7 +236,7 @@ export class Grid {
         if (blocked[nb]) continue;
         if (k >= 4 && (blocked[r * cols + nc] || blocked[nr * cols + c])) continue;
         const nd = d + NB_COST[k];
-        if (nd < dist[nb]) {
+        if (nd < dist[nb] && nd <= limit) {
           dist[nb] = nd;
           open.push(nb, nd);
         }

@@ -120,6 +120,12 @@ export class StatusFx {
     }
   }
 
+  /** Aufräumen: eigene Materialien der Partikel freigeben (die Bildchen sind geteilt). */
+  dispose(): void {
+    for (const p of this.particles) (p.sprite.material as THREE.SpriteMaterial).dispose();
+    this.particles.length = 0;
+  }
+
   get count(): number {
     return this.particles.length;
   }

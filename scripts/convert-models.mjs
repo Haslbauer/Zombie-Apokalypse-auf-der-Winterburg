@@ -12,6 +12,7 @@ import { dirname, extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { NodeIO } from '@gltf-transform/core';
 import { dedup, prune, resample, simplify, weld } from '@gltf-transform/functions';
+import { joinByMaterial } from './join-models.mjs';
 import { MeshoptSimplifier } from 'meshoptimizer';
 import { createRequire } from 'node:module';
 
@@ -385,6 +386,9 @@ try {
     await MeshoptSimplifier.ready;
     // simplifyRatio 1: Netz unverändert lassen (Low-Poly-Modelle)
     const ratio = cfg.simplifyRatio ?? 0.5;
+    // Teile mit gleichem Material zu einem Primitiv zusammenfassen: ein Zeichenaufruf statt
+    // Dutzender (Ratten, Hornissen und Frösche hatten 50 bis 207 Teile; Ruckeln bei vielen Gegnern)
+    joinByMaterial(doc);
     await doc.transform(
       dedup(),
       weld(),

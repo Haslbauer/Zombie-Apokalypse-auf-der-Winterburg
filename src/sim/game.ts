@@ -24,6 +24,12 @@ import { barricadeRect, updateDefenses } from './defenses';
 
 /** Das Distanzfeld zu den Helden wird alle so viele Ticks neu berechnet. */
 const FIELD_TICKS = 5;
+/**
+ * Das Feld zu den Helden reicht nur so weit (Meter Weglänge): Zombies verfolgen
+ * Helden höchstens aus Aggro- plus Leinenreichweite (höchstens 16 m Luftlinie),
+ * weiter weg laufen sie zu ihren Zielen. Spart den Großteil der Rechenzeit pro Tick.
+ */
+export const HERO_FIELD_RANGE = 22;
 /** Zombies, die in diesem Abstand um ein Ziel stehen, können es angreifen (Saatradius der Felder). */
 const OBJECTIVE_SEED = 0.9;
 /** Abstand der Wegfelder zu Hindernissen für kleine Einheiten (Rattenloch 0,8 m). */
@@ -279,12 +285,23 @@ export class Simulation implements SimContext {
     if (real.length === 0) return;
     if (state.tick % FIELD_TICKS === 1 || !this.field) {
       const targets = state.heroes.filter((h) => h.alive && !h.benched).map((h) => h.pos);
-      this.field = targets.length > 0 ? this.grid.distanceField(targets) : null;
+      this.field = targets.length > 0 ? this.grid.distanceField(targets, 0, HERO_FIELD_RANGE) : null;
     }
     state.zombies = real;
     updateZombies(this, this.field, null);
     for (const z of real) resolveObstacles(z.pos, z.radius, this.arena);
     state.zombies = all.filter((z) => z.avatarOf !== undefined || z.hp > 0);
+  }
+
+  /** Positionen der lebenden Helden, die einen Zombie in Reichweite des Heldenfelds haben. */
+  private chaseTargets(): Vec2[] {
+    const out: Vec2[] = [];
+    const r2 = HERO_FIELD_RANGE * HERO_FIELD_RANGE;
+    for (const h of this.state.heroes) {
+      if (!h.alive) continue;
+      if (this.state.zombies.some((z) => (z.pos.x - h.pos.x) ** 2 + (z.pos.y - h.pos.y) ** 2 <= r2)) out.push(h.pos);
+    }
+    return out;
   }
 
   /** Distanzfelder zu jedem Ziel und zu jeder Zielgruppe (nur intakte Mitglieder). */
@@ -324,12 +341,18 @@ export class Simulation implements SimContext {
       h.brush = h.alive ? brushAt(this.arena, h.pos) : -1;
     }
 
-    if (state.tick % FIELD_TICKS === 1 || !this.field) {
-      const targets = state.heroes.filter((h) => h.alive).map((h) => h.pos);
-      this.field = targets.length > 0 ? this.grid.distanceField(targets) : null;
+    // Felder zu den Helden alle FIELD_TICKS Ticks, das für kleine Einheiten versetzt (Last verteilen)
+    const phase = state.tick % FIELD_TICKS;
+    if (phase === 1 || !this.field) {
+      // Nur Helden mit Zombies in Reichweite brauchen das Feld
+      const targets = this.chaseTargets();
+      this.field = targets.length > 0 ? this.grid.distanceField(targets, 0, HERO_FIELD_RANGE) : null;
+    }
+    if (phase === 3 || (this.smallField === null && phase === 1)) {
       // Feld für kleine Einheiten nur, wenn welche unterwegs sind
+      const targets = this.chaseTargets();
       const small = state.zombies.some((z) => this.zombieDefs.get(z.defId)?.small);
-      this.smallField = small && targets.length > 0 ? this.smallGrid.distanceField(targets) : null;
+      this.smallField = small && targets.length > 0 ? this.smallGrid.distanceField(targets, 0, HERO_FIELD_RANGE) : null;
     }
     updateMinions(this);
     updateDefenses(this);

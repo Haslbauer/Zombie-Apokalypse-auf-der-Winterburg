@@ -82,9 +82,9 @@ export class Quality {
       this.goodFor = 0;
       this.apply(ORDER[i - 1]);
     } else if (this.fps > 57 && i < ORDER.length - 1) {
-      // erst nach 15 s guter Bildrate wieder hochstufen
+      // erst nach 60 s guter Bildrate wieder hochstufen (kein ständiges Hin und Her)
       this.goodFor += WINDOW;
-      if (this.goodFor >= 15) {
+      if (this.goodFor >= 60) {
         this.goodFor = 0;
         this.apply(ORDER[i + 1]);
       }

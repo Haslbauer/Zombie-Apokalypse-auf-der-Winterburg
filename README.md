@@ -552,6 +552,18 @@ Der Server zählt, wie oft das Spiel gespielt wird. Die Zahlen stehen auf der Se
 
 Code: `server/stats.ts`, Tests: `tests/server/stats.test.ts`.
 
+## Leistung
+
+Messen und Profilieren:
+- `PERF=1 npx vitest run tests/balance/perf --silent=false` misst je Welle die Rechenzeit eines Server-Ticks (Schnitt, 99 %, Maximum) und die Größe der Schnappschüsse.
+- `node --cpu-prof --import tsx scripts/perf-sim.ts 12` erstellt ein CPU-Profil der Simulation bis Welle 12.
+- Im Browser liefert `?debug` mit `winterburg.perf()` Rechenzeit pro Bild, Zeichenaufrufe, Texturen und Shader.
+
+Nach den ersten Online-Partien ruckelte es ab etwa Level 10 stark. Behoben wurde:
+- **Modelle:** Ratten, Hornissen, Frösche und einige Helden bestanden aus 50 bis 207 Einzelteilen. Jedes Teil kostete einen eigenen Zeichenaufruf und eine eigene Knochen-Textur. Bei großen Schwärmen waren das über 5000 Zeichenaufrufe pro Bild. Jetzt sind Teile mit gleichem Material zusammengefasst (`scripts/join-models.mjs`; der Konverter macht das selbst), und die Teile einer Figur teilen sich ein Skelett. Der Speicher der Grafikkarte wächst nicht mehr mit jedem Zombie.
+- **Shader:** Lichter werden nicht mehr ein- und ausgeschaltet; sie werden nur dunkel gestellt. Auch die automatische Grafikstufe schaltet die Schatten nicht mehr ab, sondern macht sie nur gröber. Vorher musste die Grafikkarte dabei jedes Mal alle Shader neu übersetzen.
+- **Server:** Das Wegfeld, mit dem Zombies Helden verfolgen, wird nur noch im Umkreis von 22 m um Helden mit Zombies in der Nähe berechnet, nicht mehr für die ganze Karte. Ein Server-Tick braucht im Schnitt etwa halb so lange, und die Ausreißer alle fünf Ticks sind weitgehend verschwunden. 99 % der Ticks bleiben unter 6 ms statt unter 18 ms. Das zählt besonders beim kostenlosen Render-Server mit wenig Rechenleistung.
+
 ## Aufbau
 
 - `src/sim/` – Spiellogik, tickbasiert (20 Ticks/s), ohne Browser-Abhängigkeit. Läuft im Einzelspieler im Browser, im Mehrspieler auf dem Server.

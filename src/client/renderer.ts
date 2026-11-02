@@ -289,7 +289,8 @@ export class GameRenderer {
     this.mapAnimation.update(time, state.heroes.filter((h) => h.alive).map((h) => h.pos));
     // Laterne folgt dem eigenen Helden (Zuschauer: aus)
     const mine = this.playerId !== null ? this.units.get(this.playerId) : undefined;
-    this.lantern.visible = !!mine;
+    // Laterne nicht aus- und einblenden (die Lichtzahl ändern übersetzt alle Shader neu), nur dunkel stellen
+    this.lantern.intensity = mine ? 16 : 0;
     if (mine) this.lantern.position.set(mine.group.position.x, 2.6, mine.group.position.z);
     // Wetter der Wellen-Ereignisse (Nebel, Blutmond, Regen) um den Helden bzw. die Kamera
     const wx = mine ? mine.group.position.x : camera.position.x;
@@ -455,8 +456,10 @@ export class GameRenderer {
   applyQuality(level: QualityLevel): void {
     const dpr = window.devicePixelRatio || 1;
     this.renderer.setPixelRatio(level === 'hoch' ? Math.min(dpr, 2) : level === 'mittel' ? Math.min(dpr, 1.5) : 1);
-    const size = level === 'hoch' ? 2048 : 1024;
-    this.sun.castShadow = level !== 'niedrig';
+    // Schatten bleiben an (nur kleiner): Ein- und Ausschalten zwingt die Grafikkarte, alle
+    // Shader neu zu übersetzen; bei automatischer Qualität ruckelte es dabei immer wieder.
+    const size = level === 'hoch' ? 2048 : level === 'mittel' ? 1024 : 512;
+    this.sun.castShadow = true;
     if (this.sun.shadow.mapSize.x !== size) {
       this.sun.shadow.mapSize.set(size, size);
       this.sun.shadow.map?.dispose();
