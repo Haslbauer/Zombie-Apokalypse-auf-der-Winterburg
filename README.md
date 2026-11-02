@@ -123,7 +123,7 @@ Die Markierung am Boden zeigt Reichweite und Trefferbereich der Waffe: einen Bog
 | Grimm | Pfote mit Krallen |
 | Hagedorn | Astgabel-Schleuder |
 | Spike | Volleyball |
-| Rauchbart | Enterhaken |
+| Rauchbarth | Enterhaken |
 | Somnia | Sternenstab |
 | Imker | Smoker |
 | Aurelius | Goldnugget |
@@ -149,7 +149,7 @@ Alle Geräusche und die Musik entstehen im Browser (Web-Audio, `src/client/audio
   | Grimm | Knurren und Zuschnappen |
   | Hagedorn | Sehne der Schleuder |
   | Spike | Ball-Plopp |
-  | Rauchbart | rasselnde Kette |
+  | Rauchbarth | rasselnde Kette |
   | Somnia | Glöckchen |
   | Imker | Summen |
   | Aurelius | Klirren von Gold |
@@ -207,7 +207,7 @@ Angriffe reichen weiter als früher (die Karte ist größer). Manche Schüsse tr
 | Hagedorn | Stein | 10 m | 1 dahinter mit 60 %; Pfeilschuss: 2 dahinter mit 75 % |
 | Somnia | Stern | 10 m | 1 dahinter mit 70 % |
 | Spike | Ball | 9 m | 2 dahinter mit 50 % |
-| Rauchbart | Haken | 7,5 m | bleibt im ersten Ziel hängen |
+| Rauchbarth | Haken | 7,5 m | bleibt im ersten Ziel hängen |
 
 Fähigkeiten reichen 15 % weiter.
 
@@ -218,7 +218,7 @@ Jeder Held hat eine Rolle im Team. Ohne Tank, Schaden und Support ist das Spiel 
 | Rolle | Helden | Wirkung |
 |---|---|---|
 | 🛡 Tank | Ragnar, Spike, Kapitän Tiefe | nimmt 20 % weniger Schaden; Bosse und Elites in 10 m Nähe greifen ihn an statt der anderen |
-| ⚔ Schaden | Grimm, Rauchbart, Aurelius, Lotte | 40 % mehr Schaden an Bossen und Elites |
+| ⚔ Schaden | Grimm, Rauchbarth, Aurelius, Lotte | 40 % mehr Schaden an Bossen und Elites |
 | ✚ Support | Hagedorn, Somnia, Imker | heilt Verbündete in 7 m Nähe ständig ein wenig und reinigt sie alle 3 s von **Seuche** |
 
 **Rollen-Kombos:**
@@ -437,7 +437,7 @@ Gold gibt es für Kills und jede überstandene Welle, in der man mitgekämpft ha
 |---|---|---|
 | Grimm (Hund) | Nahkampf-Jäger | Sprungbiss, Fährte, Heulen, Hetzjagd |
 | Hagedorn (Waldläuferin) | Fernkampf, ausdauernd | Pfeilschuss, Saat, Kräutertee, Mein Garten! |
-| Rauchbart (Pirat) | Kontrolle | Qualmstoß, Rauchwolke, Nebelschritt, Dicke Luft |
+| Rauchbarth (Pirat) | Kontrolle | Qualmstoß, Rauchwolke, Nebelschritt, Dicke Luft |
 | Spike (Libero) | Fernkampf, Support | Aufschlag, Block, Zuspiel, Schmetterball |
 | Ragnar (Rotschopf) | Nahkampf, Berserker | Wuchtschlag, Wutanfall, Ungezielter Sprung, Amok |
 | Somnia (Schläferin) | Kontrolle | Berührung, Gähnen, Powernap, Gute Nacht |

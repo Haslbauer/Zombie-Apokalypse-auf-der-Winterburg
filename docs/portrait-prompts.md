@@ -1,6 +1,6 @@
 # Bild-Prompts für die fehlenden Heldenporträts
 
-Die sechs ursprünglichen Helden (Grimm, Hagedorn, Rauchbart, Spike, Ragnar, Somnia) haben gemalte Porträts. Die acht neueren Helden haben bisher nur Bilder, die aus ihren 3D-Modellen gerendert sind. Mit diesen Prompts entstehen gemalte Porträts im gleichen Stil.
+Die sechs ursprünglichen Helden (Grimm, Hagedorn, Rauchbarth, Spike, Ragnar, Somnia) haben gemalte Porträts. Die acht neueren Helden haben bisher nur Bilder, die aus ihren 3D-Modellen gerendert sind. Mit diesen Prompts entstehen gemalte Porträts im gleichen Stil.
 
 ## So gehst du vor
 

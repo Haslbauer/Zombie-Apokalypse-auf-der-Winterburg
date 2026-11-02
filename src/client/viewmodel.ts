@@ -75,7 +75,7 @@ const BUILDS: Record<string, Build> = {
     g.add(new THREE.Mesh(new THREE.TorusGeometry(0.121, 0.008, 6, 20), mat(0x2f6fd6)).translateY(0.09).translateZ(-0.02));
     return { group: g, melee: false };
   },
-  // Rauchbart: Enterhaken an der Kette
+  // Rauchbarth: Enterhaken an der Kette
   pirat: (c) => {
     const g = arm(c, SKIN, 0x2a2420);
     const iron = mat(0x5c5c60, { metalness: 0.7, roughness: 0.35 });

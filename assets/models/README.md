@@ -28,7 +28,7 @@ Jede Figur hat einen Ordner mit `figur.fbx` (Mixamo-Figur samt Texturen) und `mo
 | Ordner | Figur | Spiel |
 |---|---|---|
 | rotschopf | Brute | Ragnar (mit Kriegshammer) |
-| pirat | Pirate (P. Konstantinov) | Rauchbart (mit Enterhaken) |
+| pirat | Pirate (P. Konstantinov) | Rauchbarth (mit Enterhaken) |
 | gaertnerin | Erika Archer (mit Bogen) | Hagedorn |
 | schlaeferin | Arissa | Somnia (mit Kristallstab) |
 | libero | Kachujin | Spike |

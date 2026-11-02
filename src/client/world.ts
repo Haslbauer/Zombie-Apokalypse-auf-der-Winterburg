@@ -40,7 +40,7 @@ function trail(color: number, length: number, width: number): THREE.Mesh {
 
 /**
  * Aussehen der Geschosse (Modell entlang +x, wird in Flugrichtung gedreht):
- * Pfeil (Hagedorn), Enterhaken an der Leine (Rauchbart), Sternenfunken
+ * Pfeil (Hagedorn), Enterhaken an der Leine (Rauchbarth), Sternenfunken
  * (Somnia), leuchtender Ball (Spike). Unbekannte: leuchtende Kugel.
  */
 function buildProjectile(look: string): THREE.Group {
