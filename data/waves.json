@@ -5,8 +5,8 @@
   "hpScalePerWave": 0.2,
   "damageScalePerWave": 0.4,
   "spawnInterval": 0.3,
-  "firstPauseDuration": 15,
-  "pauseDuration": 12,
+  "firstPauseDuration": 20,
+  "pauseDuration": 18,
   "mix": [
     {
       "fromWave": 1,

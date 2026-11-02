@@ -2,7 +2,7 @@
 
 Stand: 01.11.2026. Arbeitsgrundlage für Claude Code.
 
-Änderungen v2.7: Spieldauer etwa 20 Minuten für 20 Wellen: Pausen 15 s und 12 s, weniger, dafür härter zuschlagende Zombies (+20 % Leben, +40 % Schaden je Welle), schnellere Kriecher, Messlauf `tests/balance/timing.test.ts`. Verteidigungen lassen sich auch während der Welle bauen und reparieren.
+Änderungen v2.7: Spieldauer etwa 20 Minuten für 20 Wellen: Pausen 20 s und 18 s (zum Einkaufen), weniger, dafür härter zuschlagende Zombies (+20 % Leben, +40 % Schaden je Welle), schnellere Kriecher, Messlauf `tests/balance/timing.test.ts`. Verteidigungen lassen sich auch während der Welle bauen und reparieren.
 Änderungen v2.6: Wellen-Ereignisse (Nebelnacht, Blutmond, Regen), PvP-Varianten (Kiste erobern, Zombies nebenbei, Bots auf leeren Plätzen), Ego-Sicht mit Waffe im Bild und Kopfwippen, Schadenszahlen, Rollen-Kombos.
 Änderungen v2.5: Verteidigungen in der Pause (Stacheldraht, Barrikade, Feuerfass), vier neue Helden (Imker, Aurelius, Lotte, Kapitän Tiefe).
 Änderungen v2.4: Neuer Held Imker (Support), drei Spieler im Koop, Reichweiten und Durchschlag, Münzen und Buff-Ringe.
@@ -75,8 +75,8 @@ Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Ha
 ## 4. Spielablauf
 
 - Wellenphase: Zombies spawnen an den Kartenrändern und laufen zum Haus
-- Pausenphase 12 s (vor Welle 1: 15 s; bis v2.6 waren es 25 s und 20 s): Shop öffnen, Skillpunkte verteilen, Wiederbeleben. Wer fertig ist, startet die nächste Welle sofort mit N bzw. dem Knopf „Jetzt starten“ (im Mehrspieler später erst, wenn alle Menschen bereit sind).
-- Welle n hat mehr und stärkere Zombies als Welle n-1. Ab v2.7 gilt: 10 + 2,6 × (n − 1) einzelne Zombies, Leben ×(1 + 0,2 × (n − 1)), Schaden ×(1 + 0,4 × (n − 1)), Zwischenbosse +2 % Leben je Welle. Ziel: ein erfolgreiches Spiel über 20 Wellen dauert etwa 20 Minuten (Messlauf `tests/balance/timing.test.ts`: 21 bis 24 min mit Bots ohne frühen Start).
+- Pausenphase 18 s (vor Welle 1: 20 s; kurzzeitig 12 s und 15 s; bis v2.6 waren es 25 s und 20 s): Shop öffnen, Skillpunkte verteilen, Wiederbeleben. Wer fertig ist, startet die nächste Welle sofort mit N bzw. dem Knopf „Jetzt starten“ (im Mehrspieler später erst, wenn alle Menschen bereit sind).
+- Welle n hat mehr und stärkere Zombies als Welle n-1. Ab v2.7 gilt: 10 + 2,6 × (n − 1) einzelne Zombies, Leben ×(1 + 0,2 × (n − 1)), Schaden ×(1 + 0,4 × (n − 1)), Zwischenbosse +2 % Leben je Welle. Ziel: ein erfolgreiches Spiel über 20 Wellen dauert etwa 20 Minuten (Messlauf `tests/balance/timing.test.ts`: 24 bis 25 min mit Bots ohne frühen Start).
 - Elite-Zombie alle 5 Wellen, Boss alle 10 Wellen (Vorschlag)
 - Ziel (nach LoL-Vorbild): Welle 30 überstehen, das dauert ca. 30 bis 40 Minuten wie ein LoL-Spiel. Danach optionaler Endlos-Modus mit Highscore.
 

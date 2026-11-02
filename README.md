@@ -368,11 +368,11 @@ Gutes Spielen wird belohnt (wie in LoL): Der letzte Treffer bringt das volle Gol
 
 **Speedrun:** Oben läuft die Spielzeit (⏱). Sobald alle Zombies einer Welle erledigt sind, startet N bzw. „Jetzt starten“ sofort die nächste Welle, statt die Pause abzuwarten. Nach einem Sieg zeigt die Endstatistik die Zeit und die Bestzeit; die Bestzeit wird im Browser gespeichert.
 
-**Spieldauer:** Ein erfolgreiches Spiel über 20 Wellen dauert etwa **20 Minuten**: Die Pausen dauern 15 s vor Welle 1 und 12 s danach, zusammen knapp 4 Minuten. Die Kämpfe dauern anfangs etwa 30 s und am Ende 60 bis 90 s.
+**Spieldauer:** Ein erfolgreiches Spiel über 20 Wellen dauert gut **20 Minuten**: Die Pausen zum Einkaufen dauern 20 s vor Welle 1 und 18 s danach, zusammen knapp 6 Minuten. Wer fertig ist, startet mit N früher. Die Kämpfe dauern anfangs etwa 30 s und am Ende 60 bis 90 s.
 
 Pro Welle kommen 10 + 2,6 × (Welle − 1) einzelne Zombies, dazu Rattenrudel, Hornissenschwärme und Zwischenbosse. Zombies haben je Welle +20 % Leben und +40 % Schaden, Zwischenbosse zusätzlich +2 % Leben je Welle. Es kommen also weniger Gegner, die dafür härter zuschlagen. Kriecher sind etwas schneller, damit eine Welle nicht auf den letzten Nachzügler wartet.
 
-Wer schneller ist, startet die nächste Welle mit N früher. Der Messlauf ist `TIMING=1 TIMING_GOD=1 npx vitest run tests/balance/timing --silent=false`: drei Bots, Vorrat und Bienenstock unzerstörbar, Ausgabe der Kampf- und Pausendauer je Welle. Ergebnis: ca. 21 bis 24 min, im Spiel mit N eher weniger. Die Schwierigkeit blieb dabei gleich: Starke Bots kommen ohne Spieler im Schnitt bis Welle 13,7, vorher 13,0.
+Wer schneller ist, startet die nächste Welle mit N früher. Der Messlauf ist `TIMING=1 TIMING_GOD=1 npx vitest run tests/balance/timing --silent=false`: drei Bots, Vorrat und Bienenstock unzerstörbar, Ausgabe der Kampf- und Pausendauer je Welle. Ergebnis: ca. 24 bis 25 min ohne frühen Start, mit N entsprechend weniger. Die Schwierigkeit blieb dabei gleich: Starke Bots kommen ohne Spieler im Schnitt bis Welle 13,7, vorher 13,0.
 
 **Endstatistik:** Nach Sieg oder Niederlage erscheint eine Statistik, online für alle gleich:
 - **Teamwerte:** Welle, Spielzeit, Zombies, Bosse, Postboten, Beete, Vorrat, Bienenstock.
