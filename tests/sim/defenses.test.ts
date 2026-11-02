@@ -16,8 +16,8 @@ function setup() {
   return { sim, h, build };
 }
 
-describe('Verteidigungen in der Pause', () => {
-  it('Bauen kostet Gold, nur in der Pause, mit Höchstzahl und Abstand', () => {
+describe('Verteidigungen', () => {
+  it('Bauen kostet Gold, auch während der Welle, mit Höchstzahl und Abstand', () => {
     const { sim, h, build } = setup();
     const cost = sim.data.economy.defenses!.stacheldraht.cost;
     expect(build('stacheldraht', { x: 20, y: 20 })?.action).toBe('built');
@@ -33,7 +33,11 @@ describe('Verteidigungen in der Pause', () => {
     for (let i = 0; i < max; i++) expect(build('feuerfass', free[i])?.action).toBe('built');
     expect(build('feuerfass', free[max])?.reason).toMatch(/Höchstens/);
     sim.state.wave.phase = 'wave';
-    expect(build('stacheldraht', { x: 30, y: 20 })?.reason).toMatch(/Pause/);
+    expect(buildReason(sim, h, 'stacheldraht', { x: 30, y: 20 }, 0)).toBeNull();
+    // Barrikade nicht auf einen Zombie
+    const spot = free.slice(max).concat(free).find((p) => !buildReason(sim, h, 'barrikade', p, 0))!;
+    placeZombie(sim, 'walker', spot.x, spot.y, 100).speed = 0;
+    expect(buildReason(sim, h, 'barrikade', spot, 0)).toMatch(/Zombie steht im Weg/);
   });
 
   it('Stacheldraht verlangsamt und verletzt, nutzt sich ab; Feuerfass setzt in Brand', () => {

@@ -6,11 +6,12 @@ import { DT, type Defense, type DefenseKind, type Hero, type Obstacle, type Zomb
 import { dist, type Vec2 } from './vec';
 
 /**
- * Verteidigungen für die Pause (gegen Durchbrüche zu Vorrat und Bienenstock):
+ * Verteidigungen (gegen Durchbrüche zu Vorrat und Bienenstock):
  *  - Stacheldraht: verlangsamt und macht Schaden, nutzt sich ab
  *  - Bretterbarrikade: blockiert den Weg (Hindernis im Wegenetz), Zombies schlagen sie kaputt
  *  - Feuerfass: setzt Zombies in der Nähe in Brand, brennt langsam herunter
- * Gekauft und aufgestellt wird nur in der Pause; die Höchstzahl gilt fürs ganze Team.
+ * Gekauft und aufgestellt wird jederzeit (Pause und Welle); die Höchstzahl gilt fürs ganze Team.
+ * Eine Barrikade lässt sich nicht auf Helden oder Zombies stellen.
  */
 const TICK = 0.5;
 
@@ -33,7 +34,6 @@ export function buildReason(ctx: SimContext, h: Hero, kind: DefenseKind, pos: Ve
   if (!def || !all) return 'Unbekannte Verteidigung';
   if (ctx.state.pvp) return 'Im PvP gibt es keine Verteidigungen';
   if (!h.alive) return 'Gefallene können nicht bauen';
-  if (ctx.state.wave.phase !== 'pause') return 'Bauen geht nur in der Pause';
   if (h.gold < def.cost) return `Nicht genug Gold (${def.cost})`;
   const list = ctx.state.defenses ?? [];
   if (list.filter((d) => d.kind === kind).length >= def.max) return `Höchstens ${def.max} × ${def.name}`;
@@ -50,6 +50,7 @@ export function buildReason(ctx: SimContext, h: Hero, kind: DefenseKind, pos: Ve
       if (ctx.grid.isBlocked(p)) return 'Hier ist kein Platz';
     }
     if (ctx.state.heroes.some((x) => x.alive && distanceToObstacle(x.pos, r) < x.radius)) return 'Ein Held steht im Weg';
+    if (ctx.state.zombies.some((z) => z.hp > 0 && distanceToObstacle(z.pos, r) < z.radius)) return 'Ein Zombie steht im Weg';
   }
   if (ctx.state.objectives.some((o) => dist(o.pos, pos) < (o.radius || Math.max(o.w ?? 1, o.h ?? 1) / 2) + 0.6)) return 'Zu nah an einem Ziel';
   return null;
@@ -80,12 +81,12 @@ export function repairCost(ctx: Pick<SimContext, 'state' | 'data'>): number {
   return Math.ceil(cost);
 }
 
-/** Alles reparieren (nur in der Pause), bezahlt der Held, der es auslöst. */
+/** Alles reparieren (jederzeit), bezahlt der Held, der es auslöst. */
 export function repair(ctx: SimContext, h: Hero): boolean {
   const cost = repairCost(ctx);
   if (cost <= 0) return false;
-  if (ctx.state.wave.phase !== 'pause' || h.gold < cost) {
-    ctx.state.events.push({ type: 'defense', action: 'denied', heroId: h.id, reason: ctx.state.wave.phase !== 'pause' ? 'Reparieren geht nur in der Pause' : `Nicht genug Gold (${cost})` });
+  if (h.gold < cost) {
+    ctx.state.events.push({ type: 'defense', action: 'denied', heroId: h.id, reason: `Nicht genug Gold (${cost})` });
     return false;
   }
   h.gold -= cost;

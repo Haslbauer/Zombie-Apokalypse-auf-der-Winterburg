@@ -171,7 +171,7 @@ input.onEscape = () => {
   return true;
 };
 
-// ---------- Bauen (Pause): Stacheldraht, Barrikade, Feuerfass ----------
+// ---------- Bauen (jederzeit): Stacheldraht, Barrikade, Feuerfass ----------
 let buildOpen = false;
 let buildKind: DefenseKind | null = null;
 let buildRot = 0;
@@ -934,9 +934,9 @@ renderer.renderer.setAnimationLoop((now) => {
     shop.update(me, def.attack.type, (id) => buildPlan(ctx(), me, id));
     minimap.update(dt, state, heroId, viewCorners());
     if (session instanceof RemoteSession) hud.setPing(session.rtt);
-    // Bauleiste und Vorschau (nur in der Pause, nicht im PvP)
+    // Bauleiste und Vorschau (Pause und Welle, nicht im PvP)
     const defs = gameData.economy.defenses;
-    const canBuild = !!defs && !state.pvp && state.wave.phase === 'pause' && me.alive && !state.gameOver && !spectate;
+    const canBuild = !!defs && !state.pvp && me.alive && !state.gameOver && !spectate;
     if (!canBuild) {
       buildOpen = false;
       buildKind = null;
@@ -951,7 +951,7 @@ renderer.renderer.setAnimationLoop((now) => {
             costs: { stacheldraht: defs.stacheldraht, barrikade: defs.barrikade, feuerfass: defs.feuerfass },
             repair: repairCost(ctx()),
             canBuild,
-            reason: 'nur in der Pause',
+            reason: me.alive ? 'geht gerade nicht' : 'erst nach dem Wiederbeleben',
           }
         : null,
     );

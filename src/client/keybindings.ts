@@ -18,7 +18,7 @@ export const ACTIONS = [
   { id: 'ping', label: 'Ping (halten: Ping-Rad)' },
   { id: 'scoreboard', label: 'Anzeigetafel (halten)' },
   { id: 'mute', label: 'Ton an/aus' },
-  { id: 'build', label: 'Bauen (Pause)' },
+  { id: 'build', label: 'Bauen' },
   { id: 'rotateBuild', label: 'Barrikade drehen' },
 ] as const;
 

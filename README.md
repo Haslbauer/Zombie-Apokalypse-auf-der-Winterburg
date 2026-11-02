@@ -415,9 +415,9 @@ Erfolge, Titel und Laterne bleiben im Browser gespeichert (`winterburg.erfolge`)
 
 In der Pause heilt sich jeder Held, der in **5 m** um den Vorrat (das Herz im Innenhof) steht, um **10 % seines Lebens pro Sekunde**, von fast leer bis voll also in 10 s. Grüne Plus-Zeichen zeigen das an. Während einer Welle, im PvP und bei zerstörtem Vorrat gibt es das nicht. Verletzte Bots gehen in der Pause von selbst zum Vorrat. Werte in `data/economy.json` unter `rest`.
 
-## Verteidigungen bauen (Pause)
+## Verteidigungen bauen
 
-In der Pause öffnet **V** die Bauleiste. Die Verteidigungen stehen auch ganz oben im **Shop** (B) unter „Verteidigungen“, mit Preis, Anzahl und „Reparieren“. Ein Klick dort schließt den Shop und startet den Baumodus. Du stellst die Verteidigung per **Linksklick** an der Maus auf; erst dabei wird das Gold abgezogen. **X** dreht die Barrikade, **Esc** bricht ab. Die Höchstzahl gilt fürs ganze Team.
+**V** öffnet die Bauleiste, in der Pause und auch mitten in einer Welle. So lässt sich eine Lücke schnell mit einer Barrikade schließen oder Stacheldraht vor die anrückenden Zombies legen. Reparieren geht ebenfalls jederzeit. Eine Barrikade lässt sich nicht auf Helden oder Zombies stellen. Die Verteidigungen stehen in der Pause auch ganz oben im **Shop** (B) unter „Verteidigungen“, mit Preis, Anzahl und „Reparieren“. Ein Klick dort schließt den Shop und startet den Baumodus. Du stellst die Verteidigung per **Linksklick** an der Maus auf; erst dabei wird das Gold abgezogen. **X** dreht die Barrikade, **Esc** bricht ab. Die Höchstzahl gilt fürs ganze Team.
 
 | Verteidigung | Kosten | Höchstens | Wirkung |
 |---|---|---|---|

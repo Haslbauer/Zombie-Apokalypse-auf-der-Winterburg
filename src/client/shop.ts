@@ -38,7 +38,7 @@ export class ShopView {
   private readonly root = el('div', 'shop');
   private readonly gold = el('span', 'shop-gold');
   private readonly cards = new Map<string, Card>();
-  /** Verteidigungen (nur in der Pause, nicht im PvP): Karte je Art plus Reparieren. */
+  /** Verteidigungen (nicht im PvP): Karte je Art plus Reparieren. */
   private readonly defenseBox = el('div', 'shop-defenses');
   private readonly defenseCards = new Map<string, { card: HTMLButtonElement; price: HTMLElement; note: HTMLElement }>();
   private readonly repairCard = el('button', 'shop-card shop-repair');
@@ -58,7 +58,7 @@ export class ShopView {
     // Verteidigungen: Stacheldraht, Barrikade, Feuerfass (aufstellen nach dem Kauf per Linksklick)
     const defs = data.economy.defenses;
     if (defs) {
-      this.defenseBox.append(el('div', 'shop-cat', 'Verteidigungen (Pause)'));
+      this.defenseBox.append(el('div', 'shop-cat', 'Verteidigungen'));
       const grid = el('div', 'shop-grid');
       for (const kind of ['stacheldraht', 'barrikade', 'feuerfass'] as const) {
         const d = defs[kind];

@@ -686,7 +686,7 @@ export class Hud {
   private buildBar: HTMLElement | null = null;
   private buildKey = '';
   /**
-   * Bauleiste (Pause): Stacheldraht, Barrikade, Feuerfass mit Kosten und
+   * Bauleiste (Pause und Welle): Stacheldraht, Barrikade, Feuerfass mit Kosten und
    * Anzahl, Reparieren. null = ausblenden.
    */
   setBuildBar(

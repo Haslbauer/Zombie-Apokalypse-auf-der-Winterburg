@@ -2,7 +2,7 @@
 
 Stand: 01.11.2026. Arbeitsgrundlage für Claude Code.
 
-Änderungen v2.7: Spieldauer etwa 20 Minuten für 20 Wellen: Pausen 15 s und 12 s, weniger, dafür härter zuschlagende Zombies (+20 % Leben, +40 % Schaden je Welle), schnellere Kriecher, Messlauf `tests/balance/timing.test.ts`.
+Änderungen v2.7: Spieldauer etwa 20 Minuten für 20 Wellen: Pausen 15 s und 12 s, weniger, dafür härter zuschlagende Zombies (+20 % Leben, +40 % Schaden je Welle), schnellere Kriecher, Messlauf `tests/balance/timing.test.ts`. Verteidigungen lassen sich auch während der Welle bauen und reparieren.
 Änderungen v2.6: Wellen-Ereignisse (Nebelnacht, Blutmond, Regen), PvP-Varianten (Kiste erobern, Zombies nebenbei, Bots auf leeren Plätzen), Ego-Sicht mit Waffe im Bild und Kopfwippen, Schadenszahlen, Rollen-Kombos.
 Änderungen v2.5: Verteidigungen in der Pause (Stacheldraht, Barrikade, Feuerfass), vier neue Helden (Imker, Aurelius, Lotte, Kapitän Tiefe).
 Änderungen v2.4: Neuer Held Imker (Support), drei Spieler im Koop, Reichweiten und Durchschlag, Münzen und Buff-Ringe.
@@ -324,12 +324,12 @@ Freiwillige Ziele im Gelände außerhalb des Gartens. Sie bringen Gold und XP, k
 
 ## 8d. Verteidigungen (v2.5)
 
-- **Bauen:** nur in der Pause, nicht im PvP. Befehle `build {kind, pos, rot}` und `repair`; Werte in `data/economy.json` unter `defenses`, Code in `src/sim/defenses.ts`.
+- **Bauen:** jederzeit, in der Pause und während der Welle (seit v2.7, vorher nur in der Pause), nicht im PvP und nicht als Gefallener. Befehle `build {kind, pos, rot}` und `repair`; Werte in `data/economy.json` unter `defenses`, Code in `src/sim/defenses.ts`.
 - **Stacheldraht:** Kreis 1,3 m; verlangsamt (45 %), 10 Schaden/s; Abnutzung 4 Leben/s je Zombie darin (300 Leben).
 - **Bretterbarrikade:** 2,4 × 0,5 m, quer oder längs; Hindernis im Raster und in den Wegefeldern (neu berechnet beim Bauen und Zerstören). Zombies, die zum Ziel laufen und sie berühren, schlagen sie (700 Leben).
 - **Feuerfass:** Kreis 1,8 m; Brand 12 Schaden/s für 3 s; Abnutzung 3 Leben/s je Zombie (400 Leben).
-- **Grenzen:** je Art 6/6/3 fürs Team, mindestens 1,2 m Abstand (Barrikaden 2,2 m), nicht auf Hindernissen, Zielen oder Helden.
-- **Reparieren:** fehlender Anteil × Neupreis × 0,5 Gold, zahlt der auslösende Held.
+- **Grenzen:** je Art 6/6/3 fürs Team, mindestens 1,2 m Abstand (Barrikaden 2,2 m), nicht auf Hindernissen, Zielen oder Helden; Barrikaden auch nicht auf Zombies.
+- **Reparieren:** jederzeit; fehlender Anteil × Neupreis × 0,5 Gold, zahlt der auslösende Held.
 
 ## 8f. Wellen-Ereignisse (v2.6)
 
