@@ -1131,21 +1131,22 @@ export class UnitView {
   private reviveRing: THREE.Mesh | null = null;
   private reviveKey = -1;
   /** Gefallen: Fortschrittsring fürs Wiederbeleben (null = keiner). */
-  showRevive(progress: number | null): void {
+  showRevive(progress: number | null, color = 0x7bd36a): void {
     if (progress === null) {
       if (this.reviveRing) this.reviveRing.visible = false;
       return;
     }
-    const key = Math.round(progress * 40);
+    const key = Math.round(progress * 40) + color * 100;
     if (!this.reviveRing || key !== this.reviveKey) {
       if (this.reviveRing) {
         this.group.remove(this.reviveRing);
         this.reviveRing.geometry.dispose();
+        (this.reviveRing.material as THREE.Material).dispose();
       }
       const len = Math.max(0.05, progress) * Math.PI * 2;
       this.reviveRing = new THREE.Mesh(
         new THREE.RingGeometry(0.85, 1.05, 40, 1, Math.PI / 2, len),
-        new THREE.MeshBasicMaterial({ color: progress > 0 ? 0x7bd36a : 0xffffff, transparent: true, opacity: progress > 0 ? 0.9 : 0.35, depthWrite: false, side: THREE.DoubleSide }),
+        new THREE.MeshBasicMaterial({ color: progress > 0 ? color : 0xffffff, transparent: true, opacity: progress > 0 ? 0.9 : 0.35, depthWrite: false, side: THREE.DoubleSide }),
       );
       this.reviveRing.rotation.x = -Math.PI / 2;
       this.reviveRing.position.y = 0.08;

@@ -354,16 +354,19 @@ export const SOUNDS: Record<string, Recipe> = {
   hit: { ch: 'effects', dur: 0.15, make: (s, d, t, r) => (s.t(d, 'sine', r(150, 190), 60, t, 0.12, 0.45), s.n(d, 'lowpass', 1500, 300, t, 0.08, 0.35)) },
   heroHit: { ch: 'effects', dur: 0.2, make: (s, d, t, r) => (s.t(d, 'sine', r(95, 110), 40, t, 0.18, 0.55), s.n(d, 'bandpass', 500, 300, t, 0.12, 0.3, 2)) },
   // Eigene Angriffsklänge je Held (siehe HERO_ATTACK_SOUND)
-  hammer: { ch: 'effects', dur: 0.4, make: (s, d, t, r) => (s.t(d, 'sine', r(130, 150), 45, t + 0.1, 0.22, 0.55), s.n(d, 'lowpass', 1200, 200, t + 0.1, 0.15, 0.4), s.t(d, 'triangle', r(780, 840), 760, t + 0.1, 0.25, 0.05)) },
+  // Hammer: dumpfer Schlag ohne metallisches Klirren (klang wie Topfklopfen)
+  hammer: { ch: 'effects', dur: 0.3, make: (s, d, t, r) => (s.t(d, 'sine', r(120, 140), 45, t + 0.1, 0.2, 0.4), s.n(d, 'lowpass', 900, 200, t + 0.1, 0.14, 0.3)) },
   growl: { ch: 'effects', dur: 0.4, make: (s, d, t, r) => (s.t(d, 'sawtooth', r(95, 110), 70, t, 0.3, 0.14, 0.04), s.n(d, 'bandpass', 420, 300, t, 0.3, 0.22, 4, 0.04), s.n(d, 'highpass', 2500, 4000, t + 0.28, 0.05, 0.25)) },
   slingStone: { ch: 'effects', dur: 0.3, make: (s, d, t, r) => (s.t(d, 'triangle', r(480, 540), 180, t, 0.12, 0.35), s.n(d, 'highpass', 2000, 3000, t, 0.03, 0.3)) },
   ballPlop: { ch: 'effects', dur: 0.15, make: (s, d, t, r) => (s.t(d, 'sine', r(380, 420), 170, t, 0.09, 0.55), s.n(d, 'lowpass', 900, 300, t, 0.04, 0.25)) },
   chain: { ch: 'effects', dur: 0.45, make: (s, d, t, r) => { for (let i = 0; i < 7; i++) s.t(d, 'square', r(2400, 3000) - i * 120, 1500, t + i * 0.04, 0.035, 0.06); s.n(d, 'bandpass', 4000, 2500, t, 0.3, 0.1, 3); } },
-  bell: { ch: 'effects', dur: 0.9, make: (s, d, t, r) => { const f = r(1500, 1640); s.t(d, 'sine', f, f, t, 0.8, 0.1, 0.005); s.t(d, 'sine', f * 2.4, f * 2.4, t, 0.4, 0.04, 0.005); } },
+  // Somnia: leises, kurzes Klingeln (vorher eine lange, hohe Glocke bei jedem Schuss)
+  bell: { ch: 'effects', dur: 0.25, make: (s, d, t, r) => { const f = r(1150, 1250); s.t(d, 'sine', f, f, t, 0.2, 0.035, 0.005); } },
   buzzShot: { ch: 'effects', dur: 0.35, make: (s, d, t, r) => (s.t(d, 'sawtooth', r(225, 240), 260, t, 0.3, 0.05, 0.03), s.t(d, 'sawtooth', r(232, 246), 268, t, 0.3, 0.05, 0.03)) },
   goldClink: { ch: 'effects', dur: 0.3, make: (s, d, t, r) => (s.t(d, 'sine', r(2550, 2700), 2600, t, 0.12, 0.1), s.t(d, 'sine', r(3100, 3200), 3150, t + 0.05, 0.18, 0.08), s.n(d, 'highpass', 5000, 7000, t, 0.03, 0.08)) },
   slingFlick: { ch: 'effects', dur: 0.25, make: (s, d, t, r) => (s.n(d, 'highpass', 1500, 4000, t, 0.12, 0.3, 1, 0.02), s.t(d, 'square', r(900, 1100), 600, t + 0.1, 0.03, 0.06)) },
-  bigBell: { ch: 'effects', dur: 1.2, make: (s, d, t, r) => { const f = r(392, 420); s.t(d, 'sine', f, f, t, 1.1, 0.14, 0.004); s.t(d, 'sine', f * 2.76, f * 2.76, t, 0.5, 0.05, 0.004); s.t(d, 'triangle', f / 2, f / 2, t, 0.9, 0.05, 0.01); } },
+  // Hedwig: kurzer, tiefer Glockenschlag (vorher 1,2 s Nachhall bei jedem Schuss)
+  bigBell: { ch: 'effects', dur: 0.35, make: (s, d, t, r) => { const f = r(392, 420); s.t(d, 'sine', f, f, t, 0.3, 0.06, 0.004); s.t(d, 'triangle', f / 2, f / 2, t, 0.25, 0.03, 0.01); } },
   axeChop: { ch: 'effects', dur: 0.4, make: (s, d, t, r) => (s.n(d, 'highpass', 600, 2500, t, 0.12, 0.3, 0.7, 0.03), s.t(d, 'square', r(160, 190), 70, t + 0.12, 0.08, 0.2), s.n(d, 'bandpass', 900, 500, t + 0.12, 0.18, 0.3, 2)) },
   sweepSwish: { ch: 'effects', dur: 0.35, make: (s, d, t, r) => (s.n(d, 'bandpass', r(1800, 2200), 700, t, 0.28, 0.35, 1.2, 0.04), s.t(d, 'sine', r(150, 170), 90, t + 0.05, 0.1, 0.15)) },
   doughThud: { ch: 'effects', dur: 0.3, make: (s, d, t, r) => (s.t(d, 'sine', r(110, 130), 55, t + 0.08, 0.16, 0.5), s.n(d, 'lowpass', 700, 200, t + 0.08, 0.12, 0.35), s.n(d, 'highpass', 3000, 5000, t + 0.1, 0.08, 0.06)) },

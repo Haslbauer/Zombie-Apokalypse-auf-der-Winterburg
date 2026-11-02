@@ -708,7 +708,9 @@ export type Command =
   /** Beschwörerzauber (slot 0 = D, 1 = F) Richtung aim. */
   | { heroId: number; type: 'spell'; slot: number; aim: Vec2 }
   /** Beschwörerzauber wählen (nur in der Pause). */
-  | { heroId: number; type: 'chooseSpells'; spells: [string, string] };
+  | { heroId: number; type: 'chooseSpells'; spells: [string, string] }
+  /** Rückruf zur Basis (stillhalten, siehe sim/recall.ts). */
+  | { heroId: number; type: 'recall' };
 
 /** Pings für Absprachen im Team (wie in LoL): Hier, Angriff, Bin unterwegs, Hilfe, Gefahr. */
 export const PING_KINDS = ['here', 'attack', 'omw', 'help', 'danger', 'heal'] as const;
@@ -808,6 +810,8 @@ export interface Hero extends Unit {
   dash: Dash | null;
   /** Kanalisieren (z. B. Powernap, Festhalten) bis zu dieser Zeit. */
   channel: { until: number; tag: string; cancelOnMove: boolean } | null;
+  /** Rückruf zur Basis läuft (von start bis until), siehe sim/recall.ts. */
+  recall?: { start: number; until: number } | null;
   /** Letzter Kampfkontakt (Schaden ausgeteilt oder erhalten). */
   lastCombatAt: number;
   /** Zähler für Passive (z. B. Treffer bis zum nächsten Effekt). */
@@ -1075,6 +1079,7 @@ export type GameEvent =
   | { type: 'death'; id: number; pos: Vec2 }
   | { type: 'attack'; id: number; targetId: number }
   | { type: 'swing'; id: number; facing: number; range: number; arc: number }
+  | { type: 'recall'; heroId: number; phase: 'start' | 'cancel' | 'done'; from?: Vec2 }
   | { type: 'shot'; id: number }
   | { type: 'waveStart'; number: number }
   | { type: 'waveEvent'; kind: WaveEventKind; name: string; text: string }

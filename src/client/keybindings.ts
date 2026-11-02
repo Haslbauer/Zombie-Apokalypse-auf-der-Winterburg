@@ -21,6 +21,7 @@ export const ACTIONS = [
   { id: 'build', label: 'Bauen' },
   { id: 'rotateBuild', label: 'Barrikade drehen' },
   { id: 'camera', label: 'Kamera zum Helden (Zuschauen: Übersicht)' },
+  { id: 'recall', label: 'Rückruf zur Basis' },
 ] as const;
 
 export type Action = (typeof ACTIONS)[number]['id'];
@@ -51,6 +52,7 @@ const DEFAULTS: Record<Action, string> = {
   build: 'KeyV',
   rotateBuild: 'KeyX',
   camera: 'Space',
+  recall: 'KeyH',
 };
 
 const STORAGE_KEY = 'winterburg.keybindings';

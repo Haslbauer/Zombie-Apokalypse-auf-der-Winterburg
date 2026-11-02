@@ -90,7 +90,7 @@ export function shopClosedReason(ctx: DataContext, h: Hero): string | null {
     const base = pvp.spawns[h.team ?? 0];
     return dist(h.pos, base) <= ctx.data.economy.shopRange + 2 ? null : 'Einkaufen nur an der eigenen Basis';
   }
-  if (ctx.state.wave.phase !== 'pause') return 'Der Shop hat nur in der Pause geöffnet';
+  // Shop jederzeit im Innenhof (auch während der Welle, wie die Basis in LoL)
   const heart = ctx.state.objectives.find((o) => o.id === 'heart');
   if (heart && dist(h.pos, heart.pos) > ctx.data.economy.shopRange) return 'Einkaufen nur im Innenhof beim Herz';
   return null;

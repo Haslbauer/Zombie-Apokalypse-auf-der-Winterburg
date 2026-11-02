@@ -108,11 +108,7 @@
         "description": "Langer Sprung zu einem Zombie (Elite und Boss bevorzugt). Grimm hält ihn fest, beißt ihn pro Sekunde und heilt sich dabei.",
         "shape": "target",
         "range": 11.5,
-        "cooldown": [
-          80,
-          65,
-          50
-        ],
+        "cooldown": [50,  40,  30],
         "values": {
           "duration": [
             2.5,
@@ -253,11 +249,7 @@
         "shape": "circle",
         "range": 11.5,
         "radius": 4,
-        "cooldown": [
-          90,
-          75,
-          60
-        ],
+        "cooldown": [60,  50,  40],
         "values": {
           "dps": [
             30,
@@ -377,11 +369,7 @@
         "shape": "circle",
         "range": 9.2,
         "radius": 7,
-        "cooldown": [
-          80,
-          70,
-          60
-        ],
+        "cooldown": [50,  45,  40],
         "values": {
           "stun": 3,
           "blind": 5
@@ -500,11 +488,7 @@
         "shape": "circle",
         "range": 0,
         "radius": 4,
-        "cooldown": [
-          80,
-          70,
-          60
-        ],
+        "cooldown": [50,  45,  40],
         "values": {
           "damage": [
             150,
@@ -639,11 +623,7 @@
         "description": "Kurz unaufhaltsam (immun gegen Betäubung und Rückstoß) und doppelter Schaden.",
         "shape": "self",
         "range": 0,
-        "cooldown": [
-          90,
-          75,
-          60
-        ],
+        "cooldown": [60,  50,  40],
         "values": {
           "duration": [
             5,
@@ -766,11 +746,7 @@
         "shape": "circle",
         "range": 11.5,
         "radius": 8,
-        "cooldown": [
-          100,
-          85,
-          70
-        ],
+        "cooldown": [65,  55,  45],
         "values": {
           "sleep": [
             3,
@@ -900,11 +876,7 @@
         "shape": "circle",
         "range": 10,
         "radius": 4.5,
-        "cooldown": [
-          80,
-          70,
-          60
-        ],
+        "cooldown": [50,  45,  40],
         "values": {
           "dps": [
             40,
@@ -1040,11 +1012,7 @@
         "shape": "circle",
         "range": 8,
         "radius": 5,
-        "cooldown": [
-          90,
-          75,
-          60
-        ],
+        "cooldown": [60,  50,  40],
         "values": {
           "damage": [
             150,
@@ -1173,11 +1141,7 @@
         "shape": "circle",
         "range": 8,
         "radius": 2.5,
-        "cooldown": [
-          100,
-          85,
-          70
-        ],
+        "cooldown": [65,  55,  45],
         "values": {
           "hp": [
             500,
@@ -1323,11 +1287,7 @@
         "shape": "line",
         "range": 12,
         "width": 4,
-        "cooldown": [
-          90,
-          75,
-          60
-        ],
+        "cooldown": [60,  50,  40],
         "values": {
           "damage": [
             100,
@@ -1465,11 +1425,7 @@
         "shape": "self",
         "range": 0,
         "radius": 7,
-        "cooldown": [
-          100,
-          85,
-          70
-        ],
+        "cooldown": [65,  55,  45],
         "values": {
           "damage": [
             120,
@@ -1614,11 +1570,7 @@
         "shape": "line",
         "range": 10,
         "width": 3,
-        "cooldown": [
-          95,
-          80,
-          65
-        ],
+        "cooldown": [60,  50,  40],
         "values": {
           "delay": 0.9,
           "damage": [
@@ -1747,11 +1699,7 @@
         "shape": "circle",
         "range": 9,
         "radius": 4.5,
-        "cooldown": [
-          90,
-          75,
-          60
-        ],
+        "cooldown": [60,  50,  40],
         "values": {
           "dps": [
             45,
@@ -1876,11 +1824,7 @@
         "shape": "circle",
         "range": 8,
         "radius": 4,
-        "cooldown": [
-          90,
-          75,
-          60
-        ],
+        "cooldown": [60,  50,  40],
         "values": {
           "delay": 0.8,
           "damage": [

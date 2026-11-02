@@ -47,7 +47,7 @@ describe('Gold und Shop', () => {
     expect(far.gold).toBe(before[1]);
   });
 
-  it('Kaufen geht nur in der Pause, im Innenhof und mit genug Gold', () => {
+  it('Kaufen geht im Innenhof (auch während der Welle) und mit genug Gold', () => {
     const { sim, h, cmd, price } = shopSim();
     cmd({ type: 'buy', itemId: 'baseballschlaeger' });
     expect(h.inventory[0]).toBe('baseballschlaeger');
@@ -67,8 +67,7 @@ describe('Gold und Shop', () => {
     sim.state.wave.queue = ['walker'];
     sim.state.wave.spawnTimer = 1e9;
     cmd({ type: 'buy', itemId: 'axt' });
-    expect(h.inventory[1]).toBeNull();
-    expect(sim.state.events).toContainEqual(expect.objectContaining({ type: 'shopDenied', reason: 'Der Shop hat nur in der Pause geöffnet' }));
+    expect(h.inventory).toContain('axt');
   });
 
   it('Inventar hat 6 Plätze; Verkaufen bringt 70 %', () => {

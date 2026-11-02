@@ -1,3 +1,4 @@
+import { updateRecall } from './recall';
 import type { Vec2 } from './vec';
 import { updateProjectiles } from './combat';
 import type { SimContext } from './context';
@@ -256,6 +257,7 @@ export class Simulation implements SimContext {
     for (const h of heroes) {
       if (!h.alive && state.time >= h.respawnAt) this.respawn(h);
       asTeam(this, h, () => updateHero(this, h));
+      updateRecall(this, h);
       h.brush = h.alive ? brushAt(this.arena, h.pos) : -1;
       syncAvatars(this);
     }
@@ -338,6 +340,7 @@ export class Simulation implements SimContext {
     for (const h of state.heroes) {
       if (!h.alive && state.time >= h.respawnAt) this.respawn(h);
       updateHero(this, h);
+      updateRecall(this, h);
       h.brush = h.alive ? brushAt(this.arena, h.pos) : -1;
     }
 

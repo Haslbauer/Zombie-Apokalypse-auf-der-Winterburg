@@ -1,3 +1,4 @@
+import { cancelRecall, startRecall } from './recall';
 import { eventFactor } from './waveevents';
 import { build, repair } from './defenses';
 import { tryCast, updateDash } from './abilities';
@@ -61,11 +62,16 @@ export function applyInputs(ctx: SimContext, commands: readonly Command[]): void
     }
     if (cmd.type === 'spell') {
       castSpell(ctx, h, cmd.slot, cmd.aim);
+      cancelRecall(ctx, h);
       continue;
     }
     if (!h.alive) continue;
+    if (cmd.type === 'recall') {
+      startRecall(ctx, h);
+      continue;
+    }
     if (cmd.type === 'cast') {
-      tryCast(ctx, h, cmd.slot, cmd.aim);
+      if (tryCast(ctx, h, cmd.slot, cmd.aim)) cancelRecall(ctx, h);
       continue;
     }
     // Laufrichtung auf Länge 1 begrenzen: schräg ist nicht schneller als gerade.

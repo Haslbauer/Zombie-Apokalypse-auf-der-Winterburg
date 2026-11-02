@@ -205,7 +205,9 @@ export class GameRenderer {
         continue;
       }
       view.revive();
-      view.showRevive(null);
+      // Rückruf zur Basis: blauer Ring füllt sich
+      const rc = h.recall;
+      view.showRevive(rc ? Math.min(1, (state.time - rc.start) / Math.max(0.1, rc.until - rc.start)) : null, 0x6fb7ff);
       view.ring.visible = true;
       const hidden = (h.brush ?? -1) >= 0 && state.time >= (h.revealedUntil ?? 0);
       view.showHero(h, shieldAmount(h), hasBuff(h, 'invisible') ? 0.3 : hidden ? 0.55 : 1);

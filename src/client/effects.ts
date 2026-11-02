@@ -39,7 +39,7 @@ export class Effects {
   constructor(private readonly scene: THREE.Scene) {}
 
   /** Aufblitzender Bogen beim Nahkampfschlag. */
-  swing(p: Vec2, facing: number, radius: number, arc: number): void {
+  swing(p: Vec2, facing: number, radius: number, arc: number, follow?: () => Vec2 | null): void {
     const material = new THREE.MeshBasicMaterial({ color: 0xffd166, transparent: true, depthWrite: false });
     const mesh = new THREE.Mesh(
       new THREE.RingGeometry(radius * 0.35, radius, 32, 1, -arc / 2, arc).rotateX(-Math.PI / 2),
@@ -50,6 +50,9 @@ export class Effects {
     this.add(mesh, 0.2, (t) => {
       material.opacity = 0.7 * (1 - t);
       mesh.scale.setScalar(0.9 + t * 0.15);
+      // Bogen bleibt vor dem (laufenden) Helden
+      const at = follow?.();
+      if (at) mesh.position.set(at.x, 0.06, at.y);
     });
   }
 

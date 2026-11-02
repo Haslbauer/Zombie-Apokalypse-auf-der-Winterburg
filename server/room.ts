@@ -54,7 +54,7 @@ interface Slot {
 }
 
 /** So lange läuft der Countdown, wenn alle bereit sind (ms). */
-export const LOBBY_COUNTDOWN_MS = 15_000;
+export const LOBBY_COUNTDOWN_MS = 5_000;
 
 /**
  * Ein Raum mit vier Heldenplätzen. Die Simulation läuft hier; freie Plätze

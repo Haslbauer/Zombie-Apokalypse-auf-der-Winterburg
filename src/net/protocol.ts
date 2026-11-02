@@ -111,6 +111,8 @@ function parseCommand(c: unknown): ClientCommand | null {
       return int(o.slot, 0, 1) ? { type: 'use', slot: o.slot } : null;
     case 'startWave':
       return { type: 'startWave' };
+    case 'recall':
+      return { type: 'recall' };
     case 'build':
       return ['stacheldraht', 'barrikade', 'feuerfass'].includes(o.kind as string) && vec(o.pos) && (o.rot === 0 || o.rot === 1)
         ? { type: 'build', kind: o.kind as 'stacheldraht' | 'barrikade' | 'feuerfass', pos: { x: o.pos.x, y: o.pos.y }, rot: o.rot }

@@ -154,7 +154,7 @@ hud.onSell = (slot, consumable) => {
   if (shop.open) cmd({ type: 'sell', slot, consumable });
   else hud.message('Verkaufen nur im offenen Shop');
 };
-/** Shop öffnen bzw. schließen; nur in der Pause im Innenhof. */
+/** Shop öffnen bzw. schließen; jederzeit im Innenhof. */
 function toggleShop(): void {
   const hero = myHero();
   if (!session || !hero || spectate) return;
@@ -759,6 +759,11 @@ function abilityEffect(e: Extract<GameEvent, { type: 'effect' }>): void {
 }
 
 /** Angriffstakt eines Helden in Sekunden (Länge der Angriffsanimation). */
+/** Standardangriffe: eigene gut hörbar, die der anderen leise (sonst klingelt und klopft es ständig). */
+function attackVolume(id: number): number {
+  return id === heroId && !spectate ? 0.7 : 0.25;
+}
+
 function attackTime(state: GameState, id: number): number {
   const h = state.heroes.find((x) => x.id === id);
   return h && h.attackTimer > 0 ? h.attackTimer : 0.9;
@@ -811,11 +816,30 @@ function handleEvents(state: GameState): void {
         }
         break;
       }
+      case 'recall': {
+        const h = state.heroes.find((x) => x.id === e.heroId);
+        if (!h) break;
+        if (e.phase === 'start') {
+          effects.ring(h.pos, 1.4, 0x6fb7ff, 0.6);
+          if (e.heroId === heroId) hud.message('Rückruf zur Basis … stillhalten');
+        } else if (e.phase === 'done') {
+          if (e.from) effects.ring(e.from, 1.6, 0x6fb7ff, 0.5);
+          effects.ring(h.pos, 1.8, 0x6fb7ff, 0.6);
+          sound.play('levelUp', h.pos, e.heroId === heroId ? 0.5 : 0.2);
+          if (e.heroId === heroId) {
+            freeCam = null;
+            renderer.cam.lookAt(h.pos.x, h.pos.y);
+          }
+        } else if (e.heroId === heroId) hud.message('Rückruf abgebrochen');
+        break;
+      }
       case 'swing': {
         const h = state.heroes.find((x) => x.id === e.id);
         if (h) {
-          effects.swing(h.pos, e.facing, h.radius + e.range, e.arc);
-          sound.play(HERO_ATTACK_SOUND[h.defId] ?? 'swing', h.pos, e.id === heroId ? 1 : 0.7);
+          // An der gezeigten Position (online läuft der eigene Held dem Server voraus)
+          const shown = () => renderer.unitPosition(e.id);
+          effects.swing(shown() ?? h.pos, e.facing, h.radius + e.range, e.arc, shown);
+          sound.play(HERO_ATTACK_SOUND[h.defId] ?? 'swing', h.pos, attackVolume(e.id));
         }
         renderer.heroAction(e.id, 'attack', attackTime(state, e.id));
         break;
@@ -828,7 +852,7 @@ function handleEvents(state: GameState): void {
           const look = gameData.heroes.find((d) => d.id === h.defId)?.attack.look ?? '';
           const color = ({ stone: 0xc8f0a0, hook: 0xd8c8a8, star: 0x9fe3ff, volley: 0xff9a4a, swarm: 0xffc83d, nugget: 0xffd166 } as Record<string, number>)[look] ?? 0xffe066;
           effects.flash({ x: h.pos.x + Math.cos(h.facing) * 0.7, y: h.pos.y + Math.sin(h.facing) * 0.7 }, 1.3, color);
-          sound.play(HERO_ATTACK_SOUND[h.defId] ?? SHOT_SOUND[look] ?? 'bow', h.pos, e.id === heroId ? 1 : 0.7);
+          sound.play(HERO_ATTACK_SOUND[h.defId] ?? SHOT_SOUND[look] ?? 'bow', h.pos, attackVolume(e.id));
         }
         break;
       }
@@ -1203,6 +1227,10 @@ for (const [name, height] of Object.entries(MODELS)) {
 }
 
 input.onStartWave = () => cmd({ type: 'startWave' });
+input.onRecall = () => {
+  if (spectate || !myHero()?.alive) return;
+  cmd({ type: 'recall' });
+};
 
 // Touch-Steuerung (Handy, Tablet; ?touch erzwingt sie): Sticks und Knöpfe
 if (wantsTouch(params)) {

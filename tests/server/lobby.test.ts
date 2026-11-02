@@ -303,7 +303,7 @@ describe('Netzprotokoll', () => {
       expect(host.last('room')!.room.startsIn).toBeNull();
       guest.send({ t: 'team', team: 1 });
       guest.send({ t: 'ready', ready: true });
-      expect(host.last('room')!.room.startsIn).toBeCloseTo(15, 0);
+      expect(host.last('room')!.room.startsIn).toBeCloseTo(5, 0);
       advance(16_000);
       lobby.tick();
       const st = room.sim.state;
@@ -327,7 +327,7 @@ describe('Netzprotokoll', () => {
       guest.send({ t: 'ready', ready: true });
       // beide in Nord: die Bots stellen Süd
       expect(host.last('room')!.room.slots.map((s) => s.team)).toEqual([0, 0, 1, 1]);
-      expect(host.last('room')!.room.startsIn).toBeCloseTo(15, 0);
+      expect(host.last('room')!.room.startsIn).toBeCloseTo(5, 0);
       advance(16_000);
       lobby.tick();
       const st = room.sim.state;
@@ -380,14 +380,14 @@ describe('Netzprotokoll', () => {
       expect(plays).toEqual(['start:koop', 'loss:koop']);
     });
 
-    it('alle bereit: Countdown 15 s, Abbruch bei „nicht bereit“ und bei neuem Spieler; danach Start mit Bots', () => {
+    it('alle bereit: Countdown 5 s, Abbruch bei „nicht bereit“ und bei neuem Spieler; danach Start mit Bots', () => {
       const { lobby, host, guest, code, room, advance, player } = lobbyRoom();
       guest.send({ t: 'pick', heroId: 'gaertnerin' });
       guest.send({ t: 'spells', spells: ['geist', 'barriere'] });
       host.send({ t: 'ready', ready: true });
       expect(host.last('room')!.room.startsIn).toBeNull();
       guest.send({ t: 'ready', ready: true });
-      expect(host.last('room')!.room.startsIn).toBeCloseTo(15, 0);
+      expect(host.last('room')!.room.startsIn).toBeCloseTo(5, 0);
       guest.send({ t: 'ready', ready: false });
       expect(host.last('room')!.room.startsIn).toBeNull();
       guest.send({ t: 'ready', ready: true });
@@ -397,8 +397,8 @@ describe('Netzprotokoll', () => {
       expect(host.last('room')!.room.startsIn).toBeNull();
       third.send({ t: 'pick', heroId: 'grimm' });
       third.send({ t: 'ready', ready: true });
-      expect(host.last('room')!.room.startsIn).toBeCloseTo(15, 0);
-      advance(14_000);
+      expect(host.last('room')!.room.startsIn).toBeCloseTo(5, 0);
+      advance(4_000);
       lobby.tick();
       expect(room.phase).toBe('lobby');
       advance(1_100);

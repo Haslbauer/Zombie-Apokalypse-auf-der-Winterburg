@@ -2,6 +2,7 @@
 
 Stand: 01.11.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v2.7 (Feedback): Shop jederzeit im Innenhof, Fähigkeiten in Lobby und Team-Ansicht, Rückruf zur Basis (Befehl `recall`, 4 s stillhalten, bricht bei Bewegung, Angriff, Fähigkeit, Zauber oder Schaden ab; sim/recall.ts), Lobby-Countdown 5 s, Nahkampf mit 0,15 s Vorlauf in Laufrichtung, Ultimates etwa 35 % kürzere Abklingzeit, leisere Angriffstöne.
 Änderungen v2.7 (Leistung): Modelle mit zusammengefassten Teilen und gemeinsamem Skelett, keine Licht- und Schattenwechsel zur Laufzeit, Heldenfeld der Zombies auf 22 m begrenzt (README „Leistung“).
 Änderungen v2.7: Spieldauer etwa 20 Minuten für 20 Wellen: Pausen 20 s und 18 s (zum Einkaufen), weniger, dafür härter zuschlagende Zombies (+20 % Leben, +40 % Schaden je Welle), schnellere Kriecher, Messlauf `tests/balance/timing.test.ts`. Verteidigungen lassen sich auch während der Welle bauen und reparieren. Spielzähler (`/stats`, Abschnitt 10c). Zuschauermodus online und lokal (Abschnitt 10). Freie Kamera: Linksklick oder Ziehen auf der Minimap, mittlere Maustaste ziehen, Leertaste (belegbar, Aktion `camera`) zurück zum Helden; die Ego-Sicht hebt sie auf.
 Änderungen v2.6: Wellen-Ereignisse (Nebelnacht, Blutmond, Regen), PvP-Varianten (Kiste erobern, Zombies nebenbei, Bots auf leeren Plätzen), Ego-Sicht mit Waffe im Bild und Kopfwippen, Schadenszahlen, Rollen-Kombos.
@@ -9,7 +10,7 @@ Stand: 01.11.2026. Arbeitsgrundlage für Claude Code.
 Änderungen v2.4: Neuer Held Imker (Support), drei Spieler im Koop, Reichweiten und Durchschlag, Münzen und Buff-Ringe.
 Änderungen v2.3: Ton fast still (keine Dauerquellen, Musik nur in Wellen), Ego-Sicht beim ganz Hineinzoomen (Maus fangen, Laufen relativ zum Blick, Fadenkreuz).
 Änderungen v2.2: Endstatistik nach Spielende (Podest mit MVP, Auszeichnungen, sortierbare Rangliste, Kills pro Welle).
-Änderungen v2.1: Lobby vor dem Spiel (freie Heldenwahl, Bereit, Countdown 15 s), erste Geräusche und Musik (im Code erzeugt) mit Lautstärke-Einstellungen.
+Änderungen v2.1: Lobby vor dem Spiel (freie Heldenwahl, Bereit, Countdown damals 15 s, seit v2.7 5 s), erste Geräusche und Musik (im Code erzeugt) mit Lautstärke-Einstellungen.
 Änderungen v2.0: Figuren stehen auf dem Boden, Angriffe synchron zum Treffer, Bienen-/Beete-Kreislauf, Postbote ab Welle 6 ohne Zeitlimit, Landschaft überarbeitet.
 Änderungen v1.9: Karte mit mehr Details (Ruine, Stacheldraht, Barrikaden, Feuerstellen, Hochbeete, Bruchsteinwege, Gras), Nordeingang zum Innenhof (ersetzt das Rattenloch), Lager weichen aus. Beschwörerzauber wie in LoL (zwei pro Held, vor dem Spiel gewählt, Tasten F/G), siehe Abschnitt 9b.
 Änderungen v1.8: Figuren laufen sichtbar (ein Skelett pro Figur), Schuss-Animationen mit sichtbaren Geschossen, Grafikstufen und Leistungsanzeige, kleinere Zustandspakete, geduldigerer Herzschlag mit Trennungsgrund.
@@ -387,7 +388,7 @@ Werte in `data/spells.json`, Logik in `src/sim/spells.ts`.
 
 ## 10. Mehrspieler und Bots
 
-- **Lobby (v2.1):** Ein Online-Raum beginnt in der Lobby (`phase: lobby`, keine Simulation). Jeder Mensch wählt einen Helden (keine doppelten) und seine Zauber und meldet sich bereit (nur mit Held). Sind alle Menschen bereit, startet nach 15 s die Partie; leere Plätze füllen Bots mit freien Helden (Wunsch-Team des Gastgebers zuerst). „Nicht bereit“, ein neuer oder gehender Spieler stoppen den Countdown. Die Bot-Stärke legt der Gastgeber fest. „Nochmal“ nach Spielende führt zurück in die Lobby. Nachrichten: `pick`, `spells`, `ready`, `difficulty`; `join` mit Platz −1 = nächster freier Platz.
+- **Lobby (v2.1):** Ein Online-Raum beginnt in der Lobby (`phase: lobby`, keine Simulation). Jeder Mensch wählt einen Helden (keine doppelten) und seine Zauber und meldet sich bereit (nur mit Held). Sind alle Menschen bereit, startet nach 5 s die Partie; leere Plätze füllen Bots mit freien Helden (Wunsch-Team des Gastgebers zuerst). „Nicht bereit“, ein neuer oder gehender Spieler stoppen den Countdown. Die Bot-Stärke legt der Gastgeber fest. „Nochmal“ nach Spielende führt zurück in die Lobby. Nachrichten: `pick`, `spells`, `ready`, `difficulty`; `join` mit Platz −1 = nächster freier Platz.
 - **Zuschauer (v2.7):** `watch {room}` macht eine Verbindung zum Zuschauer.
   - Ein Zuschauer belegt keinen Platz, bekommt `watching {room}`, danach Raum-Infos und Zustände (ack 0; der erste Zustand und der nach einem Rückstau sind vollständig).
   - Alle steuernden Nachrichten eines Zuschauers ignoriert der Server; erlaubt sind nur `info`, `ping`, `create`, `join` und `watch`.

@@ -79,7 +79,7 @@ Allgemein gilt:
 
 ### Lobby
 
-„Online mit Freunden“ öffnet eine **Lobby**: Oben stehen Raum-Code und „Link kopieren“. Wer den Link öffnet, gibt seinen Namen ein und landet ebenfalls in der Lobby. Jeder wählt einen Helden (vergebene sind ausgegraut) und seine Beschwörerzauber und klickt **„Bereit“**. Sind alle bereit, startet das Spiel nach **15 Sekunden**; „Nicht bereit“ oder ein neuer Spieler halten den Countdown an. Freie Plätze spielen Bots, die Bot-Stärke wählt der Gastgeber. Nach Spielende führt „Nochmal“ zurück in die Lobby. Wer später kommt, übernimmt einen Bot im laufenden Spiel.
+„Online mit Freunden“ öffnet eine **Lobby**: Oben stehen Raum-Code und „Link kopieren“. Wer den Link öffnet, gibt seinen Namen ein und landet ebenfalls in der Lobby. Jeder wählt einen Helden (vergebene sind ausgegraut) und seine Beschwörerzauber und klickt **„Bereit“**. Sind alle bereit, startet das Spiel nach **5 Sekunden**; „Nicht bereit“ oder ein neuer Spieler halten den Countdown an. Freie Plätze spielen Bots, die Bot-Stärke wählt der Gastgeber. Nach Spielende führt „Nochmal“ zurück in die Lobby. Wer später kommt, übernimmt einen Bot im laufenden Spiel.
 
 ### Was der Netzcode tut
 
@@ -109,7 +109,8 @@ Beim Entwickeln (`npm run dev`) leitet Vite den Mehrspieler an einen laufenden `
 | Linksklick auf die Minimap | **Freie Kamera:** Die Ansicht springt zu diesem Ort, zum Beispiel vom Bunker zum Bienenstock. Mit gedrückter Taste zieht sie mit. Der Held bleibt, wo er ist, und lässt sich weiter steuern. |
 | Mittlere Maustaste ziehen | Freie Kamera: Karte verschieben |
 | Leertaste | Kamera zurück zum Helden; auch ein Klick auf den Hinweis „Freie Kamera“ über der Minimap. Beim Zuschauen schaltet die Leertaste die Übersicht. |
-| B | Shop (nur in der Pause im Innenhof) |
+| H | **Rückruf zur Basis** wie in LoL: 4 s stillhalten, ein blauer Ring füllt sich, dann steht der Held im Innenhof (im PvP an der eigenen Basis). Laufen, Angreifen, eine Fähigkeit, ein Zauber oder Schaden brechen ab. |
+| B | Shop (jederzeit im Innenhof beim Vorrat) |
 | N | Welle sofort starten (in der Pause) |
 | Rechtsklick | Ping an alle: kurz = „Hier!“, halten und ziehen = Ping-Rad mit fünf Feldern (oben Angriff, rechts Bin unterwegs, rechts unten Brauche Heilung, links unten Hilfe, links Gefahr). „Brauche Heilung“ ruft vor allem Support-Bots. Auch auf der Minimap. Bots folgen den Pings (siehe unten). |
 | Tab (halten) | Anzeigetafel: Kills, Bosse, Assists, Gold und Level aller Helden |
@@ -441,7 +442,7 @@ In der Pause heilt sich jeder Held, der in **5 m** um den Vorrat (das Herz im In
 
 ## Shop
 
-Gold gibt es für Kills und jede überstandene Welle, in der man mitgekämpft hat. In der Pause im Innenhof öffnet **B** den Shop: Waffen (wirken als Werte-Items), Rüstung, Werte-Items und Verbrauchsgüter für R/T. Rechtsklick auf ein Item im Inventar verkauft es (70 %).
+Gold gibt es für Kills und jede überstandene Welle, in der man mitgekämpft hat. Im Innenhof öffnet **B** jederzeit den Shop, auch während einer Welle: Waffen (wirken als Werte-Items), Rüstung, Werte-Items und Verbrauchsgüter für R/T. Rechtsklick auf ein Item im Inventar verkauft es (70 %).
 
 ## Helden
 
@@ -551,6 +552,21 @@ Der Server zählt, wie oft das Spiel gespielt wird. Die Zahlen stehen auf der Se
   Ohne Upstash zählt der Server in die Datei `.data/stats.json`. Das reicht, wenn der Server dauerhaft läuft, zum Beispiel auf einem eigenen Rechner.
 
 Code: `server/stats.ts`, Tests: `tests/server/stats.test.ts`.
+
+## Nach den ersten Spielen
+
+Rückmeldungen aus der ersten Online-Runde, drei Spieler schafften Welle 14:
+- **Shop:** im Innenhof jederzeit offen, auch während einer Welle.
+- **Fähigkeiten nachlesen:** In der Lobby und in der Team-Ansicht stehen unter den Helden Angriff, Passiv und die vier Fähigkeiten mit Abklingzeit. Mit der Maus über einem anderen Helden zeigt die Liste dessen Fähigkeiten.
+- **Rückruf zur Basis:** Taste H, 4 s stillhalten (siehe Steuerung).
+- **Lobby:** Der Countdown nach „Alle bereit“ dauert 5 s statt 15 s.
+- **Nahkampf im Laufen:** Der Schlag trifft dort, wo der Held gleich ist, 0,15 s in Laufrichtung voraus, und der Schlagbogen bleibt an der sichtbaren Figur. Vorher landete der Hieb, besonders online, sichtbar hinter dem Helden.
+- **Töne:**
+  - Somnias Klingeln und Hedwigs Glocke sind kurz und leise.
+  - Ragnars Hammer klingt dumpf statt nach Topfklopfen.
+  - Standardangriffe der anderen Helden sind deutlich leiser als die eigenen.
+- **Ultimates:** etwa 35 % kürzere Abklingzeiten, zum Beispiel Amok 60/50/40 s statt 90/75/60 s.
+- **Ruckeln ab Level 10:** behoben, siehe „Leistung“.
 
 ## Leistung
 

@@ -55,6 +55,8 @@ export class Input {
   onLook: (pos: Vec2) => void = () => {};
   /** Freie Kamera: Ziehen mit der mittleren Maustaste verschiebt die Ansicht um (dx, dy) Meter. */
   onPan: (delta: Vec2) => void = () => {};
+  /** Taste „Rückruf“ (H): zurück zur Basis. */
+  onRecall: () => void = () => {};
   /** Taste „Kamera“ (Leertaste): zurück zum Helden bzw. Übersicht beim Zuschauen. */
   onCamera: () => void = () => {};
   /** Linke Maustaste wurde auf der Minimap gedrückt und ist noch unten. */
@@ -178,6 +180,7 @@ export class Input {
         if (e.code === this.bindings.get('startWave')) this.onStartWave();
         if (e.code === this.bindings.get('build')) this.onBuild();
         if (e.code === this.bindings.get('rotateBuild')) this.onRotateBuild();
+        if (e.code === this.bindings.get('recall') && !(e.target instanceof HTMLInputElement)) this.onRecall();
         if (e.code === this.bindings.get('camera') && !(e.target instanceof HTMLInputElement)) {
           e.preventDefault();
           this.onCamera();

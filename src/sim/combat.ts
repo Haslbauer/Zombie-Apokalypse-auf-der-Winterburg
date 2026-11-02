@@ -1,3 +1,4 @@
+import { cancelRecall } from './recall';
 import type { SimContext } from './context';
 import { shotBlocked } from './grid';
 import { kitOf } from './heroes/index';
@@ -29,6 +30,8 @@ export function edgeDistance(a: { pos: { x: number; y: number }; radius: number 
  * source ist der Held, der den Schaden verursacht (für Kampfstatus).
  */
 export function applyDamage(ctx: SimContext, target: Hero | Zombie, amount: number, source?: Hero): number {
+  // Schaden bricht den Rückruf zur Basis ab
+  if (amount > 0 && 'recall' in target && target.recall) cancelRecall(ctx, target as Hero);
   if (target.hp <= 0 || amount <= 0) return 0;
   const { state } = ctx;
   // PvP: Schaden am Stellvertreter geht an den Helden (nur Gegner)
@@ -152,6 +155,13 @@ export function heroHit(ctx: SimContext, h: Hero, z: Zombie, base: number): numb
  * Standardangriff in Blickrichtung. Nahkampf trifft alle Zombies im Bogen vor
  * dem Helden, Fernkampf feuert ein Projektil, das geradeaus fliegt.
  */
+/**
+ * Nahkampf im Laufen: Der Schlag trifft dort, wo der Held gleich ist (so viele
+ * Sekunden Vorlauf), nicht hinter ihm. Online sieht man den eigenen Helden der
+ * Server-Position voraus; ohne Vorlauf landete der Hieb sichtbar hinter ihm.
+ */
+export const MELEE_LEAD = 0.15;
+
 /** So lange ist ein Held nach Angriff oder Fähigkeit auch im Versteck sichtbar (s). */
 export const REVEAL_TIME = 1.5;
 
@@ -167,12 +177,17 @@ export function heroAttack(ctx: SimContext, h: Hero, cooldown: number): void {
     ctx.state.events.push({ type: 'swing', id: h.id, facing: h.facing, range, arc });
     const behind = attack.reachBehind ?? 0;
     const narrow = ((attack.reachArc ?? 60) * Math.PI) / 180;
+    // Im Laufen: Trefferbogen ein Stück in Laufrichtung vorziehen
+    const m = h.input?.move ?? { x: 0, y: 0 };
+    const len = Math.min(1, Math.hypot(m.x, m.y));
+    const lead = len > 0.1 && !h.dash ? (h.speed * MELEE_LEAD) / Math.max(1, Math.hypot(m.x, m.y)) : 0;
+    const origin = lead > 0 ? { ...h, pos: { x: h.pos.x + m.x * lead, y: h.pos.y + m.y * lead } } : h;
     for (const z of ctx.state.zombies) {
       if (z.hp <= 0) continue;
-      if (inArc(h, z, h.facing, arc, range)) {
+      if (inArc(origin, z, h.facing, arc, range) || (lead > 0 && inArc(h, z, h.facing, arc, range))) {
         const dealt = heroHit(ctx, h, z, attack.damage);
         kitOf(h.defId).onBasicHit?.(ctx, h, z, dealt);
-      } else if (behind > 0 && inArc(h, z, h.facing, narrow, range + behind)) {
+      } else if (behind > 0 && inArc(origin, z, h.facing, narrow, range + behind)) {
         // Wucht: auch knapp dahinter, mit weniger Schaden
         heroHit(ctx, h, z, attack.damage * (attack.reachFactor ?? 0.5));
       }

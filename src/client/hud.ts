@@ -159,8 +159,12 @@ export class Hud {
       const img = el('img', 'hud-hero-portrait');
       img.src = `portraits/${def.id}.jpg`;
       btn.append(img, el('strong', '', def.name), this.roleTag(def.id), el('small', 'hud-role', def.role), el('span', 'hud-hero-desc', label));
+      btn.addEventListener('mouseenter', () => teamSkills.replaceWith((teamSkills = this.skillPanel(id))));
       return btn;
     };
+    // Fähigkeiten nachlesen: eigener Held, beim Darüberfahren der jeweilige Bot
+    let teamSkills = this.skillPanel(playerId);
+    row.addEventListener('mouseleave', () => teamSkills.replaceWith((teamSkills = this.skillPanel(playerId))));
     const render = () => {
       row.replaceChildren();
       const me = card(playerId, 'Du');
@@ -216,7 +220,7 @@ export class Hud {
         }),
       );
     renderLevel();
-    box.append(row, check, levelHolder, diffRow, this.spellPicker(playerId));
+    box.append(row, teamSkills, check, levelHolder, diffRow, this.spellPicker(playerId));
     if (onOnline) {
       // Mehrspieler: Raum auf dem Server, Freunde übernehmen per Link die Bot-Plätze
       const name = this.nameInput();
@@ -228,6 +232,38 @@ export class Hud {
     box.append(buttons);
     this.overlay.append(box);
     this.overlay.style.display = '';
+  }
+
+  /** Lobby: Held, über dem die Maus steht (zeigt seine Fähigkeiten statt des eigenen). */
+  private lobbyHover: string | null = null;
+
+  /** Fähigkeiten eines Helden (Passiv, 1–4 mit Abklingzeit) zum Nachlesen vor dem Spiel. */
+  private skillPanel(heroId: string | null | undefined): HTMLElement {
+    const box = el('div', 'hud-skills');
+    const def = heroId ? this.data.heroes.find((h) => h.id === heroId) : undefined;
+    if (!def) {
+      box.append(el('p', 'hud-small', 'Fahre mit der Maus über einen Helden, um seine Fähigkeiten zu sehen.'));
+      return box;
+    }
+    const head = el('div', 'hud-skills-head');
+    head.append(el('strong', '', def.name), el('small', 'hud-role', def.role));
+    box.append(head, el('p', 'hud-skills-desc', def.description));
+    const atk = def.attack;
+    const list = el('ul', 'hud-skills-list');
+    const row = (key: string, name: string, text: string, cd?: string) => {
+      const li = el('li', '');
+      li.append(el('kbd', '', key), el('b', '', name), cd ? el('span', 'hud-skills-cd', cd) : el('span', ''), el('span', 'hud-skills-text', text));
+      list.append(li);
+    };
+    row('LMB', 'Angriff', `${atk.type === 'melee' ? 'Nahkampf' : 'Fernkampf'}, ${atk.damage} Schaden, Reichweite ${atk.range} m, alle ${atk.cooldown} s`);
+    row('P', def.passive.name, def.passive.description);
+    def.abilities.forEach((a, i) => {
+      const cds = Array.isArray(a.cooldown) ? a.cooldown : [a.cooldown];
+      const cd = cds.length ? (cds[0] === cds[cds.length - 1] ? `${cds[0]} s` : `${cds[0]}–${cds[cds.length - 1]} s`) : '';
+      row(String(i + 1), `${a.name}${i === 3 ? ' (Ultimate)' : ''}`, a.description, cd);
+    });
+    box.append(list);
+    return box;
   }
 
   /** Namensfeld für den Mehrspieler (im Browser gemerkt). */
@@ -451,9 +487,18 @@ export class Hud {
       } else b.title = `${h.name} – ${h.role}`;
       if (me?.defId === h.id) b.classList.add('active');
       b.addEventListener('click', () => on.pick(h.id));
+      b.addEventListener('mouseenter', () => {
+        this.lobbyHover = h.id;
+        skills.replaceWith((skills = this.skillPanel(h.id)));
+      });
       pickRow.append(b);
     }
-    box.append(el('h2', '', 'Dein Held'), pickRow);
+    pickRow.addEventListener('mouseleave', () => {
+      this.lobbyHover = null;
+      skills.replaceWith((skills = this.skillPanel(me?.defId)));
+    });
+    let skills = this.skillPanel(this.lobbyHover ?? me?.defId);
+    box.append(el('h2', '', 'Dein Held'), pickRow, skills);
     // Zauber (Vorgabe nach dem gewählten Helden; jede Änderung geht an den Server)
     box.append(this.spellPicker(me?.defId || 'rotschopf', on.spells));
 
@@ -1212,7 +1257,7 @@ export class Hud {
   /** Kurzbeschreibung der Steuerung mit der aktuellen Belegung. */
   private controlsText(): string {
     const k = (a: Parameters<Keybindings['get']>[0]) => `<b>${keyName(this.bindings.get(a))}</b>`;
-    return `${k('up')}${k('left')}${k('down')}${k('right')} laufen · <b>Maus</b> zielen · ${k('attack')} angreifen · ${k('ability1')}–${k('ability4')} Fähigkeiten (halten = Vorschau) · ${k('spell1')} ${k('spell2')} Beschwörerzauber · <b>Shift</b>+Taste steigern · <b>Mausrad</b> zoomen · <b>Esc</b> Menü`;
+    return `${k('up')}${k('left')}${k('down')}${k('right')} laufen · <b>Maus</b> zielen · ${k('attack')} angreifen · ${k('ability1')}–${k('ability4')} Fähigkeiten (halten = Vorschau) · ${k('spell1')} ${k('spell2')} Beschwörerzauber · <b>Shift</b>+Taste steigern · ${k('recall')} Rückruf · <b>Mausrad</b> zoomen · <b>Esc</b> Menü`;
   }
 
   private updateHelp(): void {
