@@ -1843,3 +1843,19 @@ body.watching.watching-online .hud-start-wave { display: none !important; }
   .hud-spectator { top: 50px; font-size: 12px; }
   .hud-spectator-btn small { display: none; }
 }
+
+/* Freie Kamera: Hinweis über der Minimap */
+.hud-camera-hint {
+  position: absolute;
+  right: 12px;
+  bottom: 170px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid #ffd166;
+  background: rgba(15, 22, 17, 0.85);
+  color: #ffd166;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  pointer-events: auto;
+}

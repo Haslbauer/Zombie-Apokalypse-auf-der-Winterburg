@@ -15,7 +15,7 @@ import { Effects } from './effects';
 import { Hud } from './hud';
 import { Quality, QUALITY_LABELS } from './quality';
 import { Input } from './input';
-import { Keybindings } from './keybindings';
+import { Keybindings, keyName } from './keybindings';
 import { loadRiggedModel } from './models';
 import { GameRenderer } from './renderer';
 import { Minimap } from './minimap';
@@ -207,6 +207,7 @@ function watchHero(id: number): void {
   if (!state || !h) return;
   heroId = h.id;
   heroDefId = h.defId;
+  freeCam = null;
   hud.startGame(heroDefId);
   hud.setWatched(heroId);
   if (watchOverview) setWatchOverview(false);
@@ -250,13 +251,32 @@ function updateSpectatorUi(): void {
   );
 }
 
-// Zuschauen: Leertaste schaltet die Übersicht um
-window.addEventListener('keydown', (e) => {
-  if (!spectate || !session || e.code !== 'Space' || e.repeat) return;
-  if (e.target instanceof HTMLInputElement) return;
-  e.preventDefault();
-  setWatchOverview(!watchOverview);
-});
+// Freie Kamera: Klick bzw. Ziehen auf der Minimap, mittlere Maustaste auf der Karte; Leertaste zurück
+/** Ort, den die Kamera statt des Helden zeigt (null = Kamera folgt dem Helden). */
+let freeCam: { x: number; y: number } | null = null;
+function clampToMap(p: { x: number; y: number }): { x: number; y: number } {
+  const a = gameData.arena;
+  return { x: Math.min(a.width, Math.max(a.minX ?? 0, p.x)), y: Math.min(a.height, Math.max(a.minY ?? 0, p.y)) };
+}
+input.onLook = (p) => {
+  if (!session || !myHero()) return;
+  if (spectate && watchOverview) setWatchOverview(false);
+  renderer.cam.firstPerson = false;
+  freeCam = clampToMap(p);
+};
+input.onPan = (d) => {
+  const h = myHero();
+  if (!session || !h || watchOverview || renderer.cam.firstPerson) return;
+  const base = freeCam ?? renderer.unitPosition(heroId) ?? h.pos;
+  freeCam = clampToMap({ x: base.x + d.x, y: base.y + d.y });
+  renderer.cam.jump(freeCam.x, freeCam.y);
+};
+hud.onCameraHint = () => (freeCam = null);
+input.onCamera = () => {
+  if (!session) return;
+  if (freeCam) freeCam = null;
+  else if (spectate) setWatchOverview(!watchOverview);
+};
 
 /**
  * Spielzähler: Einzelspieler-Partien beim Server melden (nur Art und Ergebnis,
@@ -341,6 +361,7 @@ function startDaily(setup: DailySetup): void {
 /** Gemeinsamer Start: Darstellung, HUD und Kamera für den Helden heroId. */
 function begin(isPlayer: boolean): void {
   const hero = myHero()!;
+  freeCam = null;
   heroDefId = hero.defId;
   renderer.playerId = isPlayer ? hero.id : null;
   shop.hide();
@@ -1056,7 +1077,11 @@ renderer.renderer.setAnimationLoop((now) => {
     const state = session.state;
     const me = myHero() ?? hero;
     renderer.sync(state, session.prev, alpha, dt, time);
-    const focus = renderer.unitPosition(heroId) ?? me.pos;
+    const heroFocus = renderer.unitPosition(heroId) ?? me.pos;
+    // Freie Kamera (Minimap, mittlere Maustaste) zeigt einen anderen Ort; Ego-Sicht immer am Helden
+    if (renderer.cam.firstPerson) freeCam = null;
+    const focus = freeCam ?? heroFocus;
+    hud.setCameraHint(freeCam ? `Freie Kamera · ${keyName(bindings.get('camera'))}: zurück zum Helden` : null);
     // Ego-Sicht: Augenhöhe, eigener Held ausgeblendet, kein Zielbogen; Maus frei bei Shop, Menü, Spielende
     const cam = renderer.cam;
     cam.eyeHeight = heroDefId === 'grimm' ? 0.7 : 1.6;
@@ -1066,7 +1091,7 @@ renderer.renderer.setAnimationLoop((now) => {
     const mouseNeeded = shop.open || hud.menuOpen || state.gameOver;
     if ((!cam.firstPerson || mouseNeeded) && input.mouseLocked) document.exitPointerLock?.();
     hud.setFirstPerson(cam.firstPerson && !mouseNeeded, input.mouseLocked);
-    renderer.updateAimIndicator(me.alive && !spectate && !cam.inFirstPerson ? focus : null, me.facing, me.attackTimer <= 0);
+    renderer.updateAimIndicator(me.alive && !spectate && !cam.inFirstPerson ? heroFocus : null, me.facing, me.attackTimer <= 0);
     const slot = input.previewSlot;
     const def = gameData.heroes.find((h) => h.id === heroDefId)!;
     renderer.showPreview(slot !== null && me.alive && me.ranks[slot] > 0 ? def.abilities[slot] : null, me, input.aimPoint);

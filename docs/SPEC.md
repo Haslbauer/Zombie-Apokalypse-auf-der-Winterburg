@@ -2,7 +2,7 @@
 
 Stand: 01.11.2026. Arbeitsgrundlage für Claude Code.
 
-Änderungen v2.7: Spieldauer etwa 20 Minuten für 20 Wellen: Pausen 20 s und 18 s (zum Einkaufen), weniger, dafür härter zuschlagende Zombies (+20 % Leben, +40 % Schaden je Welle), schnellere Kriecher, Messlauf `tests/balance/timing.test.ts`. Verteidigungen lassen sich auch während der Welle bauen und reparieren. Spielzähler (`/stats`, Abschnitt 10c). Zuschauermodus online und lokal (Abschnitt 10).
+Änderungen v2.7: Spieldauer etwa 20 Minuten für 20 Wellen: Pausen 20 s und 18 s (zum Einkaufen), weniger, dafür härter zuschlagende Zombies (+20 % Leben, +40 % Schaden je Welle), schnellere Kriecher, Messlauf `tests/balance/timing.test.ts`. Verteidigungen lassen sich auch während der Welle bauen und reparieren. Spielzähler (`/stats`, Abschnitt 10c). Zuschauermodus online und lokal (Abschnitt 10). Freie Kamera: Linksklick oder Ziehen auf der Minimap, mittlere Maustaste ziehen, Leertaste (belegbar, Aktion `camera`) zurück zum Helden; die Ego-Sicht hebt sie auf.
 Änderungen v2.6: Wellen-Ereignisse (Nebelnacht, Blutmond, Regen), PvP-Varianten (Kiste erobern, Zombies nebenbei, Bots auf leeren Plätzen), Ego-Sicht mit Waffe im Bild und Kopfwippen, Schadenszahlen, Rollen-Kombos.
 Änderungen v2.5: Verteidigungen in der Pause (Stacheldraht, Barrikade, Feuerfass), vier neue Helden (Imker, Aurelius, Lotte, Kapitän Tiefe).
 Änderungen v2.4: Neuer Held Imker (Support), drei Spieler im Koop, Reichweiten und Durchschlag, Münzen und Buff-Ringe.

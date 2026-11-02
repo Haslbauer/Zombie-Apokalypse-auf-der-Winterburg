@@ -106,6 +106,9 @@ Beim Entwickeln (`npm run dev`) leitet Vite den Mehrspieler an einen laufenden `
 | Shift + 1–4 | Skillpunkt setzen (oder „+“ in der Fähigkeitenleiste) |
 | R T | Verbrauchsgüter benutzen (Heiltrank, Energiedrink) |
 | F G | Beschwörerzauber (wie D/F in LoL) Richtung Mauszeiger; Rechtsklick auf das Feld in der Pause: tauschen |
+| Linksklick auf die Minimap | **Freie Kamera:** Die Ansicht springt zu diesem Ort, zum Beispiel vom Bunker zum Bienenstock. Mit gedrückter Taste zieht sie mit. Der Held bleibt, wo er ist, und lässt sich weiter steuern. |
+| Mittlere Maustaste ziehen | Freie Kamera: Karte verschieben |
+| Leertaste | Kamera zurück zum Helden; auch ein Klick auf den Hinweis „Freie Kamera“ über der Minimap. Beim Zuschauen schaltet die Leertaste die Übersicht. |
 | B | Shop (nur in der Pause im Innenhof) |
 | N | Welle sofort starten (in der Pause) |
 | Rechtsklick | Ping an alle: kurz = „Hier!“, halten und ziehen = Ping-Rad mit fünf Feldern (oben Angriff, rechts Bin unterwegs, rechts unten Brauche Heilung, links unten Hilfe, links Gefahr). „Brauche Heilung“ ruft vor allem Support-Bots. Auch auf der Minimap. Bots folgen den Pings (siehe unten). |

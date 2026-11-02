@@ -96,6 +96,12 @@ export class GameCamera {
     this.camera.updateProjectionMatrix();
   }
 
+  /** Sofort auf einen Punkt springen (freie Kamera beim Ziehen), mit demselben Versatz wie follow. */
+  jump(x: number, y: number): void {
+    if (!this.following) return;
+    this.lookAt(x, y + FOCUS_SOUTH * (this.offset.length() / DISTANCE));
+  }
+
   /** Folgt die Kamera gerade (nicht Übersicht)? */
   get isFollowing(): boolean {
     return this.following;

@@ -51,6 +51,16 @@ export class Input {
   }
   /** Touch-Steuerung (null: aus). Sticks ergänzen Tastatur und Maus. */
   touch: TouchControls | null = null;
+  /** Freie Kamera: Linksklick bzw. Ziehen auf der Minimap zeigt diesen Ort. */
+  onLook: (pos: Vec2) => void = () => {};
+  /** Freie Kamera: Ziehen mit der mittleren Maustaste verschiebt die Ansicht um (dx, dy) Meter. */
+  onPan: (delta: Vec2) => void = () => {};
+  /** Taste „Kamera“ (Leertaste): zurück zum Helden bzw. Übersicht beim Zuschauen. */
+  onCamera: () => void = () => {};
+  /** Linke Maustaste wurde auf der Minimap gedrückt und ist noch unten. */
+  private minimapDrag = false;
+  /** Mittlere Maustaste: letzter Bodenpunkt unter der Maus beim Ziehen. */
+  private panFrom: Vec2 | null = null;
   /** Die Minimap rechnet Bildschirmpunkte über ihr in Orte um (null: Maus nicht über der Minimap). */
   minimapPoint: (x: number, y: number) => Vec2 | null = () => null;
 
@@ -94,6 +104,22 @@ export class Input {
       if (code === this.bindings.get('ping')) this.beginPing(e.clientX, e.clientY);
       else this.pressed.add(code);
     });
+    // Freie Kamera: Linksklick auf die Minimap springt dorthin, Ziehen verschiebt weiter
+    window.addEventListener('pointerdown', (e) => {
+      if (this.capture || e.button !== 0 || e.target === canvas) return;
+      const p = this.minimapPoint(e.clientX, e.clientY);
+      if (!p) return;
+      e.preventDefault();
+      this.minimapDrag = true;
+      this.onLook(p);
+    });
+    // Mittlere Maustaste auf der Karte: Ansicht ziehen
+    canvas.addEventListener('pointerdown', (e) => {
+      if (e.button !== 1 || this.firstPerson) return;
+      e.preventDefault();
+      this.panFrom = this.renderer.pickGround(e.clientX, e.clientY);
+    });
+    canvas.addEventListener('auxclick', (e) => e.button === 1 && e.preventDefault());
     // Ping-Geste auch über der Minimap (die liegt im HUD, nicht auf dem Canvas)
     window.addEventListener('pointerdown', (e) => {
       if (this.capture || `Mouse${e.button}` !== this.bindings.get('ping') || e.target === canvas) return;
@@ -106,6 +132,8 @@ export class Input {
       if (this.capture && (e.target as HTMLElement).dataset.rebind === undefined) this.finishCapture(`Mouse${e.button}`);
     });
     window.addEventListener('pointerup', (e) => {
+      if (e.button === 0) this.minimapDrag = false;
+      if (e.button === 1) this.panFrom = null;
       if (`Mouse${e.button}` === this.bindings.get('ping')) this.endPing();
       this.pressed.delete(`Mouse${e.button}`);
     });
@@ -117,6 +145,15 @@ export class Input {
       }
       this.mouse = { x: e.clientX, y: e.clientY };
       this.pingWheel.move(e.clientX, e.clientY);
+      if (this.minimapDrag) {
+        const p = this.minimapPoint(e.clientX, e.clientY);
+        if (p) this.onLook(p);
+      }
+      if (this.panFrom) {
+        const now = this.renderer.pickGround(e.clientX, e.clientY);
+        // Der Bodenpunkt bleibt unter der Maus: Ansicht um die Differenz verschieben
+        if (now) this.onPan({ x: this.panFrom.x - now.x, y: this.panFrom.y - now.y });
+      }
     });
     window.addEventListener('keydown', (e) => {
       if (e.code === MENU_KEY) {
@@ -141,6 +178,10 @@ export class Input {
         if (e.code === this.bindings.get('startWave')) this.onStartWave();
         if (e.code === this.bindings.get('build')) this.onBuild();
         if (e.code === this.bindings.get('rotateBuild')) this.onRotateBuild();
+        if (e.code === this.bindings.get('camera') && !(e.target instanceof HTMLInputElement)) {
+          e.preventDefault();
+          this.onCamera();
+        }
         // Stumm nicht beim Tippen (z. B. Name in der Lobby)
         if (e.code === this.bindings.get('mute') && !(e.target instanceof HTMLInputElement && e.target.type === 'text')) this.onMute();
       }
@@ -164,6 +205,8 @@ export class Input {
     });
     // Fenster verlassen: alles loslassen, sonst läuft der Held weiter.
     window.addEventListener('blur', () => {
+      this.minimapDrag = false;
+      this.panFrom = null;
       this.pressed.clear();
       this.previewSlot = null;
       this.pingWheel.cancel();

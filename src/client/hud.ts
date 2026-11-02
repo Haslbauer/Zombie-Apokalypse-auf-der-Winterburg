@@ -770,6 +770,19 @@ export class Hud {
   }
 
   /** Hinweis während eines Verbindungsabbruchs (null blendet aus). */
+  private cameraHint: HTMLElement | null = null;
+  /** Hinweis bei freier Kamera („Leertaste: zurück zum Helden“); null = ausblenden. Klick kehrt zurück. */
+  onCameraHint: () => void = () => {};
+  setCameraHint(text: string | null): void {
+    if (!this.cameraHint) {
+      this.cameraHint = el('button', 'hud-camera-hint');
+      this.cameraHint.addEventListener('click', () => this.onCameraHint());
+      this.root.append(this.cameraHint);
+    }
+    if (this.cameraHint.textContent !== (text ?? '')) this.cameraHint.textContent = text ?? '';
+    this.cameraHint.style.display = text ? '' : 'none';
+  }
+
   setConnection(text: string | null): void {
     this.connection.textContent = text ?? '';
     this.connection.style.display = text ? '' : 'none';
