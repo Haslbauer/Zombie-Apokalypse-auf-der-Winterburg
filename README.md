@@ -519,6 +519,27 @@ Alle neuen Helden haben jetzt gemalte Porträts wie die ursprünglichen Helden (
 
 Details in `docs/SPEC.md` (Abschnitt 6), Werte in `data/heroes.json`.
 
+## Spielzähler
+
+Der Server zählt, wie oft das Spiel gespielt wird. Die Zahlen stehen auf der Seite **`/stats`**, zum Beispiel https://zombie-apokalypse.onrender.com/stats; als Rohdaten unter `/stats.json`.
+
+- **Was gezählt wird:**
+  - gestartete Partien je Art: Einzelspieler, Tägliche Herausforderung, Zuschauen, Online-Koop, Online-PvP
+  - Siege und Niederlagen
+  - Starts pro Tag mit einem Balken für die letzten 14 Tage
+- **Datenschutz:** Gespeichert werden nur Zahlen, keine Namen, keine IP-Adressen und keine Cookies.
+- **Woher die Zahlen kommen:** Online-Partien zählt der Server selbst. Einzelspieler-Partien laufen im Browser; der Browser meldet Start und Ergebnis kurz an `/api/played`. Im Entwicklungsmodus (`npm run dev`) und mit `?debug` wird nichts gemeldet.
+- **Seite schützen (optional):** Setzt du in Render die Umgebungsvariable `STATS_KEY`, zum Beispiel auf `geheim123`, ist die Seite nur noch mit `/stats?key=geheim123` sichtbar.
+- **Zählerstände dauerhaft speichern:** Der kostenlose Render-Dienst verliert seine Dateien bei jedem Neustart und Einschlafen. Damit die Zahlen erhalten bleiben, kommt eine kostenlose Redis-Datenbank von Upstash dazu:
+  1. Auf https://upstash.com kostenlos anmelden und mit **Create Database** eine Redis-Datenbank anlegen, Region zum Beispiel Frankfurt.
+  2. In der Datenbank unter **REST API** die Werte `UPSTASH_REDIS_REST_URL` und `UPSTASH_REDIS_REST_TOKEN` kopieren.
+  3. In Render beim Dienst unter **Environment** beide Variablen mit diesen Werten eintragen und speichern. Render startet den Dienst dann neu.
+  4. Auf `/stats` steht nun „gespeichert in Upstash Redis“.
+
+  Ohne Upstash zählt der Server in die Datei `.data/stats.json`. Das reicht, wenn der Server dauerhaft läuft, zum Beispiel auf einem eigenen Rechner.
+
+Code: `server/stats.ts`, Tests: `tests/server/stats.test.ts`.
+
 ## Aufbau
 
 - `src/sim/` – Spiellogik, tickbasiert (20 Ticks/s), ohne Browser-Abhängigkeit. Läuft im Einzelspieler im Browser, im Mehrspieler auf dem Server.

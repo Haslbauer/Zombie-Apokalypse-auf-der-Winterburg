@@ -2,7 +2,7 @@
 
 Stand: 01.11.2026. Arbeitsgrundlage für Claude Code.
 
-Änderungen v2.7: Spieldauer etwa 20 Minuten für 20 Wellen: Pausen 20 s und 18 s (zum Einkaufen), weniger, dafür härter zuschlagende Zombies (+20 % Leben, +40 % Schaden je Welle), schnellere Kriecher, Messlauf `tests/balance/timing.test.ts`. Verteidigungen lassen sich auch während der Welle bauen und reparieren.
+Änderungen v2.7: Spieldauer etwa 20 Minuten für 20 Wellen: Pausen 20 s und 18 s (zum Einkaufen), weniger, dafür härter zuschlagende Zombies (+20 % Leben, +40 % Schaden je Welle), schnellere Kriecher, Messlauf `tests/balance/timing.test.ts`. Verteidigungen lassen sich auch während der Welle bauen und reparieren. Spielzähler (`/stats`, Abschnitt 10c).
 Änderungen v2.6: Wellen-Ereignisse (Nebelnacht, Blutmond, Regen), PvP-Varianten (Kiste erobern, Zombies nebenbei, Bots auf leeren Plätzen), Ego-Sicht mit Waffe im Bild und Kopfwippen, Schadenszahlen, Rollen-Kombos.
 Änderungen v2.5: Verteidigungen in der Pause (Stacheldraht, Barrikade, Feuerfass), vier neue Helden (Imker, Aurelius, Lotte, Kapitän Tiefe).
 Änderungen v2.4: Neuer Held Imker (Support), drei Spieler im Koop, Reichweiten und Durchschlag, Münzen und Buff-Ringe.
@@ -429,6 +429,18 @@ Werte in `data/spells.json`, Logik in `src/sim/spells.ts`.
 - **Kiste erobern:** `state.pvp.crate {pos, points, toWin, holder, contested}`. Ort aus `economy.pvp.crate.pos`, sonst die Mitte zwischen den Basen. Nur ein Team im Umkreis `radius` → `perSecond` Punkte pro Sekunde; beide → umkämpft. Sieg bei `pointsToWin`; Kills beenden das Spiel in diesem Modus nicht. Ereignis `pvpCrate` bei jedem Wechsel.
 - **Zombies nebenbei:** `economy.pvp.roamers` (`first`, `every`, `min`..`max`, `types`, `maxAlive`, Startpunkte `from`). Die Zombies haben `roam` (Wegpunkt: Mitte, dann eine Seite). Ohne Opfer in Sicht ziehen sie dorthin, sonst jagen sie Helden beider Teams. `enemyAvatars` liefert jedem Team die echten Zombies mit, sodass alle Angriffe sie treffen. Tod durch Zombies gibt keinen Punkt.
 - **Bots:** eigenes Verhalten `pvpThink` (`src/sim/bots/brain.ts`): Rückzug zur Basis und Einkauf, nächstes Ziel in 13 m (Helden vor Zombies), sonst zur Kiste bzw. zum nächsten Gegner.
+
+## 10c. Spielzähler (v2.7)
+
+- Der Server zählt nur Zahlen, keine personenbezogenen Daten. Felder:
+  - `start:<art>`, `win:<art>`, `loss:<art>`, `end:pvp`
+  - `day:<JJJJ-MM-TT>` für die Starts pro Tag
+  - Arten: `solo`, `daily`, `zuschauen`, `koop`, `pvp`
+- Online-Partien meldet der Raum selbst über `Room.onPlay`, beim Start nach dem Countdown und bei `gameOver`. Einzelspieler-Partien meldet der Browser mit `POST /api/played {kind, event}`. Der Server nimmt dort nur `solo`, `daily` und `zuschauen` an, höchstens 20 Meldungen je Adresse und Minute; die Begrenzung liegt nur im Speicher.
+- `GET /stats` zeigt eine HTML-Übersicht, `GET /stats.json` die Rohdaten. Mit `STATS_KEY` ist beides nur mit `?key=…` erreichbar.
+- Speicher:
+  - Upstash Redis über die REST-API (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`): Hash `winterburg:stats`, `HINCRBY` und `HGETALL`
+  - sonst die Datei `STATS_FILE` (Standard `.data/stats.json`), höchstens alle 2 s und beim Herunterfahren geschrieben
 
 ## 11. Karte
 

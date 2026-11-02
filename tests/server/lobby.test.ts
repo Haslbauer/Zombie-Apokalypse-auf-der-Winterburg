@@ -4,6 +4,7 @@ import { BACKPRESSURE_BYTES, RESERVE_MS, ZOMBIE_TYPES } from '../../server/room'
 import { gameData } from '../../src/gameData';
 import { decodeSnapshot, encodeSnapshot, MAX_CLIENT_MESSAGE, parseClientMessage, type ServerMessage } from '../../src/net/protocol';
 import { Simulation } from '../../src/sim/game';
+import { endGame } from '../../src/sim/stats';
 
 /** Lobby mit Spielern, die ihre Nachrichten sammeln; die Uhr wird von Hand gestellt. */
 function setup(skipLobby = true) {
@@ -328,6 +329,27 @@ describe('Netzprotokoll', () => {
       expect(guest.last('error')!.msg).toMatch(/schon jemand/);
       guest.send({ t: 'pick', heroId: 'gaertnerin' });
       expect(host.last('room')!.room.slots[1].defId).toBe('gaertnerin');
+    });
+
+    it('Spielzähler: Start und Ergebnis einer Online-Partie werden gemeldet', () => {
+      const { lobby, host, guest, room, advance } = lobbyRoom();
+      const plays: string[] = [];
+      room.onPlay = (kind, event) => plays.push(`${event}:${kind}`);
+      guest.send({ t: 'pick', heroId: 'gaertnerin' });
+      host.send({ t: 'ready', ready: true });
+      guest.send({ t: 'ready', ready: true });
+      advance(15_100);
+      lobby.tick();
+      expect(plays).toEqual(['start:koop']);
+      // Niederlage im nächsten Tick
+      const sim = room.sim;
+      const step = sim.step.bind(sim);
+      sim.step = (cmds) => {
+        step(cmds);
+        endGame(sim, 'Test', false);
+      };
+      lobby.tick();
+      expect(plays).toEqual(['start:koop', 'loss:koop']);
     });
 
     it('alle bereit: Countdown 15 s, Abbruch bei „nicht bereit“ und bei neuem Spieler; danach Start mit Bots', () => {

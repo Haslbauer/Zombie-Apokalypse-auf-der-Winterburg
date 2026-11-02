@@ -7,3 +7,4 @@ tests
 scripts
 .git
 *.md
+.data

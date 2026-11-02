@@ -77,6 +77,8 @@ export class Room {
   difficulty: BotDifficulty;
   /** Zeitpunkt, seit dem niemand mehr im Raum ist (zum Aufräumen). */
   emptySince: number | null = null;
+  /** Spielzähler (setzt die Lobby): Partie gestartet bzw. beendet. */
+  onPlay?: (kind: 'koop' | 'pvp', event: 'start' | 'win' | 'loss' | 'end') => void;
   /** Selten wechselnde Daten im letzten Schnappschuss (siehe slowKey). */
   private lastSlowKey = '';
 
@@ -287,6 +289,7 @@ export class Room {
     this.phase = 'playing';
     this.startsAt = null;
     this.newSim();
+    this.onPlay?.(this.mode === 'pvp' ? 'pvp' : 'koop', 'start');
     for (const s of this.slots) {
       s.ready = false;
       if (!s.player) continue;
@@ -425,6 +428,8 @@ export class Room {
     });
     this.sim.step(cmds);
     const events = this.sim.state.events;
+    const over = this.onPlay && events.find((e) => e.type === 'gameOver');
+    if (over && over.type === 'gameOver') this.onPlay!(this.mode === 'pvp' ? 'pvp' : 'koop', this.mode === 'pvp' ? 'end' : over.victory ? 'win' : 'loss');
     // Selten wechselnde Daten (Inventar, Ränge, Punkte …) nur bei Änderung und
     // zur Sicherheit jede Sekunde vollständig schicken
     const key = slowKey(this.sim.state);

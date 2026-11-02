@@ -30,6 +30,8 @@ export interface LobbyOptions {
   /** Räume ohne Lobby sofort starten (für Tests des Spielbetriebs). */
   skipLobby?: boolean;
   log?: (line: string) => void;
+  /** Spielzähler: Partie gestartet bzw. beendet (siehe server/stats.ts). */
+  onPlay?: (kind: 'koop' | 'pvp', event: 'start' | 'win' | 'loss' | 'end') => void;
 }
 
 /** Alle Räume des Servers: anlegen, beitreten, wiederverbinden, Befehle verteilen, aufräumen. */
@@ -39,12 +41,14 @@ export class Lobby {
   private readonly maxRooms: number;
   private readonly log: (line: string) => void;
   private readonly skipLobby: boolean;
+  private readonly onPlay: LobbyOptions['onPlay'];
 
   constructor(options: LobbyOptions = {}) {
     this.skipLobby = options.skipLobby ?? false;
     this.now = options.now ?? (() => Date.now());
     this.maxRooms = options.maxRooms ?? 200;
     this.log = options.log ?? (() => {});
+    this.onPlay = options.onPlay;
   }
 
   connect(send: (data: string) => void, buffered: () => number = () => 0, close: (reason: string) => void = () => {}): Client {
@@ -166,6 +170,7 @@ export class Lobby {
     const diff = DIFFICULTIES.includes(difficulty) ? difficulty : 'mittel';
     this.leaveRoom(client);
     const room = new Room(this.newCode(), team, diff, this.skipLobby);
+    room.onPlay = this.onPlay;
     this.rooms.set(room.code, room);
     this.log(`Raum ${room.code} erstellt (${team.join(', ')}, ${diff})`);
     this.enter(client, room, 0, name);

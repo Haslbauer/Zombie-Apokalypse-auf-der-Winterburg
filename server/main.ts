@@ -8,6 +8,10 @@
  *   HOST       Adresse (Standard 0.0.0.0, also auch im WLAN erreichbar)
  *   MAX_ROOMS  Höchstzahl gleichzeitiger Räume (Standard 200)
  *   LAG_MS     Nur zum Testen: künstliche Verzögerung je Richtung in ms
+ *   STATS_KEY  Spielzähler /stats nur mit ?key=… zeigen (ohne: für alle sichtbar)
+ *   STATS_FILE Datei für den Spielzähler (Standard .data/stats.json)
+ *   UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
+ *              Spielzähler dauerhaft in Upstash Redis speichern (kostenlos, übersteht Neustarts)
  */
 import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
@@ -16,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { MAX_CLIENT_MESSAGE, type ServerMessage } from '../src/net/protocol';
 import { Lobby } from './lobby';
+import { PLAY_EVENTS, PLAY_KINDS, Stats, statsPage, type PlayEvent, type PlayKind } from './stats';
 import { TICK_MS } from './room';
 
 const PORT = Number(process.env.PORT ?? 3000);
@@ -107,9 +112,53 @@ function serveStatic(req: IncomingMessage, res: ServerResponse, path: string): v
   else createReadStream(sendFile).pipe(res);
 }
 
-const lobby = new Lobby({ maxRooms: MAX_ROOMS, log });
+const STATS_KEY = process.env.STATS_KEY ?? '';
+const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+const stats = new Stats({
+  file: process.env.STATS_FILE ?? resolve(fileURLToPath(new URL('../.data/stats.json', import.meta.url))),
+  redis: redisUrl && redisToken ? { url: redisUrl, token: redisToken } : null,
+  log,
+});
+const lobby = new Lobby({ maxRooms: MAX_ROOMS, log, onPlay: (kind, event) => stats.record(kind, event) });
+
+/** Missbrauchsschutz für /api/played: höchstens 20 Meldungen je Adresse und Minute (nur im Speicher). */
+const playedRate = new Map<string, number>();
+setInterval(() => playedRate.clear(), 60_000).unref();
+const MAX_BODY = 200;
+
+/** Einzelspieler-Partien meldet der Browser: POST /api/played {kind, event}. */
+function handlePlayed(req: IncomingMessage, res: ServerResponse): void {
+  const ip = String(req.headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? '').split(',')[0].trim();
+  const n = (playedRate.get(ip) ?? 0) + 1;
+  playedRate.set(ip, n);
+  if (n > 20) {
+    res.writeHead(429, SECURITY_HEADERS).end();
+    return;
+  }
+  let body = '';
+  req.setEncoding('utf8');
+  req.on('data', (chunk: string) => {
+    body += chunk;
+    if (body.length > MAX_BODY) req.destroy();
+  });
+  req.on('end', () => {
+    try {
+      const { kind, event } = JSON.parse(body) as { kind: PlayKind; event: PlayEvent };
+      // Online-Partien zählt der Server selbst
+      if (['solo', 'daily', 'zuschauen'].includes(kind) && PLAY_KINDS.includes(kind) && PLAY_EVENTS.includes(event)) stats.record(kind, event);
+      res.writeHead(204, { ...SECURITY_HEADERS, 'Cache-Control': 'no-store' }).end();
+    } catch {
+      res.writeHead(400, SECURITY_HEADERS).end();
+    }
+  });
+}
 
 const http = createServer((req, res) => {
+  if (req.method === 'POST' && req.url === '/api/played') {
+    handlePlayed(req, res);
+    return;
+  }
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.writeHead(405, SECURITY_HEADERS).end();
     return;
@@ -124,6 +173,19 @@ const http = createServer((req, res) => {
   if (path === '/health') {
     res.writeHead(200, { 'Content-Type': TYPES['.json'], 'Cache-Control': 'no-store' });
     res.end(JSON.stringify({ ok: true, build: BUILD, rooms: lobby.rooms.size, players: lobby.playerCount }));
+    return;
+  }
+  if (path === '/stats' || path === '/stats.json') {
+    const key = new URL(req.url ?? '/', 'http://x').searchParams.get('key') ?? '';
+    if (STATS_KEY && key !== STATS_KEY) {
+      res.writeHead(403, { ...SECURITY_HEADERS, 'Content-Type': TYPES['.txt'] }).end('Schlüssel fehlt: /stats?key=…');
+      return;
+    }
+    void stats.snapshot().then((data) => {
+      const json = path.endsWith('.json');
+      res.writeHead(200, { ...SECURITY_HEADERS, 'Content-Type': json ? TYPES['.json'] : TYPES['.html'], 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' });
+      res.end(json ? JSON.stringify(data) : statsPage(data, stats.storage));
+    });
     return;
   }
   serveStatic(req, res, path);
@@ -222,6 +284,7 @@ function shutdown(signal: string): void {
     ws.close(1012, 'Neustart');
   }
   http.close();
+  stats.flush();
   setTimeout(() => process.exit(0), 500).unref();
 }
 process.on('SIGTERM', () => shutdown('SIGTERM'));

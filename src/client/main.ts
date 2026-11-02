@@ -183,6 +183,22 @@ input.onRotateBuild = () => {
   buildRot = 1 - buildRot;
 };
 
+/**
+ * Spielzähler: Einzelspieler-Partien beim Server melden (nur Art und Ergebnis,
+ * keine persönlichen Daten). Online-Partien zählt der Server selbst. Im
+ * Entwicklungsmodus und bei Fehlern passiert nichts.
+ */
+type PlayKind = 'solo' | 'daily' | 'zuschauen';
+let playKind: PlayKind | null = null;
+function reportPlay(kind: PlayKind, event: 'start' | 'win' | 'loss'): void {
+  if (import.meta.env.DEV || params.has('debug')) return;
+  try {
+    void fetch('/api/played', { method: 'POST', body: JSON.stringify({ kind, event }), keepalive: true }).catch(() => {});
+  } catch {
+    // ohne Server (z. B. statisch gehostet) nicht zählen
+  }
+}
+
 /** Heldenwahl, dann Team-Ansicht, dann Spielstart (allein oder online). */
 function pickHero(defId: string): void {
   hud.showTeam(
@@ -210,6 +226,8 @@ function startGame(defId: string | null, bots: string[], diff: BotDifficulty): v
   );
   session = local;
   heroId = local.state.heroes[0].id;
+  playKind = defId ? 'solo' : 'zuschauen';
+  reportPlay(playKind, 'start');
   begin(defId !== null);
   hud.setInvite(null);
 }
@@ -235,6 +253,8 @@ function startDaily(setup: DailySetup): void {
   );
   session = local;
   heroId = local.state.heroes[0].id;
+  playKind = 'daily';
+  reportPlay(playKind, 'start');
   begin(true);
   hud.setInvite(null);
 }
@@ -871,6 +891,7 @@ function handleEvents(state: GameState): void {
         break;
       }
       case 'gameOver': {
+        if (session instanceof LocalSession && playKind) reportPlay(playKind, e.victory ? 'win' : 'loss');
         // PvP: Sieg, wenn das eigene Team gewonnen hat
         const base = state.pvp && e.winnerTeam !== undefined ? { ...e, victory: myHero()?.team === e.winnerTeam } : e;
         // Erfolge (Titel, Laternenfarben) eintragen; neue zeigt der Endbildschirm
