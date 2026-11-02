@@ -418,6 +418,11 @@ export class GameRenderer {
 
   /** Gerenderte Position einer Einheit (interpoliert). */
   /** Laufende Dauer-Animation einer Einheit (Debug). */
+  /** Nebel an (normal) bzw. aus (Übersicht über die ganze Karte). */
+  setFogEnabled(on: boolean): void {
+    this.scene.fog = on ? this.fog : null;
+  }
+
   unitLoop(id: number): string {
     return this.units.get(id)?.loopName ?? '';
   }

@@ -36,6 +36,8 @@ export interface RoomInfo {
   /** PvP-Einstellungen: Ziel (Kills oder Kiste), Zombies nebenbei, leere Plätze mit Bots. */
   pvp?: PvpOptions;
   startsIn: number | null;
+  /** Zuschauer im Raum (belegen keinen Platz). */
+  spectators?: number;
   slots: { heroId: number; defId: string; human: boolean; reserved: boolean; name: string | null; ready: boolean; spells: [string, string] | null; team: number }[];
 }
 
@@ -46,6 +48,8 @@ export type ClientMessage =
   | { t: 'create'; heroes: string[]; difficulty: BotDifficulty; name: string }
   | { t: 'info'; room: string }
   | { t: 'join'; room: string; slot: number; name: string }
+  /** Zuschauen: Zustände empfangen, ohne einen Platz zu belegen. */
+  | { t: 'watch'; room: string }
   /** Nach einem Verbindungsabbruch: denselben Platz mit dem Token zurückholen. */
   | { t: 'resume'; room: string; token: string; name: string }
   /** Eingabe für einen Tick (WASD, Maus) mit laufender Nummer. */
@@ -73,6 +77,8 @@ export type ServerMessage =
   /** Beitritt bestätigt (und beim Spielstart erneut): eigener Platz, Held (−1 in der Lobby), Token. */
   | { t: 'joined'; room: RoomInfo; heroId: number; token: string; slot?: number }
   | { t: 'room'; room: RoomInfo }
+  /** Zuschauen bestätigt; Zustände kommen wie bei Spielern (ack immer 0). */
+  | { t: 'watching'; room: RoomInfo }
   /** ack: zuletzt angewendete Eingabe dieses Spielers. */
   | { t: 'state'; s: Snapshot; ack: number }
   | { t: 'pong'; ts: number }
@@ -139,6 +145,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return { t: 'create', heroes: m.heroes as string[], difficulty: m.difficulty as BotDifficulty, name };
     case 'info':
       return str(m.room, 8) ? { t: 'info', room: m.room } : null;
+    case 'watch':
+      return str(m.room, 8) ? { t: 'watch', room: m.room } : null;
     case 'join':
       // slot −1: nächster freier Platz (Lobby)
       return str(m.room, 8) && int(m.slot, -1, 3) ? { t: 'join', room: m.room, slot: m.slot, name } : null;

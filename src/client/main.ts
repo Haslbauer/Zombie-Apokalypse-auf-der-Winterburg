@@ -47,7 +47,10 @@ const startLevel = Math.max(1, Math.min(18, Number(params.get('level')) || 1));
 /** Entwicklermodus: ?wave=5 beginnt mit Welle 5. */
 const startWave = Math.max(1, Number(params.get('wave')) || 1);
 /** Entwicklermodus: ?bots=4 – vier Bots spielen allein (Zuschauen, Kamera von oben). */
-const spectate = params.get('bots') === '4' || params.get('bots') === '3';
+/** Zuschauermodus: kein eigener Held, heroId ist der beobachtete Held (lokal nur Bots oder online im Raum). */
+let spectate = params.get('bots') === '4' || params.get('bots') === '3';
+/** Zuschauen: Übersicht über die ganze Karte statt einem Helden folgen. */
+let watchOverview = false;
 const spectateDifficulty = (params.get('difficulty') ?? 'mittel') as BotDifficulty;
 /** Entwicklermodus: ?zoom=12 holt die Kamera näher heran (Standard 34). */
 const zoom = Number(params.get('zoom')) || 0;
@@ -118,7 +121,15 @@ function flushDamageNumbers(): void {
 let beesAngryUntil = 0;
 const myHero = () => session?.state.heroes.find((h) => h.id === heroId);
 
-input.onCast = (slot) => cmd({ type: 'cast', slot, aim: input.aimPoint });
+input.onCast = (slot) => {
+  // Zuschauen: 1–4 wechselt den beobachteten Helden
+  if (spectate) {
+    const h = session?.state.heroes[slot];
+    if (h) watchHero(h.id);
+    return;
+  }
+  cmd({ type: 'cast', slot, aim: input.aimPoint });
+};
 input.onPing = (kind, pos) => cmd({ type: 'ping', kind, pos });
 input.onLevelUp = (slot) => cmd({ type: 'levelUp', slot });
 hud.onLevelUp = input.onLevelUp;
@@ -145,7 +156,7 @@ hud.onSell = (slot, consumable) => {
 /** Shop öffnen bzw. schließen; nur in der Pause im Innenhof. */
 function toggleShop(): void {
   const hero = myHero();
-  if (!session || !hero) return;
+  if (!session || !hero || spectate) return;
   if (shop.open) {
     shop.hide();
     return;
@@ -176,12 +187,76 @@ let buildOpen = false;
 let buildKind: DefenseKind | null = null;
 let buildRot = 0;
 input.onBuild = () => {
+  if (spectate) return;
   buildOpen = !buildOpen;
   if (!buildOpen) buildKind = null;
 };
 input.onRotateBuild = () => {
   buildRot = 1 - buildRot;
 };
+
+/** Startbildschirm: Heldenwahl, Tägliche Herausforderung, Zuschauen. */
+function showStartScreen(): void {
+  hud.showStart(pickHero, showDaily, () => startGame(null, defaultTeam(gameData.bots, null), spectateDifficulty));
+}
+
+/** Zuschauen: einem Helden folgen (Index oder Id), HUD zeigt seine Leiste. */
+function watchHero(id: number): void {
+  const state = session?.state;
+  const h = state?.heroes.find((x) => x.id === id);
+  if (!state || !h) return;
+  heroId = h.id;
+  heroDefId = h.defId;
+  hud.startGame(heroDefId);
+  hud.setWatched(heroId);
+  if (watchOverview) setWatchOverview(false);
+}
+
+/** Zuschauen: Übersicht über die ganze Karte an/aus. */
+function setWatchOverview(on: boolean): void {
+  watchOverview = on;
+  const cam = renderer.cam;
+  if (on) {
+    renderer.setFogEnabled(false);
+    cam.firstPerson = false;
+    cam.overview(gameData.arena.width / 2 + (gameData.arena.minX ?? 0) / 2, gameData.arena.height / 2 + (gameData.arena.minY ?? 0) / 2 + 8, 135);
+  } else {
+    renderer.setFogEnabled(true);
+    cam.resume();
+    const h = myHero();
+    if (h) cam.lookAt(h.pos.x, h.pos.y);
+  }
+}
+
+/** Zuschauer-Leiste und Klicks auf die Teamleiste je nach Modus. */
+function updateSpectatorUi(): void {
+  document.body.classList.toggle('watching', spectate && !!session);
+  document.body.classList.toggle('watching-online', spectate && session instanceof RemoteSession);
+  hud.onTeamClick = spectate ? watchHero : null;
+  if (!spectate || !session) {
+    hud.setSpectator(null, { pick: () => {}, overview: () => {} });
+    return;
+  }
+  const names = playerNames();
+  const remote = session instanceof RemoteSession ? session : null;
+  hud.setSpectator(
+    {
+      heroes: session.state.heroes.map((h) => ({ id: h.id, name: gameData.heroes.find((d) => d.id === h.defId)?.name ?? h.defId, who: names?.get(h.id) ?? 'Bot' })),
+      watched: heroId,
+      overview: watchOverview,
+      viewers: remote?.room?.spectators,
+    },
+    { pick: watchHero, overview: () => setWatchOverview(!watchOverview), leave: remote ? leaveOnline : undefined },
+  );
+}
+
+// Zuschauen: Leertaste schaltet die Übersicht um
+window.addEventListener('keydown', (e) => {
+  if (!spectate || !session || e.code !== 'Space' || e.repeat) return;
+  if (e.target instanceof HTMLInputElement) return;
+  e.preventDefault();
+  setWatchOverview(!watchOverview);
+});
 
 /**
  * Spielzähler: Einzelspieler-Partien beim Server melden (nur Art und Ergebnis,
@@ -191,7 +266,7 @@ input.onRotateBuild = () => {
 type PlayKind = 'solo' | 'daily' | 'zuschauen';
 let playKind: PlayKind | null = null;
 function reportPlay(kind: PlayKind, event: 'start' | 'win' | 'loss'): void {
-  if (import.meta.env.DEV || params.has('debug')) return;
+  if ((import.meta as { env?: { DEV?: boolean } }).env?.DEV || params.has('debug')) return;
   try {
     void fetch('/api/played', { method: 'POST', body: JSON.stringify({ kind, event }), keepalive: true }).catch(() => {});
   } catch {
@@ -204,7 +279,7 @@ function pickHero(defId: string): void {
   hud.showTeam(
     defId,
     (bots, diff) => startGame(defId, bots, diff),
-    () => hud.showStart(pickHero, showDaily),
+    () => showStartScreen(),
     (bots, diff, name) => startOnline(defId, bots, diff, name),
   );
 }
@@ -227,6 +302,8 @@ function startGame(defId: string | null, bots: string[], diff: BotDifficulty): v
   session = local;
   heroId = local.state.heroes[0].id;
   playKind = defId ? 'solo' : 'zuschauen';
+  spectate = defId === null;
+  watchOverview = false;
   reportPlay(playKind, 'start');
   begin(defId !== null);
   hud.setInvite(null);
@@ -237,7 +314,7 @@ let daily: DailySetup | null = null;
 
 function showDaily(): void {
   const setup = dailySetup(gameData.bots, gameData.heroes.map((h) => h.id));
-  hud.showDaily(setup, loadDaily(setup.key), () => startDaily(setup), () => hud.showStart(pickHero, showDaily));
+  hud.showDaily(setup, loadDaily(setup.key), () => startDaily(setup), () => showStartScreen());
 }
 
 /** Tagesherausforderung: fester Seed, festes Team, Schwierigkeit und Mutator. */
@@ -254,6 +331,8 @@ function startDaily(setup: DailySetup): void {
   session = local;
   heroId = local.state.heroes[0].id;
   playKind = 'daily';
+  spectate = false;
+  watchOverview = false;
   reportPlay(playKind, 'start');
   begin(true);
   hud.setInvite(null);
@@ -277,9 +356,19 @@ function begin(isPlayer: boolean): void {
   // Entwicklermodus ?camera=x,y,abstand: feste Kamera auf einen Punkt (Nahaufnahmen der Karte)
   const camera = params.get('camera')?.split(',').map(Number);
   if (camera && camera.length === 3 && camera.every(Number.isFinite)) renderer.cam.overview(camera[0], camera[1], camera[2]);
-  else if (overview || !isPlayer) {
-    renderer.scene.fog = null;
+  else if (overview) {
+    renderer.setFogEnabled(false);
     renderer.cam.overview(gameData.arena.width / 2 + (gameData.arena.minX ?? 0) / 2, gameData.arena.height / 2 + (gameData.arena.minY ?? 0) / 2 + 8, 135);
+  } else {
+    // Zuschauen (und normales Spiel): dem Helden folgen; Übersicht schaltet die Leertaste
+    renderer.setFogEnabled(true);
+    renderer.cam.resume();
+    watchOverview = false;
+  }
+  renderer.cam.allowFirstPerson = !spectate;
+  if (spectate) {
+    renderer.cam.firstPerson = false;
+    hud.setWatched(heroId);
   }
   minimap.visible = true;
   hud.message('Mach dich bereit!');
@@ -328,6 +417,7 @@ async function joinRoom(code: string, error?: string): Promise<void> {
       (slot, name) => connect({ t: 'join', room: room.code, slot, name }, room.slots.map((s) => s.defId)),
       leaveOnline,
       error,
+      () => connect({ t: 'watch', room: room.code }, room.slots.map((s) => s.defId)),
     );
   } catch (err) {
     hud.showNotice('Raum nicht gefunden', (err as Error).message, leaveOnline);
@@ -368,7 +458,40 @@ function connect(first: Parameters<typeof RemoteSession.connect>[0], heroes: str
   const remote = RemoteSession.connect(first, placeholder(heroes));
   let started = false;
   remote.onRoom = (room: RoomInfo) => {
+    if (remote.watching) {
+      // Zuschauen: kein Platz; in der Lobby warten, im Spiel dem ersten Helden folgen
+      const query = new URLSearchParams(location.search);
+      query.set('room', room.code);
+      query.set('watch', '1');
+      history.replaceState(null, '', `?${query}`);
+      difficulty = room.difficulty;
+      if (room.phase === 'lobby') {
+        started = false;
+        session = remote;
+        spectate = true;
+        heroId = -1;
+        minimap.visible = false;
+        hud.setInvite(null);
+        const players = room.slots.filter((sl) => sl.human).map((sl) => sl.name ?? 'Spieler');
+        hud.showNotice(`👁 Zuschauen – Raum ${room.code}`, `Die Gruppe sammelt sich noch in der Lobby (${players.join(', ') || 'noch niemand'}). Das Spiel erscheint hier, sobald es startet.`, leaveOnline);
+        return;
+      }
+      if (!started) {
+        started = true;
+        remote.state = placeholder(room.slots.map((sl) => sl.defId));
+        session = remote;
+        spectate = true;
+        heroId = room.slots[0]?.heroId ?? remote.state.heroes[0].id;
+        begin(false);
+        hud.setInvite(null);
+      } else {
+        hud.buildTeam(remote.state, -1, difficulty, playerNames());
+        hud.setWatched(heroId);
+      }
+      return;
+    }
     if (!remote.token) return; // erst nach der Beitrittsbestätigung
+    spectate = false;
     difficulty = room.difficulty;
     storeToken(room.code, remote.token);
     const link = `${location.origin}${location.pathname}?room=${room.code}`;
@@ -381,6 +504,7 @@ function connect(first: Parameters<typeof RemoteSession.connect>[0], heroes: str
       hud.setInvite(null);
       const query = new URLSearchParams(location.search);
       query.set('room', room.code);
+      query.delete('watch');
       history.replaceState(null, '', `?${query}`);
       hud.showLobby(room, remote.slot, link, {
         pick: (id) => remote.lobby({ t: 'pick', heroId: id }),
@@ -407,6 +531,7 @@ function connect(first: Parameters<typeof RemoteSession.connect>[0], heroes: str
       heroId = remote.heroId;
       const query = new URLSearchParams(location.search);
       query.set('room', room.code);
+      query.delete('watch');
       history.replaceState(null, '', `?${query}`);
       begin(true);
       hud.setInvite(room.code, link);
@@ -454,10 +579,12 @@ function connect(first: Parameters<typeof RemoteSession.connect>[0], heroes: str
 function leaveOnline(): void {
   session?.close();
   session = null;
+  spectate = false;
+  updateSpectatorUi();
   minimap.visible = false;
   hud.setInvite(null);
   history.replaceState(null, '', location.pathname);
-  hud.showStart(pickHero, showDaily);
+  showStartScreen();
 }
 
 /** Esc: Pause mit Tastenbelegung öffnen bzw. schließen (online läuft das Spiel weiter). */
@@ -951,7 +1078,8 @@ renderer.renderer.setAnimationLoop((now) => {
       shop.hide();
       hud.message(shopReason);
     }
-    hud.setShopHint(!shopReason && !shop.open && !session.paused);
+    hud.setShopHint(!shopReason && !shop.open && !session.paused && !spectate);
+    updateSpectatorUi();
     shop.update(me, def.attack.type, (id) => buildPlan(ctx(), me, id));
     minimap.update(dt, state, heroId, viewCorners());
     if (session instanceof RemoteSession) hud.setPing(session.rtt);
@@ -1188,7 +1316,8 @@ else if (roomCode) {
   // Neu geladen: mit dem gespeicherten Token denselben Helden zurückholen, sonst Platz wählen
   const code = roomCode.toUpperCase();
   const token = storedToken(code);
-  if (token) connect({ t: 'resume', room: code, token, name: savedName() }, gameData.heroes.slice(0, 4).map((h) => h.id));
+  if (params.has('watch')) connect({ t: 'watch', room: code }, gameData.heroes.slice(0, 4).map((h) => h.id));
+  else if (token) connect({ t: 'resume', room: code, token, name: savedName() }, gameData.heroes.slice(0, 4).map((h) => h.id));
   else void joinRoom(code);
 }
-else hud.showStart(pickHero, showDaily);
+else showStartScreen();

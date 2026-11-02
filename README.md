@@ -34,6 +34,15 @@ Baut das Spiel, startet den Server und öffnet einen kostenlosen Cloudflare-Tunn
 
 Im Spiel: Helden wählen, **„Online mit Freunden“**. Oben rechts stehen Raum-Code, Ping (ms) und **„Link kopieren“**. Wer den Link öffnet, übernimmt einen Bot-Platz samt Level, Gold und Items.
 
+### Zuschauermodus
+
+- **Online zuschauen:** Wer einen Einladungslink öffnet, kann statt beizutreten **„👁 Nur zuschauen“** wählen. Ein Zuschauer belegt keinen Platz und steuert nichts. Er sieht die Partie live, wie die Spieler sie sehen. Pro Raum sind bis zu 8 Zuschauer möglich. Ist die Gruppe noch in der Lobby, wartet der Zuschauer, bis das Spiel startet. Der Link mit `&watch=1` führt direkt zum Zuschauen, zum Beispiel `…/?room=ABCD&watch=1`.
+- **Nur Bots:** Auf dem Startbildschirm startet **„👁 Zuschauen (nur Bots)“** eine Partie, in der drei Bots allein spielen.
+- **Steuerung beim Zuschauen:**
+  - **1–4** oder ein Klick auf einen Helden, oben oder in der Teamleiste: Diesem Helden folgen. Unten stehen dann seine Fähigkeiten, Items und sein Gold.
+  - **Leertaste** oder „🗺 Übersicht“: die ganze Karte von oben, ohne Nebel; noch einmal drücken führt zurück.
+  - Das Mausrad zoomt. Die Leiste oben zeigt online, wie viele zuschauen.
+
 ### Dauerhafter Link (Render, Gratis-Tarif)
 
 Das Spiel läuft unter **https://zombie-apokalypse.onrender.com** und wird bei jedem Push auf `main` automatisch neu gebaut. Eigene Instanz: bei [render.com](https://render.com) mit GitHub anmelden, **New → Blueprint**, dieses Repo wählen – `render.yaml` erledigt den Rest (Region Frankfurt). Der Gratis-Dienst schläft nach rund 15 Minuten ohne Besucher; der erste Aufruf danach dauert etwa eine Minute, das Spiel zeigt dann „Server wacht auf …“ und versucht es weiter. Laufende Räume gehen beim Einschlafen verloren. (Stand der Anbieterbedingungen kann sich ändern.)
@@ -178,7 +187,7 @@ Die Winterburg: U-förmiges Haus mit dem **Lebensmittelvorrat** im Innenhof (err
 
 Neutrale Lager lassen sich nicht über den Zaun hinweg „abfarmen“: Erreichen sie ihren Angreifer 5 s lang nicht, kehren sie unverwundbar heim und heilen sich. Es ist Nacht: Mondlicht, Nebel, brennende Fässer, Stacheldraht und Bretterbarrikaden an den Toren, Feuerstellen, Krähen, Knochen und ein Autowrack vor dem Osttor. Der Westflügel des Hauses ist eine halb eingestürzte Ruine, die Wege sind aus Bruchstein. Ohne Bienenstock wachsen zerstörte Beete nicht mehr nach (verdorrte Stängel, Hinweis in der Kopfleiste). Rund um den Garten liegt Gelände mit Büschen, Hecken, einer alten Grabstätte und einem Teich. **Verstecke** wie das Gebüsch in LoL: Im hohen Gras, in Büschen und im Schilf sehen Zombies einen Helden erst aus nächster Nähe – bis er angreift. Umgekehrt sieht man Zombies im Gebüsch erst, wenn man selbst nah dran ist.
 
-Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben, `?level=6` startet auf Level 6, `?wave=5` mit Welle 5 (kombinierbar: `?wave=5&level=8`), `?bots=3` (oder `?bots=4`) lässt drei Bots allein spielen (Zuschauen, optional `&difficulty=schwer`). `?camera=x,y,abstand` richtet die Kamera fest auf einen Punkt (z. B. `?bots=4&camera=37,22,30` fürs Haus), `?debug` gibt Testhilfen frei (`winterburg.teleport(x, y)`, `spawnZombie(typ, x, y)`, `buff(art, wert, sekunden)`, `down()`, `finish(sieg)`). `portrait.html?hero=<id>` rendert ein Porträt aus dem Modell.
+Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben, `?level=6` startet auf Level 6, `?wave=5` mit Welle 5 (kombinierbar: `?wave=5&level=8`), `?bots=3` (oder `?bots=4`) lässt drei Bots allein spielen (Zuschauermodus, optional `&difficulty=schwer`). `?camera=x,y,abstand` richtet die Kamera fest auf einen Punkt (z. B. `?bots=4&camera=37,22,30` fürs Haus), `?debug` gibt Testhilfen frei (`winterburg.teleport(x, y)`, `spawnZombie(typ, x, y)`, `buff(art, wert, sekunden)`, `down()`, `finish(sieg)`). `portrait.html?hero=<id>` rendert ein Porträt aus dem Modell.
 
 ## Team und Bots
 

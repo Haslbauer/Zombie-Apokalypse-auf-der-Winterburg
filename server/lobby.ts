@@ -72,7 +72,12 @@ export class Lobby {
         return;
       }
     }
+    // Zuschauer steuern nichts: nur Raum-Infos, Ping, neuer Raum, Beitritt oder Zuschauen
+    if (client.room?.isSpectator(client) && !['info', 'ping', 'create', 'join', 'watch'].includes(msg.t)) return;
     switch (msg.t) {
+      case 'watch':
+        this.watch(client, msg.room.toUpperCase());
+        break;
       case 'create':
         this.create(client, msg.heroes, msg.difficulty, msg.name);
         break;
@@ -183,6 +188,17 @@ export class Lobby {
     if (!room) return this.reply(client, { t: 'error', msg: 'Diesen Raum gibt es nicht (mehr)' });
     this.leaveRoom(client);
     this.enter(client, room, slot, name);
+  }
+
+  /** Zuschauen: Zustände empfangen, ohne einen Platz zu belegen. */
+  private watch(client: Client, code: string): void {
+    const room = this.rooms.get(code);
+    if (!room) return this.reply(client, { t: 'error', msg: 'Diesen Raum gibt es nicht (mehr)' });
+    if (client.room !== room) this.leaveRoom(client);
+    const err = room.watch(client, this.now());
+    if (err) return this.reply(client, { t: 'error', msg: err });
+    client.room = room;
+    this.log(`Raum ${room.code}: Zuschauer dazu (${room.spectatorCount})`);
   }
 
   /** Nach einem Abbruch: Platz zum Token suchen und zurückgeben. */

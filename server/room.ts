@@ -24,6 +24,8 @@ export const BACKPRESSURE_BYTES = 256 * 1024;
 const FULL_EVERY = 20;
 /** So lange bleibt der Platz eines Spielers nach einem Verbindungsabbruch für ihn reserviert (ms). */
 export const RESERVE_MS = 2 * 60 * 1000;
+/** Höchstzahl der Zuschauer je Raum. */
+export const MAX_SPECTATORS = 8;
 /** Mehr wartende Eingaben werden verworfen (die ältesten), damit die Verzögerung nicht wächst. */
 const MAX_QUEUED_INPUTS = 6;
 
@@ -77,6 +79,8 @@ export class Room {
   difficulty: BotDifficulty;
   /** Zeitpunkt, seit dem niemand mehr im Raum ist (zum Aufräumen). */
   emptySince: number | null = null;
+  /** Zuschauer: bekommen Raum-Infos und Zustände, steuern nichts. needFull: nächster Zustand vollständig. */
+  private readonly spectators = new Map<Player, { needFull: boolean }>();
   /** Spielzähler (setzt die Lobby): Partie gestartet bzw. beendet. */
   onPlay?: (kind: 'koop' | 'pvp', event: 'start' | 'win' | 'loss' | 'end') => void;
   /** Selten wechselnde Daten im letzten Schnappschuss (siehe slowKey). */
@@ -158,6 +162,7 @@ export class Room {
       level: this.level,
       pvp: { ...this.pvpOptions },
       startsIn: lobby && this.startsAt !== null ? Math.max(0, (this.startsAt - now) / 1000) : null,
+      spectators: this.spectators.size,
       slots: this.active.map((s, i) => {
         const h = this.sim.state.heroes[i];
         const reserved = !s.player && s.reservedUntil !== null && now < s.reservedUntil;
@@ -299,6 +304,24 @@ export class Room {
     this.broadcastRoom(now);
   }
 
+  /** Zuschauer aufnehmen (Fehlertext, wenn voll). */
+  watch(player: Player, now = Date.now()): string | null {
+    if (this.spectators.has(player)) return null;
+    if (this.spectators.size >= MAX_SPECTATORS) return `Höchstens ${MAX_SPECTATORS} Zuschauer pro Raum`;
+    this.spectators.set(player, { needFull: true });
+    player.send(JSON.stringify({ t: 'watching', room: this.info(now) }));
+    this.broadcastRoom(now);
+    return null;
+  }
+
+  isSpectator(player: Player): boolean {
+    return this.spectators.has(player);
+  }
+
+  get spectatorCount(): number {
+    return this.spectators.size;
+  }
+
   /** Menschen im Raum. */
   get humans(): Player[] {
     return this.slots.flatMap((s) => (s.player ? [s.player] : []));
@@ -361,6 +384,10 @@ export class Room {
    * (keep = true) bleibt der Platz für sein Token reserviert.
    */
   leave(player: Player, now: number, keep = false): void {
+    if (this.spectators.delete(player)) {
+      this.broadcastRoom(now);
+      return;
+    }
     const slot = this.slotOf(player);
     if (slot < 0) return;
     const s = this.slots[slot];
@@ -453,11 +480,23 @@ export class Room {
       } else json = shared ??= encodeSnapshot(this.sim.state, events, ZOMBIE_TYPES, full);
       s.player.send(stateMessage(json, s.ack));
     }
+    // Zuschauer: derselbe Zustand; wer neu ist oder einen Rückstau hatte, bekommt einen vollständigen
+    let fullJson: string | null = null;
+    for (const [p, v] of this.spectators) {
+      if (p.buffered() > BACKPRESSURE_BYTES) {
+        v.needFull = true;
+        continue;
+      }
+      const json = v.needFull ? (fullJson ??= encodeSnapshot(this.sim.state, events, ZOMBIE_TYPES, true)) : (shared ??= encodeSnapshot(this.sim.state, events, ZOMBIE_TYPES, full));
+      v.needFull = false;
+      p.send(stateMessage(json, 0));
+    }
   }
 
   broadcastRoom(now = Date.now()): void {
     const data = JSON.stringify({ t: 'room', room: this.info(now) });
     for (const p of this.humans) p.send(data);
+    for (const p of this.spectators.keys()) p.send(data);
   }
 }
 

@@ -254,7 +254,13 @@ export class Hud {
    * Beitreten per Einladungslink: Die Plätze des Raums; ein Bot-Platz lässt sich
    * übernehmen (samt Level, Gold und Items).
    */
-  showJoin(room: RoomInfo, onPick: (slot: number, name: string) => void, onCancel: () => void, error?: string): void {
+  showJoin(room: RoomInfo, onPick: (slot: number, name: string) => void, onCancel: () => void, error?: string, onWatch?: () => void): void {
+    const watchBtn = () => {
+      const b = el('button', 'hud-restart', '👁 Nur zuschauen');
+      b.title = 'Zuschauen, ohne einen Platz zu belegen';
+      if (onWatch) b.addEventListener('click', onWatch);
+      return b;
+    };
     delete this.overlay.dataset.menu;
     this.showInGame(false);
     this.overlay.replaceChildren();
@@ -269,7 +275,9 @@ export class Hud {
       const back = el('button', 'hud-restart', 'Allein spielen');
       back.addEventListener('click', onCancel);
       const buttons = el('div', 'hud-buttons');
-      buttons.append(back, go);
+      buttons.append(back);
+      if (onWatch) buttons.append(watchBtn());
+      buttons.append(go);
       box.append(name, buttons);
       this.overlay.append(box);
       this.overlay.style.display = '';
@@ -295,6 +303,7 @@ export class Hud {
     const back = el('button', 'hud-restart', 'Allein spielen');
     back.addEventListener('click', onCancel);
     buttons.append(back);
+    if (onWatch) buttons.append(watchBtn());
     // Beschwörerzauber gelten für jeden Helden; Vorgabe nach dem ersten freien Platz
     const firstFree = room.slots.find((s) => !s.human && !s.reserved)?.defId ?? room.slots[0]?.defId ?? 'rotschopf';
     box.append(row, this.spellPicker(firstFree), name, buttons);
@@ -783,6 +792,52 @@ export class Hud {
   }
 
   /** Teamleiste links: Porträt, Name, Mensch/Bot, Level, Leben, Respawn. names: Menschen im Raum nach Helden-Id (Mehrspieler). */
+  /** Zuschauen: Klick auf einen Helden in der Teamleiste (null = aus). */
+  onTeamClick: ((heroId: number) => void) | null = null;
+
+  /** Zuschauen: beobachteten Helden in der Teamleiste hervorheben. */
+  setWatched(heroId: number): void {
+    for (const [id, r] of this.teamRows) r.row.classList.toggle('me', id === heroId);
+  }
+
+  private spectatorBar: HTMLElement | null = null;
+  private spectatorKey = '';
+  /**
+   * Zuschauer-Leiste oben: Helden zum Wechseln (1–4 oder Klick), Übersicht
+   * (Leertaste), Anzahl der Zuschauer online. null = ausblenden.
+   */
+  setSpectator(
+    info: { heroes: { id: number; name: string; who: string }[]; watched: number; overview: boolean; viewers?: number } | null,
+    on: { pick: (heroId: number) => void; overview: () => void; leave?: () => void },
+  ): void {
+    if (!this.spectatorBar) {
+      this.spectatorBar = el('div', 'hud-spectator');
+      this.root.append(this.spectatorBar);
+    }
+    const key = info ? JSON.stringify(info) : '';
+    if (key === this.spectatorKey) return;
+    this.spectatorKey = key;
+    this.spectatorBar.style.display = info ? '' : 'none';
+    if (!info) return;
+    const items: HTMLElement[] = [el('span', 'hud-spectator-title', `👁 Zuschauer${info.viewers ? ` · ${info.viewers} schauen zu` : ''}`)];
+    info.heroes.forEach((h, i) => {
+      const b = el('button', `hud-spectator-btn${!info.overview && h.id === info.watched ? ' active' : ''}`);
+      b.append(el('kbd', '', String(i + 1)), el('span', '', h.name), el('small', '', h.who));
+      b.addEventListener('click', () => on.pick(h.id));
+      items.push(b);
+    });
+    const ov = el('button', `hud-spectator-btn${info.overview ? ' active' : ''}`);
+    ov.append(el('kbd', '', 'Leer'), el('span', '', '🗺 Übersicht'));
+    ov.addEventListener('click', on.overview);
+    items.push(ov);
+    if (on.leave) {
+      const lv = el('button', 'hud-spectator-btn leave', 'Verlassen');
+      lv.addEventListener('click', on.leave);
+      items.push(lv);
+    }
+    this.spectatorBar.replaceChildren(...items);
+  }
+
   buildTeam(state: GameState, playerId: number, difficulty: BotDifficulty, names?: Map<number, string>): void {
     this.team.replaceChildren();
     this.teamRows.clear();
@@ -804,6 +859,7 @@ export class Hud {
       bar.append(hp);
       info.append(name, status, bar);
       row.append(img, info);
+      row.addEventListener('click', () => this.onTeamClick?.(h.id));
       this.team.append(row);
       const bosses = el('span', 'hud-team-bosses');
       level.before(bosses);
@@ -812,7 +868,7 @@ export class Hud {
   }
 
   /** Startbildschirm mit Heldenwahl. */
-  showStart(onPick: (heroId: string) => void, onDaily?: () => void): void {
+  showStart(onPick: (heroId: string) => void, onDaily?: () => void, onWatch?: () => void): void {
     delete this.overlay.dataset.menu;
     this.showInGame(false);
     this.overlay.replaceChildren();
@@ -822,6 +878,12 @@ export class Hud {
       const daily = el('button', 'hud-diff hud-daily-btn', '📅 Tägliche Herausforderung');
       daily.addEventListener('click', onDaily);
       box.append(daily);
+    }
+    if (onWatch) {
+      const watch = el('button', 'hud-diff hud-watch-btn', '👁 Zuschauen (nur Bots)');
+      watch.title = 'Drei Bots spielen allein; du wechselst mit 1–3 zwischen den Helden, Leertaste zeigt die ganze Karte';
+      watch.addEventListener('click', onWatch);
+      box.append(watch);
     }
     box.append(el('p', '', 'Wähle deinen Helden:'));
     const row = el('div', 'hud-heroes');

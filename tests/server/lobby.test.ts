@@ -105,6 +105,34 @@ describe('Server: Räume', () => {
     expect(other.last('joined')).toBeDefined();
   });
 
+  it('Zuschauer: bekommen Zustände, belegen keinen Platz, steuern nichts, max. 8', () => {
+    const { lobby, player, host, code, room } = twoPlayers();
+    const fan = player();
+    fan.send({ t: 'watch', room: code.toLowerCase() });
+    expect(fan.last('watching')!.room.spectators).toBe(1);
+    expect(host.last('room')!.room.spectators).toBe(1);
+    expect(room.humans).toHaveLength(2);
+    lobby.tick();
+    const st = fan.last('state')!;
+    expect(st.s.full).toBe(true);
+    expect(st.ack).toBe(0);
+    // Befehle und Neustart werden ignoriert
+    const before = room.sim.state.heroes.map((h) => h.gold);
+    fan.send({ t: 'cmd', cmd: { type: 'buy', itemId: 'baseballschlaeger' } });
+    fan.send({ t: 'restart' });
+    fan.send({ t: 'pick', heroId: 'grimm' });
+    lobby.tick();
+    expect(room.sim.state.heroes.map((h) => h.gold)).toEqual(before);
+    // Höchstzahl
+    for (let i = 0; i < 7; i++) player().send({ t: 'watch', room: code });
+    const late = player();
+    late.send({ t: 'watch', room: code });
+    expect(late.last('error')!.msg).toMatch(/Zuschauer/);
+    // Gehen
+    lobby.disconnect(fan.client);
+    expect(host.last('room')!.room.spectators).toBe(7);
+  });
+
   it('Eingaben: genau eine pro Tick in Reihenfolge, Bestätigung (ack) im Zustand, nur der eigene Held', () => {
     const { lobby, host, room } = twoPlayers();
     const h = room.sim.state.heroes[0];

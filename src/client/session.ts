@@ -165,6 +165,8 @@ export class RemoteSession implements Session {
   private reconnecting = false;
   /** Eigener Platz im Raum (Lobby). */
   slot = -1;
+  /** Nur zuschauen (kein Platz, keine Eingaben). */
+  watching = false;
   /** Letzter entpackter Zustand (liefert fehlende, selten wechselnde Felder). */
   private lastDecoded: GameState | null = null;
   private reconnectStart = 0;
@@ -259,6 +261,15 @@ export class RemoteSession implements Session {
         this.onRoom(msg.room);
         break;
       }
+      case 'watching':
+        this.watching = true;
+        this.room = msg.room;
+        if (this.reconnecting) {
+          this.reconnecting = false;
+          this.onStatus('online');
+        }
+        this.onRoom(msg.room);
+        break;
       case 'room':
         this.room = msg.room;
         this.onRoom(msg.room);

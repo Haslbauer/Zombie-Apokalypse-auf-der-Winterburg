@@ -1791,3 +1791,55 @@ body.touch .hud-wave { font-size: 16px; }
   z-index: 2;
   position: relative;
 }
+
+/* Zuschauer-Leiste */
+.hud-spectator {
+  position: absolute;
+  left: 50%;
+  top: 58px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: calc(100% - 32px);
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(15, 22, 17, 0.82);
+  pointer-events: auto;
+  z-index: 5;
+}
+.hud-spectator-title { font-weight: 700; color: #ffd166; margin-right: 4px; font-size: 13px; }
+.hud-spectator-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 8px;
+  border: 1px solid #4f7a57;
+  background: #1d2a20;
+  color: #e8f0e0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+.hud-spectator-btn small { opacity: 0.7; font-size: 11px; }
+.hud-spectator-btn kbd {
+  font: inherit;
+  font-size: 11px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+}
+.hud-spectator-btn.active { border-color: #ffd166; box-shadow: 0 0 10px rgba(255, 209, 102, 0.4); }
+.hud-spectator-btn.leave { border-color: #7a4f4f; }
+.hud-team-row { cursor: default; }
+body.watching .hud-team-row { cursor: pointer; }
+/* Zuschauen: keine Steuerungshilfe, keine Skillpunkt-Hinweise; online auch kein „Jetzt starten“ */
+body.watching .hud-help, body.watching .hud-skill-hint, body.watching .hud-ability-plus { display: none !important; }
+body.watching.watching-online .hud-start-wave { display: none !important; }
+@media (max-width: 700px) {
+  .hud-spectator { top: 50px; font-size: 12px; }
+  .hud-spectator-btn small { display: none; }
+}

@@ -88,6 +88,19 @@ export class GameCamera {
     this.lookAt(x, y);
   }
 
+  /** Aus der Übersicht zurück: wieder dem Helden folgen (Zuschauen). */
+  resume(): void {
+    this.following = true;
+    this.offset.setLength(this.targetDistance);
+    this.camera.far = 200;
+    this.camera.updateProjectionMatrix();
+  }
+
+  /** Folgt die Kamera gerade (nicht Übersicht)? */
+  get isFollowing(): boolean {
+    return this.following;
+  }
+
   /** Weich zum Ziel nachführen. Der Fokus liegt etwas südlich, weil unten die Heldenleiste sitzt. */
   /** Maus in der Ego-Sicht: drehen (dx) und hoch/runter schauen (dy), in Pixeln. */
   look(dx: number, dy: number): void {

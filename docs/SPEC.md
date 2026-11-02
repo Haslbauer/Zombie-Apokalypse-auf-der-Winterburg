@@ -2,7 +2,7 @@
 
 Stand: 01.11.2026. Arbeitsgrundlage für Claude Code.
 
-Änderungen v2.7: Spieldauer etwa 20 Minuten für 20 Wellen: Pausen 20 s und 18 s (zum Einkaufen), weniger, dafür härter zuschlagende Zombies (+20 % Leben, +40 % Schaden je Welle), schnellere Kriecher, Messlauf `tests/balance/timing.test.ts`. Verteidigungen lassen sich auch während der Welle bauen und reparieren. Spielzähler (`/stats`, Abschnitt 10c).
+Änderungen v2.7: Spieldauer etwa 20 Minuten für 20 Wellen: Pausen 20 s und 18 s (zum Einkaufen), weniger, dafür härter zuschlagende Zombies (+20 % Leben, +40 % Schaden je Welle), schnellere Kriecher, Messlauf `tests/balance/timing.test.ts`. Verteidigungen lassen sich auch während der Welle bauen und reparieren. Spielzähler (`/stats`, Abschnitt 10c). Zuschauermodus online und lokal (Abschnitt 10).
 Änderungen v2.6: Wellen-Ereignisse (Nebelnacht, Blutmond, Regen), PvP-Varianten (Kiste erobern, Zombies nebenbei, Bots auf leeren Plätzen), Ego-Sicht mit Waffe im Bild und Kopfwippen, Schadenszahlen, Rollen-Kombos.
 Änderungen v2.5: Verteidigungen in der Pause (Stacheldraht, Barrikade, Feuerfass), vier neue Helden (Imker, Aurelius, Lotte, Kapitän Tiefe).
 Änderungen v2.4: Neuer Held Imker (Support), drei Spieler im Koop, Reichweiten und Durchschlag, Münzen und Buff-Ringe.
@@ -387,6 +387,11 @@ Werte in `data/spells.json`, Logik in `src/sim/spells.ts`.
 ## 10. Mehrspieler und Bots
 
 - **Lobby (v2.1):** Ein Online-Raum beginnt in der Lobby (`phase: lobby`, keine Simulation). Jeder Mensch wählt einen Helden (keine doppelten) und seine Zauber und meldet sich bereit (nur mit Held). Sind alle Menschen bereit, startet nach 15 s die Partie; leere Plätze füllen Bots mit freien Helden (Wunsch-Team des Gastgebers zuerst). „Nicht bereit“, ein neuer oder gehender Spieler stoppen den Countdown. Die Bot-Stärke legt der Gastgeber fest. „Nochmal“ nach Spielende führt zurück in die Lobby. Nachrichten: `pick`, `spells`, `ready`, `difficulty`; `join` mit Platz −1 = nächster freier Platz.
+- **Zuschauer (v2.7):** `watch {room}` macht eine Verbindung zum Zuschauer.
+  - Ein Zuschauer belegt keinen Platz, bekommt `watching {room}`, danach Raum-Infos und Zustände (ack 0; der erste Zustand und der nach einem Rückstau sind vollständig).
+  - Alle steuernden Nachrichten eines Zuschauers ignoriert der Server; erlaubt sind nur `info`, `ping`, `create`, `join` und `watch`.
+  - Höchstens 8 Zuschauer je Raum; `RoomInfo.spectators` zählt sie. Zuschauer halten einen leeren Raum nicht offen.
+  - Im Client folgt die Kamera einem Helden (1–4, Klick auf die Teamleiste); die Leertaste schaltet die Übersicht. Lokal startet „Zuschauen (nur Bots)“ eine Partie nur mit Bots.
 - **Pings als Aufträge an Bots (v1.7):** Ein Ping eines Menschen wird zum Auftrag. Bots antworten mit „Bin unterwegs“.
   - **Angriff!:** Alle Bots greifen das nächste Ziel um den Ping an (Zombie, Lager oder Postbote), solange sie dort kämpfen bis es fällt (sonst höchstens 25 s). Ohne Ziel kämpfen sie am Ort.
   - **Hilfe!:** Alle Bots laufen zum Helden und beschützen ihn 12 s.
