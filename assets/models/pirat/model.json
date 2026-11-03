@@ -42,6 +42,18 @@
     },
     "cast": {
       "file": "../rotschopf/casting.fbx"
+    },
+    "magic1hA": {
+      "file": "../moves/magic-1h-01.fbx"
+    },
+    "cast1h": {
+      "file": "../moves/cast-1h.fbx"
+    },
+    "goalie": {
+      "file": "../moves/goalie-throw-2.fbx"
+    },
+    "magic2hA": {
+      "file": "../moves/magic-2h-01.fbx"
     }
   },
   "inPlace": true,

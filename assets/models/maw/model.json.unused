@@ -1,0 +1,17 @@
+{
+  "base": "figur.fbx",
+  "clips": {
+    "walk": { "file": "../zombie/walk.fbx" },
+    "run": { "file": "../zombie/run.fbx" },
+    "idle": { "file": "../zombie/idle.fbx" },
+    "attack": { "file": "../zombie/attack.fbx" },
+    "attack2": { "file": "../moves/stomping.fbx" },
+    "scream": { "file": "../zombie/scream.fbx" },
+    "death": { "file": "../zombie/death.fbx" }
+  },
+  "inPlace": true,
+  "textureSize": 1024,
+  "simplifyRatio": 0.35,
+  "normalSize": 512,
+  "output": "public/models/zombie-maw.glb"
+}

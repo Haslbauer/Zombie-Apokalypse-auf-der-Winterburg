@@ -45,6 +45,30 @@
     },
     "jump": {
       "file": "../moves/standing-jump.fbx"
+    },
+    "magic1hA": {
+      "file": "../moves/magic-1h-01.fbx"
+    },
+    "cast1h": {
+      "file": "../moves/cast-1h.fbx"
+    },
+    "cast2h": {
+      "file": "../moves/cast-2h.fbx"
+    },
+    "area1": {
+      "file": "../moves/area-2h-01.fbx"
+    },
+    "area2": {
+      "file": "../moves/area-2h-02.fbx"
+    },
+    "magic2hB": {
+      "file": "../moves/magic-2h-02.fbx"
+    },
+    "wizard": {
+      "file": "../moves/wizard-casting.fbx"
+    },
+    "stompRage": {
+      "file": "../moves/stomping.fbx"
     }
   },
   "inPlace": true,

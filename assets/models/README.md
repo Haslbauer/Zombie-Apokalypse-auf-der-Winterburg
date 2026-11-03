@@ -110,3 +110,7 @@ Alle vier stehen mit `moves/standing-idle` (echtes Stehen statt Standbild).
 | snake (snake.fbx) | walk, idle, attack, attack2 (Sprung); **keine Todesanimation** | **Abgelegt für später, nicht im Spiel.** Quaternius (CC0). `model.json.unused` in `model.json` umbenennen und `npm run models snake` aufrufen, um sie zu verwenden |
 
 Ergebnis: je Modell ca. 1–3,5 MB (Ragnar mit mehreren Texturen am größten), 4.000–16.000 Dreiecke. Die Originale in `assets/models/` sind zusammen gut 400 MB groß.
+
+## Maw J Laygo (abgelegt für später)
+
+`assets/models/maw/figur.fbx` ist die Mixamo-Figur „Maw J Laygo“, ein großes Monster. Sie ist noch nicht im Spiel. `model.json.unused` ist schon mit Zombie-Bewegungen und Stampfen als zweitem Angriff vorbereitet; zum Einbauen die Datei in `model.json` umbenennen und `npm run models maw` ausführen.

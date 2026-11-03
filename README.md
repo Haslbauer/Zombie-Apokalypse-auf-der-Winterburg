@@ -574,13 +574,13 @@ Jede Fähigkeit spielt eine eigene Bewegung aus der Mixamo-Sammlung in `assets/m
 
 | Held | 1 | 2 | 3 | 4 |
 |---|---|---|---|---|
-| Lotte | Zauber mit einer Hand (Trollruf) | Beschwören (Brückentroll) | Hochspringen (Wutanfall) | Zauber mit beiden Händen (Trollfamilie) |
-| Hedwig | Zauber mit einer Hand (Weckruf) | Schlag auf den Boden (Glockenschlag) | Beschwören (Schutzglocke) | Zauber mit beiden Händen (Sturmgeläut) |
-| Imker | Werfen (Honigtopf) | Zauber mit einer Hand (Smoker) | Beschwören (Wachbienen) | Zauber mit beiden Händen (Schwarm) |
-| Aurelius | Zauber mit einer Hand (Lötflamme) | Beschwören (Blattgold) | Werfen (Schmelztiegel) | Zauber mit beiden Händen (Goldrausch) |
+| Lotte | Zauber mit einer Hand (Trollruf) | Zwei-Hand-Zauber (Brückentroll) | Stampfen (Wutanfall) | Zwei-Hand-Flächenzauber (Trollfamilie) |
+| Hedwig | Ein-Hand-Magieangriff (Weckruf) | Zwei-Hand-Flächenzauber (Glockenschlag) | Zwei-Hand-Zauber (Schutzglocke) | großer Zauberer-Zauber (Sturmgeläut) |
+| Imker | Wurf im Laufen (Honigtopf) | Ein-Hand-Magieangriff (Smoker) | Zauber mit einer Hand (Wachbienen) | Zwei-Hand-Magieangriff (Schwarm) |
+| Aurelius | Ein-Hand-Magieangriff (Lötflamme) | Zauber mit einer Hand (Blattgold) | Überkopf-Wurf (Schmelztiegel) | Zwei-Hand-Magieangriff (Goldrausch) |
 | Kapitän Tiefe | Schießen (Harpune) | Beschwören (Luftblase) | Sprung (Tauchgang) | Stoß mit beiden Händen (Flutwelle) |
 
-Vorher spielten Lotte und Hedwig bei ihrer dritten Fähigkeit Somnias Hinlegen (Powernap) ab, der Imker und Aurelius die Bewegungen von Spike und Rauchbarth.
+Die Bewegungen liegen in `assets/models/moves/`, darunter Stampfen, Wurf im Laufen und Mixamo-Zauber mit einer bzw. zwei Händen. Ultimates dürfen bis zu 2,2 s dauern, damit lange Zauber-Clips nicht hektisch wirken. Vorher spielten Lotte und Hedwig bei ihrer dritten Fähigkeit Somnias Hinlegen (Powernap) ab, der Imker und Aurelius die Bewegungen von Spike und Rauchbarth.
 
 ## Leistung
 

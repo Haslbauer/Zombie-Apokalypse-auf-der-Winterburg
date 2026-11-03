@@ -145,15 +145,15 @@ const HERO_LOOKS: Record<string, ModelLook> = {
   libero: { model: 'libero', move: 'run', idle: 'idle', refSpeed: 5.6, scale: 1.02, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.42 },
   pirat: { model: 'pirat', move: 'run', idle: 'idle', refSpeed: 5.5, scale: 1.03, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.5, props: ['hook'] },
   // Lotte: kleines Mädchen (verkleinerte Figur) im gelben Regenmantel, Zöpfe, Teddy im Arm
-  lotte: { model: 'schlaeferin', abilityClips: ['ability1', 'cast', 'jump', 'ability4'], move: 'run', idle: 'idle', refSpeed: 4.6, scale: 0.72, tint: [1, 1, 1], recolor: { color: 0xf0c020, flat: 0.4 }, attacks: ['attack'], attackStart: 0.3, props: ['pigtails', 'teddy'] },
+  lotte: { model: 'schlaeferin', abilityClips: ['cast1h', 'magic2hB', 'stompRage', 'area2'], move: 'run', idle: 'idle', refSpeed: 4.6, scale: 0.72, tint: [1, 1, 1], recolor: { color: 0xf0c020, flat: 0.4 }, attacks: ['attack'], attackStart: 0.3, props: ['pigtails', 'teddy'] },
   // Taucher Kapitän Tiefe: schwerer Anzug (einfarbig), Messinghelm, Sauerstoffflasche, Harpune
   taucher: { model: 'taucher', move: 'run', idle: 'idle', refSpeed: 4.8, scale: 1.08, tint: [1, 1, 1], recolor: { color: 0x3a4a40, keepSkin: false }, materialColors: { MaleBruteA_Shoes6: 0x1e1e1c }, attacks: ['attack', 'attack2'], attackStart: 0.25, props: ['divehelm', 'airtank', 'harpoongun'] },
   // Goldschmied Aurelius: umgebaute Figur mit runder Brille, Lederschürze und Lupe am Gürtel
-  goldschmied: { model: 'pirat', abilityClips: ['magic1', 'cast', 'ability1', 'magic2'], move: 'run', idle: 'idle', refSpeed: 5.3, scale: 1.0, tint: [0.85, 0.8, 0.72], attacks: ['attack'], attackStart: 0.3, props: ['glasses', 'apron', 'loupe'] },
+  goldschmied: { model: 'pirat', abilityClips: ['magic1hA', 'cast1h', 'goalie', 'magic2hA'], move: 'run', idle: 'idle', refSpeed: 5.3, scale: 1.0, tint: [0.85, 0.8, 0.72], attacks: ['attack'], attackStart: 0.3, props: ['glasses', 'apron', 'loupe'] },
   // Imker: umgebaute Figur (heller Anzug), Imkerhut mit Schleier, Smoker in der Hand
-  imker: { model: 'libero', abilityClips: ['toss', 'magic1', 'cast', 'magic2'], move: 'run', idle: 'idle', refSpeed: 5.4, scale: 1.0, tint: [1, 1, 1], recolor: { color: 0xe4ddc4, flat: 0.65 }, attacks: ['attack'], attackStart: 0.5, props: ['beehat', 'smoker'], headOffset: 0.02 },
+  imker: { model: 'libero', abilityClips: ['throwRun', 'magic1hA', 'cast1h', 'magic2hE'], move: 'run', idle: 'idle', refSpeed: 5.4, scale: 1.0, tint: [1, 1, 1], recolor: { color: 0xe4ddc4, flat: 0.65 }, attacks: ['attack'], attackStart: 0.5, props: ['beehat', 'smoker'], headOffset: 0.02 },
   // Glöcknerin Hedwig: umgebaute Figur (violettes Gewand), Haube, Schultertuch, Handglocke
-  gloecknerin: { model: 'schlaeferin', abilityClips: ['ability1', 'stomp', 'cast', 'ability4'], move: 'run', idle: 'idle', refSpeed: 5.1, scale: 0.96, tint: [1, 1, 1], recolor: { color: 0x5a4a86 }, attacks: ['attack'], attackStart: 0.3, props: ['bonnet', 'shawl', 'handbell'] },
+  gloecknerin: { model: 'schlaeferin', abilityClips: ['magic1hA', 'area1', 'cast2h', 'wizard'], move: 'run', idle: 'idle', refSpeed: 5.1, scale: 0.96, tint: [1, 1, 1], recolor: { color: 0x5a4a86 }, attacks: ['attack'], attackStart: 0.3, props: ['bonnet', 'shawl', 'handbell'] },
   // Förster Bruno: umgebaute Figur (grüne Jacke), Filzhut mit Feder, Axt
   foerster: { model: 'foerster', move: 'run', idle: 'idle', refSpeed: 5.0, scale: 1.1, tint: [1, 1, 1], recolor: { color: 0x55692f }, attacks: ['attack'], attackStart: 0.35, props: ['felthat', 'axe'] },
   // Schornsteinfeger Kasimir: umgebaute Figur (schwarzer Anzug), Zylinder, Kaminbesen
@@ -731,7 +731,8 @@ export class UnitView {
     let name = own && this.hasClip(own) ? own : `ability${slot + 1}`;
     if (!own && this.hasClip(`${name}b`) && Math.random() < 0.5) name += 'b';
     const clip = a.inst.actions.get(name)?.getClip();
-    if (clip) this.playOnce(name, Math.min(ABILITY_ANIM, Math.max(0.6, clip.duration)));
+    // Ultimates dürfen länger dauern (lange Zauber-Clips sonst viel zu schnell)
+    if (clip) this.playOnce(name, slot === 3 ? Math.min(2.2, Math.max(0.8, clip.duration / 2.5)) : Math.min(ABILITY_ANIM, Math.max(0.6, clip.duration)));
   }
 
   /** Sterben: Sterbe-Animation, danach liegen bleiben. */

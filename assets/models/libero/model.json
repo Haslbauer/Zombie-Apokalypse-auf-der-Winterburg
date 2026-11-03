@@ -42,6 +42,18 @@
     },
     "cast": {
       "file": "../rotschopf/casting.fbx"
+    },
+    "throwRun": {
+      "file": "../moves/run-throw.fbx"
+    },
+    "magic1hA": {
+      "file": "../moves/magic-1h-01.fbx"
+    },
+    "cast1h": {
+      "file": "../moves/cast-1h.fbx"
+    },
+    "magic2hE": {
+      "file": "../moves/magic-2h-05.fbx"
     }
   },
   "inPlace": true,
