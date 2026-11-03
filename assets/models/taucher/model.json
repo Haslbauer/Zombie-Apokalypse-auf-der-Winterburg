@@ -14,7 +14,7 @@
       "file": "../moves/melee-kick.fbx"
     },
     "ability1": {
-      "file": "../pirat/throw-grenade.fbx"
+      "file": "../gaertnerin/firing-rifle.fbx"
     },
     "ability2": {
       "file": "../rotschopf/casting.fbx"
@@ -23,7 +23,7 @@
       "file": "../moves/standing-jump.fbx"
     },
     "ability4": {
-      "file": "../rotschopf/flex.fbx"
+      "file": "../schlaeferin/magic-2h-01.fbx"
     },
     "use": {
       "file": "../shared/pill.fbx"

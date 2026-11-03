@@ -733,6 +733,13 @@ function abilityEffect(e: Extract<GameEvent, { type: 'effect' }>): void {
     effects.line(e.pos, e.to, e.radius * 2, color, e.kind.endsWith('-warn') ? 1 : 0.45);
     return;
   }
+  // Flutwelle: rollende Wasserwand statt flachem Kegel
+  if (e.kind === 'tidalwave' && e.facing !== undefined) {
+    const width = gameData.heroes.find((h) => h.id === 'taucher')?.abilities[3].width ?? 4;
+    effects.tidalWave(e.pos, e.facing, e.radius, width);
+    sound.play('wave', e.pos);
+    return;
+  }
   if (e.facing !== undefined && e.arc !== undefined) {
     effects.cone(e.pos, e.facing, e.radius, e.arc, color);
     return;

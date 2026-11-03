@@ -30,6 +30,18 @@
     },
     "hit": {
       "file": "../moves/react-gut.fbx"
+    },
+    "toss": {
+      "file": "../shared/toss-grenade.fbx"
+    },
+    "magic1": {
+      "file": "../schlaeferin/magic-1h-02.fbx"
+    },
+    "magic2": {
+      "file": "../schlaeferin/magic-2h-01.fbx"
+    },
+    "cast": {
+      "file": "../rotschopf/casting.fbx"
     }
   },
   "inPlace": true,

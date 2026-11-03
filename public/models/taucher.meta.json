@@ -2,9 +2,9 @@
  "impacts": {
   "attack": 0.41,
   "attack2": 0.16,
-  "ability1": 0.56,
+  "ability1": 0.04,
   "ability2": 0.56,
   "ability3": 0.26,
-  "ability4": 0.46
+  "ability4": 0.41
  }
 }

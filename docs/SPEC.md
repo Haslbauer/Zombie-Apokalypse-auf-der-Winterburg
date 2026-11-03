@@ -2,6 +2,7 @@
 
 Stand: 01.11.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v2.7 (Animationen): passende Fähigkeits-Clips für Helden mit geteilter Figur (`abilityClips`), Kapitän Tiefe mit Harpunen-Schuss und Zwei-Hand-Stoß, Flutwelle als rollende Wasserwand mit Gischt und nasser Spur.
 Änderungen v2.7 (Feedback): Shop jederzeit im Innenhof, Fähigkeiten in Lobby und Team-Ansicht, Rückruf zur Basis (Befehl `recall`, 4 s stillhalten, bricht bei Bewegung, Angriff, Fähigkeit, Zauber oder Schaden ab; sim/recall.ts), Lobby-Countdown 5 s, Nahkampf mit 0,15 s Vorlauf in Laufrichtung, Ultimates etwa 35 % kürzere Abklingzeit, leisere Angriffstöne.
 Änderungen v2.7 (Leistung): Modelle mit zusammengefassten Teilen und gemeinsamem Skelett, keine Licht- und Schattenwechsel zur Laufzeit, Heldenfeld der Zombies auf 22 m begrenzt (README „Leistung“).
 Änderungen v2.7: Spieldauer etwa 20 Minuten für 20 Wellen: Pausen 20 s und 18 s (zum Einkaufen), weniger, dafür härter zuschlagende Zombies (+20 % Leben, +40 % Schaden je Welle), schnellere Kriecher, Messlauf `tests/balance/timing.test.ts`. Verteidigungen lassen sich auch während der Welle bauen und reparieren. Spielzähler (`/stats`, Abschnitt 10c). Zuschauermodus online und lokal (Abschnitt 10). Freie Kamera: Linksklick oder Ziehen auf der Minimap, mittlere Maustaste ziehen, Leertaste (belegbar, Aktion `camera`) zurück zum Helden; die Ego-Sicht hebt sie auf.

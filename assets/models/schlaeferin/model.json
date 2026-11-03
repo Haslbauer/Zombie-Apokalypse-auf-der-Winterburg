@@ -36,6 +36,15 @@
     },
     "hit": {
       "file": "../moves/react-gut.fbx"
+    },
+    "cast": {
+      "file": "../rotschopf/casting.fbx"
+    },
+    "stomp": {
+      "file": "../gaertnerin/melee-down.fbx"
+    },
+    "jump": {
+      "file": "../moves/standing-jump.fbx"
     }
   },
   "inPlace": true,

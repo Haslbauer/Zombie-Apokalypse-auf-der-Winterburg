@@ -56,6 +56,91 @@ export class Effects {
     });
   }
 
+  /**
+   * Flutwelle (Kapitän Tiefe): eine gekrümmte Wasserwand mit Schaumkrone rollt
+   * von p aus length Meter in Blickrichtung, dahinter bleibt eine nasse Spur,
+   * oben sprüht Gischt. Breite width (wie in der Simulation).
+   */
+  tidalWave(p: Vec2, facing: number, length: number, width = 4): void {
+    const life = 1.15;
+    const H = 2.1;
+    const dir = { x: Math.cos(facing), y: Math.sin(facing) };
+    // Wellenwand: vorne +x, Breite entlang z; oben nach vorn gebogen, zu den Seiten flacher
+    const segU = 28;
+    const segV = 10;
+    const geo = new THREE.PlaneGeometry(1, 1, segU, segV);
+    const pos = geo.attributes.position;
+    const colors = new Float32Array(pos.count * 3);
+    const deep = new THREE.Color(0x174f86);
+    const mid = new THREE.Color(0x3aa6e0);
+    const foam = new THREE.Color(0xe8f8ff);
+    const c = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      const u = pos.getX(i) + 0.5; // 0..1 über die Breite
+      const v = pos.getY(i) + 0.5; // 0..1 von unten nach oben
+      const side = 1 - 0.45 * Math.pow(Math.abs(u * 2 - 1), 2);
+      const h = v * H * side;
+      const curl = 1.7 * v * v * v * side;
+      pos.setXYZ(i, curl, h, (u - 0.5) * width);
+      if (v < 0.6) c.copy(deep).lerp(mid, v / 0.6);
+      else c.copy(mid).lerp(foam, (v - 0.6) / 0.4);
+      colors.set([c.r, c.g, c.b], i * 3);
+    }
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geo.computeVertexNormals();
+    const wallMat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false });
+    const wall = new THREE.Mesh(geo, wallMat);
+    wall.rotation.y = -facing;
+    wall.renderOrder = 5;
+    // Nasse Spur am Boden hinter der Welle
+    const sheetMat = new THREE.MeshBasicMaterial({ color: 0x3b8fbf, transparent: true, opacity: 0.5, depthWrite: false });
+    // Schaumstreifen am Fuß der Welle (von oben gut zu sehen)
+    const foamMat = new THREE.MeshBasicMaterial({ color: 0xf2fbff, transparent: true, opacity: 0.8, depthWrite: false });
+    const foamStrip = new THREE.Mesh(new THREE.PlaneGeometry(1.1, width * 1.05).rotateX(-Math.PI / 2), foamMat);
+    foamStrip.rotation.y = -facing;
+    const sheet = new THREE.Mesh(new THREE.PlaneGeometry(1, width * 0.95).rotateX(-Math.PI / 2), sheetMat);
+    sheet.rotation.y = -facing;
+    const ease = (t: number) => 1 - Math.pow(1 - t, 2);
+    const front = (t: number) => ease(Math.min(1, t / 0.85)) * length;
+    this.add(wall, life, (t) => {
+      const d = front(t);
+      wall.position.set(p.x + dir.x * d, 0.02, p.y + dir.y * d);
+      // schnell aufbäumen, am Ende in sich zusammenfallen
+      const rise = Math.min(1, t / 0.15);
+      const fall = t > 0.7 ? 1 - (t - 0.7) / 0.3 : 1;
+      wall.scale.set(1, Math.max(0.05, rise * (0.4 + 0.6 * fall)), 1 + 0.15 * t);
+      wallMat.opacity = 0.85 * (t > 0.75 ? 1 - (t - 0.75) / 0.25 : 1);
+    });
+    this.add(sheet, life * 1.8, (t) => {
+      const d = Math.max(0.1, front(Math.min(1, (t * 1.8) / 1)));
+      sheet.scale.set(d, 1, 1);
+      sheet.position.set(p.x + dir.x * d * 0.5, 0.04, p.y + dir.y * d * 0.5);
+      sheetMat.opacity = 0.5 * (1 - t);
+    });
+    this.add(foamStrip, life, (t) => {
+      const d = front(t) + 0.9;
+      foamStrip.position.set(p.x + dir.x * d, 0.06, p.y + dir.y * d);
+      foamMat.opacity = 0.8 * (t > 0.7 ? 1 - (t - 0.7) / 0.3 : 1);
+    });
+    // Gischt an der Krone: weiche weiße Punkte, die mit der Welle fliegen und aufsteigen
+    for (let i = 0; i < 14; i++) {
+      const across = (Math.random() - 0.5) * width * 0.9;
+      const delay = Math.random() * 0.2;
+      const mat = new THREE.SpriteMaterial({ map: softTexture(), color: 0xeaf8ff, transparent: true, depthWrite: false, opacity: 0 });
+      const spray = new THREE.Sprite(mat);
+      const size = 0.35 + Math.random() * 0.45;
+      const up = 0.6 + Math.random() * 1.2;
+      this.add(spray, life, (t) => {
+        const k = Math.max(0, (t - delay) / (1 - delay));
+        const d = front(t) + 0.6;
+        const side = { x: -dir.y * across, y: dir.x * across };
+        spray.position.set(p.x + dir.x * d + side.x, H * 0.85 + k * up, p.y + dir.y * d + side.y);
+        spray.scale.setScalar(size * (1 + k));
+        mat.opacity = k <= 0 ? 0 : 0.8 * (1 - k);
+      });
+    }
+  }
+
   /** Aufblitzender Kegel (z. B. Wuchtschlag, Qualmstoß, Gähnen). */
   cone(p: Vec2, facing: number, radius: number, arcDeg: number, color: number, life = 0.3): void {
     const arc = (arcDeg * Math.PI) / 180;

@@ -491,7 +491,7 @@ Trolle kämpfen selbst; ihr Schaden zählt für Lotte. Zombies greifen Trolle an
 - **Harpune:** zieht den ersten getroffenen Zombie heran und betäubt ihn kurz. Bosse werden nur betäubt.
 - **Luftblase:** Schild für ihn und Mitspieler in 5 m.
 - **Tauchgang:** 0,8 s unverwundbar abtauchen, dann an der Zielstelle auftauchen, die Zombies dort betäuben und treffen.
-- **Ultimate „Flutwelle“:** breite Welle in eine Richtung; Schaden, spült Zombies 5–9 m zurück und verlangsamt sie.
+- **Ultimate „Flutwelle“:** breite Welle in eine Richtung; Schaden, spült Zombies 5–9 m zurück und verlangsamt sie. Zu sehen ist eine 2 m hohe Wasserwand mit Schaumkrone und Gischt, die 12 m über den Boden rollt und eine nasse Spur hinterlässt; dazu ein anschwellendes Rauschen. Kapitän Tiefe stößt dabei beide Hände nach vorn.
 
 **Hedwig** (Glöcknerin, Support):
 - **Angriff:** Schallwelle der Handglocke (9 m).
@@ -567,6 +567,20 @@ Rückmeldungen aus der ersten Online-Runde, drei Spieler schafften Welle 14:
   - Standardangriffe der anderen Helden sind deutlich leiser als die eigenen.
 - **Ultimates:** etwa 35 % kürzere Abklingzeiten, zum Beispiel Amok 60/50/40 s statt 90/75/60 s.
 - **Ruckeln ab Level 10:** behoben, siehe „Leistung“.
+
+## Animationen der Fähigkeiten
+
+Jede Fähigkeit spielt eine eigene Bewegung aus der Mixamo-Sammlung in `assets/models/`. Vier Helden nutzen die Figur eines anderen Helden; für sie legt `abilityClips` in `HERO_LOOKS` (`src/client/units.ts`) fest, welcher Clip zu welcher Fähigkeit gehört. Die geteilten Figuren enthalten dafür zusätzliche Clips.
+
+| Held | 1 | 2 | 3 | 4 |
+|---|---|---|---|---|
+| Lotte | Zauber mit einer Hand (Trollruf) | Beschwören (Brückentroll) | Hochspringen (Wutanfall) | Zauber mit beiden Händen (Trollfamilie) |
+| Hedwig | Zauber mit einer Hand (Weckruf) | Schlag auf den Boden (Glockenschlag) | Beschwören (Schutzglocke) | Zauber mit beiden Händen (Sturmgeläut) |
+| Imker | Werfen (Honigtopf) | Zauber mit einer Hand (Smoker) | Beschwören (Wachbienen) | Zauber mit beiden Händen (Schwarm) |
+| Aurelius | Zauber mit einer Hand (Lötflamme) | Beschwören (Blattgold) | Werfen (Schmelztiegel) | Zauber mit beiden Händen (Goldrausch) |
+| Kapitän Tiefe | Schießen (Harpune) | Beschwören (Luftblase) | Sprung (Tauchgang) | Stoß mit beiden Händen (Flutwelle) |
+
+Vorher spielten Lotte und Hedwig bei ihrer dritten Fähigkeit Somnias Hinlegen (Powernap) ab, der Imker und Aurelius die Bewegungen von Spike und Rauchbarth.
 
 ## Leistung
 

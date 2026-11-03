@@ -370,6 +370,8 @@ export const SOUNDS: Record<string, Recipe> = {
   axeChop: { ch: 'effects', dur: 0.4, make: (s, d, t, r) => (s.n(d, 'highpass', 600, 2500, t, 0.12, 0.3, 0.7, 0.03), s.t(d, 'square', r(160, 190), 70, t + 0.12, 0.08, 0.2), s.n(d, 'bandpass', 900, 500, t + 0.12, 0.18, 0.3, 2)) },
   sweepSwish: { ch: 'effects', dur: 0.35, make: (s, d, t, r) => (s.n(d, 'bandpass', r(1800, 2200), 700, t, 0.28, 0.35, 1.2, 0.04), s.t(d, 'sine', r(150, 170), 90, t + 0.05, 0.1, 0.15)) },
   doughThud: { ch: 'effects', dur: 0.3, make: (s, d, t, r) => (s.t(d, 'sine', r(110, 130), 55, t + 0.08, 0.16, 0.5), s.n(d, 'lowpass', 700, 200, t + 0.08, 0.12, 0.35), s.n(d, 'highpass', 3000, 5000, t + 0.1, 0.08, 0.06)) },
+  // Flutwelle: anschwellendes Rauschen, das bricht
+  wave: { ch: 'effects', dur: 1.4, make: (s, d, t) => (s.n(d, 'lowpass', 500, 1800, t, 0.6, 0.35, 0.7, 0.3), s.n(d, 'bandpass', 1400, 600, t + 0.5, 0.8, 0.3, 0.8, 0.05), s.t(d, 'sine', 70, 45, t + 0.45, 0.5, 0.25, 0.05)) },
   bubble: { ch: 'effects', dur: 0.6, make: (s, d, t, r) => { for (let i = 0; i < 3; i++) s.t(d, 'sine', r(280, 380), r(800, 1000), t + i * 0.07, 0.07, 0.12); s.t(d, 'triangle', 220, 210, t + 0.05, 0.45, 0.08, 0.005); s.t(d, 'triangle', 331, 325, t + 0.05, 0.35, 0.04, 0.005); } },
   // Zombies
   moan: { ch: 'effects', dur: 1.4, make: (s, d, t, r) => { const f = r(80, 120); s.t(d, 'triangle', f, f * r(0.75, 0.9), t, r(0.9, 1.3), 0.06, 0.35); s.n(d, 'bandpass', r(350, 550), r(250, 350), t, 1, 0.025, 5, 0.35); } },
