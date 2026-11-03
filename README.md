@@ -586,6 +586,12 @@ Rückmeldungen aus der ersten Online-Runde, drei Spieler schafften Welle 14:
   - Großflächige Bodenflecken (Moos, Erde, trockenes Gras) lösen das Kachelmuster auf.
   - Glühwürmchen schweben über Garten und Waldrand.
   - Die Wege haben helle, festgetretene Erde mit Kieseln statt dunklem Schlamm, dazu hellere Trittplatten.
+  - **Gebäude:**
+    - Das Wohnhaus hat Fachwerk mit schrägen Streben und Andreaskreuzen, auch an den Giebelseiten, und sichtbare Giebeldreiecke unter einem hohlen Dach.
+    - Dazu kommen Ziegelreihen, Ortgangbretter, Moos, Dachrinne mit Fallrohr, ein Bruchsteinsockel mit Schmutzrand und ein gemauerter Schornstein.
+    - Fenster haben Fensterkreuz, Fensterbank und teils Blumenkästen; der Eingang hat eine Haustür mit Beschlägen, Stufe und Laterne.
+    - Der Schuppen bekommt Bretterwände in verschiedenen Tönen, ein Wellblechdach mit Rost, eine Tür mit Z-Strebe, ein Fenster, Rechen, Spaten und eine Regentonne.
+    - Im Kompost liegen Erde, Grünschnitt und Stroh.
   - Neu sind vier Misthaufen mit Stroh, Jauchepfütze und Mistgabel: beim Kompost, beim Schuppen, beim Brunnen und am Südrand (`decor` mit `look: "dung"` in `data/map.json`).
 
 ## Der Schlund (Zwischenboss)
