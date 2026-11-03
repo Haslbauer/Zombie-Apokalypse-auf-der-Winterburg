@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Waffen-Vorschau</title>
+<style>body{margin:0;background:#1d2a20}</style></head>
+<body>
+<script type="module">
+// Entwicklung: alle Waffen groß nebeneinander (weapons.html), zum Prüfen von Form und Material
+import * as THREE from 'three';
+import { WEAPON_KINDS, weaponMesh, setWeaponEnvironment } from '/src/client/weapons.ts';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+const W = 1200, H = 700;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+document.body.append(renderer.domElement);
+const scene = new THREE.Scene();
+setWeaponEnvironment(new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture);
+scene.background = new THREE.Color(0x24332a);
+scene.add(new THREE.HemisphereLight(0xcfd8ff, 0x302820, 1.2));
+const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+sun.position.set(3, 5, 4);
+scene.add(sun);
+const cam = new THREE.PerspectiveCamera(30, W / H, 0.1, 100);
+cam.position.set(0, 0.6, 9.5);
+cam.lookAt(0, 0.6, 0);
+WEAPON_KINDS.forEach((k, i) => {
+  const w = weaponMesh(k);
+  const col = i % 6, row = Math.floor(i / 6);
+  w.position.set((col - 2.5) * 1.2, row === 0 ? 1.0 : -0.9, 0);
+  w.rotation.y = 0.6;
+  w.rotation.z = -0.25;
+  scene.add(w);
+});
+renderer.render(scene, cam);
+window.done = true;
+</script>
+</body></html>

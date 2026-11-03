@@ -432,7 +432,7 @@ export type ObstacleLook =
 
 /** Nur Darstellung, ohne Wirkung im Spiel: Pflaster, Kieswege, Friedhofszaun. Rechteck mit Mittelpunkt. */
 export interface DecorDef {
-  look: 'cobbles' | 'gravel' | 'gravefence';
+  look: 'cobbles' | 'gravel' | 'gravefence' | 'dung';
   x: number;
   y: number;
   w: number;

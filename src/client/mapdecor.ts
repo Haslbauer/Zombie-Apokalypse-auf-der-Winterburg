@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { treeMesh } from './foliage';
 import { distanceToObstacle } from '../sim/grid';
 import type { ArenaDef, Brush, DecorDef, Obstacle, SpawnPoint } from '../sim/types';
 
@@ -76,6 +77,8 @@ export const TEXTURES = {
           c.fill();
         }
     }),
+  /** Festgetretene, helle Erde mit kleinen Kieseln (Untergrund der Wege). */
+  dirt: () => canvasTexture(128, (c, s) => noise(c, s, '#a38a66', ['#957c5a', '#b39a74', '#bea782', '#86704f', '#c9b593'], 650, [1, 3], 9)),
   gravel: () => canvasTexture(128, (c, s) => noise(c, s, '#b8a888', ['#a59576', '#cbbd9e', '#948468', '#d6cab0'], 700, [1, 3], 6)),
   /** Bruchsteinplatten: unregelmäßige Steine (Voronoi), dunkle Fugen mit etwas Moos; kachelbar. */
   flagstone: () =>
@@ -463,21 +466,9 @@ function lamp(mats: Mats): THREE.Group {
 }
 
 /** Baum: Laubbaum (zwei Kronen-Stufen) oder Nadelbaum, je nach Ort. */
-export function tree(x: number, y: number, r: number, mats: Mats): THREE.Group {
-  const g = new THREE.Group();
-  const rnd = rand(x * 31 + y * 17);
-  const s = 0.85 + rnd() * 0.35;
-  g.add(part(new THREE.CylinderGeometry(r * 0.22, r * 0.3, 1.8 * s, 7), mats.lambert(0x5e4128), 0, 0.9 * s, 0));
-  if (rnd() < 0.35) {
-    for (let i = 0; i < 3; i++) g.add(part(new THREE.ConeGeometry(r * (1.25 - i * 0.3) * s, 1.5 * s, 8), mats.lambert(0x2f6b35), 0, (1.4 + i * 0.9) * s + 0.75 * s, 0));
-  } else {
-    const greens = [0x3e8f3a, 0x4a9a3e, 0x357f33];
-    g.add(part(new THREE.IcosahedronGeometry(r * 1.35 * s, 0), mats.lambert(greens[Math.floor(rnd() * 3)]), 0, 1.8 * s + r * s, 0));
-    g.add(part(new THREE.IcosahedronGeometry(r * 0.9 * s, 0), mats.lambert(greens[Math.floor(rnd() * 3)]), r * 0.5, 1.8 * s + r * 1.9 * s, -r * 0.3));
-  }
-  g.position.set(x, 0, y);
-  g.rotation.y = rnd() * Math.PI * 2;
-  return g;
+export function tree(x: number, y: number, r: number, _mats?: Mats): THREE.Group {
+  // Organischer Baum (unregelmäßige Laubballen bzw. Nadel-Etagen, Stamm mit Wurzeln), siehe foliage.ts
+  return treeMesh(x, y, r);
 }
 
 /** Alle übrigen Hindernisse nach Aussehen (Schuppen, Kompost, Gräber, Teich …). */
@@ -649,6 +640,7 @@ export function decor(d: DecorDef, mats: Mats): THREE.Object3D {
     edge(d.h, d.w / 2, 0, false);
     return g;
   }
+  if (d.look === 'dung') return dungHeap(d, mats);
   const cobbles = d.look === 'cobbles';
   if (cobbles) {
     const geo = new THREE.PlaneGeometry(d.w, d.h).rotateX(-Math.PI / 2);
@@ -667,8 +659,9 @@ export function decor(d: DecorDef, mats: Mats): THREE.Object3D {
   const along = d.w >= d.h;
   const len = along ? d.w : d.h;
   const wid = along ? d.h : d.w;
-  const mud = mats.lambert(0x3e3226);
-  const mudDark = mats.lambert(0x2e261d);
+  // Heller, erdiger Untergrund (vorher fast schwarzer Schlamm)
+  const mud = mats.textured('dirt', 1);
+  const mudDark = mats.textured('dirt', 1, 0xc9b89a);
   // Erdspur mit unregelmäßigem Rand aus überlappenden Flecken
   for (let t = -len / 2; t < len / 2; t += 0.6) {
     const r = wid * (0.45 + rnd() * 0.25);
@@ -681,7 +674,7 @@ export function decor(d: DecorDef, mats: Mats): THREE.Object3D {
     g.add(blot);
   }
   // Trittplatten
-  const stones = [0x8a8378, 0x7a746a, 0x958d80, 0x6e695f].map((c) => mats.lambert(c));
+  const stones = [0xaaa293, 0x9a9284, 0xb5ac9b, 0x8c857a].map((c) => mats.lambert(c));
   const step = 0.55;
   for (let t = -len / 2 + 0.3; t < len / 2 - 0.2; t += step + rnd() * 0.25) {
     const pairs = wid > 1 ? 2 : 1;
@@ -714,6 +707,51 @@ export function decor(d: DecorDef, mats: Mats): THREE.Object3D {
       }
     }
   }
+  return g;
+}
+
+/** Misthaufen: dunkler, klumpiger Haufen mit Stroh, Pfütze und einer Mistgabel darin. */
+function dungHeap(d: DecorDef, mats: Mats): THREE.Group {
+  const g = new THREE.Group();
+  const rnd = rand(d.x * 7 + d.y * 11);
+  const browns = [0x7a5634, 0x8a6440, 0x6a4a2c, 0x946e46].map((c) => mats.lambert(c, { flatShading: true }));
+  // Pfütze aus Jauche am Fuß
+  const puddle = new THREE.Mesh(new THREE.CircleGeometry(d.w * 0.62, 12).rotateX(-Math.PI / 2), mats.lambert(0x4a3a22));
+  puddle.scale.set(1, 1, 0.75);
+  puddle.position.set(d.x, 0.006, d.y);
+  puddle.receiveShadow = true;
+  g.add(puddle);
+  // Haufen aus abgeflachten Klumpen
+  for (let i = 0; i < 7; i++) {
+    const r = (0.35 + rnd() * 0.35) * (i === 0 ? 1.4 : 1);
+    const geo = new THREE.IcosahedronGeometry(r, 1);
+    const p = geo.attributes.position;
+    for (let k = 0; k < p.count; k++) p.setXYZ(k, p.getX(k) * (0.9 + rnd() * 0.2), Math.max(-0.05, p.getY(k)) * (0.55 + rnd() * 0.2), p.getZ(k) * (0.9 + rnd() * 0.2));
+    geo.computeVertexNormals();
+    const a = rnd() * Math.PI * 2;
+    const off = i === 0 ? 0 : (d.w / 2) * (0.25 + rnd() * 0.35);
+    g.add(part(geo, browns[Math.floor(rnd() * browns.length)], d.x + Math.cos(a) * off, i === 0 ? 0.1 : 0.04, d.y + Math.sin(a) * off * 0.8));
+  }
+  // Stroh: helle Halme kreuz und quer
+  const straw = [mats.lambert(0xe8d080), mats.lambert(0xc8ac60)];
+  for (let i = 0; i < 26; i++) {
+    const s = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.25 + rnd() * 0.25, 3), straw[i % 2]);
+    const a = rnd() * Math.PI * 2;
+    const r = rnd() * d.w * 0.45;
+    s.position.set(d.x + Math.cos(a) * r, 0.18 + rnd() * 0.35 * (1 - r / d.w), d.y + Math.sin(a) * r * 0.8);
+    s.rotation.set(rnd() * 3, rnd() * 3, rnd() * 3);
+    g.add(s);
+  }
+  // Mistgabel, schräg im Haufen
+  const fork = new THREE.Group();
+  fork.add(part(new THREE.CylinderGeometry(0.025, 0.025, 1.5, 6), mats.lambert(0x7a5532), 0, 0.75, 0));
+  const iron = mats.lambert(0x5a5c60);
+  fork.add(part(new THREE.BoxGeometry(0.28, 0.03, 0.03), iron, 0, 1.52, 0));
+  for (const x of [-0.12, -0.04, 0.04, 0.12]) fork.add(part(new THREE.CylinderGeometry(0.01, 0.006, 0.3, 4), iron, x, 1.68, 0));
+  // Zinken nach unten im Mist, Stiel ragt schräg heraus
+  fork.rotation.set(Math.PI - 0.4, rnd() * 3, 0.2);
+  fork.position.set(d.x + 0.25, 1.75, d.y - 0.1);
+  g.add(fork);
   return g;
 }
 

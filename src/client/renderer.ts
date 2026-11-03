@@ -1,3 +1,6 @@
+import { PostFx } from './post';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { setWeaponEnvironment } from './weapons';
 import * as THREE from 'three';
 import { buffRings } from './buffrings';
 import { arenaBounds, brushAt } from '../sim/grid';
@@ -41,6 +44,8 @@ export interface Snapshot {
 
 export class GameRenderer {
   readonly renderer: THREE.WebGLRenderer;
+  /** Bildnachbearbeitung (Bloom, Farbgebung, Vignette); auf „niedrig“ aus. */
+  private post: PostFx | null = null;
   readonly scene = new THREE.Scene();
   readonly cam: GameCamera;
   private readonly units = new Map<number, UnitView>();
@@ -93,6 +98,8 @@ export class GameRenderer {
     this.scene.background = new THREE.Color(night);
     this.fog = new THREE.Fog(night, 40, 95);
     this.scene.fog = this.fog;
+    // Spiegel-Umgebung für Metall an Waffen und Werkzeugen (einmal erzeugt)
+    setWeaponEnvironment(new THREE.PMREMGenerator(this.renderer).fromScene(new RoomEnvironment(), 0.04).texture);
     const hemi = new THREE.HemisphereLight(0x7d8fc4, 0x1a2018, 0.8);
     this.scene.add(hemi);
     const sun = new THREE.DirectionalLight(0xaebfff, 1.15);
@@ -127,6 +134,7 @@ export class GameRenderer {
 
     window.addEventListener('resize', () => {
       this.renderer.setSize(container.clientWidth, container.clientHeight);
+      this.post?.setSize(container.clientWidth, container.clientHeight);
       this.cam.resize(container.clientWidth / container.clientHeight);
     });
   }
@@ -463,6 +471,14 @@ export class GameRenderer {
   applyQuality(level: QualityLevel): void {
     const dpr = window.devicePixelRatio || 1;
     this.renderer.setPixelRatio(level === 'hoch' ? Math.min(dpr, 2) : level === 'mittel' ? Math.min(dpr, 1.5) : 1);
+    // Nachbearbeitung nur auf „hoch“ und „mittel“ (Bloom auf „mittel“ schwächer)
+    if (level !== 'niedrig') {
+      this.post ??= new PostFx(this.renderer, this.scene, this.cam.camera);
+      this.post.enabled = true;
+      this.post.setBloom(level === 'hoch' ? 0.7 : 0.5);
+      const size = this.renderer.getSize(new THREE.Vector2());
+      this.post.setSize(size.x, size.y);
+    } else if (this.post) this.post.enabled = false;
     // Schatten bleiben an (nur kleiner): Ein- und Ausschalten zwingt die Grafikkarte, alle
     // Shader neu zu übersetzen; bei automatischer Qualität ruckelte es dabei immer wieder.
     const size = level === 'hoch' ? 2048 : level === 'mittel' ? 1024 : 512;
@@ -494,7 +510,8 @@ export class GameRenderer {
       c.position.x += -Math.sin(this.cam.yaw) * side;
       c.position.z += Math.cos(this.cam.yaw) * side;
     }
-    this.renderer.render(this.scene, this.cam.camera);
+    if (this.post) this.post.render(this.scene, this.cam.camera);
+    else this.renderer.render(this.scene, this.cam.camera);
   }
 }
 

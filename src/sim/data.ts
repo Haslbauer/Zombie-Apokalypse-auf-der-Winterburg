@@ -164,7 +164,7 @@ export function parseGameData(raw: {
   (Array.isArray(a?.decor) ? a.decor : []).forEach((d: any, i: number) => {
     pos(d, `arena.decor[${i}]`);
     for (const k of ['w', 'h']) num(d, k, `arena.decor[${i}]`, 0.1);
-    if (!['cobbles', 'gravel', 'gravefence'].includes(d?.look)) errors.push(`arena.decor[${i}].look: cobbles, gravel oder gravefence erwartet`);
+    if (!['cobbles', 'gravel', 'gravefence', 'dung'].includes(d?.look)) errors.push(`arena.decor[${i}].look: cobbles, gravel, gravefence oder dung erwartet`);
   });
   const zombieList: any[] = Array.isArray(raw.zombies) ? raw.zombies : [];
   (Array.isArray(a?.camps) ? a.camps : []).forEach((c: any, i: number) => {

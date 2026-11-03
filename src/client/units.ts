@@ -5,6 +5,7 @@ import type { Hero, HeroDef, Minion, Unit, Zombie, ZombieDef } from '../sim/type
 import { instantiate, type ModelInstance, type RiggedModel } from './models';
 import { recolorTexture } from './recolor';
 import { type FxKind, StatusFx } from './statusfx';
+import { isWeapon, weaponMesh, WeaponTrail } from './weapons';
 import { groundGlow } from './nightdecor';
 import type { Snapshot } from './renderer';
 
@@ -257,7 +258,7 @@ export class UnitView {
     look: ModelLook;
     loop: THREE.AnimationAction | null;
     loopName: string;
-    once: { action: THREE.AnimationAction; left: number; upper?: boolean } | null;
+    once: { action: THREE.AnimationAction; left: number; upper?: boolean; name?: string; total?: number } | null;
     attackIndex: number;
     /** Gestorben: nach der Sterbe-Animation liegen bleiben. */
     dead: boolean;
@@ -416,7 +417,9 @@ export class UnitView {
       const body = prop === 'apron' || prop === 'airtank' || prop === 'shawl' ? 'mixamorigSpine1' : prop === 'loupe' ? 'mixamorigHips' : null;
       const bone = inst.root.getObjectByName(body ?? (head ? (look.headBone ?? 'mixamorigHead') : (look.handBone ?? 'mixamorigRightHand')));
       if (!bone) continue;
-      const mesh = this.propMesh(prop);
+      const mesh = isWeapon(prop) ? weaponMesh(prop) : this.propMesh(prop);
+      const tipObj = mesh.getObjectByName('tip');
+      if (tipObj && !this.trail) this.trail = new WeaponTrail(this.hero ? 0xffe6a0 : 0xff7a5a, tipObj, mesh);
       const k = bone.getWorldScale(new THREE.Vector3()).x;
       mesh.scale.setScalar(look.scale / k);
       mesh.position.y = (body ? 0 : ((head ? look.headOffset : look.handOffset) ?? 0)) * look.scale / k;
@@ -679,7 +682,7 @@ export class UnitView {
     // Oberkörper-Variante (im Laufen): Beine laufen weiter
     const upper = name.endsWith('Upper');
     if (!upper) a.loop?.fadeOut(0.08);
-    a.once = { action, left: duration, upper };
+    a.once = { action, left: duration, upper, name, total: duration };
   }
 
   /** Hat die Figur eine Animation dieses Namens? */
@@ -732,7 +735,7 @@ export class UnitView {
     action.fadeIn(0.05).play();
     const upper = actionName.endsWith('Upper');
     if (!upper) a.loop?.fadeOut(0.06);
-    a.once = { action, left: duration, upper };
+    a.once = { action, left: duration, upper, name: actionName, total: duration };
   }
 
   /** Fähigkeit (slot 0–3); lange Clips werden auf höchstens 1,2 s gerafft. */
@@ -816,6 +819,15 @@ export class UnitView {
       }
     }
     a.inst.mixer.update(frozen && !a.dead ? 0 : dt);
+    if (this.trail) {
+      // Spur nur beim Zuschlagen (Angriffe und Fähigkeiten), in Weltkoordinaten in der Szene
+      if (!this.trail.mesh.parent && this.group.parent) this.group.parent.add(this.trail.mesh);
+      // Spur während des eigentlichen Hiebs (erste 0,5 s der Aktion)
+      const o = a.once;
+      const swinging = !!o && !a.dead && /^(attack|ability|cast)/.test(o.name ?? '') && (o.total ?? 0) - o.left < 0.5;
+      this.group.updateMatrixWorld(true);
+      this.trail.update(swinging && this.group.visible, dt);
+    }
   }
 
   /** Nach dem Respawn: Sterbe-Animation beenden, wieder normal animieren. */
@@ -858,6 +870,8 @@ export class UnitView {
   }
 
   private lastDir: MoveDir = 'forward';
+  /** Bewegungsspur der Waffe beim Zuschlagen (nur Figuren mit Waffe). */
+  private trail: WeaponTrail | null = null;
 
   /** Figur aus einem animierten Modell? */
   get isAnimated(): boolean {
@@ -1321,10 +1335,16 @@ export class UnitView {
    */
   dispose(): void {
     this.fxView?.dispose();
+    if (this.trail) {
+      this.trail.mesh.removeFromParent();
+      this.trail.dispose();
+      this.trail = null;
+    }
     this.group.traverse((o) => {
       if ((o as THREE.SkinnedMesh).isSkinnedMesh) (o as THREE.SkinnedMesh).skeleton.dispose();
       if (o instanceof THREE.Mesh) {
         if (!o.userData.sharedGeometry) o.geometry.dispose();
+        if (o.userData.sharedMaterial) return;
         for (const m of (Array.isArray(o.material) ? o.material : [o.material]) as THREE.MeshBasicMaterial[]) {
           if (o.userData.ownTexture) m.map?.dispose();
           m.dispose();

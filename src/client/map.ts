@@ -3,6 +3,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { arenaBounds } from '../sim/grid';
 import type { ArenaDef, Obstacle } from '../sim/types';
 import { nightDecor, nightObstacle } from './nightdecor';
+import { crownGeometry, fireflies, foliageMaterial, groundPatches, pineGeometry, trunkGeometry } from './foliage';
 import { brushes, decor, hatch, hedge, house, Mats, obstacleDecor, smoke, thicket, tree, windTime, rathole, ruin, grassTufts } from './mapdecor';
 
 const COLORS = {
@@ -59,6 +60,9 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   flat((x1 - x0) * 4, (y1 - y0) * 4, (x0 + x1) / 2, (y0 + y1) / 2, m(COLORS.forest), -0.03);
   flat(x1 - x0, y1 - y0, (x0 + x1) / 2, (y0 + y1) / 2, mats.textured('terrain', 8), -0.02);
   flat(g.w, g.h, g.x, g.y, mats.textured('grass', 7), -0.01);
+  // Großflächige Flecken (Moos, Erde, trockenes Gras) gegen das Kachelmuster
+  const patches = groundPatches(x0, y0, x1, y1);
+  if (patches) target.add(patches);
   for (const p of arena.paths ?? []) scene.add(decor({ look: 'gravel', ...p }, mats));
   for (const d of arena.decor ?? []) scene.add(decor(d, mats));
   forestBorder(scene, x0, y0, x1, y1, mats);
@@ -127,6 +131,9 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   }
 
   const live = new THREE.Group();
+  // Glühwürmchen über Garten und Waldrand
+  const flies = fireflies(x0 - 4, y0 - 4, x1 + 4, y1 + 4);
+  live.add(flies.points);
   const night = nightDecor(scene, live, arena, mats);
   // Deko-Gras bleibt eigenständig (Grafik „Niedrig“ blendet es aus)
   const tufts = grassTufts(arena);
@@ -140,8 +147,10 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
       windTime.value = time;
       smokes.update(time);
       night.update(time, heroes);
+      if (flies.points.visible) flies.update(time);
     },
     setDetail(on) {
+      flies.points.visible = on;
       night.setDetail(on);
       tufts.visible = on;
       smokes.group.visible = on;
@@ -208,7 +217,9 @@ function mergeStatic(root: THREE.Group): THREE.Group {
     }
     const geo = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone();
     geo.applyMatrix4(mesh.matrixWorld);
-    for (const name of Object.keys(geo.attributes)) if (!['position', 'normal', 'uv'].includes(name)) geo.deleteAttribute(name);
+    // Vertex-Farben behalten, wenn das Material sie nutzt (Bäume)
+    const keepAttr = (mesh.material as THREE.MeshLambertMaterial).vertexColors ? ['position', 'normal', 'uv', 'color'] : ['position', 'normal', 'uv'];
+    for (const name of Object.keys(geo.attributes)) if (!keepAttr.includes(name)) geo.deleteAttribute(name);
     if (!geo.attributes.uv) geo.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(geo.attributes.position.count * 2), 2));
     geo.clearGroups();
     const key = `${mesh.material.uuid}|${mesh.castShadow}`;
@@ -229,7 +240,7 @@ function mergeStatic(root: THREE.Group): THREE.Group {
 }
 
 /** Dichter Wald jenseits des Kartenrands (nur Kulisse, instanziert, feste Anordnung). */
-function forestBorder(scene: THREE.Object3D, x0: number, y0: number, x1: number, y1: number, mats: Mats): void {
+function forestBorder(scene: THREE.Object3D, x0: number, y0: number, x1: number, y1: number, _mats: Mats): void {
   let seed = 7;
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   const spots: { x: number; y: number; s: number; pine: boolean }[] = [];
@@ -246,15 +257,31 @@ function forestBorder(scene: THREE.Object3D, x0: number, y0: number, x1: number,
     }
   }
   const m = new THREE.Matrix4();
-  const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.35, 0.45, 1.8, 6).translate(0, 0.9, 0), mats.lambert(0x5e4128), spots.length);
+  // Waldrand: je drei Formen für Laub- und Nadelbäume (weniger Wiederholung), leicht unterschiedlich getönt
+  const trunks = new THREE.InstancedMesh(trunkGeometry(3, 0.38, 1.8, false), foliageMaterial(), spots.length);
   const leafy = spots.filter((s) => !s.pine);
   const pines = spots.filter((s) => s.pine);
-  const crowns = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(2, 0).translate(0, 3.6, 0), mats.lambert(0x3b7f36), leafy.length);
-  const cones = new THREE.InstancedMesh(new THREE.ConeGeometry(1.8, 5, 7).translate(0, 4, 0), mats.lambert(0x2c5e31), pines.length);
+  const tint = new THREE.Color();
+  const variants: THREE.InstancedMesh[] = [];
+  for (let v = 0; v < 3; v++) {
+    const list = leafy.filter((_, i) => i % 3 === v);
+    const crowns = new THREE.InstancedMesh(crownGeometry(11 + v * 5, 2, 1.4), foliageMaterial(), Math.max(1, list.length));
+    crowns.count = list.length;
+    list.forEach((s, i) => {
+      crowns.setMatrixAt(i, m.makeRotationY(s.x * 1.7).scale(new THREE.Vector3(s.s, s.s, s.s)).setPosition(s.x, 0, s.y));
+      crowns.setColorAt(i, tint.setHSL(0.3, 0.2, 0.85 + ((s.x * 13 + s.y * 7) % 10) / 50));
+    });
+    const plist = pines.filter((_, i) => i % 3 === v);
+    const cones = new THREE.InstancedMesh(pineGeometry(23 + v * 7, 1.7, 1.2), foliageMaterial(), Math.max(1, plist.length));
+    cones.count = plist.length;
+    plist.forEach((s, i) => {
+      cones.setMatrixAt(i, m.makeRotationY(s.y * 1.3).scale(new THREE.Vector3(s.s, s.s * 1.1, s.s)).setPosition(s.x, 0, s.y));
+      cones.setColorAt(i, tint.setHSL(0.33, 0.2, 0.85 + ((s.x * 7 + s.y * 13) % 10) / 50));
+    });
+    variants.push(crowns, cones);
+  }
   spots.forEach((s, i) => trunks.setMatrixAt(i, m.makeScale(s.s, s.s, s.s).setPosition(s.x, 0, s.y)));
-  leafy.forEach((s, i) => crowns.setMatrixAt(i, m.makeScale(s.s, s.s, s.s).setPosition(s.x, 0, s.y)));
-  pines.forEach((s, i) => cones.setMatrixAt(i, m.makeScale(s.s, s.s * 1.1, s.s).setPosition(s.x, 0, s.y)));
-  for (const inst of [trunks, crowns, cones]) {
+  for (const inst of [trunks, ...variants]) {
     inst.castShadow = true;
     scene.add(inst);
   }

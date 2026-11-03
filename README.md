@@ -568,6 +568,26 @@ Rückmeldungen aus der ersten Online-Runde, drei Spieler schafften Welle 14:
 - **Ultimates:** etwa 35 % kürzere Abklingzeiten, zum Beispiel Amok 60/50/40 s statt 90/75/60 s.
 - **Ruckeln ab Level 10:** behoben, siehe „Leistung“.
 
+## Grafik: Waffen, Bild und Karte
+
+**Engine:** Das Spiel bleibt bei Three.js. Ein Wechsel etwa zu Godot hieße, den ganzen Client neu zu schreiben (Darstellung, Oberfläche, Netzcode), und die Web-Version lädt deutlich länger. Bessere Grafik geht in Three.js genauso: echte Formen, Materialien und Bildnachbearbeitung.
+
+- **Waffen** (`src/client/weapons.ts`, Vorschau mit `npm run dev` unter `/weapons.html`): Hammer, Axt, Nudelholz, Traumstab, Harpunengewehr, Kaminbesen, Handglocke, Hackbeil, Sense, Schaufel, Haken und Schleuder sind neu gebaut.
+  - Formen: gedrechselte Griffe mit Lederwicklung, gefaste Metallköpfe, geschwungene Klingen.
+  - Materialien: Holzmaserung und gebürsteter Stahl aus selbst erzeugten Texturen; Metall und Messing spiegeln eine Umgebung und glänzen dadurch auch nachts.
+  - Leistung: Jede Waffe wird nur einmal gebaut; alle Figuren teilen Geometrie und Material.
+  - Beim Zuschlagen zieht die Waffenspitze eine leuchtende Bewegungsspur, golden bei Helden und rötlich bei Bossen.
+- **Bild** (`src/client/post.ts`, auf „hoch“ und „mittel“):
+  - Bloom: Laternen, Fenster, Feuer und Zauber leuchten weich nach.
+  - Farbgebung mit etwas mehr Kontrast, kühlen Schatten und warmen Lichtern.
+  - Abgedunkelte Bildränder.
+- **Karte** (`src/client/foliage.ts`):
+  - Organische Bäume: unregelmäßige Laubballen bzw. versetzte Nadel-Etagen mit Farbverlauf, Stämme mit Wurzelansatz; am Waldrand drei Formen je Baumart.
+  - Großflächige Bodenflecken (Moos, Erde, trockenes Gras) lösen das Kachelmuster auf.
+  - Glühwürmchen schweben über Garten und Waldrand.
+  - Die Wege haben helle, festgetretene Erde mit Kieseln statt dunklem Schlamm, dazu hellere Trittplatten.
+  - Neu sind vier Misthaufen mit Stroh, Jauchepfütze und Mistgabel: beim Kompost, beim Schuppen, beim Brunnen und am Südrand (`decor` mit `look: "dung"` in `data/map.json`).
+
 ## Der Schlund (Zwischenboss)
 
 Ein großer Mutant (Mixamo „Maw J Laygo“) mit eigenen Mutanten-Bewegungen: Gehen, Rennen, Atmen im Stand, Faustschlag, Prankenhieb, Brüllen, Sprung und Sterben. Er ist in der Rotation der Zwischenbosse dabei.
