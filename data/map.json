@@ -393,14 +393,16 @@
       "x": 6,
       "y": 6,
       "r": 1.4,
-      "look": "tree"
+      "look": "tree",
+      "species": "yew"
     },
     {
       "kind": "circle",
       "x": 13,
       "y": 2.5,
       "r": 1.4,
-      "look": "tree"
+      "look": "tree",
+      "species": "rowan"
     },
     {
       "kind": "circle",
@@ -414,14 +416,16 @@
       "x": 55,
       "y": 15,
       "r": 1.4,
-      "look": "tree"
+      "look": "tree",
+      "species": "fir"
     },
     {
       "kind": "circle",
       "x": 56,
       "y": 21,
       "r": 1.4,
-      "look": "tree"
+      "look": "tree",
+      "species": "fir"
     },
     {
       "kind": "circle",
@@ -435,7 +439,8 @@
       "x": 40,
       "y": 38,
       "r": 1.4,
-      "look": "tree"
+      "look": "tree",
+      "species": "apple"
     },
     {
       "kind": "circle",
@@ -449,14 +454,16 @@
       "x": 6.5,
       "y": 57.5,
       "r": 1.4,
-      "look": "tree"
+      "look": "tree",
+      "species": "fruit"
     },
     {
       "kind": "circle",
       "x": 20,
       "y": 61,
       "r": 1.4,
-      "look": "tree"
+      "look": "tree",
+      "species": "fruit"
     },
     {
       "kind": "circle",
@@ -614,7 +621,8 @@
       "x": 23.6,
       "y": 31.5,
       "r": 0.5,
-      "look": "barrel"
+      "look": "barrel",
+      "species": "rain"
     },
     {
       "kind": "rect",
@@ -916,6 +924,111 @@
       "y": 58,
       "r": 0.9,
       "look": "well"
+    },
+    {
+      "kind": "circle",
+      "x": 29.3,
+      "y": 12.0,
+      "r": 1.0,
+      "look": "tree",
+      "species": "fig"
+    },
+    {
+      "kind": "circle",
+      "x": 37.3,
+      "y": 13.6,
+      "r": 0.45,
+      "look": "tree",
+      "species": "olive"
+    },
+    {
+      "kind": "circle",
+      "x": 9,
+      "y": 3.4,
+      "r": 1.0,
+      "look": "tree",
+      "species": "rowan"
+    },
+    {
+      "kind": "circle",
+      "x": 17.2,
+      "y": 4.0,
+      "r": 0.85,
+      "look": "tree",
+      "species": "yew"
+    },
+    {
+      "kind": "circle",
+      "x": 11.2,
+      "y": 5.6,
+      "r": 0.7,
+      "look": "tree",
+      "species": "elder"
+    },
+    {
+      "kind": "circle",
+      "x": 28.0,
+      "y": 39.0,
+      "r": 1.0,
+      "look": "tree",
+      "species": "apple"
+    },
+    {
+      "kind": "circle",
+      "x": 32.2,
+      "y": 52,
+      "r": 0.6,
+      "look": "tree",
+      "species": "elder"
+    },
+    {
+      "kind": "circle",
+      "x": 36.4,
+      "y": 56.5,
+      "r": 0.6,
+      "look": "tree",
+      "species": "elder"
+    },
+    {
+      "kind": "circle",
+      "x": 32.2,
+      "y": 63,
+      "r": 0.6,
+      "look": "tree",
+      "species": "elder"
+    },
+    {
+      "kind": "circle",
+      "x": 36.4,
+      "y": 66.2,
+      "r": 0.6,
+      "look": "tree",
+      "species": "elder"
+    },
+    {
+      "kind": "circle",
+      "x": 25.6,
+      "y": 34.3,
+      "r": 0.4,
+      "look": "barrel",
+      "species": "rain"
+    },
+    {
+      "kind": "circle",
+      "x": 30.0,
+      "y": 34.2,
+      "r": 0.4,
+      "look": "barrel",
+      "species": "rain"
+    },
+    {
+      "kind": "rect",
+      "x": 27.3,
+      "y": 36.0,
+      "w": 3.0,
+      "h": 1.1,
+      "look": "flowers",
+      "species": "roses"
     }
   ],
   "botPosts": [
@@ -1312,6 +1425,20 @@
       "y": 68,
       "w": 2.2,
       "h": 1.8
+    },
+    {
+      "look": "gate",
+      "x": 39.5,
+      "y": 10.5,
+      "w": 2,
+      "h": 1
+    },
+    {
+      "look": "meadow",
+      "x": 41.5,
+      "y": 36.2,
+      "w": 8,
+      "h": 4
     }
   ],
   "props": [

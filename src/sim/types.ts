@@ -432,7 +432,7 @@ export type ObstacleLook =
 
 /** Nur Darstellung, ohne Wirkung im Spiel: Pflaster, Kieswege, Friedhofszaun. Rechteck mit Mittelpunkt. */
 export interface DecorDef {
-  look: 'cobbles' | 'gravel' | 'gravefence' | 'dung';
+  look: 'cobbles' | 'gravel' | 'gravefence' | 'dung' | 'gate' | 'meadow';
   x: number;
   y: number;
   w: number;
@@ -441,6 +441,8 @@ export interface DecorDef {
 
 interface ObstacleBase {
   look?: ObstacleLook;
+  /** Nur Aussehen: Baumart (apple, fruit, olive, fig, rowan, yew, elder, fir) bzw. Variante (roses, rain). */
+  species?: string;
   /** Hält Schüsse auf (Standard true). Niedrige Hindernisse wie Beete lassen sie durch. */
   blocksShots?: boolean;
 }

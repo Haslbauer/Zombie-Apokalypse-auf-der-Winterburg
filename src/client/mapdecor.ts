@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { treeMesh } from './foliage';
+import { type TreeSpecies, treeMesh } from './foliage';
 import { distanceToObstacle } from '../sim/grid';
 import type { ArenaDef, Brush, DecorDef, Obstacle, SpawnPoint } from '../sim/types';
 
@@ -172,6 +172,34 @@ function part(geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: numb
   return mesh;
 }
 
+/**
+ * UVs in Weltmetern (je Fläche passend zur Ausrichtung), damit Ziegel auf langen
+ * und kurzen Wänden gleich groß sind. scale: Meter pro Texturkachel.
+ */
+function worldUV<T extends THREE.BufferGeometry>(geo: T, scale = 0.9): T {
+  const p = geo.attributes.position;
+  const n = geo.attributes.normal;
+  const uv = geo.attributes.uv;
+  if (!uv) return geo;
+  for (let i = 0; i < p.count; i++) {
+    const ax = Math.abs(n?.getX(i) ?? 0);
+    const ay = Math.abs(n?.getY(i) ?? 0);
+    const az = Math.abs(n?.getZ(i) ?? 1);
+    const x = p.getX(i);
+    const y = p.getY(i);
+    const z = p.getZ(i);
+    if (ay >= ax && ay >= az) uv.setXY(i, x / scale, z / scale);
+    else if (ax >= az) uv.setXY(i, z / scale, y / scale);
+    else uv.setXY(i, x / scale, y / scale);
+  }
+  return geo;
+}
+
+/** Ziegelquader (Mauern, Hauswände) mit Ziegeln im richtigen Maßstab. */
+function brickBox(w: number, h: number, d: number): THREE.BoxGeometry {
+  return worldUV(new THREE.BoxGeometry(w, h, d));
+}
+
 /** Prisma (Satteldach) entlang x: Breite w (x), Tiefe d (z), Firsthöhe h. */
 function gableGeometry(w: number, d: number, h: number, thick = 0): THREE.BufferGeometry {
   const shape = new THREE.Shape();
@@ -210,21 +238,24 @@ export function house(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chimne
   const short = Math.min(o.w, o.h);
   const alongX = o.w >= o.h;
   const rnd = rand(o.x * 13 + o.y * 7);
-  const plaster = mats.textured('plaster', 2);
-  const grime = mats.textured('plaster', 2, 0xa89c86);
-  const timber = mats.lambert(0x4a3020);
+  // Ziegelbau: Wände aus Ziegeln, Gesims und Fensterstürze aus hellem Stein
+  const plaster = mats.textured('bricks', 1);
+  const grime = mats.textured('bricks', 1, 0x8a7e6e);
+  const timber = mats.lambert(0xb8ae9c);
   const dark = mats.lambert(0x3a2a1c);
   // Sockel aus Bruchstein, darüber ein Schmutzrand am Putz
   g.add(part(new THREE.BoxGeometry(o.w + 0.15, 0.5, o.h + 0.15), mats.textured('flagstone', 1, 0x9a9080), 0, 0.25, 0));
-  g.add(part(new THREE.BoxGeometry(o.w, WALL_H, o.h), plaster, 0, WALL_H / 2, 0));
-  g.add(part(new THREE.BoxGeometry(o.w + 0.02, 0.45, o.h + 0.02), grime, 0, 0.72, 0, false));
+  g.add(part(brickBox(o.w, WALL_H, o.h), plaster, 0, WALL_H / 2, 0));
+  g.add(part(brickBox(o.w + 0.02, 0.45, o.h + 0.02), grime, 0, 0.72, 0, false));
   /** Balken an der Fassade: lokale Koordinate t entlang der Wand, y Höhe, Winkel in der Wandebene. */
   const facade = (side: number, longSide: boolean) => {
     // Längsseite: Wand verläuft entlang der langen Achse; Giebelseite: entlang der kurzen
     const wallAlongX = longSide ? alongX : !alongX;
     const off = (wallAlongX ? o.h : o.w) / 2 + 0.02;
     return (len: number, t: number, y: number, angle = 0, thick = 0.14) => {
-      const m = part(new THREE.BoxGeometry(len, thick, thick), timber, 0, 0, 0, false);
+      // Ziegelbau: nur waagrechte Steinbänder (Gesims unter dem Dach), kein Fachwerk
+      if (angle !== 0 || y < WALL_H - 0.5) return;
+      const m = part(new THREE.BoxGeometry(len + 0.1, thick + 0.06, thick), timber, 0, 0, 0, false);
       // Wand entlang x (Normalen ±z) bzw. entlang z (Normalen ±x)
       if (wallAlongX) {
         m.position.set(t, y, side * off);
@@ -282,6 +313,7 @@ export function house(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chimne
       if (short < 2.5) continue;
       const win = new THREE.Group();
       win.add(part(new THREE.BoxGeometry(0.9, 1, 0.08), dark, 0, 0, 0, false));
+      win.add(part(new THREE.BoxGeometry(1.1, 0.16, 0.12), timber, 0, 0.58, 0.02, false));
       const boarded = (i * 7 + Math.round(o.x * 3 + o.y) + (side > 0 ? 1 : 0)) % 3 === 0;
       win.add(part(new THREE.BoxGeometry(0.72, 0.82, 0.1), boarded ? mats.lambert(0x141210) : mats.lambert(0xffcf7a, { emissive: 0xffa53a, emissiveIntensity: 0.9 }), 0, 0, 0, false));
       if (boarded) {
@@ -329,7 +361,11 @@ export function house(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chimne
     tri.lineTo(0, roofH - 0.12);
     tri.lineTo(short / 2, 0);
     tri.lineTo(-short / 2, 0);
-    const gable = new THREE.Mesh(new THREE.ShapeGeometry(tri), plaster);
+    const gableGeo = new THREE.ShapeGeometry(tri);
+    const guv = gableGeo.attributes.uv;
+    const gp = gableGeo.attributes.position;
+    for (let i = 0; i < gp.count; i++) guv.setXY(i, gp.getX(i) / 0.9, gp.getY(i) / 0.9);
+    const gable = new THREE.Mesh(gableGeo, plaster);
     gable.receiveShadow = true;
     const off = (alongX ? o.w : o.h) / 2;
     if (alongX) {
@@ -398,11 +434,81 @@ export function house(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chimne
 }
 
 /**
+ * Hofmauer aus Ziegeln (schmale Teile am Innenhof): 2,6 m hoch, Mauerabdeckung
+ * aus Stein, Pfeiler alle 2,5 m, ein wenig Efeu.
+ */
+export function courtyardWall(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats): THREE.Group {
+  const g = new THREE.Group();
+  g.position.set(o.x, 0, o.y);
+  const H = 2.6;
+  const rnd = rand(o.x * 3 + o.y * 5);
+  const alongX = o.w >= o.h;
+  const len = Math.max(o.w, o.h);
+  const brick = mats.textured('bricks', 1);
+  const cap = mats.lambert(0xb8ae9c);
+  const wallT = Math.min(o.w, o.h);
+  g.add(part(brickBox(o.w, H, o.h), brick, 0, H / 2, 0));
+  g.add(part(new THREE.BoxGeometry(o.w + 0.12, 0.12, o.h + 0.12), cap, 0, H + 0.06, 0));
+  const piers = Math.max(1, Math.round(len / 2.5));
+  for (let i = 0; i <= piers; i++) {
+    const t = -len / 2 + (i * len) / piers;
+    g.add(part(brickBox(alongX ? 0.45 : wallT + 0.18, H + 0.2, alongX ? wallT + 0.18 : 0.45), brick, alongX ? t : 0, (H + 0.2) / 2, alongX ? 0 : t));
+    g.add(part(new THREE.BoxGeometry(alongX ? 0.55 : wallT + 0.28, 0.12, alongX ? wallT + 0.28 : 0.55), cap, alongX ? t : 0, H + 0.26, alongX ? 0 : t));
+  }
+  const ivy = mats.lambert(0x2f5a28);
+  for (let i = 0; i < 3; i++) {
+    if (rnd() < 0.4) continue;
+    const t = (rnd() - 0.5) * (len - 1);
+    const side = rnd() < 0.5 ? -1 : 1;
+    const h = 0.8 + rnd() * 1.5;
+    g.add(part(new THREE.BoxGeometry(alongX ? 0.6 + rnd() * 0.6 : 0.05, h, alongX ? 0.05 : 0.6 + rnd() * 0.6), ivy, alongX ? t : side * (wallT / 2 + 0.03), h / 2, alongX ? side * (wallT / 2 + 0.03) : t, false));
+  }
+  return g;
+}
+
+/**
+ * Hoftor in der Mauer: zwei Ziegelpfeiler mit Steinkugeln, ein Bogen darüber,
+ * zwei offene Holztorflügel mit Eisenbändern.
+ */
+export function courtyardGate(d: DecorDef, mats: Mats): THREE.Group {
+  const g = new THREE.Group();
+  g.position.set(d.x, 0, d.y);
+  const alongX = d.w >= d.h;
+  if (!alongX) g.rotation.y = Math.PI / 2;
+  const W = Math.max(d.w, d.h);
+  const brick = mats.textured('bricks', 1);
+  const cap = mats.lambert(0xb8ae9c);
+  for (const s of [-1, 1]) {
+    g.add(part(brickBox(0.5, 3.0, 0.7), brick, s * (W / 2 + 0.05), 1.5, 0));
+    g.add(part(new THREE.BoxGeometry(0.62, 0.12, 0.82), cap, s * (W / 2 + 0.05), 3.06, 0));
+    g.add(part(new THREE.SphereGeometry(0.2, 10, 8), cap, s * (W / 2 + 0.05), 3.3, 0));
+  }
+  // Bogen aus Ziegeln über dem Tor
+  const arch = part(new THREE.TorusGeometry(W / 2 + 0.05, 0.16, 6, 16, Math.PI), brick, 0, 2.55, 0);
+  g.add(arch);
+  // Offene Torflügel (nach innen gedreht)
+  const wood = [mats.lambert(0x6a4a2c), mats.lambert(0x7a5634)];
+  const iron = mats.lambert(0x2f2f2f);
+  for (const s of [-1, 1]) {
+    const leaf = new THREE.Group();
+    const lw = W / 2 - 0.05;
+    for (let k = 0; k < 5; k++) leaf.add(part(new THREE.BoxGeometry(lw / 5 - 0.02, 2.1, 0.06), wood[k % 2], s * (-(k + 0.5) * (lw / 5)), 1.1, 0, false));
+    for (const y of [0.5, 1.7]) leaf.add(part(new THREE.BoxGeometry(lw, 0.07, 0.03), iron, (-s * lw) / 2, y, 0.05, false));
+    leaf.position.set(s * (W / 2 - 0.02), 0, 0.05);
+    leaf.rotation.y = s * 1.25;
+    g.add(leaf);
+  }
+  // Ausgetretene Schwelle
+  g.add(part(new THREE.BoxGeometry(W, 0.05, 0.7), mats.lambert(0x8a8378), 0, 0.025, 0, false));
+  return g;
+}
+
+/**
  * Verfallener Hausflügel: Die eine Hälfte steht noch (hohle Mauern, halbes
  * Dach, kahle Sparren), die andere ist eingestürzt (Mauerstümpfe, Schutt,
  * Balken, umgekippter Schornstein, Efeu). Die Kollision bleibt das Rechteck.
  */
-export function ruin(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chimneys: THREE.Vector3[]): THREE.Group {
+export function ruin(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, _chimneys: THREE.Vector3[]): THREE.Group {
   const outer = new THREE.Group();
   outer.position.set(o.x, 0, o.y);
   const g = new THREE.Group();
@@ -415,7 +521,7 @@ export function ruin(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chimney
   const hl = L / 2;
   const hs = S / 2;
   const rnd = rand(o.x * 7 + o.y * 3);
-  const plaster = mats.textured('plaster', 2, 0xd8ccb0);
+  const plaster = mats.textured('bricks', 1, 0xd8ccc0);
   const timber = mats.lambert(0x3e2a1c);
   const stone = mats.lambert(0x7d7468);
   const brick = mats.lambert(0x8a4a38);
@@ -428,15 +534,14 @@ export function ruin(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chimney
 
   // Stehende Hälfte (lokal −x): hohle Mauern in voller Höhe
   const wall = (len: number, h: number, x: number, z: number, alongLong: boolean) =>
-    g.add(part(new THREE.BoxGeometry(alongLong ? len : T, h, alongLong ? T : len), plaster, x, 0.45 + h / 2, z));
+    g.add(part(brickBox(alongLong ? len : T, h, alongLong ? T : len), plaster, x, 0.45 + h / 2, z));
   for (const side of [-1, 1]) wall(hl, WALL_H, -hl / 2, side * (hs - T / 2), true);
   wall(S, WALL_H, -hl + T / 2, 0, false);
   // Fachwerkbalken und leere bzw. vernagelte Fenster auf der stehenden Hälfte
   for (const side of [-1, 1]) {
     const z = side * (hs + 0.02);
-    g.add(part(new THREE.BoxGeometry(hl, 0.16, 0.16), timber, -hl / 2, WALL_H - 0.1, z, false));
-    g.add(part(new THREE.BoxGeometry(hl, 0.16, 0.16), timber, -hl / 2, 1.6, z, false));
-    for (let x = -hl; x <= 0.01; x += 2.3) g.add(part(new THREE.BoxGeometry(0.16, WALL_H - 0.5, 0.16), timber, x, 0.5 + (WALL_H - 0.5) / 2, z, false));
+    // Steinband unter der Dachkante (Ziegelbau, kein Fachwerk)
+    g.add(part(new THREE.BoxGeometry(hl, 0.18, 0.12), mats.lambert(0xb8ae9c), -hl / 2, 0.45 + WALL_H - 0.12, z, false));
     for (let x = -hl + 1.15; x < -0.5; x += 2.3) {
       g.add(part(new THREE.BoxGeometry(0.8, 0.95, 0.06), dark, x, 2.35, z + side * 0.02, false));
       if (rnd() < 0.6) {
@@ -446,27 +551,28 @@ export function ruin(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chimney
       }
     }
   }
-  // Halbes Dach über dem stehenden Teil, dahinter kahle, abgebrochene Sparren
-  const roofH = Math.min(2.6, Math.max(0.9, S * 0.42));
-  const roofLen = hl * 0.65;
-  const roof = new THREE.Mesh(gableGeometry(roofLen, S + 0.9, roofH), mats.textured('roof', 1));
-  roof.castShadow = true;
-  roof.position.set(-hl + roofLen / 2 - 0.3, 0.45 + WALL_H - 0.45, 0);
-  g.add(roof);
-  const rafterLen = Math.hypot(hs + 0.45, roofH);
-  const tilt = Math.atan2(roofH, hs + 0.45);
-  for (let x = -hl + roofLen; x < hl * 0.25; x += 0.7) {
-    for (const side of [-1, 1]) {
-      if (rnd() < 0.25) continue; // einzelne Sparren fehlen
-      const len = rafterLen * (x > -0.5 ? 0.4 + rnd() * 0.5 : 1);
-      const r = part(new THREE.BoxGeometry(0.12, len, 0.12), timber, x, 0, 0);
-      r.rotation.x = side * (Math.PI / 2 - tilt);
-      // Fußpunkt auf der Mauerkrone, Richtung First
-      r.position.set(x, WALL_H + 0.45 + Math.sin(tilt) * len / 2 - 0.1, side * (hs + 0.45 - Math.cos(tilt) * len / 2));
-      g.add(r);
-    }
+  // Flachdach mit Dachpappe über dem stehenden Teil: Bahnen mit überlappenden Nähten,
+  // Blechkante am Rand, Flicken und eine Pfütze; zur Abbruchkante hin ausgefranst
+  const felt = mats.lambert(0x2c2c30);
+  const feltLight = mats.lambert(0x3a3a40);
+  const roofY = 0.45 + WALL_H;
+  g.add(part(new THREE.BoxGeometry(hl + 0.25, 0.12, S + 0.3), felt, -hl / 2 - 0.1, roofY + 0.06, 0));
+  for (let z = -hs; z <= hs + 0.01; z += 1) g.add(part(new THREE.BoxGeometry(hl + 0.2, 0.03, 0.08), feltLight, -hl / 2 - 0.1, roofY + 0.13, z, false));
+  const trim = mats.lambert(0x6a6e72);
+  for (const side of [-1, 1]) g.add(part(new THREE.BoxGeometry(hl + 0.3, 0.1, 0.06), trim, -hl / 2 - 0.1, roofY + 0.1, side * (hs + 0.15), false));
+  g.add(part(new THREE.BoxGeometry(0.06, 0.1, S + 0.3), trim, -hl - 0.22, roofY + 0.1, 0, false));
+  for (let i = 0; i < 4; i++) {
+    const patch = part(new THREE.BoxGeometry(0.5 + rnd() * 0.6, 0.02, 0.4 + rnd() * 0.5), feltLight, -hl + 0.6 + rnd() * (hl - 1.2), roofY + 0.135, (rnd() - 0.5) * (S - 0.6), false);
+    patch.rotation.y = rnd();
+    g.add(patch);
   }
-  g.add(part(new THREE.BoxGeometry(hl * 0.9, 0.16, 0.16), timber, -hl * 0.45, WALL_H + 0.45 + roofH - 0.1, 0));
+  g.add(part(new THREE.CircleGeometry(0.55, 10).rotateX(-Math.PI / 2), mats.lambert(0x3f5560), -hl * 0.6, roofY + 0.14, (rnd() - 0.5) * (S - 1.5), false));
+  // Abbruchkante: Dachpappe hängt in Fetzen über die Mauer
+  for (let z = -hs; z < hs; z += 0.45) {
+    const flap = part(new THREE.BoxGeometry(0.35, 0.03, 0.42), felt, 0.1, roofY - 0.05, z + 0.2, false);
+    flap.rotation.z = -0.6 - rnd() * 0.6;
+    g.add(flap);
+  }
 
   // Eingestürzte Hälfte (lokal +x): gezackte Mauerstümpfe
   for (const side of [-1, 1]) {
@@ -500,13 +606,7 @@ export function ruin(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chimney
     beam.rotation.set((rnd() - 0.5) * 0.6, rnd() * Math.PI, (rnd() - 0.5) * 0.8);
     g.add(beam);
   }
-  // Umgekippter Schornstein auf dem Schutt, aus dem noch Staub steigt
-  const ch = part(new THREE.BoxGeometry(2.2, 0.7, 0.7), mats.lambert(0x8a5a48), hl * 0.55, 1.1, (rnd() - 0.5) * 0.8);
-  ch.rotation.set(0.15, 0.6, 0.35);
-  g.add(ch);
-  g.updateMatrixWorld(true);
-  outer.updateMatrixWorld(true);
-  chimneys.push(new THREE.Vector3(hl * 0.55, 1.2, 0).applyMatrix4(g.matrixWorld));
+  // (Kein Schornstein im eingestürzten Teil: Dort hätte keiner gestanden)
   return outer;
 }
 
@@ -609,9 +709,9 @@ function lamp(mats: Mats): THREE.Group {
 }
 
 /** Baum: Laubbaum (zwei Kronen-Stufen) oder Nadelbaum, je nach Ort. */
-export function tree(x: number, y: number, r: number, _mats?: Mats): THREE.Group {
-  // Organischer Baum (unregelmäßige Laubballen bzw. Nadel-Etagen, Stamm mit Wurzeln), siehe foliage.ts
-  return treeMesh(x, y, r);
+export function tree(x: number, y: number, r: number, _mats?: Mats, species?: TreeSpecies): THREE.Group {
+  // Organischer Baum (unregelmäßige Laubballen bzw. Nadel-Etagen, Stamm mit Wurzeln) oder eine besondere Art, siehe foliage.ts
+  return treeMesh(x, y, r, species);
 }
 
 /** Alle übrigen Hindernisse nach Aussehen (Schuppen, Kompost, Gräber, Teich …). */
@@ -716,10 +816,22 @@ export function obstacleDecor(o: Obstacle, mats: Mats): THREE.Object3D | null {
           g.add(log);
         }
       break;
-    case 'barrel':
-      g.add(part(new THREE.CylinderGeometry(w / 2, w / 2 * 0.9, 1, 12), mats.lambert(0x3a6aa0), 0, 0.5, 0));
-      g.add(part(new THREE.CylinderGeometry(w / 2 - 0.05, w / 2 - 0.05, 0.02, 12), mats.lambert(0x2c4f70), 0, 1.01, 0, false));
+    case 'barrel': {
+      // Regentonne aus Holzdauben mit Eisenreifen, Wasser mit Spiegelung, Deckel halb daneben
+      const r0 = w / 2;
+      const staves = [mats.lambert(0x6a4a2c), mats.lambert(0x5a3e24), mats.lambert(0x7a5634)];
+      const n = 14;
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2;
+        const st = part(new THREE.BoxGeometry(r0 * 0.46, 1.0, 0.05), staves[i % 3], Math.cos(a) * r0 * 0.95, 0.5, Math.sin(a) * r0 * 0.95, true);
+        st.rotation.y = -a + Math.PI / 2;
+        g.add(st);
+      }
+      for (const y of [0.15, 0.5, 0.85]) g.add(part(new THREE.CylinderGeometry(r0 * 1.0, r0 * 1.0, 0.06, 14, 1, true), mats.lambert(0x2f2f2f), 0, y, 0, false));
+      g.add(part(new THREE.CylinderGeometry(r0 * 0.9, r0 * 0.9, 0.02, 14), mats.lambert(0x2f4f5a, { emissive: 0x0a1a20 }), 0, 0.9, 0, false));
+      g.add(part(new THREE.CylinderGeometry(r0 * 0.9, r0 * 0.9, 0.9, 12), mats.lambert(0x3a2a1a), 0, 0.45, 0, false));
       break;
+    }
     case 'bench':
       g.add(part(new THREE.BoxGeometry(w, 0.08, 0.45), mats.lambert(0x8a6a45), 0, 0.45, 0));
       g.add(part(new THREE.BoxGeometry(w, 0.4, 0.06), mats.lambert(0x8a6a45), 0, 0.75, -0.22));
@@ -736,18 +848,45 @@ export function obstacleDecor(o: Obstacle, mats: Mats): THREE.Object3D | null {
       break;
     }
     case 'flowers': {
-      g.add(part(new THREE.BoxGeometry(w, 0.15, h), mats.lambert(0x4a3322), 0, 0.075, 0, false));
-      const colors = [0xff6f91, 0xffd166, 0xc77dff, 0xffffff, 0xff9f43];
-      const geo = new THREE.IcosahedronGeometry(0.13, 0);
-      const count = Math.round(w * h * 5);
-      const inst = new THREE.InstancedMesh(geo, mats.lambert(0xffffff), count);
+      // Blumenbeet mit Steinkante; Rosenbeet (species: roses) mit Rosenbüschen und vielen anderen Blumen
+      const roses = o.species === 'roses';
+      g.add(part(new THREE.BoxGeometry(w, 0.12, h), mats.lambert(0x4a3322), 0, 0.06, 0, false));
+      const edge = mats.lambert(0x9a9284);
+      for (let x = -w / 2; x < w / 2; x += 0.3)
+        for (const zs of [-1, 1]) g.add(part(new THREE.BoxGeometry(0.26, 0.14, 0.12), edge, x + 0.15, 0.07, zs * (h / 2), false));
+      const stemMat = mats.lambert(0x3f7a30);
+      const leafMat = mats.lambert(0x2f6a2a, { flatShading: true });
+      const colors = roses ? [0xc81e3a, 0xe8466a, 0xf0f0e8, 0xffd166, 0xb48cff, 0xff9f43] : [0xff6f91, 0xffd166, 0xc77dff, 0xffffff, 0xff9f43];
+      const count = Math.round(w * h * (roses ? 9 : 6));
+      const stem = new THREE.CylinderGeometry(0.012, 0.012, 1, 3).translate(0, 0.5, 0);
+      const head = new THREE.IcosahedronGeometry(0.07, 0);
+      const stems = new THREE.InstancedMesh(stem, stemMat, count);
+      const heads = new THREE.InstancedMesh(head, mats.lambert(0xffffff), count);
       const m = new THREE.Matrix4();
       for (let i = 0; i < count; i++) {
-        m.setPosition((rnd() - 0.5) * (w - 0.2), 0.3 + rnd() * 0.15, (rnd() - 0.5) * (h - 0.2));
-        inst.setMatrixAt(i, m);
-        inst.setColorAt(i, new THREE.Color(colors[Math.floor(rnd() * colors.length)]));
+        const x = (rnd() - 0.5) * (w - 0.25);
+        const z = (rnd() - 0.5) * (h - 0.25);
+        const ht = 0.25 + rnd() * 0.35;
+        m.makeScale(1, ht, 1).setPosition(x, 0.12, z);
+        stems.setMatrixAt(i, m);
+        m.makeScale(1, 0.8, 1).setPosition(x, 0.12 + ht, z);
+        heads.setMatrixAt(i, m);
+        heads.setColorAt(i, new THREE.Color(colors[Math.floor(rnd() * colors.length)]));
       }
-      g.add(inst);
+      g.add(stems, heads);
+      if (roses) {
+        // Rosenbüsche: dunkles Laub mit großen roten und rosa Blüten
+        for (let x = -w / 2 + 0.45; x < w / 2 - 0.3; x += 0.9) {
+          const bush = part(new THREE.IcosahedronGeometry(0.32, 1), leafMat, x, 0.42, 0);
+          bush.scale.set(1, 0.9, 0.85);
+          g.add(bush);
+          for (let k = 0; k < 6; k++) {
+            const a = rnd() * Math.PI * 2;
+            const bloom = part(new THREE.DodecahedronGeometry(0.075, 0), mats.lambert(rnd() < 0.6 ? 0xc81e3a : 0xe8466a), x + Math.cos(a) * 0.27, 0.45 + rnd() * 0.28, Math.sin(a) * 0.22, false);
+            g.add(bloom);
+          }
+        }
+      }
       break;
     }
     case 'grave': {
@@ -852,6 +991,8 @@ export function decor(d: DecorDef, mats: Mats): THREE.Object3D {
     return g;
   }
   if (d.look === 'dung') return dungHeap(d, mats);
+  if (d.look === 'gate') return courtyardGate(d, mats);
+  if (d.look === 'meadow') return meadow(d, mats);
   const cobbles = d.look === 'cobbles';
   if (cobbles) {
     const geo = new THREE.PlaneGeometry(d.w, d.h).rotateX(-Math.PI / 2);
@@ -918,6 +1059,32 @@ export function decor(d: DecorDef, mats: Mats): THREE.Object3D {
       }
     }
   }
+  return g;
+}
+
+/** Blumenwiese (nur Aussehen): viele Wildblumen mit Stängeln, Klee und höheres Gras. */
+function meadow(d: DecorDef, mats: Mats): THREE.Group {
+  const g = new THREE.Group();
+  const rnd = rand(d.x * 13 + d.y * 7);
+  const count = Math.round(d.w * d.h * 12);
+  const stem = new THREE.CylinderGeometry(0.01, 0.01, 1, 3).translate(0, 0.5, 0);
+  const head = new THREE.IcosahedronGeometry(0.05, 0);
+  const stems = new THREE.InstancedMesh(stem, mats.lambert(0x4a8a36), count);
+  const heads = new THREE.InstancedMesh(head, mats.lambert(0xffffff), count);
+  const palette = [0xf4f0e8, 0xffd84a, 0xb48cff, 0xff8aa0, 0x7ab8ff, 0xffffff];
+  const m = new THREE.Matrix4();
+  for (let i = 0; i < count; i++) {
+    // dichter zur Mitte, ausfransender Rand
+    const x = d.x + (rnd() - 0.5) * d.w * (0.6 + rnd() * 0.4);
+    const z = d.y + (rnd() - 0.5) * d.h * (0.6 + rnd() * 0.4);
+    const ht = 0.15 + rnd() * 0.3;
+    m.makeScale(1, ht, 1).setPosition(x, 0, z);
+    stems.setMatrixAt(i, m);
+    m.makeScale(1, 0.7, 1).setPosition(x, ht, z);
+    heads.setMatrixAt(i, m);
+    heads.setColorAt(i, new THREE.Color(palette[Math.floor(rnd() * palette.length)]));
+  }
+  g.add(stems, heads);
   return g;
 }
 
@@ -1105,7 +1272,9 @@ export function thicket(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats): THR
   bushes.castShadow = true;
   g.add(bushes);
   const trees = Math.round((o.w * o.h) / 40);
-  for (let i = 0; i < trees; i++) g.add(tree(o.x + (rnd() - 0.5) * (o.w - 2), o.y + (rnd() - 0.5) * (o.h - 2), 1.4, mats));
+  // Östlich der Häuser (unerreichbares Dickicht): große Tannen
+  const firs = o.x > 50;
+  for (let i = 0; i < trees; i++) g.add(tree(o.x + (rnd() - 0.5) * (o.w - 2), o.y + (rnd() - 0.5) * (o.h - 2), firs ? 1.5 : 1.4, mats, firs ? 'fir' : undefined));
   return g;
 }
 

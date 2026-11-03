@@ -133,10 +133,172 @@ export function foliageMaterial(): THREE.MeshLambertMaterial {
   return (foliageMat ??= new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }));
 }
 
-/** Ein ganzer Baum (für einzelne Bäume auf der Karte). */
-export function treeMesh(x: number, y: number, r: number): THREE.Group {
+/** Baumarten auf der Karte (Kartendaten: obstacle.species). */
+export type TreeSpecies = 'apple' | 'fruit' | 'olive' | 'fig' | 'rowan' | 'yew' | 'elder' | 'fir';
+
+/** Kleine Kugeln (Früchte, Beeren, Blüten) in einer Farbe, als eine Geometrie. */
+function dots(points: THREE.Vector3[], radius: number, color: number): THREE.BufferGeometry {
+  const c = new THREE.Color(color);
+  const parts = points.map((p) => {
+    const g = new THREE.IcosahedronGeometry(radius, 0);
+    g.deleteAttribute('uv');
+    g.translate(p.x, p.y, p.z);
+    return g;
+  });
+  const g = mergeGeometries(parts)!;
+  const col = new Float32Array(g.attributes.position.count * 3);
+  for (let i = 0; i < col.length; i += 3) col.set([c.r, c.g, c.b], i);
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  return g;
+}
+
+/** Punkte auf der Oberfläche einer Krone (grob: Halbkugel um center). */
+function crownPoints(rnd: () => number, n: number, cx: number, cy: number, cz: number, r: number, low = 0.1): THREE.Vector3[] {
+  const out: THREE.Vector3[] = [];
+  for (let i = 0; i < n; i++) {
+    const a = rnd() * Math.PI * 2;
+    const e = Math.asin(low + rnd() * (1 - low)) * (rnd() < 0.8 ? 1 : -0.4);
+    out.push(new THREE.Vector3(cx + Math.cos(a) * Math.cos(e) * r, cy + Math.sin(e) * r * 0.8, cz + Math.sin(a) * Math.cos(e) * r));
+  }
+  return out;
+}
+
+/** Krone mit eigenen Farben (für besondere Arten). */
+function tintedCrown(seed: number, r: number, base: number, low: number, high: number, balls = 0): THREE.BufferGeometry {
+  const rnd = rand(seed);
+  const parts: THREE.BufferGeometry[] = [];
+  const n = balls || 4 + Math.floor(rnd() * 3);
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + rnd();
+    const g = lumpy(r * (0.5 + rnd() * 0.3), rnd);
+    const off = i === 0 ? 0 : r * (0.45 + rnd() * 0.3);
+    g.translate(Math.cos(a) * off, base + r * 0.7 + (i === 0 ? r * 0.4 : rnd() * r * 0.5), Math.sin(a) * off);
+    parts.push(g);
+  }
+  const g = mergeGeometries(parts)!;
+  paint(g, new THREE.Color(low), new THREE.Color(high), base, base + r * 2, rnd);
+  return g;
+}
+
+/** Besondere Baumart als fertige Gruppe (Stamm + Krone + Früchte/Blüten). */
+function speciesTree(species: TreeSpecies, seed: number, r: number): THREE.Group {
+  const rnd = rand(seed);
+  const g = new THREE.Group();
+  const mesh = (geo: THREE.BufferGeometry) => {
+    geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, foliageMaterial());
+    m.castShadow = true;
+    m.receiveShadow = true;
+    g.add(m);
+  };
+  const s = 0.9 + rnd() * 0.25;
+  switch (species) {
+    case 'apple':
+    case 'fruit': {
+      // Obstbaum: kurzer Stamm, runde, lockere Krone, Früchte rundherum (auch ein paar im Gras)
+      const h = 1.4 * s;
+      mesh(trunkGeometry(seed, r * 0.2, h));
+      const cr = r * 1.05 * s;
+      const crown = tintedCrown(seed, cr, h * 0.75, 0x2a5a24, 0x6aae4a);
+      const cy = h * 0.75 + cr * 0.95;
+      const fruitColor = species === 'apple' ? 0xd2302a : rnd() < 0.5 ? 0xd8c040 : 0x6a2a6a;
+      const fruits = dots(crownPoints(rnd, 26, 0, cy, 0, cr * 1.05), 0.09, fruitColor);
+      const fallen = dots(Array.from({ length: 5 }, () => new THREE.Vector3((rnd() - 0.5) * cr * 2, 0.07, (rnd() - 0.5) * cr * 2)), 0.08, fruitColor);
+      mesh(mergeGeometries([crown.toNonIndexed(), fruits.toNonIndexed(), fallen.toNonIndexed()].map((x) => (x.deleteAttribute('normal'), x)))!);
+      break;
+    }
+    case 'olive': {
+      // Olivenbaum: zwei bis drei knorrige, gedrehte Stämme, silbrig-graugrünes, lockeres Laub
+      for (let i = 0; i < 3; i++) {
+        const t = trunkGeometry(seed + i * 3, r * 0.13, 1.6 * s, false);
+        t.rotateZ((rnd() - 0.5) * 0.5);
+        t.rotateY(i * 2.1);
+        t.translate(Math.cos(i * 2.1) * 0.12, 0, Math.sin(i * 2.1) * 0.12);
+        mesh(t);
+      }
+      const crown = tintedCrown(seed, r * 1.0 * s, 1.2 * s, 0x5a6a4a, 0xa8b48a, 7);
+      const olives = dots(crownPoints(rnd, 16, 0, 1.2 * s + r * 0.9, 0, r * 1.0), 0.05, 0x3a3a2a);
+      mesh(mergeGeometries([crown.toNonIndexed(), olives.toNonIndexed()].map((x) => (x.deleteAttribute('normal'), x)))!);
+      break;
+    }
+    case 'fig': {
+      // Feigenbaum: mehrere Stämme, breite, niedrige Krone mit großem, dunklem Laub
+      for (let i = 0; i < 3; i++) {
+        const t = trunkGeometry(seed + i, r * 0.12, 1.3 * s, false);
+        t.rotateZ(0.35);
+        t.rotateY(i * 2.1 + 0.4);
+        mesh(t);
+      }
+      const crown = tintedCrown(seed, r * 1.15 * s, 0.8 * s, 0x1f4a22, 0x4f8a3a, 6);
+      crown.scale(1.25, 0.8, 1.25);
+      const figs = dots(crownPoints(rnd, 12, 0, 0.8 * s + r * 0.8, 0, r * 1.3), 0.07, 0x5a3a5a);
+      mesh(mergeGeometries([crown.toNonIndexed(), figs.toNonIndexed()].map((x) => (x.deleteAttribute('normal'), x)))!);
+      break;
+    }
+    case 'rowan': {
+      // Eberesche: schlanker Stamm, luftige Krone, leuchtend orangerote Beerendolden
+      const h = 2.2 * s;
+      mesh(trunkGeometry(seed, r * 0.16, h));
+      const cr = r * 0.9 * s;
+      const crown = tintedCrown(seed, cr, h * 0.7, 0x2f5a2a, 0x7ab84e, 5);
+      const clusters: THREE.Vector3[] = [];
+      for (const c of crownPoints(rnd, 9, 0, h * 0.7 + cr * 0.9, 0, cr * 1.05)) for (let k = 0; k < 5; k++) clusters.push(c.clone().add(new THREE.Vector3((rnd() - 0.5) * 0.18, (rnd() - 0.5) * 0.12, (rnd() - 0.5) * 0.18)));
+      mesh(mergeGeometries([crown.toNonIndexed(), dots(clusters, 0.05, 0xe8501e).toNonIndexed()].map((x) => (x.deleteAttribute('normal'), x)))!);
+      break;
+    }
+    case 'yew': {
+      // Eibe: sehr dunkel, dicht, schon ab dem Boden benadelt, ein paar rote Beeren
+      mesh(trunkGeometry(seed, r * 0.15, 0.6, false));
+      const crown = tintedCrown(seed, r * 0.95 * s, -0.2, 0x0f2618, 0x2a4a2c, 6);
+      crown.scale(1, 1.35, 1);
+      const berries = dots(crownPoints(rnd, 10, 0, r * 1.2, 0, r * 0.95), 0.04, 0xc8201e);
+      mesh(mergeGeometries([crown.toNonIndexed(), berries.toNonIndexed()].map((x) => (x.deleteAttribute('normal'), x)))!);
+      break;
+    }
+    case 'elder': {
+      // Holunder: Strauch aus mehreren dünnen Stämmen, weiße, flache Blütendolden
+      for (let i = 0; i < 4; i++) {
+        const t = trunkGeometry(seed + i * 5, r * 0.07, 1.1 * s, false);
+        t.rotateZ(0.25 + rnd() * 0.25);
+        t.rotateY(i * 1.6);
+        mesh(t);
+      }
+      const crown = tintedCrown(seed, r * 0.85 * s, 0.3, 0x24502a, 0x5a9a44, 6);
+      crown.scale(1.2, 0.85, 1.2);
+      const umbels: THREE.BufferGeometry[] = [];
+      for (const c of crownPoints(rnd, 12, 0, 0.3 + r * 0.75, 0, r * 1.0, 0.3)) {
+        const u = new THREE.CylinderGeometry(0.13, 0.08, 0.04, 7);
+        u.deleteAttribute('uv');
+        u.translate(c.x, c.y, c.z);
+        umbels.push(u.toNonIndexed());
+      }
+      const white = mergeGeometries(umbels)!;
+      const col = new Float32Array(white.attributes.position.count * 3).fill(0.95);
+      white.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      mesh(mergeGeometries([crown.toNonIndexed(), white].map((x) => (x.deleteAttribute('normal'), x)))!);
+      break;
+    }
+    case 'fir': {
+      // Große Tanne
+      mesh(trunkGeometry(seed, r * 0.22, 1.6, false));
+      mesh(pineGeometry(seed, r * 1.2 * s, 1.0));
+      g.scale.setScalar(1.6);
+      break;
+    }
+  }
+  return g;
+}
+
+/** Ein ganzer Baum (für einzelne Bäume auf der Karte); species: besondere Art. */
+export function treeMesh(x: number, y: number, r: number, species?: TreeSpecies): THREE.Group {
   const seed = x * 31 + y * 17;
   const rnd = rand(seed);
+  if (species) {
+    const t = speciesTree(species, seed, r);
+    t.position.set(x, 0, y);
+    t.rotation.y = rnd() * Math.PI * 2;
+    return t;
+  }
   const g = new THREE.Group();
   const s = 0.85 + rnd() * 0.35;
   const pine = rnd() < 0.35;

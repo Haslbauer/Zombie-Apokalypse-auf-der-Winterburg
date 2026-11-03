@@ -3,6 +3,7 @@
 Stand: 01.11.2026. Arbeitsgrundlage für Claude Code.
 
 Änderungen v2.7 (Deko-Modelle): CC0-Modelle von Quaternius (Medieval Village Pack, Survival Pack) als Deko: Fässer, Kisten, Marktkarren, Zaunfelder, Kornsäcke, Axt, Schaufel (props `oakbarrel`, `woodcrate`, `handcart`, `picketfence`, `grainsacks`, `axe`, `shovel`; Quellen in assets/props/, `npm run props` → public/models/props.glb, Client src/client/propmodels.ts).
+Änderungen v2.7 (Skizze): Ziegelbauten, Hofmauern mit Nordtor, Ruine mit Flachdach (Dachpappe) ohne Schornstein, Regentonnen, Rosenbeet, Apfel-, Oliven- und Feigenbaum, Eiben, Ebereschen, Holunder, Tannen im Osten, Blumenwiese, Obstbäume, detaillierte Bienenbeuten und Gemüse. Neues Hindernisfeld `species` (nur Aussehen).
 Änderungen v2.7 (Grafik): detaillierte Waffen mit Bewegungsspur (weapons.ts), Bildnachbearbeitung (Bloom, Farbgebung, Vignette; post.ts), organische Bäume, Bodenflecken, Glühwürmchen (foliage.ts), hellere Wege, Misthaufen (decor `dung`). Engine bleibt Three.js.
 Änderungen v2.7 (Schlund): neuer Zwischenboss Der Schlund (`schlund`, Sprung, Prankenhieb, Urschrei, Team-Buff Mutantenkraft), Boss-Ausholbewegungen (`cast<Art>`-Clips, sonst Schrei), Seitschritt-Animationen der Helden, graues Eigenleuchten der Modelle entfernt.
 Änderungen v2.7 (Animationen): passende Fähigkeits-Clips für Helden mit geteilter Figur (`abilityClips`), Kapitän Tiefe mit Harpunen-Schuss und Zwei-Hand-Stoß, Flutwelle als rollende Wasserwand mit Gischt und nasser Spur.

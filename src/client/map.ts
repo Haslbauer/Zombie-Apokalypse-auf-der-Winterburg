@@ -4,8 +4,8 @@ import { arenaBounds } from '../sim/grid';
 import type { ArenaDef, Obstacle } from '../sim/types';
 import { nightDecor, nightObstacle } from './nightdecor';
 import { addPropModels } from './propmodels';
-import { crownGeometry, fireflies, foliageMaterial, groundPatches, pineGeometry, trunkGeometry } from './foliage';
-import { brushes, decor, hatch, hedge, house, Mats, obstacleDecor, smoke, thicket, tree, windTime, rathole, ruin, grassTufts } from './mapdecor';
+import { crownGeometry, fireflies, foliageMaterial, groundPatches, pineGeometry, type TreeSpecies, trunkGeometry } from './foliage';
+import { brushes, courtyardWall, decor, hatch, hedge, house, Mats, obstacleDecor, smoke, thicket, tree, windTime, rathole, ruin, grassTufts } from './mapdecor';
 
 const COLORS = {
   forest: 0x3a6230,
@@ -94,7 +94,9 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
 
   const chimneys: THREE.Vector3[] = [];
   for (const o of arena.obstacles) {
-    if (o.kind === 'rect' && o.look === 'house') scene.add(house(o, mats, chimneys));
+    // Schmale Hausteile am Innenhof sind Ziegelmauern (ohne Dach)
+    if (o.kind === 'rect' && o.look === 'house' && Math.min(o.w, o.h) <= 1.2) scene.add(courtyardWall(o, mats));
+    else if (o.kind === 'rect' && o.look === 'house') scene.add(house(o, mats, chimneys));
     else if (o.kind === 'rect' && o.look === 'rathole') scene.add(rathole(o, mats, chimneys));
     else if (o.kind === 'rect' && o.look === 'ruin') scene.add(ruin(o, mats, chimneys));
     else if (o.look === 'car' || o.look === 'well') {
@@ -102,7 +104,7 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
       if (d) scene.add(d);
     }
     else if (o.kind === 'rect' && (o.look ?? 'hedge') === 'hedge') scene.add(hedge(o, mats));
-    else if (o.kind === 'circle' && o.look === 'tree') scene.add(tree(o.x, o.y, o.r, mats));
+    else if (o.kind === 'circle' && o.look === 'tree') scene.add(tree(o.x, o.y, o.r, mats, o.species as TreeSpecies | undefined));
     else if (o.kind === 'rect' && o.look === 'blocked') {
       flat(o.w, o.h, o.x, o.y, m(COLORS.blocked), 0.012);
       scene.add(thicket(o, mats));

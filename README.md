@@ -594,6 +594,15 @@ Rückmeldungen aus der ersten Online-Runde, drei Spieler schafften Welle 14:
     - Fenster haben Fensterkreuz, Fensterbank und teils Blumenkästen; der Eingang hat eine Haustür mit Beschlägen, Stufe und Laterne.
     - Der Schuppen bekommt Bretterwände in verschiedenen Tönen, ein Wellblechdach mit Rost, eine Tür mit Z-Strebe, ein Fenster, Rechen, Spaten und eine Regentonne.
     - Im Kompost liegen Erde, Grünschnitt und Stroh.
+  - **Gestaltung nach Skizze** (Gelände um die Burg):
+    - Alle Gebäude sind aus Ziegelstein mit hellem Steingesims und Fensterstürzen, ohne Fachwerk. Die schmalen Teile am Innenhof sind Ziegelmauern mit Pfeilern; in der Lücke im Norden steht ein Hoftor mit Ziegelbogen und offenen Holzflügeln.
+    - Die stehende Hälfte der Ruine hat ein Flachdach mit Dachpappe: Nähte, Flicken, eine Pfütze und Fetzen an der Abbruchkante. Den Schornstein im eingestürzten Teil gibt es nicht mehr. Südlich davon stehen zwei Regentonnen, ein Rosenbeet mit vielen anderen Blumen und ein Apfelbaum.
+    - Im Innenhof steht ein Olivenbaum, nordwestlich der Häuser ein Feigenbaum.
+    - Bei den Bienen stehen zwei Beuten auf einem Bock: gestapelte Zargen, Blechdeckel, Flugbrett und Flugloch. Westlich davon wachsen Eiben, Ebereschen mit orangeroten Beeren und Holunder mit weißen Dolden.
+    - Im Osten, hinter dem Zaun, stehen große Tannen; am Weg von Süden wachsen Holundersträucher.
+    - Im Süden liegt eine Blumenwiese um den Apfelbaum, im Südwesten stehen Obstbäume mit Birnen bzw. Pflaumen.
+    - Gemüse in den Beeten: gerippte Kürbisse mit Stiel, Ranke und gelappten Blättern; Kohl mit Außenblättern, krauser Salat, Tomaten an Stäben mit Rispen und Blüten; neu sind Möhren.
+    - Baumarten stehen in den Kartendaten als `species` an Bäumen (apple, fruit, olive, fig, rowan, yew, elder, fir); dazu kommen neue Deko-Arten `gate` und `meadow`.
   - Neu sind vier Misthaufen mit Stroh, Jauchepfütze und Mistgabel: beim Kompost, beim Schuppen, beim Brunnen und am Südrand (`decor` mit `look: "dung"` in `data/map.json`).
 
 ## Der Schlund (Zwischenboss)

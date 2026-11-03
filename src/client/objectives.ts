@@ -118,7 +118,7 @@ export class ObjectiveView {
     const plants = new THREE.Group();
     plants.name = 'plants';
     inner.add(plants);
-    const kind = ['cabbage', 'lettuce', 'tomato', 'pumpkin', 'leek', 'cabbage'][Math.abs(seed) % 5];
+    const kind = ['cabbage', 'lettuce', 'tomato', 'pumpkin', 'leek', 'carrot'][Math.abs(seed) % 6];
     // Pflanzen wachsen vom Erdboden aus (Gruppe auf Erdhöhe, damit das Schrumpfen nicht im Kasten versinkt)
     plants.position.y = 0.62;
     const plantMats = new Map<number, THREE.MeshLambertMaterial>();
@@ -130,37 +130,86 @@ export class ObjectiveView {
       plants.add(m);
       return m;
     };
+    // Gerippter Kürbis (einmal gebaut): Kugel mit 8 Rippen, oben und unten eingedellt
+    const pumpkinGeo = (() => {
+      const geo = new THREE.SphereGeometry(0.3, 24, 12);
+      const p = geo.attributes.position;
+      for (let i = 0; i < p.count; i++) {
+        const v = new THREE.Vector3().fromBufferAttribute(p, i);
+        const phi = Math.atan2(v.z, v.x);
+        const rib = 1 + 0.07 * Math.cos(phi * 8);
+        const pole = 1 - 0.25 * Math.pow(Math.abs(v.y) / 0.3, 3);
+        p.setXYZ(i, v.x * rib, v.y * pole, v.z * rib);
+      }
+      geo.computeVertexNormals();
+      geo.scale(1.15, 0.78, 1.15);
+      return geo;
+    })();
+    // Großes, gelapptes Blatt (Kürbis, Kohl)
+    const lobedLeaf = (r: number) => {
+      const shape = new THREE.Shape();
+      for (let i = 0; i <= 20; i++) {
+        const a = (i / 20) * Math.PI * 2;
+        const rr = r * (0.75 + 0.25 * Math.abs(Math.sin(a * 2.5)));
+        if (i === 0) shape.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
+        else shape.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+      }
+      return new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2);
+    };
     const rows = depth > 1.2 ? [-depth / 4, depth / 4] : [0];
     for (const z of rows) {
-      for (let x = -length / 2 + 0.45; x < length / 2 - 0.3; x += kind === 'pumpkin' ? 1.4 : kind === 'leek' ? 0.35 : 0.7) {
+      for (let x = -length / 2 + 0.45; x < length / 2 - 0.3; x += kind === 'pumpkin' ? 1.4 : kind === 'leek' || kind === 'carrot' ? 0.32 : 0.7) {
         const jx = x + (rnd() - 0.5) * 0.12;
         switch (kind) {
-          case 'cabbage':
-            P(new THREE.IcosahedronGeometry(0.2, 1), 0x6fa84a, jx, 0.78, z).scale.set(1, 0.85, 1);
-            for (let i = 0; i < 4; i++) {
-              const leaf = P(new THREE.SphereGeometry(0.17, 6, 4), 0x4f8a36, jx + Math.cos(i * 1.6) * 0.14, 0.7, z + Math.sin(i * 1.6) * 0.14);
-              leaf.scale.set(1, 0.35, 1);
+          case 'cabbage': {
+            // Kohlkopf: fester Kopf, darum offene, bläulich-grüne Außenblätter mit Adern
+            P(new THREE.IcosahedronGeometry(0.17, 2), 0x9ac46a, jx, 0.8, z).scale.set(1, 0.9, 1);
+            for (let i = 0; i < 6; i++) {
+              const a = i * 1.05 + rnd() * 0.3;
+              const leaf = P(lobedLeaf(0.18), i % 2 ? 0x5a8a5a : 0x6a9a62, jx + Math.cos(a) * 0.16, 0.72 + (i % 2) * 0.03, z + Math.sin(a) * 0.16);
+              leaf.rotation.set(Math.sin(a) * 0.5, 0, -Math.cos(a) * 0.5);
             }
             break;
+          }
           case 'lettuce':
-            for (let i = 0; i < 5; i++) {
-              const leaf = P(new THREE.SphereGeometry(0.13, 6, 4), i % 2 ? 0x8fcf5a : 0x7aba48, jx + (rnd() - 0.5) * 0.15, 0.72, z + (rnd() - 0.5) * 0.15);
-              leaf.scale.set(1, 0.55, 1);
+            // Salat: krause, hellgrüne Blätter in Rosetten
+            for (let i = 0; i < 7; i++) {
+              const a = i * 0.9;
+              const leaf = P(lobedLeaf(0.11), i % 2 ? 0x9ad86a : 0x7aba48, jx + Math.cos(a) * 0.08, 0.7 + rnd() * 0.06, z + Math.sin(a) * 0.08);
+              leaf.rotation.set(Math.sin(a) * 0.9, a, -Math.cos(a) * 0.9);
             }
             break;
           case 'tomato': {
-            P(new THREE.CylinderGeometry(0.015, 0.015, 1.1, 4), 0x8a6a45, jx, 1.15, z);
-            P(new THREE.IcosahedronGeometry(0.22, 0), 0x3f7a30, jx, 1.0, z).scale.set(0.8, 1.6, 0.8);
-            for (let i = 0; i < 3; i++) P(new THREE.SphereGeometry(0.06, 6, 4), 0xd8302a, jx + (rnd() - 0.5) * 0.25, 0.85 + rnd() * 0.4, z + (rnd() - 0.5) * 0.25);
+            // Tomaten: Stab, Pflanze, Rispen mit roten und noch grünen Früchten, gelbe Blüten
+            P(new THREE.CylinderGeometry(0.015, 0.015, 1.2, 4), 0x8a6a45, jx, 1.2, z);
+            for (let k = 0; k < 3; k++) P(new THREE.IcosahedronGeometry(0.14, 1), 0x3f7a30, jx + (rnd() - 0.5) * 0.12, 0.85 + k * 0.25, z + (rnd() - 0.5) * 0.12).scale.set(1, 0.8, 1);
+            for (let i = 0; i < 6; i++) P(new THREE.SphereGeometry(0.055, 8, 6), rnd() < 0.7 ? 0xd8302a : 0x8ab83a, jx + (rnd() - 0.5) * 0.28, 0.8 + rnd() * 0.5, z + (rnd() - 0.5) * 0.28);
+            for (let i = 0; i < 3; i++) P(new THREE.IcosahedronGeometry(0.025, 0), 0xf2d040, jx + (rnd() - 0.5) * 0.25, 1.1 + rnd() * 0.25, z + (rnd() - 0.5) * 0.25);
             break;
           }
           case 'pumpkin': {
-            const pk = P(new THREE.SphereGeometry(0.3, 10, 7), 0xe07a1f, jx, 0.82, z);
-            pk.scale.set(1.15, 0.8, 1.15);
-            P(new THREE.CylinderGeometry(0.03, 0.04, 0.12, 5), 0x4a6a2a, jx, 1.08, z);
-            for (let i = 0; i < 3; i++) {
-              const leaf = P(new THREE.CircleGeometry(0.2, 6).rotateX(-Math.PI / 2), 0x4f8a36, jx + (rnd() - 0.5) * 0.9, 0.66, z + (rnd() - 0.5) * 0.4);
-              leaf.rotation.y = rnd() * 3;
+            // Kürbis: gerippt, mit gekrümmtem Stiel, Ranke und großen gelappten Blättern
+            const shade = rnd() < 0.3 ? 0xd06a14 : 0xe8821e;
+            const pk = P(pumpkinGeo, shade, jx, 0.84, z);
+            pk.rotation.y = rnd() * 3;
+            const st = P(new THREE.CylinderGeometry(0.025, 0.04, 0.14, 6), 0x5a6a2a, jx + 0.02, 1.08, z);
+            st.rotation.z = 0.35;
+            const vine = new THREE.CatmullRomCurve3([new THREE.Vector3(jx, 0.66, z), new THREE.Vector3(jx + 0.3, 0.68, z + 0.15), new THREE.Vector3(jx + 0.55, 0.66, z - 0.1)]);
+            const v = new THREE.Mesh(new THREE.TubeGeometry(vine, 8, 0.015, 4), plantMats.get(0x4a7a2a) ?? this.lambert(0x4a7a2a));
+            v.position.y = -0.62;
+            plants.add(v);
+            for (let i = 0; i < 4; i++) {
+              const leaf = P(lobedLeaf(0.24), i % 2 ? 0x3f7a30 : 0x4f8a36, jx + (rnd() - 0.5) * 1.0, 0.68 + rnd() * 0.08, z + (rnd() - 0.5) * 0.45);
+              leaf.rotation.set((rnd() - 0.5) * 0.4, rnd() * 3, (rnd() - 0.5) * 0.4);
+            }
+            break;
+          }
+          case 'carrot': {
+            // Möhren: orange Schultern schauen aus der Erde, darüber fedriges Kraut
+            P(new THREE.ConeGeometry(0.035, 0.08, 6).rotateX(Math.PI), 0xe8782a, jx, 0.64, z);
+            for (let i = 0; i < 4; i++) {
+              const frond = P(new THREE.ConeGeometry(0.035, 0.3, 4), 0x5aa63a, jx, 0.8, z);
+              frond.rotation.set((rnd() - 0.5) * 0.7, i, (rnd() - 0.5) * 0.7);
             }
             break;
           }
@@ -211,19 +260,47 @@ export class ObjectiveView {
 
   private buildHive(): THREE.Object3D {
     const g = new THREE.Group();
-    const box = (x: number, z: number, y: number, color: number) => {
-      const b = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.75, 0.95), this.lambert(color));
-      b.position.set(x, y + 0.375, z);
-      b.castShadow = b.receiveShadow = true;
-      g.add(b);
+    const add = (geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z: number, shadow = true) => {
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(x, y, z);
+      m.castShadow = shadow;
+      m.receiveShadow = true;
+      g.add(m);
+      return m;
     };
-    box(-0.55, 0, 0, 0xf2e3b3);
-    box(0.55, 0, 0, 0xe8c66a);
-    box(0, 0, 0.75, 0xf0d58c);
-    const lid = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.12, 1.15), this.lambert(0x8a6a45));
-    lid.position.set(0, 1.56, 0);
-    lid.castShadow = true;
-    g.add(lid);
+    // Bienenbock: zwei Balken auf Ziegelsteinen
+    const brick = this.lambert(0x8a4a38);
+    const wood = this.lambert(0x6a4a2c);
+    for (const x of [-0.9, 0.9]) for (const z of [-0.35, 0.35]) add(new THREE.BoxGeometry(0.22, 0.22, 0.12), brick, x, 0.11, z);
+    for (const z of [-0.35, 0.35]) add(new THREE.BoxGeometry(2.3, 0.1, 0.12), wood, 0, 0.27, z);
+    // Zwei Beuten aus gestapelten Zargen (unterschiedlich bemalt), Blechdeckel, Flugbrett mit Flugloch
+    const hive = (x: number, colors: number[]) => {
+      let y = 0.32;
+      add(new THREE.BoxGeometry(0.78, 0.06, 0.78), this.lambert(0x5a3e24), x, y + 0.03, 0);
+      y += 0.06;
+      for (const c of colors) {
+        const h = 0.3;
+        add(new THREE.BoxGeometry(0.72, h, 0.72), this.lambert(c), x, y + h / 2, 0);
+        // Griffleisten
+        for (const s of [-1, 1]) add(new THREE.BoxGeometry(0.2, 0.04, 0.04), wood, x + s * 0.38, y + h * 0.6, 0, false);
+        y += h + 0.01;
+      }
+      // Blechdeckel mit Überstand und flachem Giebel
+      add(new THREE.BoxGeometry(0.86, 0.06, 0.86), this.lambert(0x9aa0a6), x, y + 0.03, 0);
+      const roof = add(new THREE.CylinderGeometry(0.5, 0.5, 0.86, 3, 1).rotateZ(Math.PI / 2).rotateY(Math.PI / 2), this.lambert(0x8a9096), x, y + 0.12, 0);
+      roof.scale.set(1, 0.28, 1);
+      // Flugbrett und dunkles Flugloch vorne (Süden)
+      const board = add(new THREE.BoxGeometry(0.6, 0.03, 0.22), this.lambert(0x8a6a45), x, 0.42, 0.45);
+      board.rotation.x = 0.25;
+      add(new THREE.BoxGeometry(0.42, 0.05, 0.02), this.lambert(0x111111), x, 0.43, 0.365, false);
+    };
+    hive(-0.55, [0xf2e3b3, 0xe8c66a, 0xf2e3b3]);
+    hive(0.55, [0x9ec4d8, 0xf0f0e8]);
+    // Ein paar Bienen auf den Flugbrettern und eine Wabe am Boden
+    const dot = new THREE.SphereGeometry(0.03, 5, 4);
+    for (let i = 0; i < 8; i++) add(dot, this.lambert(0xffc93c), (i % 2 ? 0.55 : -0.55) + (Math.sin(i * 7) * 0.2), 0.45, 0.45 + Math.cos(i * 3) * 0.06, false);
+    const comb = add(new THREE.CylinderGeometry(0.16, 0.16, 0.03, 6), this.lambert(0xe0a83a), 1.0, 0.02, 0.6, false);
+    comb.rotation.y = 0.4;
     const geometry = new THREE.SphereGeometry(0.08, 6, 4);
     for (let i = 0; i < BEE_COUNT; i++) {
       const bee = new THREE.Mesh(geometry, this.beeMaterial);
