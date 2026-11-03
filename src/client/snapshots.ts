@@ -26,6 +26,12 @@ export class SnapshotBuffer {
     this.buffer.push({ state, played: false });
   }
 
+  /** Alles verwerfen (neue Partie im selben Raum: alte Zustände nicht mehr zeigen). */
+  clear(): void {
+    this.buffer = [];
+    this.renderTick = -1;
+  }
+
   /** Neuester Zustand (für Abgleich und Tests). */
   get newest(): GameState | undefined {
     return this.buffer[this.buffer.length - 1]?.state;

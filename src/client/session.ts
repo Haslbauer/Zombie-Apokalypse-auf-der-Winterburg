@@ -249,6 +249,9 @@ export class RemoteSession implements Session {
         if (msg.build && BUILD_ID && msg.build !== BUILD_ID) this.onVersionMismatch();
         break;
       case 'joined': {
+        // Neue Partie (oder Wiederverbinden): Zustände der vorigen Partie verwerfen,
+        // sonst zeigte der Client kurz die alten Helden (und behielt deren Figuren)
+        if (msg.room.phase === 'playing' && !this.reconnecting) this.resetStates();
         this.heroId = msg.heroId;
         if (msg.slot !== undefined) this.slot = msg.slot;
         this.token = msg.token;
@@ -271,6 +274,8 @@ export class RemoteSession implements Session {
         this.onRoom(msg.room);
         break;
       case 'room':
+        // Zurück in der Lobby: alte Zustände verwerfen
+        if (msg.room.phase === 'lobby' && this.room?.phase !== 'lobby') this.resetStates();
         this.room = msg.room;
         this.onRoom(msg.room);
         break;
@@ -299,6 +304,13 @@ export class RemoteSession implements Session {
         // Server startet neu: wie ein Abbruch behandeln (die Sitzung versucht es weiter)
         break;
     }
+  }
+
+  /** Zustände der vorigen Partie vergessen (Jitter-Puffer und letzter entpackter Zustand). */
+  private resetStates(): void {
+    this.snapshots.clear();
+    this.lastDecoded = null;
+    this.prediction.reset();
   }
 
   private sendRaw(msg: ClientMessage): void {

@@ -170,8 +170,16 @@ export class GameRenderer {
     const upsert = (unit: Hero | Zombie, make: () => UnitView, lift = 0) => {
       seen.add(unit.id);
       let view = this.units.get(unit.id);
+      // Gleiche Id, anderer Held/Typ (neue Partie im selben Raum): Figur neu bauen
+      if (view && view.defId !== unit.defId) {
+        this.scene.remove(view.group);
+        view.dispose();
+        this.units.delete(unit.id);
+        view = undefined;
+      }
       if (!view) {
         view = make();
+        view.defId = unit.defId;
         this.units.set(unit.id, view);
         this.scene.add(view.group);
       }

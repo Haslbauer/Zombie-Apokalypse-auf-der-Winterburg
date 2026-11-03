@@ -143,4 +143,13 @@ describe('Jitter-Puffer', () => {
     const frame = buf.advance(0, () => {})!;
     expect(frame.to.tick).toBeLessThan(10);
   });
+
+  it('Jitter-Puffer: clear verwirft alle Zustände (neue Partie im selben Raum)', () => {
+    const b = new SnapshotBuffer();
+    b.push({ tick: 100 } as never);
+    b.push({ tick: 101 } as never);
+    b.clear();
+    expect(b.empty).toBe(true);
+    expect(b.newest).toBeUndefined();
+  });
 });
