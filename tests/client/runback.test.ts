@@ -21,4 +21,13 @@ describe('Rückwärtslaufen', () => {
     move(still, 0, 0);
     expect(still.movingBackward(0)).toBe(false);
   });
+
+  it('Seitschritt: links und rechts relativ zur Blickrichtung', () => {
+    const v = new UnitView(0.45, '#fff', 0x00ff00, 1.8, 'human');
+    move(v, 0, 5); // läuft nach +z (Süden)
+    expect(v.moveDirection(0)).toBe('right'); // blickt nach Osten: Süden ist rechts
+    expect(v.moveDirection(Math.PI)).toBe('left'); // blickt nach Westen: Süden ist links
+    expect(v.moveDirection(Math.PI / 2)).toBe('forward');
+    expect(v.moveDirection(-Math.PI / 2)).toBe('back');
+  });
 });

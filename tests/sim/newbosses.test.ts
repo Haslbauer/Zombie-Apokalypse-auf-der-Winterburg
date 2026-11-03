@@ -81,4 +81,24 @@ describe('Neue Zwischenbosse', () => {
     }
     expect(h.plague?.stacks ?? 0).toBeGreaterThan(0);
   });
+  it('Der Schlund: Elite mit Sprung, Prankenhieb und Urschrei, in der Rotation', () => {
+    const data = testData();
+    const def = data.zombies.find((z) => z.id === 'schlund')!;
+    expect(def.rank).toBe('elite');
+    expect(def.special?.kind).toBe('leap');
+    expect(def.abilities!.map((a) => a.kind)).toEqual(['slam', 'nova']);
+    expect(def.teamBuff).toBeDefined();
+    const seen = new Set<string>();
+    for (let n = 3; n <= 30; n++) for (const e of waveElites(n, data.waves)) seen.add(e);
+    expect(seen.has('schlund')).toBe(true);
+    // Urschrei betäubt Helden in der Nähe
+    const { sim, h } = setup();
+    const z = placeZombie(sim, 'schlund', 22, 20, 100000);
+    z.abil = { timers: [99, 0], cast: null };
+    for (let i = 0; i < 40; i++) {
+      h.input = { move: { x: 0, y: 0 }, aim: z.pos, attack: false };
+      sim.step();
+    }
+    expect(h.hp).toBeLessThan(5000);
+  });
 });

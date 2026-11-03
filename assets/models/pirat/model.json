@@ -54,6 +54,12 @@
     },
     "magic2hA": {
       "file": "../moves/magic-2h-01.fbx"
+    },
+    "strafeL": {
+      "file": "../moves/walk-left.fbx"
+    },
+    "strafeR": {
+      "file": "../moves/walk-right.fbx"
     }
   },
   "inPlace": true,

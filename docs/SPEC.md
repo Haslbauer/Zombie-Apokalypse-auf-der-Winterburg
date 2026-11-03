@@ -2,6 +2,7 @@
 
 Stand: 01.11.2026. Arbeitsgrundlage für Claude Code.
 
+Änderungen v2.7 (Schlund): neuer Zwischenboss Der Schlund (`schlund`, Sprung, Prankenhieb, Urschrei, Team-Buff Mutantenkraft), Boss-Ausholbewegungen (`cast<Art>`-Clips, sonst Schrei), Seitschritt-Animationen der Helden, graues Eigenleuchten der Modelle entfernt.
 Änderungen v2.7 (Animationen): passende Fähigkeits-Clips für Helden mit geteilter Figur (`abilityClips`), Kapitän Tiefe mit Harpunen-Schuss und Zwei-Hand-Stoß, Flutwelle als rollende Wasserwand mit Gischt und nasser Spur.
 Änderungen v2.7 (Feedback): Shop jederzeit im Innenhof, Fähigkeiten in Lobby und Team-Ansicht, Rückruf zur Basis (Befehl `recall`, 4 s stillhalten, bricht bei Bewegung, Angriff, Fähigkeit, Zauber oder Schaden ab; sim/recall.ts), Lobby-Countdown 5 s, Nahkampf mit 0,15 s Vorlauf in Laufrichtung, Ultimates etwa 35 % kürzere Abklingzeit, leisere Angriffstöne.
 Änderungen v2.7 (Leistung): Modelle mit zusammengefassten Teilen und gemeinsamem Skelett, keine Licht- und Schattenwechsel zur Laufzeit, Heldenfeld der Zombies auf 22 m begrenzt (README „Leistung“).

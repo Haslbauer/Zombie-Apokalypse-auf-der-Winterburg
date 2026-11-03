@@ -60,7 +60,7 @@ describe('Neue Gegner und Elites', () => {
     expect(new Set(waveElites(13, cfg)).size).toBe(3);
     const all = new Set<string>();
     for (let n = 3; n <= 20; n++) for (const t of waveElites(n, cfg)) all.add(t);
-    expect(all).toEqual(new Set(['rattenkoenig', 'schlaechter', 'daemon', 'vogelscheuche', 'frostriese', 'totengraeber', 'moorhexe']));
+    expect(all).toEqual(new Set(['rattenkoenig', 'schlaechter', 'daemon', 'vogelscheuche', 'frostriese', 'totengraeber', 'moorhexe', 'schlund']));
     const q = waveQueue({ rng: 1 }, 5, cfg);
     expect(q.filter((e) => e.startsWith('elite:'))).toEqual(waveElites(5, cfg).map((t) => `elite:${t}`));
     expect(q.filter((e) => e.startsWith('pack:ratte')).length).toBe(packCount(5, cfg, 'ratte'));

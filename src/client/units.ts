@@ -77,6 +77,8 @@ interface ModelLook {
   recolor?: { color: number; strength?: number; keepSkin?: boolean; flat?: number };
   /** Farbe je Material (Figuren mit getrennten Materialien, z. B. Hose, Schuhe). */
   materialColors?: Record<string, number>;
+  /** Eigenleuchten des Materials ganz abschalten (graues Eigenleuchten wird ohnehin entfernt). */
+  noEmissive?: boolean;
   /** Clip je Fähigkeit (Platz 1–4), wenn die Figur einem anderen Helden gehört und dessen Fähigkeits-Clips nicht passen. */
   abilityClips?: [string, string, string, string];
   /** Schwebehöhe über dem Boden (Hornissen). */
@@ -113,6 +115,8 @@ const ZOMBIE_LOOKS: Record<string, ModelLook> = {
   // Vogelscheuche: strohfarbener Zombie mit Sonnenhut und Sense
   scarecrow: { model: 'zombie-cop', move: 'walk', refSpeed: 1.6, scale: 1.55, tint: [1, 1, 1], plain: 0xb89a52, ...Z, attacks: ['attack', 'bite'], props: ['sunhat', 'scythe'], handOffset: 0.06 },
   // Frostriese: großer, eisblauer Hüne mit Eiskrone
+  // Der Schlund: Mixamo-Mutant „Maw J Laygo“ mit eigenen Mutanten-Bewegungen
+  maw: { model: 'zombie-maw', move: 'walk', moveFast: 'run', fastAbove: 2.6, refSpeed: 1.5, scale: 1.4, tint: [0.95, 0.72, 0.62], idle: 'idle', attacks: ['attack', 'attack2'] },
   frostgiant: { model: 'zombie-warrok', move: 'walk', refSpeed: 1.0, scale: 2.15, tint: [0.65, 0.95, 1.4], ...Z, attacks: ['attack', 'bite'], props: ['icecrown'] },
   // Totengräber: erdbrauner Zombie mit Filzhut und Schaufel
   gravedigger: { model: 'zombie-cop', move: 'walk', refSpeed: 1.5, scale: 1.6, tint: [1, 1, 1], plain: 0x5a4630, ...Z, attacks: ['attack', 'bite'], props: ['felthat', 'shovel'], handOffset: 0.06 },
@@ -133,6 +137,7 @@ export const ELITE_COLORS: Record<string, number> = {
   toad: 0x7fd6a0,
   scarecrow: 0xe0b040,
   frostgiant: 0x7fd1ff,
+  maw: 0xff7a3c,
   gravedigger: 0xc8a070,
   witch: 0x8aff6a,
 };
@@ -162,6 +167,9 @@ const HERO_LOOKS: Record<string, ModelLook> = {
   baeckerin: { model: 'baeckerin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 1.0, tint: [1, 1, 1], attacks: ['attack', 'attack2'], attackStart: 0.3, props: ['chefhat', 'apron', 'rollingpin'], headOffset: -0.07 },
   gaertnerin: { model: 'gaertnerin', move: 'run', idle: 'idle', refSpeed: 5.3, scale: 0.98, tint: [1, 1, 1], attacks: ['attack'], attackStart: 0.4, impact: { attack: 0.78 } },
 };
+
+/** Laufrichtung relativ zur Blickrichtung (Animationen). */
+export type MoveDir = 'forward' | 'back' | 'left' | 'right';
 
 /** Höchstdauer einer Angriffs- bzw. Fähigkeitsanimation in der Darstellung (Sekunden). */
 export const ATTACK_ANIM = 0.9;
@@ -387,6 +395,10 @@ export class UnitView {
         std.map = recolorTexture(std.map, look.recolor.color, look.recolor.strength, look.recolor.keepSkin, look.recolor.flat);
         m.needsUpdate = true;
       }
+      // Graues Eigenleuchten aus den Mixamo-Dateien abschalten (Skelett-Zombies und Maw wirkten
+      // sonst blass wie Geister); farbiges Leuchten (Augen, Quaternius-Tiere) bleibt
+      const em = std.emissive;
+      if (em && (look.noEmissive || (Math.max(em.r, em.g, em.b) - Math.min(em.r, em.g, em.b) < 0.02 && Math.max(em.r, em.g, em.b) > 0.02))) em.setRGB(0, 0, 0);
       const own = look.materialColors?.[m.name];
       if (own !== undefined) {
         std.map = null;
@@ -735,6 +747,16 @@ export class UnitView {
     if (clip) this.playOnce(name, slot === 3 ? Math.min(2.2, Math.max(0.8, clip.duration / 2.5)) : Math.min(ABILITY_ANIM, Math.max(0.6, clip.duration)));
   }
 
+  /**
+   * Bossfähigkeit vorbereiten: eigener Clip „cast<Art>“ (z. B. castSlam beim Schlund),
+   * sonst der Schrei. Dauert so lange wie die Warnzeit plus Ausführung.
+   */
+  playCast(kind: string, duration: number): void {
+    const name = `cast${kind.charAt(0).toUpperCase()}${kind.slice(1)}`;
+    if (this.hasClip(name)) this.playOnce(name, duration);
+    else if (this.hasClip('scream')) this.playOnce('scream', Math.min(duration, 1.2));
+  }
+
   /** Sterben: Sterbe-Animation, danach liegen bleiben. */
   die(): void {
     const a = this.anim;
@@ -764,7 +786,7 @@ export class UnitView {
     this.animate(t, speed, frozen);
   }
 
-  animate(dt: number, speed: number, frozen: boolean, hold?: string, backward = false): void {
+  animate(dt: number, speed: number, frozen: boolean, hold?: string, dir: MoveDir = 'forward'): void {
     const a = this.anim;
     if (!a) return;
     if (a.once) {
@@ -783,9 +805,14 @@ export class UnitView {
       else {
         const fast = look.moveFast && speed > (look.fastAbove ?? Infinity);
         const scale = frozen ? 0 : speed < 0.05 ? 0.25 : Math.min(2.2, Math.max(0.35, speed / look.refSpeed));
-        // Rückwärts (zielt nach vorn, läuft nach hinten): eigene Animation, sonst normal laufen
-        const back = backward && this.hasClip('runBack');
-        this.setLoop(back ? 'runBack' : fast ? look.moveFast! : look.move, back ? Math.min(1.6, Math.max(0.5, speed / (look.refSpeed * 0.75))) : scale);
+        // Rückwärts bzw. seitwärts (zielt in eine Richtung, läuft in eine andere): eigene Animationen
+        const side = dir === 'left' ? 'strafeL' : dir === 'right' ? 'strafeR' : null;
+        if (side && this.hasClip(side)) {
+          // Seitschritt-Clips sind gehend aufgenommen (ca. 1,6 m/s): schneller abspielen
+          this.setLoop(side, frozen ? 0 : Math.min(2.6, Math.max(0.6, speed / 1.9)));
+        } else if (dir === 'back' && this.hasClip('runBack')) {
+          this.setLoop('runBack', Math.min(1.6, Math.max(0.5, speed / (look.refSpeed * 0.75))));
+        } else this.setLoop(fast ? look.moveFast! : look.move, scale);
       }
     }
     a.inst.mixer.update(frozen && !a.dead ? 0 : dt);
@@ -807,10 +834,30 @@ export class UnitView {
    * Spielwinkel: 0 = +x, π/2 = +y bzw. Three +z)
    */
   movingBackward(facing: number): boolean {
-    const v = Math.hypot(this.shownVel.x, this.shownVel.z);
-    if (v < 0.8) return false;
-    return (this.shownVel.x * Math.cos(facing) + this.shownVel.z * Math.sin(facing)) / v < -0.45;
+    return this.moveDirection(facing) === 'back';
   }
+
+  /**
+   * Laufrichtung relativ zur Blickrichtung: vorwärts, rückwärts, links oder rechts
+   * (für Rückwärts- und Seitschritt-Animationen). Mit etwas Spielraum, damit
+   * es an den Grenzen nicht hin und her springt.
+   */
+  moveDirection(facing: number): MoveDir {
+    const v = Math.hypot(this.shownVel.x, this.shownVel.z);
+    if (v < 0.8) return (this.lastDir = 'forward');
+    const fwd = (this.shownVel.x * Math.cos(facing) + this.shownVel.z * Math.sin(facing)) / v;
+    const right = (-this.shownVel.x * Math.sin(facing) + this.shownVel.z * Math.cos(facing)) / v;
+    const keep = 0.1; // Hysterese
+    const prev = this.lastDir;
+    let dir: MoveDir;
+    if (fwd > 0.5 - (prev === 'forward' ? keep : 0)) dir = 'forward';
+    else if (fwd < -0.5 + (prev === 'back' ? keep : 0)) dir = 'back';
+    else dir = right > 0 ? 'right' : 'left';
+    this.lastDir = dir;
+    return dir;
+  }
+
+  private lastDir: MoveDir = 'forward';
 
   /** Figur aus einem animierten Modell? */
   get isAnimated(): boolean {

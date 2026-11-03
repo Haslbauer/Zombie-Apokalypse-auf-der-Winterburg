@@ -232,7 +232,7 @@ export class GameRenderer {
       const hold = h.channel?.tag === 'nap' ? 'ability3' : undefined;
       // Sieg: stehen bleiben (Ruhe-Animation) statt mitten im Schritt einzufrieren
       if (state.gameOver) view.animate(dt, 0, false);
-      else view.animate(dt, speed, false, hold, view.movingBackward(h.facing));
+      else view.animate(dt, speed, false, hold, view.moveDirection(h.facing));
     }
     // Lottes Trolle (Verbündete)
     for (const m of state.minions ?? []) {
@@ -402,6 +402,11 @@ export class GameRenderer {
   /** Zombie stirbt: Sterbe-Animation, die Leiche bleibt kurz liegen. */
   zombieDie(id: number): void {
     this.units.get(id)?.die();
+  }
+
+  /** Bossfähigkeit: Ausholen mit passender Bewegung (siehe UnitView.playCast). */
+  zombieCast(id: number, kind: string, duration: number): void {
+    this.units.get(id)?.playCast(kind, duration);
   }
 
   /** Schrei (Elite-Auftritt, Ausholen des Schlächters). */

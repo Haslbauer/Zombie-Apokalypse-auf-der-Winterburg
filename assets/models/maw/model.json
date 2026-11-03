@@ -1,0 +1,46 @@
+{
+  "base": "figur.fbx",
+  "clips": {
+    "walk": {
+      "file": "walking.fbx"
+    },
+    "run": {
+      "file": "run.fbx"
+    },
+    "idle": {
+      "file": "breathing-idle.fbx"
+    },
+    "idle2": {
+      "file": "idle.fbx"
+    },
+    "attack": {
+      "file": "punch.fbx"
+    },
+    "attack2": {
+      "file": "swiping.fbx"
+    },
+    "castSlam": {
+      "file": "jump-attack.fbx"
+    },
+    "castNova": {
+      "file": "roaring.fbx"
+    },
+    "castLeap": {
+      "file": "jumping.fbx"
+    },
+    "scream": {
+      "file": "roaring.fbx"
+    },
+    "death": {
+      "file": "dying.fbx"
+    },
+    "castBolt": {
+      "file": "flexing.fbx"
+    }
+  },
+  "inPlace": true,
+  "textureSize": 1024,
+  "simplifyRatio": 0.35,
+  "normalSize": 512,
+  "output": "public/models/zombie-maw.glb"
+}

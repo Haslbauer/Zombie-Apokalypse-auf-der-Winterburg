@@ -69,6 +69,12 @@
     },
     "stompRage": {
       "file": "../moves/stomping.fbx"
+    },
+    "strafeL": {
+      "file": "../moves/walk-left.fbx"
+    },
+    "strafeR": {
+      "file": "../moves/walk-right.fbx"
     }
   },
   "inPlace": true,

@@ -33,6 +33,12 @@
     },
     "hit": {
       "file": "../moves/react-gut.fbx"
+    },
+    "strafeL": {
+      "file": "../moves/walk-left.fbx"
+    },
+    "strafeR": {
+      "file": "../moves/walk-right.fbx"
     }
   },
   "inPlace": true,

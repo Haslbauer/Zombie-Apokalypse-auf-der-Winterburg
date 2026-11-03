@@ -568,6 +568,22 @@ Rückmeldungen aus der ersten Online-Runde, drei Spieler schafften Welle 14:
 - **Ultimates:** etwa 35 % kürzere Abklingzeiten, zum Beispiel Amok 60/50/40 s statt 90/75/60 s.
 - **Ruckeln ab Level 10:** behoben, siehe „Leistung“.
 
+## Der Schlund (Zwischenboss)
+
+Ein großer Mutant (Mixamo „Maw J Laygo“) mit eigenen Mutanten-Bewegungen: Gehen, Rennen, Atmen im Stand, Faustschlag, Prankenhieb, Brüllen, Sprung und Sterben. Er ist in der Rotation der Zwischenbosse dabei.
+- **Sprungangriff:** springt bis zu 10 m auf einen Helden; 65 Schaden im Umkreis von 3 m, 0,5 s betäubt.
+- **Prankenhieb:** schwerer Schlag vor ihm, 85 Schaden.
+- **Urschrei (ab Welle 9):** Brüllen im Umkreis von 4,5 m, 0,7 s betäubt.
+- **Team-Buff beim Kill:** „Mutantenkraft“, 90 s +12 % Schaden und 6 % weniger erlittener Schaden.
+
+Beim Ausholen spielen jetzt alle Bosse eine Bewegung ab: der Schlund seine eigenen, die anderen ihren Schrei. Bisher erschien nur der Warnkreis am Boden.
+
+## Flüssige Bewegungen
+
+- **Seitschritte:** Läuft ein Held quer zur Blickrichtung, etwa wenn er nach rechts zielt und nach oben läuft, spielt er einen Seitschritt nach links bzw. rechts statt der Vorwärtsanimation. Dazu kommt das bisherige Rückwärtslaufen. Die Richtung wechselt mit etwas Spielraum, damit die Animation an den Grenzen nicht hin und her springt.
+- **Farben:** Graues Eigenleuchten aus den Mixamo-Dateien wird abgeschaltet. Die Skelett-Zombies, eine der beiden Figuren der Runner, wirkten dadurch blass wie Geister. Farbiges Leuchten, etwa die Augen der Quaternius-Tiere, bleibt.
+- **Abgelegt für später:** Gesten wie Nicken, Kopfschütteln, Abwinken oder Angeben liegen unter `assets/models/moves/gestures/`, das Pistolen-Paket unter `moves/pistol/`, Schwert und Schild unter `moves/sword-shield/`.
+
 ## Animationen der Fähigkeiten
 
 Jede Fähigkeit spielt eine eigene Bewegung aus der Mixamo-Sammlung in `assets/models/`. Vier Helden nutzen die Figur eines anderen Helden; für sie legt `abilityClips` in `HERO_LOOKS` (`src/client/units.ts`) fest, welcher Clip zu welcher Fähigkeit gehört. Die geteilten Figuren enthalten dafür zusätzliche Clips.

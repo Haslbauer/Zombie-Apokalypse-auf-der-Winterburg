@@ -927,15 +927,17 @@ function handleEvents(state: GameState): void {
         sound.play('whoosh', e.from);
         break;
       case 'leap':
-        // Höllensprung: Landeplatz warnen, Dämon schreit
+        // Sprung (Dämon, Schlund): Landeplatz warnen, Sprung- bzw. Schrei-Animation
         effects.warning(e.to, e.radius, 0xb04dff, e.windup + 0.45);
-        renderer.zombieScream(e.zombieId);
+        renderer.zombieCast(e.zombieId, 'leap', e.windup + 0.5);
         sound.play('roar', e.from);
         break;
       case 'bossCast': {
         // Bossfähigkeit: Warnung am Boden (ausweichen!), Name über dem Boss
         const color = BOSS_COLORS[e.kind];
         for (const p of e.points) effects.warning(p, e.radius, color, e.windup);
+        // Boss holt sichtbar aus (eigene Bewegung, sonst Schrei)
+        renderer.zombieCast(e.zombieId, e.kind, e.windup + 0.35);
         const at = renderer.unitPosition(e.zombieId);
         if (at) effects.floatingText(at, e.name, '#ffb3a7', 3.2);
         sound.play('whoosh', at ?? e.points[0], 0.7);
@@ -1212,6 +1214,7 @@ const MODELS: Record<string, number> = {
   'zombie-pumpkin': 1.75,
   'zombie-warrok': 1.75,
   'zombie-demon': 1.8,
+  'zombie-maw': 1.9,
   rotschopf: 1.8,
   schlaeferin: 1.8,
   libero: 1.8,

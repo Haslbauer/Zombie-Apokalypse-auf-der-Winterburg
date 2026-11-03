@@ -795,5 +795,65 @@
         "attackSpeed": 0.1
       }
     }
+  },
+  {
+    "id": "schlund",
+    "name": "Der Schlund",
+    "color": "#8a5a4a",
+    "hp": 1250,
+    "speed": 1.9,
+    "radius": 1.1,
+    "damage": 42,
+    "attackRange": 0.7,
+    "attackCooldown": 1.6,
+    "aggroRange": 10,
+    "xp": 160,
+    "gold": 75,
+    "figure": "maw",
+    "rank": "elite",
+    "special": {
+      "kind": "leap",
+      "interval": 10,
+      "range": 10,
+      "windup": 0.8,
+      "flight": 0.5,
+      "radius": 3,
+      "damage": 65,
+      "stun": 0.5
+    },
+    "targets": {
+      "heart": 1
+    },
+    "abilities": [
+      {
+        "kind": "slam",
+        "name": "Prankenhieb",
+        "interval": 7,
+        "windup": 0.9,
+        "range": 3,
+        "radius": 2.2,
+        "damage": 85
+      },
+      {
+        "kind": "nova",
+        "name": "Urschrei",
+        "interval": 11,
+        "windup": 1.2,
+        "range": 5,
+        "radius": 4.5,
+        "damage": 30,
+        "stun": 0.7,
+        "fromWave": 9
+      }
+    ],
+    "teamBuff": {
+      "name": "Mutantenkraft",
+      "icon": "💪",
+      "duration": 90,
+      "effects": {
+        "damageMult": 1.12,
+        "damageReduction": 0.06
+      }
+    }
   }
 ]
