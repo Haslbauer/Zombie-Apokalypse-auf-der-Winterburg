@@ -1,4 +1,4 @@
-import { readdirSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { NodeIO } from '@gltf-transform/core';
 import { describe, expect, it } from 'vitest';
 
@@ -7,7 +7,8 @@ import { describe, expect, it } from 'vitest';
  * dessen Knochen bewegen. Sonst bleiben Teile der Figur (Kleidung, Haare …)
  * in der Grundpose stehen, und die Figur „gleitet“ nur.
  */
-const files = readdirSync('public/models').filter((f) => f.endsWith('.glb'));
+// props.glb enthält unbewegte Deko-Modelle (eigener Test unten)
+const files = readdirSync('public/models').filter((f) => f.endsWith('.glb') && f !== 'props.glb');
 
 describe('Modelle', () => {
   for (const file of files) {
@@ -30,4 +31,16 @@ describe('Modelle', () => {
       }
     });
   }
+
+  it('props.glb: ein Knoten je Deko-Modell, alle Looks in der Karte bekannt', async () => {
+    const cfg = JSON.parse(readFileSync('assets/props/props.json', 'utf8'));
+    const keys = Object.keys(cfg).filter((k) => k !== '//');
+    const doc = await new NodeIO().read('public/models/props.glb');
+    const names = new Set(doc.getRoot().listNodes().map((n) => n.getName()));
+    for (const k of keys) expect(names.has(k), k).toBe(true);
+    const { MODEL_PROPS } = await import('../../src/client/propmodels');
+    expect([...MODEL_PROPS].sort()).toEqual([...keys].sort());
+    const { PROP_LOOKS } = await import('../../src/sim/types');
+    for (const k of keys) expect((PROP_LOOKS as readonly string[]).includes(k), k).toBe(true);
+  });
 });

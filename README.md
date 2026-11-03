@@ -18,7 +18,7 @@ npm run dev
 
 **Nach jedem Aktualisieren (`git pull`) einmal `npm install` ausführen**, falls neue Pakete dazugekommen sind (sonst z. B. „Cannot find module 'ws'“). `npm run share` macht das selbst.
 
-Dann http://localhost:5173 öffnen. Weitere Befehle: `npm test` (Simulationstests), `npm run typecheck`, `npm run build`, `npm run models` (3D-Modelle aus `assets/models/` umwandeln, siehe dortige README).
+Dann http://localhost:5173 öffnen. Weitere Befehle: `npm test` (Simulationstests), `npm run typecheck`, `npm run build`, `npm run models` (3D-Modelle aus `assets/models/` umwandeln, siehe dortige README), `npm run props` (Deko-Modelle aus `assets/props/` umwandeln).
 
 ## Mehrspieler
 
@@ -188,6 +188,8 @@ Der Hintergrund ist bewusst fast still: keine Dauergeräusche, nur ab und zu ein
 ## Karte
 
 Die Winterburg: U-förmiges Haus mit dem **Lebensmittelvorrat** im Innenhof (erreichbar über einen schmalen Durchgang im Südwesten und den Nordeingang). Zombies kommen aus dem **Bunker**, durch die **Heckenlücke Süd**, den **Hang Ost** hinauf und aus dem **Nordwesten**. Zombies plündern den Vorrat, **Ratten** fressen die **Hochbeete** oder laufen zum Vorrat (deren Ernte füllt den Vorrat nach jeder Welle auf), **Hornissen** greifen den **Bienenstock** an. Ist der Vorrat leer, ist das Spiel verloren.
+
+Dazu stehen echte 3D-Modelle als Deko (Quaternius, CC0, `assets/props/`): Holzfässer, Kisten und Kornsäcke im Innenhof und beim Holzstapel, ein verlassener Marktkarren an der Zuwegung Ost, einzelne Zaunfelder im Gelände, eine Schaufel in der Erde beim Gartenhaus und an der Grabstätte, Äxte in Baumstümpfen.
 
 Neutrale Lager lassen sich nicht über den Zaun hinweg „abfarmen“: Erreichen sie ihren Angreifer 5 s lang nicht, kehren sie unverwundbar heim und heilen sich. Es ist Nacht: Mondlicht, Nebel, brennende Fässer, Stacheldraht und Bretterbarrikaden an den Toren, Feuerstellen, Krähen, Knochen und ein Autowrack vor dem Osttor. Der Westflügel des Hauses ist eine halb eingestürzte Ruine, die Wege sind aus Bruchstein. Ohne Bienenstock wachsen zerstörte Beete nicht mehr nach (verdorrte Stängel, Hinweis in der Kopfleiste). Rund um den Garten liegt Gelände mit Büschen, Hecken, einer alten Grabstätte und einem Teich. **Verstecke** wie das Gebüsch in LoL: Im hohen Gras, in Büschen und im Schilf sehen Zombies einen Helden erst aus nächster Nähe – bis er angreift. Umgekehrt sieht man Zombies im Gebüsch erst, wenn man selbst nah dran ist.
 

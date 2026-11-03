@@ -3,6 +3,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { arenaBounds } from '../sim/grid';
 import type { ArenaDef, Obstacle } from '../sim/types';
 import { nightDecor, nightObstacle } from './nightdecor';
+import { addPropModels } from './propmodels';
 import { crownGeometry, fireflies, foliageMaterial, groundPatches, pineGeometry, trunkGeometry } from './foliage';
 import { brushes, decor, hatch, hedge, house, Mats, obstacleDecor, smoke, thicket, tree, windTime, rathole, ruin, grassTufts } from './mapdecor';
 
@@ -139,6 +140,8 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   const tufts = grassTufts(arena);
   live.add(tufts);
   target.add(mergeStatic(scene));
+  // Fässer, Kisten, Karren, Zäune und Werkzeug als 3D-Modelle (werden nachgeladen)
+  addPropModels(target, arena.props ?? []);
   target.add(live);
   const smokes = smoke(chimneys);
   target.add(smokes.group);

@@ -584,9 +584,17 @@ export const PROP_LOOKS = [
   'bodybag',
   'mailbox',
   'dirt',
+  // 3D-Modelle (Quaternius, CC0) aus public/models/props.glb, siehe src/client/propmodels.ts
+  'oakbarrel',
+  'woodcrate',
+  'handcart',
+  'picketfence',
+  'grainsacks',
+  'axe',
+  'shovel',
 ] as const;
 
-/** Deko-Objekt an einem Punkt; rot dreht um die Hochachse, w: Breite (Barrikade), h: Höhe (Krähen auf Zaun/Grabstein). */
+/** Deko-Objekt an einem Punkt; rot dreht um die Hochachse, w: Breite (Barrikade), h: Höhe (Krähen auf Zaun/Grabstein, Axt im Baumstumpf). */
 export interface PropDef {
   look: (typeof PROP_LOOKS)[number];
   x: number;

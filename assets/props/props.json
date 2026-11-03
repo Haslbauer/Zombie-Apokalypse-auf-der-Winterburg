@@ -1,0 +1,10 @@
+{
+  "//": "Deko-Modelle für die Karte (Quaternius, CC0). Schlüssel = look in data/map.json (props). size: Zielgröße in m entlang der Achse axis (y = Höhe, sonst die längste Seite).",
+  "oakbarrel": { "file": "Barrel.fbx", "size": 1.0, "axis": "y" },
+  "woodcrate": { "file": "Crate.fbx", "size": 0.8, "axis": "y" },
+  "handcart": { "file": "Cart.fbx", "size": 2.6, "axis": "long" },
+  "picketfence": { "file": "Fence.fbx", "size": 2.0, "axis": "long" },
+  "grainsacks": { "file": "Bags.fbx", "size": 1.3, "axis": "long" },
+  "axe": { "file": "Axe.fbx", "size": 0.75, "axis": "long" },
+  "shovel": { "file": "Shovel.fbx", "size": 1.2, "axis": "long" }
+}
