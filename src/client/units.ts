@@ -872,6 +872,8 @@ export class UnitView {
   private lastDir: MoveDir = 'forward';
   /** Typ der Einheit, für die diese Figur gebaut wurde (Held- bzw. Zombie-Id). */
   defId = '';
+  /** Stand der geladenen Modelle beim Bau (siehe Renderer.addModel). */
+  modelsVersion = 0;
   /** Bewegungsspur der Waffe beim Zuschlagen (nur Figuren mit Waffe). */
   private trail: WeaponTrail | null = null;
 

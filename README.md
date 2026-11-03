@@ -612,6 +612,7 @@ Rückmeldungen aus der ersten Online-Runde, drei Spieler schafften Welle 14:
     - Mehr hohes Gras: unter den Ebereschen, beim Kompost, auf der Apfelwiese und zwei Flächen vor der Südhecke.
     - Südöstlich vom Weg gibt es eine große Blumenwiese mit Laubbäumen. Ein Baum ist an eine neue Stelle gerückt, ein Busch ist weg, ein großer Laubbaum am Weg und zwei Obstbäume sind dazugekommen.
     - Kahle Erdstellen haben jetzt weiche Ränder; vorher waren es harte, dunkle Vielecke im Rasen.
+  - **Figuren laden nach:** Die animierten Modelle sind zusammen etwa 45 MB groß. Startet eine Partie, bevor sie geladen sind, zeigt das Spiel kurz einfache Ersatzfiguren. Früher blieben diese „Tonnen“ die ganze Partie lang stehen. Jetzt wird jede Figur ausgetauscht, sobald ihr Modell da ist.
   - Neu sind vier Misthaufen mit Stroh, Jauchepfütze und Mistgabel: beim Kompost, beim Schuppen, beim Brunnen und am Südrand (`decor` mit `look: "dung"` in `data/map.json`).
 
 ## Der Schlund (Zwischenboss)

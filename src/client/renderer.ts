@@ -73,6 +73,14 @@ export class GameRenderer {
   private aimIndicator: THREE.Mesh | null = null;
   /** Animierte Modelle nach Name (public/models/<name>.glb); fehlende: einfache Figur. */
   readonly models = new Map<string, RiggedModel>();
+  /** Zählt geladene Modelle: Figuren ohne Modell werden neu gebaut, sobald eins dazukommt. */
+  private modelsVersion = 0;
+
+  /** Ein fertig geladenes Modell eintragen (einfache Figuren bekommen es beim nächsten Bild). */
+  addModel(name: string, model: RiggedModel): void {
+    this.models.set(name, model);
+    this.modelsVersion++;
+  }
   /** Gestorbene Zombies: Leiche bleibt liegen und versinkt (Restzeit in s). */
   private readonly corpses = new Map<UnitView, number>();
   /** Held des Spielers (grüner Ring); Bots bekommen einen blauen Ring. null = nur Bots. */
@@ -170,8 +178,9 @@ export class GameRenderer {
     const upsert = (unit: Hero | Zombie, make: () => UnitView, lift = 0) => {
       seen.add(unit.id);
       let view = this.units.get(unit.id);
-      // Gleiche Id, anderer Held/Typ (neue Partie im selben Raum): Figur neu bauen
-      if (view && view.defId !== unit.defId) {
+      // Gleiche Id, anderer Held/Typ (neue Partie im selben Raum) oder inzwischen ein Modell
+      // geladen, die Figur ist aber noch die einfache Ersatzfigur: neu bauen
+      if (view && (view.defId !== unit.defId || (!view.isAnimated && view.modelsVersion !== this.modelsVersion))) {
         this.scene.remove(view.group);
         view.dispose();
         this.units.delete(unit.id);
@@ -180,6 +189,7 @@ export class GameRenderer {
       if (!view) {
         view = make();
         view.defId = unit.defId;
+        view.modelsVersion = this.modelsVersion;
         this.units.set(unit.id, view);
         this.scene.add(view.group);
       }

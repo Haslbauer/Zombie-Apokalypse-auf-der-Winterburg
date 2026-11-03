@@ -1232,7 +1232,7 @@ const MODELS: Record<string, number> = {
 };
 for (const [name, height] of Object.entries(MODELS)) {
   loadRiggedModel(`models/${name}.glb`, height)
-    .then((m) => renderer.models.set(name, m))
+    .then((m) => renderer.addModel(name, m))
     .catch((err) => console.warn(`Modell ${name} nicht geladen:`, err));
 }
 
