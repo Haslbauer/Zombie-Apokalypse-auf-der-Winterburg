@@ -3,6 +3,7 @@
 Stand: 01.11.2026. Arbeitsgrundlage für Claude Code.
 
 Änderungen v2.7 (Deko-Modelle): CC0-Modelle von Quaternius (Medieval Village Pack, Survival Pack) als Deko: Fässer, Kisten, Marktkarren, Zaunfelder, Kornsäcke, Axt, Schaufel (props `oakbarrel`, `woodcrate`, `handcart`, `picketfence`, `grainsacks`, `axe`, `shovel`; Quellen in assets/props/, `npm run props` → public/models/props.glb, Client src/client/propmodels.ts).
+Änderungen v2.7 (zweite Skizze): Südhaus mit drei Giebeln, Bunker als Treppe in ein Loch im Boden (Holunder und Gestrüpp daneben), Hollywoodschaukel im Südwesten, Rosmarinhecke im Osten, Eibe und Tanne an der Ostweg-Kreuzung, mehr hohes Gras, Blumenwiese mit Laubbäumen im Südosten, weiche Erdstellen.
 Änderungen v2.7 (Skizze): Ziegelbauten, Hofmauern mit Nordtor, Ruine mit Flachdach (Dachpappe) ohne Schornstein, Regentonnen, Rosenbeet, Apfel-, Oliven- und Feigenbaum, Eiben, Ebereschen, Holunder, Tannen im Osten, Blumenwiese, Obstbäume, detaillierte Bienenbeuten und Gemüse. Neues Hindernisfeld `species` (nur Aussehen).
 Änderungen v2.7 (Grafik): detaillierte Waffen mit Bewegungsspur (weapons.ts), Bildnachbearbeitung (Bloom, Farbgebung, Vignette; post.ts), organische Bäume, Bodenflecken, Glühwürmchen (foliage.ts), hellere Wege, Misthaufen (decor `dung`). Engine bleibt Three.js.
 Änderungen v2.7 (Schlund): neuer Zwischenboss Der Schlund (`schlund`, Sprung, Prankenhieb, Urschrei, Team-Buff Mutantenkraft), Boss-Ausholbewegungen (`cast<Art>`-Clips, sonst Schrei), Seitschritt-Animationen der Helden, graues Eigenleuchten der Modelle entfernt.
@@ -465,7 +466,7 @@ Garten mit Haus, Hecken und Zugängen. Umgesetzt in `data/map.json`, 1 Spieleinh
 - **Bienenstock** nordwestlich vom Haus: Ziel der Hornissen und eines Teils der Ratten (siehe Abschnitt 8)
 - Sechs **Hochbeete** westlich vom Haus: Ziel der Ratten, versorgen den Vorrat mit ihrer Ernte. Sie blockieren das Laufen, nicht aber Schüsse.
 - Zombie-Zugänge:
-  1. **Bunker** unten links im Garten, der einzige Spawn im Garten. Der Bunker liegt unter der Erde: Zu sehen ist nur eine flache Luke im Rasen mit rostiger Doppeltür, aus der die Zombies steigen; daneben steht eine Hollywoodschaukel.
+  1. **Bunker** unten links im Garten, der einzige Spawn im Garten. Der Bunker liegt unter der Erde: Eine Treppe mit Betonwangen führt in ein Loch im Boden, aus dem die Zombies steigen. Daneben wachsen Holundersträucher und Gestrüpp. Die Hollywoodschaukel steht im Südwesten beim Schuppen.
   2. **Süd:** im Gelände vor der Heckenlücke, durch das Südtor
   3. **Ost:** am Ende der Zuwegung; die Zombies laufen den Hang hinauf und sind dort langsamer (halbes Tempo)
   4. **Nordwest** im Gelände vor dem Westtor: 85 % der Hornissen (sie fliegen über den Zaun) und ebenso oft Zombies wie Ost. Liegt nah an Bienenstock und Hochbeeten.

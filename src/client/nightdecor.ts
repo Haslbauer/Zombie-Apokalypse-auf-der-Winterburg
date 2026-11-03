@@ -29,6 +29,47 @@ function part(geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: numb
   return mesh;
 }
 
+let dirtMat: THREE.MeshLambertMaterial | null = null;
+/** Kahle Erdstelle: unregelmäßiger Fleck mit weichem Rand und ein paar Steinchen. */
+function dirtMaterial(): THREE.MeshLambertMaterial {
+  if (dirtMat) return dirtMat;
+  if (typeof document === 'undefined') return (dirtMat = new THREE.MeshLambertMaterial({ color: 0x3a2e22, transparent: true, opacity: 0.5 }));
+  const S = 128;
+  const c = document.createElement('canvas');
+  c.width = c.height = S;
+  const g = c.getContext('2d')!;
+  const rnd = rand(5);
+  for (let i = 0; i < 14; i++) {
+    const a = rnd() * Math.PI * 2;
+    const d = rnd() * 22;
+    const x = S / 2 + Math.cos(a) * d;
+    const y = S / 2 + Math.sin(a) * d;
+    const r = 18 + rnd() * 22;
+    const grad = g.createRadialGradient(x, y, 0, x, y, r);
+    const col = rnd() < 0.5 ? '78,60,40' : '96,76,50';
+    grad.addColorStop(0, `rgba(${col},0.55)`);
+    grad.addColorStop(0.6, `rgba(${col},0.3)`);
+    grad.addColorStop(1, `rgba(${col},0)`);
+    g.fillStyle = grad;
+    g.beginPath();
+    g.arc(x, y, r, 0, Math.PI * 2);
+    g.fill();
+  }
+  // Steinchen
+  for (let i = 0; i < 26; i++) {
+    const a = rnd() * Math.PI * 2;
+    const d = rnd() * 30;
+    g.fillStyle = `rgba(${150 + Math.floor(rnd() * 40)},${140 + Math.floor(rnd() * 30)},${120 + Math.floor(rnd() * 30)},0.8)`;
+    g.beginPath();
+    g.ellipse(S / 2 + Math.cos(a) * d, S / 2 + Math.sin(a) * d, 1 + rnd() * 2, 1 + rnd() * 1.5, rnd() * 3, 0, Math.PI * 2);
+    g.fill();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  dirtMat = new THREE.MeshLambertMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
+  return dirtMat;
+}
+
 let softTexture: THREE.CanvasTexture | null = null;
 /** Weicher, runder Fleck (Lichtschein, Flammen, Nebel). */
 function soft(): THREE.CanvasTexture {
@@ -502,8 +543,10 @@ export function nightDecor(stat: THREE.Group, live: THREE.Group, arena: ArenaDef
       case 'dirt': {
         // kahle Erdstelle mit ein paar Steinchen
         const r = p.w ?? 1.5;
-        const m = new THREE.Mesh(new THREE.CircleGeometry(r, 8).rotateX(-Math.PI / 2), mats.lambert(0x3a2e22));
-        m.position.y = 0.006;
+        // weicher Rand (Textur mit Verlauf), damit kein hartes Vieleck im Rasen liegt
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(r * 2.4, r * 2.4).rotateX(-Math.PI / 2), dirtMaterial());
+        m.position.y = 0.006 + rnd() * 0.002;
+        m.renderOrder = -1;
         m.scale.set(1, 1, 0.6 + rnd() * 0.5);
         m.rotation.y = rnd() * 3;
         m.receiveShadow = true;

@@ -342,6 +342,12 @@ export function house(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chimne
       g.add(win);
     }
   }
+  // Reihe von Giebeln (species "gables"): mehrere Satteldächer quer zur langen Seite,
+  // Giebel zeigen zu den Längsseiten (Hausfront mit Türen und Fenstern)
+  if (o.species === 'gables' && long >= 7) {
+    gableRow(g, o, mats, chimneys, rnd);
+    return g;
+  }
   // ---------- Giebelseiten: Fachwerk mit Andreaskreuzen und Giebeldreieck ----------
   const roofH = Math.min(2.6, Math.max(0.9, short * 0.42));
   for (const side of [-1, 1]) {
@@ -431,6 +437,91 @@ export function house(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chimne
     chimneys.push(new THREE.Vector3(o.x + cx, WALL_H + roofH + 1.4, o.y + cz));
   }
   return g;
+}
+
+/** Dachlandschaft aus mehreren Satteldächern nebeneinander (First quer zur langen Achse). */
+function gableRow(g: THREE.Group, o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chimneys: THREE.Vector3[], rnd: () => number): void {
+  const long = Math.max(o.w, o.h);
+  const short = Math.min(o.w, o.h);
+  const alongX = o.w >= o.h;
+  const n = Math.max(2, Math.round(long / 4.3));
+  const seg = long / n;
+  const roofH = Math.min(2.6, Math.max(1.2, seg * 0.5));
+  const depth = short + 0.7; // Dachlänge (First) inkl. Überstand
+  const span = seg + 0.12; // Dachbreite je Giebel (kleiner Überstand)
+  const plaster = mats.textured('bricks', 1);
+  const rowMat = mats.lambert(0x7a2e1e);
+  const roofMat = mats.textured('roof', 1);
+  const row = new THREE.Group();
+  const slope = Math.atan2(roofH, span / 2);
+  const slopeLen = Math.hypot(roofH, span / 2);
+  for (let i = 0; i < n; i++) {
+    const c = -long / 2 + (i + 0.5) * seg;
+    // Dach: Prisma mit First entlang der kurzen Achse (lokal z)
+    const roof = new THREE.Mesh(gableGeometry(depth, span, roofH, 0.16), roofMat);
+    roof.rotation.y = Math.PI / 2;
+    roof.position.set(c, WALL_H, 0);
+    roof.castShadow = true;
+    row.add(roof);
+    row.add(part(new THREE.BoxGeometry(0.25, 0.18, depth + 0.1), mats.lambert(0x5e2418), c, WALL_H + roofH, 0));
+    for (const sgn of [-1, 1]) {
+      // Ziegelreihen
+      for (let k = 0.35; k < slopeLen - 0.2; k += 0.42) {
+        const d = (span / 2) * (1 - k / slopeLen);
+        const strip = part(new THREE.BoxGeometry(0.07, 0.05, depth), rowMat, c + sgn * d, WALL_H + roofH * (k / slopeLen) + 0.03, 0, false);
+        strip.rotation.z = -sgn * slope;
+        row.add(strip);
+      }
+      // Giebeldreieck aus Ziegeln an Vorder- und Rückseite, mit Ortgangbrettern
+      const tri = new THREE.Shape();
+      tri.moveTo(-seg / 2, 0);
+      tri.lineTo(0, roofH - 0.1);
+      tri.lineTo(seg / 2, 0);
+      tri.lineTo(-seg / 2, 0);
+      const gg = new THREE.ShapeGeometry(tri);
+      const gp = gg.attributes.position;
+      for (let v = 0; v < gp.count; v++) gg.attributes.uv.setXY(v, (gp.getX(v) + c) / 0.9, gp.getY(v) / 0.9);
+      const gable = new THREE.Mesh(gg, plaster);
+      gable.receiveShadow = true;
+      gable.position.set(c, WALL_H, sgn * (short / 2));
+      if (sgn < 0) gable.rotation.y = Math.PI;
+      row.add(gable);
+      for (const e of [-1, 1]) {
+        const board = part(new THREE.BoxGeometry(slopeLen + 0.1, 0.2, 0.08), mats.lambert(0x3a2418), c + (e * span) / 4, WALL_H + roofH / 2, sgn * (depth / 2 + 0.02), false);
+        board.rotation.z = e > 0 ? -slope : slope;
+        row.add(board);
+      }
+      // Rundes Giebelfenster (Ochsenauge), manchmal erleuchtet
+      const lit = rnd() < 0.5;
+      const eye = part(new THREE.CircleGeometry(0.22, 12), lit ? mats.lambert(0xffcf7a, { emissive: 0xffa53a, emissiveIntensity: 0.8 }) : mats.lambert(0x1a1612), c, WALL_H + roofH * 0.42, sgn * (short / 2 + 0.03), false);
+      if (sgn < 0) eye.rotation.y = Math.PI;
+      row.add(eye);
+      // Moos
+      if (rnd() < 0.6) {
+        const t = 0.2 + rnd() * 0.5;
+        const moss = part(new THREE.CircleGeometry(0.3 + rnd() * 0.3, 7), mats.lambert(0x4a6a32), c + sgn * (span / 2) * (1 - t), WALL_H + roofH * t + 0.1, (rnd() - 0.5) * short * 0.7, false);
+        moss.rotation.set(-Math.PI / 2, 0, 0);
+        moss.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -sgn * slope);
+        row.add(moss);
+      }
+    }
+    // Kehlen zwischen den Dächern: Rinne
+    if (i > 0) {
+      const gutter = part(new THREE.CylinderGeometry(0.08, 0.08, depth, 6, 1, true), mats.lambert(0x6a6e72), c - seg / 2, WALL_H + 0.02, 0, false);
+      gutter.rotation.x = Math.PI / 2;
+      row.add(gutter);
+    }
+  }
+  // Fallrohre an den Kehlen (Vorderseite)
+  for (let i = 1; i < n; i++) row.add(part(new THREE.CylinderGeometry(0.05, 0.05, WALL_H, 6), mats.lambert(0x6a6e72), -long / 2 + i * seg, WALL_H / 2, short / 2 + 0.06, false));
+  if (!alongX) row.rotation.y = Math.PI / 2;
+  g.add(row);
+  // Schornstein auf dem mittleren First
+  const cx = alongX ? 0 : short * 0.0;
+  const cz = alongX ? -short * 0.2 : 0;
+  g.add(part(new THREE.BoxGeometry(0.7, roofH + 1.0, 0.7), mats.textured('bricks', 1), cx, WALL_H + (roofH + 1.0) / 2, cz));
+  g.add(part(new THREE.BoxGeometry(0.85, 0.15, 0.85), mats.lambert(0x5a4038), cx, WALL_H + roofH + 1.0, cz));
+  chimneys.push(new THREE.Vector3(o.x + cx, WALL_H + roofH + 1.2, o.y + cz));
 }
 
 /**
@@ -636,19 +727,56 @@ export function rathole(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, chim
   return g;
 }
 
-/** Bunker unter der Erde: flache Luke im Rasen mit Betonrand und rostiger Doppeltür. */
+/**
+ * Bunker unter der Erde: eine Treppe führt in ein Loch im Boden. Betonwangen
+ * links, rechts und hinten, die Stufen werden nach unten immer dunkler (bis
+ * ins Schwarze), oben ein rostiges Geländer und die aufgeklappte Stahltür.
+ * Die Treppe öffnet sich nach Norden (dort kommen die Zombies heraus).
+ */
 export function hatch(s: SpawnPoint, mats: Mats): THREE.Group {
   const g = new THREE.Group();
   g.position.set(s.x, 0, s.y);
-  g.add(part(new THREE.BoxGeometry(3, 0.18, 2.4), mats.lambert(0x8d8d86), 0, 0.09, 0));
-  g.add(part(new THREE.BoxGeometry(2.6, 0.04, 2), mats.lambert(0x1c1c1c), 0, 0.19, 0, false));
-  for (const side of [-1, 1]) {
-    const door = part(new THREE.BoxGeometry(1.22, 0.08, 1.9), mats.lambert(0x6e4a32), side * 0.64, 0.22, 0, false);
-    g.add(door);
-    // Rostflecken und Griffe
-    g.add(part(new THREE.BoxGeometry(0.5, 0.02, 0.4), mats.lambert(0x8a4a22), side * 0.5, 0.27, 0.4, false));
-    g.add(part(new THREE.BoxGeometry(0.08, 0.08, 0.4), mats.lambert(0x2c2c2c), side * 0.12, 0.3, 0, false));
+  const W = 2.2; // Breite (x)
+  const L = 3.2; // Länge (z)
+  const concrete = mats.lambert(0x8d8d86);
+  const stained = mats.lambert(0x6e6e68);
+  // Schwarzes Loch als Grund
+  g.add(part(new THREE.BoxGeometry(W, 0.02, L), mats.lambert(0x050505), 0, 0.012, 0, false));
+  // Stufen: oben (Norden) hell, nach Süden immer tiefer und dunkler
+  const steps = 7;
+  for (let i = 0; i < steps; i++) {
+    const t = i / (steps - 1);
+    const shade = Math.round(0x80 * (1 - t) ** 1.6 + 0x08);
+    const col = (shade << 16) | (shade << 8) | Math.round(shade * 0.95);
+    const d = (L - 0.4) / steps;
+    const z = -L / 2 + 0.1 + (i + 0.5) * d;
+    g.add(part(new THREE.BoxGeometry(W - 0.1, 0.03, d - 0.04), mats.lambert(col), 0, 0.03, z, false));
+    // Stufenkante (hell), damit man die Stufen erkennt
+    if (t < 0.8) g.add(part(new THREE.BoxGeometry(W - 0.1, 0.035, 0.05), mats.lambert(Math.min(0xffffff, col + 0x181818)), 0, 0.035, z - d / 2 + 0.03, false));
   }
+  // Betonwangen (seitlich und hinten), oben mit Moos und Rissen
+  for (const side of [-1, 1]) {
+    g.add(part(new THREE.BoxGeometry(0.25, 0.45, L + 0.25), concrete, side * (W / 2 + 0.12), 0.22, 0.12));
+    g.add(part(new THREE.BoxGeometry(0.27, 0.06, 0.6), mats.lambert(0x4a6a32), side * (W / 2 + 0.12), 0.46, -0.4 + side * 0.5, false));
+    g.add(part(new THREE.BoxGeometry(0.27, 0.12, 0.5), stained, side * (W / 2 + 0.12), 0.06, L / 2 - 0.4, false));
+    // Geländer: Pfosten und Handlauf (rostig)
+    const rail = mats.lambert(0x6a3a22);
+    for (const z of [-L / 2 + 0.3, 0.3, L / 2 - 0.1]) g.add(part(new THREE.CylinderGeometry(0.025, 0.025, 0.8, 5), rail, side * (W / 2 + 0.12), 0.85, z, false));
+    const bar = part(new THREE.CylinderGeometry(0.03, 0.03, L - 0.3, 5), rail, side * (W / 2 + 0.12), 1.22, 0.1, false);
+    bar.rotation.x = Math.PI / 2;
+    g.add(bar);
+  }
+  g.add(part(new THREE.BoxGeometry(W + 0.5, 0.45, 0.25), concrete, 0, 0.22, L / 2 + 0.12));
+  // Aufgeklappte Stahltür, an die hintere Wange gelehnt
+  const door = part(new THREE.BoxGeometry(W - 0.2, 1.2, 0.07), mats.lambert(0x5a4030), 0, 0.7, L / 2 + 0.45);
+  door.rotation.x = 0.3; // nach Süden weggekippt, die Treppe bleibt frei
+  g.add(door);
+  const rust = part(new THREE.BoxGeometry(0.8, 0.5, 0.02), mats.lambert(0x8a4a22), -0.4, 0.15, -0.05, false);
+  door.add(rust);
+  door.add(part(new THREE.BoxGeometry(0.3, 0.06, 0.08), mats.lambert(0x2c2c2c), 0.5, 0.1, -0.06, false));
+  // Ein paar Steine und Blätter auf den oberen Stufen
+  const rnd = rand(s.x * 3 + s.y);
+  for (let i = 0; i < 5; i++) g.add(part(new THREE.DodecahedronGeometry(0.06 + rnd() * 0.06, 0), stained, (rnd() - 0.5) * (W - 0.4), 0.07, -L / 2 + 0.3 + rnd() * 0.9, false));
   return g;
 }
 
@@ -950,9 +1078,10 @@ export function obstacleDecor(o: Obstacle, mats: Mats): THREE.Object3D | null {
 export function hedge(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats): THREE.Group {
   const g = new THREE.Group();
   g.position.set(o.x, 0, o.y);
-  g.add(part(new THREE.BoxGeometry(o.w, 1.3, o.h), mats.lambert(0x2f6b2a), 0, 0.65, 0));
   const alongX = o.w >= o.h;
   const len = Math.max(o.w, o.h);
+  if (o.species === 'rosemary') return rosemary(g, o, mats, alongX, len);
+  g.add(part(new THREE.BoxGeometry(o.w, 1.3, o.h), mats.lambert(0x2f6b2a), 0, 0.65, 0));
   const count = Math.max(2, Math.round(len / 0.9));
   const geo = new THREE.IcosahedronGeometry(0.5, 0);
   const inst = new THREE.InstancedMesh(geo, mats.lambert(0x377a30), count);
@@ -966,6 +1095,58 @@ export function hedge(o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats): THREE
     inst.setMatrixAt(i, m);
   }
   g.add(inst);
+  return g;
+}
+
+/**
+ * Rosmarinhecke: niedrige, graugrüne Büsche aus vielen aufrechten Nadelzweigen,
+ * dazwischen winzige hellblaue Blüten.
+ */
+function rosemary(g: THREE.Group, o: Extract<Obstacle, { kind: 'rect' }>, mats: Mats, alongX: boolean, len: number): THREE.Group {
+  const across = Math.min(o.w, o.h);
+  const rnd = rand(o.x * 5 + o.y * 3);
+  // dunkler Kern, damit keine Lücken durchscheinen
+  g.add(part(new THREE.BoxGeometry(alongX ? len : across * 0.8, 0.7, alongX ? across * 0.8 : len), mats.lambert(0x3e5a3a), 0, 0.35, 0));
+  // Buschkugeln (abgeflacht, unregelmäßig)
+  const bushN = Math.max(3, Math.round(len / 0.7));
+  const bush = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.55, 1), mats.lambert(0x5f7d58, { flatShading: true }), bushN);
+  bush.castShadow = true;
+  const m = new THREE.Matrix4();
+  const q = new THREE.Quaternion();
+  const e = new THREE.Euler();
+  const v = new THREE.Vector3();
+  const s = new THREE.Vector3();
+  const place = (t: number, side: number, y: number) => v.set(alongX ? t : side, y, alongX ? side : t);
+  const greys = [0x5f7d58, 0x6a8862, 0x52704e, 0x748f6a];
+  for (let i = 0; i < bushN; i++) {
+    const t = -len / 2 + ((i + 0.5) * len) / bushN;
+    const k = 0.8 + rnd() * 0.5;
+    m.compose(place(t, (rnd() - 0.5) * across * 0.4, 0.55), q.setFromEuler(e.set(0, rnd() * 3, 0)), s.set(k, k * 0.95, k));
+    bush.setMatrixAt(i, m);
+    bush.setColorAt(i, new THREE.Color(greys[i % greys.length]));
+  }
+  g.add(bush);
+  // aufrechte Nadelzweige
+  const sprigN = Math.round(len * 26);
+  const sprig = new THREE.InstancedMesh(new THREE.ConeGeometry(0.035, 1, 4).translate(0, 0.5, 0), mats.lambert(0x7a9670), sprigN);
+  const flowerN = Math.round(len * 22);
+  const flower = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.035, 0), mats.lambert(0xa8b8f0, { emissive: 0x223366, emissiveIntensity: 0.25 }), flowerN);
+  let f = 0;
+  for (let i = 0; i < sprigN; i++) {
+    const t = (rnd() - 0.5) * len;
+    const side = (rnd() - 0.5) * across * 0.9;
+    const h = 0.35 + rnd() * 0.45;
+    const base = place(t, side, 0.55 + rnd() * 0.35).clone();
+    m.compose(base, q.setFromEuler(e.set((rnd() - 0.5) * 0.6, 0, (rnd() - 0.5) * 0.6)), s.set(1, h, 1));
+    sprig.setMatrixAt(i, m);
+    if (f < flowerN && rnd() < 0.85) {
+      const tip = new THREE.Vector3(0, h * (0.5 + rnd() * 0.4), 0).applyQuaternion(q).add(base);
+      m.makeTranslation(tip.x + (rnd() - 0.5) * 0.04, tip.y, tip.z + (rnd() - 0.5) * 0.04);
+      flower.setMatrixAt(f++, m);
+    }
+  }
+  flower.count = f;
+  g.add(sprig, flower);
   return g;
 }
 

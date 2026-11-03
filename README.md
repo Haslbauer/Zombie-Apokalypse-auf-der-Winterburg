@@ -603,6 +603,15 @@ Rückmeldungen aus der ersten Online-Runde, drei Spieler schafften Welle 14:
     - Im Süden liegt eine Blumenwiese um den Apfelbaum, im Südwesten stehen Obstbäume mit Birnen bzw. Pflaumen.
     - Gemüse in den Beeten: gerippte Kürbisse mit Stiel, Ranke und gelappten Blättern; Kohl mit Außenblättern, krauser Salat, Tomaten an Stäben mit Rispen und Blüten; neu sind Möhren.
     - Baumarten stehen in den Kartendaten als `species` an Bäumen (apple, fruit, olive, fig, rowan, yew, elder, fir); dazu kommen neue Deko-Arten `gate` und `meadow`.
+  - **Zweite Skizze** (ganzes Gelände):
+    - Das Haus an der Südseite des Hofs hat jetzt drei Satteldächer nebeneinander. Die Giebel zeigen nach Süden und Norden, mit runden Giebelfenstern, Kehlrinnen und Fallrohren (`species: "gables"` am Haus).
+    - Der Bunker ist eine Treppe in ein Loch im Boden: Betonwangen, Stufen, die nach unten im Dunkeln verschwinden, ein rostiges Geländer und eine aufgeklappte Stahltür. Daneben wachsen Holundersträucher und Gestrüpp.
+    - Die Hollywoodschaukel steht jetzt im Südwesten beim Schuppen.
+    - Die Hecke im Osten ist eine Rosmarinhecke mit graugrünen Nadelzweigen und kleinen hellblauen Blüten (`species: "rosemary"`).
+    - An der Ostweg-Kreuzung stehen eine Eibe und eine Tanne, unter den Tannen wächst Holunder.
+    - Mehr hohes Gras: unter den Ebereschen, beim Kompost, auf der Apfelwiese und zwei Flächen vor der Südhecke.
+    - Südöstlich vom Weg gibt es eine große Blumenwiese mit Laubbäumen. Ein Baum ist an eine neue Stelle gerückt, ein Busch ist weg, ein großer Laubbaum am Weg und zwei Obstbäume sind dazugekommen.
+    - Kahle Erdstellen haben jetzt weiche Ränder; vorher waren es harte, dunkle Vielecke im Rasen.
   - Neu sind vier Misthaufen mit Stroh, Jauchepfütze und Mistgabel: beim Kompost, beim Schuppen, beim Brunnen und am Südrand (`decor` mit `look: "dung"` in `data/map.json`).
 
 ## Der Schlund (Zwischenboss)

@@ -62,12 +62,13 @@ describe('Karte Winterburg', () => {
     }
   });
 
-  it('Bunker unter der Erde: Luke begehbar, daneben die Hollywoodschaukel', () => {
+  it('Bunker unter der Erde: Treppe begehbar, Hollywoodschaukel im Südwesten', () => {
     const spawn = arena.spawnPoints.find((s) => s.id === 'bunker')!;
     expect(sim.grid.isBlocked(spawn)).toBe(false);
     expect(arena.obstacles.some((o) => (o.look as string) === 'bunker')).toBe(false);
     const swing = arena.obstacles.find((o) => o.look === 'swing')!;
-    expect(Math.hypot(swing.x - spawn.x, swing.y - spawn.y)).toBeLessThan(5);
+    expect(swing.x).toBeLessThan(12);
+    expect(swing.y).toBeGreaterThan(60);
   });
 
   it('Postboten-Runde, Lager und Verstecke liegen frei', () => {

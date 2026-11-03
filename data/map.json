@@ -1,5 +1,5 @@
 {
-  "//": "Winterburg. 1 Einheit = 1 m, x nach Osten, y nach Süden. Rechtecke: Mittelpunkt x/y, Breite w, Höhe h. Der Garten liegt bei 0–66 × 0–75; außen herum 10 m Gelände (minX/minY negativ), dort liegen die Spawnpunkte. Zombies kommen durch die Tore im Westen, Süden und Osten, nur der Bunker liegt im Garten (Luke im Rasen, daneben die Hollywoodschaukel). brush: Verstecke (Busch, hohes Gras, Schilf), decor: nur Darstellung.",
+  "//": "Winterburg. 1 Einheit = 1 m, x nach Osten, y nach Süden. Rechtecke: Mittelpunkt x/y, Breite w, Höhe h. Der Garten liegt bei 0–66 × 0–75; außen herum 10 m Gelände (minX/minY negativ), dort liegen die Spawnpunkte. Zombies kommen durch die Tore im Westen, Süden und Osten, nur der Bunker liegt im Garten (Treppe in ein Loch im Boden, Holunder und Gestrüpp daneben; die Hollywoodschaukel steht im Südwesten). brush: Verstecke (Busch, hohes Gras, Schilf), decor: nur Darstellung.",
   "minX": -10,
   "minY": -10,
   "width": 76,
@@ -266,7 +266,8 @@
       "y": 26.7,
       "w": 12.8,
       "h": 7.0,
-      "look": "house"
+      "look": "house",
+      "species": "gables"
     },
     {
       "kind": "rect",
@@ -298,7 +299,8 @@
       "y": 53.12,
       "w": 2,
       "h": 34.75,
-      "look": "hedge"
+      "look": "hedge",
+      "species": "rosemary"
     },
     {
       "kind": "rect",
@@ -474,8 +476,8 @@
     },
     {
       "kind": "circle",
-      "x": 42,
-      "y": 67.5,
+      "x": 46.5,
+      "y": 59.5,
       "r": 1.4,
       "look": "tree"
     },
@@ -586,8 +588,8 @@
     },
     {
       "kind": "rect",
-      "x": 15.7,
-      "y": 53.9,
+      "x": 5.5,
+      "y": 69.0,
       "w": 2.8,
       "h": 1.4,
       "look": "swing"
@@ -1029,6 +1031,77 @@
       "h": 1.1,
       "look": "flowers",
       "species": "roses"
+    },
+    {
+      "kind": "circle",
+      "x": 40.8,
+      "y": 46.9,
+      "r": 1.3,
+      "look": "tree"
+    },
+    {
+      "kind": "circle",
+      "x": 23.5,
+      "y": 48.5,
+      "r": 1.1,
+      "look": "tree",
+      "species": "fruit"
+    },
+    {
+      "kind": "circle",
+      "x": 3.5,
+      "y": 41,
+      "r": 1.0,
+      "look": "tree",
+      "species": "fruit"
+    },
+    {
+      "kind": "circle",
+      "x": 54,
+      "y": 40.5,
+      "r": 1.0,
+      "look": "tree",
+      "species": "yew"
+    },
+    {
+      "kind": "circle",
+      "x": 58.2,
+      "y": 40.8,
+      "r": 1.3,
+      "look": "tree",
+      "species": "fir"
+    },
+    {
+      "kind": "circle",
+      "x": 55.5,
+      "y": 28.6,
+      "r": 0.8,
+      "look": "tree",
+      "species": "elder"
+    },
+    {
+      "kind": "circle",
+      "x": 19.6,
+      "y": 52.6,
+      "r": 0.6,
+      "look": "tree",
+      "species": "elder"
+    },
+    {
+      "kind": "circle",
+      "x": 12.4,
+      "y": 53.8,
+      "r": 0.6,
+      "look": "tree",
+      "species": "elder"
+    },
+    {
+      "kind": "circle",
+      "x": 18.2,
+      "y": 57.4,
+      "r": 0.6,
+      "look": "tree",
+      "species": "elder"
     }
   ],
   "botPosts": [
@@ -1161,13 +1234,6 @@
       "y": 58.5,
       "r": 2.6,
       "look": "grass"
-    },
-    {
-      "kind": "circle",
-      "x": 45,
-      "y": 62,
-      "r": 2.3,
-      "look": "bush"
     },
     {
       "kind": "circle",
@@ -1346,6 +1412,49 @@
       "y": 67.6,
       "r": 1.5,
       "look": "grass"
+    },
+    {
+      "kind": "rect",
+      "x": 12,
+      "y": 11.4,
+      "w": 7,
+      "h": 1.8,
+      "look": "grass"
+    },
+    {
+      "kind": "circle",
+      "x": 8.5,
+      "y": 50.5,
+      "r": 1.8,
+      "look": "grass"
+    },
+    {
+      "kind": "circle",
+      "x": 41,
+      "y": 65.5,
+      "r": 2.4,
+      "look": "grass"
+    },
+    {
+      "kind": "circle",
+      "x": 53,
+      "y": 66.6,
+      "r": 2.5,
+      "look": "grass"
+    },
+    {
+      "kind": "circle",
+      "x": 15,
+      "y": 57.2,
+      "r": 1.7,
+      "look": "bush"
+    },
+    {
+      "kind": "circle",
+      "x": 48.5,
+      "y": 39.8,
+      "r": 1.6,
+      "look": "grass"
     }
   ],
   "decor": [
@@ -1435,9 +1544,23 @@
     },
     {
       "look": "meadow",
-      "x": 41.5,
-      "y": 36.2,
-      "w": 8,
+      "x": 40,
+      "y": 38.5,
+      "w": 8.5,
+      "h": 8
+    },
+    {
+      "look": "meadow",
+      "x": 48,
+      "y": 57,
+      "w": 20,
+      "h": 18
+    },
+    {
+      "look": "meadow",
+      "x": 53,
+      "y": 66.6,
+      "w": 5,
       "h": 4
     }
   ],
@@ -1545,8 +1668,8 @@
     },
     {
       "look": "bones",
-      "x": 4,
-      "y": 68
+      "x": 10,
+      "y": 68.4
     },
     {
       "look": "bones",
