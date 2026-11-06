@@ -7,8 +7,8 @@ import { describe, expect, it } from 'vitest';
  * dessen Knochen bewegen. Sonst bleiben Teile der Figur (Kleidung, Haare …)
  * in der Grundpose stehen, und die Figur „gleitet“ nur.
  */
-// props.glb enthält unbewegte Deko-Modelle (eigener Test unten)
-const files = readdirSync('public/models').filter((f) => f.endsWith('.glb') && f !== 'props.glb');
+// props.glb und garden.glb enthalten unbewegte Deko-Modelle (eigene Tests unten)
+const files = readdirSync('public/models').filter((f) => f.endsWith('.glb') && f !== 'props.glb' && f !== 'garden.glb');
 
 describe('Modelle', () => {
   for (const file of files) {
@@ -42,5 +42,17 @@ describe('Modelle', () => {
     expect([...MODEL_PROPS].sort()).toEqual([...keys].sort());
     const { PROP_LOOKS } = await import('../../src/sim/types');
     for (const k of keys) expect((PROP_LOOKS as readonly string[]).includes(k), k).toBe(true);
+  });
+
+  it('garden.glb (Blender): Bienenstock und alle Baumformen mit Vertex-Farben', async () => {
+    const doc = await new NodeIO().read('public/models/garden.glb');
+    const meshes = new Map(doc.getRoot().listNodes().filter((n) => n.getMesh()).map((n) => [n.getName(), n.getMesh()!]));
+    for (const name of ['beehive', 'oak_a', 'oak_b', 'oak_c', 'pine_a', 'pine_b']) {
+      const mesh = meshes.get(name);
+      expect(mesh, name).toBeTruthy();
+      for (const prim of mesh!.listPrimitives()) expect(prim.getAttribute('COLOR_0'), name).toBeTruthy();
+    }
+    const { treeVariant } = await import('../../src/client/gardenmodels');
+    for (let i = 0; i < 40; i++) expect(meshes.has(treeVariant(i * 3.7, i * 1.9))).toBe(true);
   });
 });

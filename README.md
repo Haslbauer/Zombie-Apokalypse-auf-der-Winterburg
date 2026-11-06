@@ -613,6 +613,7 @@ Rückmeldungen aus der ersten Online-Runde, drei Spieler schafften Welle 14:
     - Südöstlich vom Weg gibt es eine große Blumenwiese mit Laubbäumen. Ein Baum ist an eine neue Stelle gerückt, ein Busch ist weg, ein großer Laubbaum am Weg und zwei Obstbäume sind dazugekommen.
     - Kahle Erdstellen haben jetzt weiche Ränder; vorher waren es harte, dunkle Vielecke im Rasen.
   - **Figuren laden nach:** Die animierten Modelle sind zusammen etwa 45 MB groß. Startet eine Partie, bevor sie geladen sind, zeigt das Spiel kurz einfache Ersatzfiguren. Früher blieben diese „Tonnen“ die ganze Partie lang stehen. Jetzt wird jede Figur ausgetauscht, sobald ihr Modell da ist.
+  - **Modelle aus Blender (Python):** Bienenstock und gewöhnliche Bäume kommen aus Blender, das als Python-Paket ohne Oberfläche läuft (`tools/blender/`, `npm run garden`, Ergebnis `public/models/garden.glb`). Die Modelle haben abgerundete Kanten, Holzmaserung, abgeplatzte Farbe, Rinde mit Moos und Laub mit wechselnden Grüntönen. Die Schatten in Ecken, Fugen und im Inneren der Kronen sind vorberechnet (Ambient Occlusion) und kosten im Spiel nichts. Bäume werden als Instanzen gezeichnet, also eine Zeichnung je Baumform. Bis die Datei geladen ist, stehen die alten Formen da.
   - Neu sind vier Misthaufen mit Stroh, Jauchepfütze und Mistgabel: beim Kompost, beim Schuppen, beim Brunnen und am Südrand (`decor` mit `look: "dung"` in `data/map.json`).
 
 ## Der Schlund (Zwischenboss)

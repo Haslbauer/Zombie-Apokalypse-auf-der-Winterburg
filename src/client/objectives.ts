@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { ObjectiveDef, Objective } from '../sim/types';
+import { gardenMesh, loadGarden } from './gardenmodels';
 
 const BEE_COUNT = 14;
 
@@ -301,6 +302,13 @@ export class ObjectiveView {
     for (let i = 0; i < 8; i++) add(dot, this.lambert(0xffc93c), (i % 2 ? 0.55 : -0.55) + (Math.sin(i * 7) * 0.2), 0.45, 0.45 + Math.cos(i * 3) * 0.06, false);
     const comb = add(new THREE.CylinderGeometry(0.16, 0.16, 0.03, 6), this.lambert(0xe0a83a), 1.0, 0.02, 0.6, false);
     comb.rotation.y = 0.4;
+    // Bienenstock aus Blender (tools/blender/garden.py) ersetzt die einfache Form, sobald geladen
+    void loadGarden().then((models) => {
+      const mesh = gardenMesh(models, 'beehive');
+      if (!mesh) return;
+      g.clear();
+      g.add(mesh);
+    });
     const geometry = new THREE.SphereGeometry(0.08, 6, 4);
     for (let i = 0; i < BEE_COUNT; i++) {
       const bee = new THREE.Mesh(geometry, this.beeMaterial);

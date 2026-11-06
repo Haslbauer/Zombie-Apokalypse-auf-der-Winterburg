@@ -11,6 +11,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.sim.json --noEmit && tsc -p tsconfig.server.json --noEmit && tsc -p tests/tsconfig.json --noEmit",
     "balance": "BALANCE=1 vitest run tests/balance --silent=false",
     "models": "node scripts/convert-models.mjs",
+    "garden": ".venv-blender/bin/python tools/blender/garden.py public/models/garden.glb",
     "props": "node scripts/convert-props.mjs",
     "server": "node --import tsx server/main.ts",
     "start": "npm run build && npm run server",

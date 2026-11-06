@@ -4,6 +4,7 @@ import { arenaBounds } from '../sim/grid';
 import type { ArenaDef, Obstacle } from '../sim/types';
 import { nightDecor, nightObstacle } from './nightdecor';
 import { addPropModels } from './propmodels';
+import { loadGarden, treeInstances, type TreeSpot } from './gardenmodels';
 import { crownGeometry, fireflies, foliageMaterial, groundPatches, pineGeometry, type TreeSpecies, trunkGeometry } from './foliage';
 import { brushes, courtyardWall, decor, hatch, hedge, house, Mats, obstacleDecor, smoke, thicket, tree, windTime, rathole, ruin, grassTufts } from './mapdecor';
 
@@ -93,6 +94,8 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   }
 
   const chimneys: THREE.Vector3[] = [];
+  const plainTrees: TreeSpot[] = [];
+  const fallbackTrees = new THREE.Group();
   for (const o of arena.obstacles) {
     // Schmale Hausteile am Innenhof sind Ziegelmauern (ohne Dach)
     if (o.kind === 'rect' && o.look === 'house' && Math.min(o.w, o.h) <= 1.2) scene.add(courtyardWall(o, mats));
@@ -104,6 +107,11 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
       if (d) scene.add(d);
     }
     else if (o.kind === 'rect' && (o.look ?? 'hedge') === 'hedge') scene.add(hedge(o, mats));
+    else if (o.kind === 'circle' && o.look === 'tree' && !o.species) {
+      // Gewöhnliche Bäume: Blender-Modelle (werden nachgeladen), bis dahin die einfache Form
+      plainTrees.push({ x: o.x, y: o.y, r: o.r });
+      fallbackTrees.add(tree(o.x, o.y, o.r, mats));
+    }
     else if (o.kind === 'circle' && o.look === 'tree') scene.add(tree(o.x, o.y, o.r, mats, o.species as TreeSpecies | undefined));
     else if (o.kind === 'rect' && o.look === 'blocked') {
       flat(o.w, o.h, o.x, o.y, m(COLORS.blocked), 0.012);
@@ -142,6 +150,15 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   const tufts = grassTufts(arena);
   live.add(tufts);
   target.add(mergeStatic(scene));
+  // Bäume aus Blender: ersetzen die einfachen Formen, sobald garden.glb geladen ist
+  const fallback = mergeStatic(fallbackTrees);
+  target.add(fallback);
+  void loadGarden().then((models) => {
+    const trees = treeInstances(models, plainTrees);
+    if (!trees) return;
+    target.remove(fallback);
+    target.add(trees);
+  });
   // Fässer, Kisten, Karren, Zäune und Werkzeug als 3D-Modelle (werden nachgeladen)
   addPropModels(target, arena.props ?? []);
   target.add(live);
