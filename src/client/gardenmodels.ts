@@ -100,3 +100,48 @@ export function treeInstances(models: Map<string, GardenModel>, spots: TreeSpot[
   }
   return group;
 }
+
+// ---------- Häuser (tools/blender/houses.py → public/models/houses.glb) ----------
+
+/** Name des Hausmodells zu einem Hindernis-Rechteck (wie im Blender-Skript). */
+export function houseKey(o: { x: number; y: number }): string {
+  return `house_${Math.round(o.x * 100)}_${Math.round(o.y * 100)}`;
+}
+
+let housesPending: Promise<Map<string, THREE.Object3D>> | null = null;
+
+/**
+ * Häuser mit gebackener Textur (Ziegel, Dachziegel, Stein, Holz und
+ * Umgebungsverdeckung in einem Bild je Haus) und leuchtenden Fenstern.
+ * Schlüssel: houseKey(), dazu Objekte mit der Endung _glow.
+ */
+export function loadHouses(): Promise<Map<string, THREE.Object3D>> {
+  if (typeof window === 'undefined') return Promise.resolve(new Map());
+  housesPending ??= new GLTFLoader()
+    .loadAsync('models/houses.glb')
+    .then((gltf) => {
+      const glow = new THREE.MeshLambertMaterial({ color: 0xffcf7a, emissive: 0xffa53a, emissiveIntensity: 0.9 });
+      const out = new Map<string, THREE.Object3D>();
+      for (const child of gltf.scene.children) {
+        child.traverse((o) => {
+          const mesh = o as THREE.Mesh;
+          if (!mesh.isMesh) return;
+          const src = mesh.material as THREE.MeshStandardMaterial;
+          if (child.name.endsWith('_glow')) mesh.material = glow;
+          else {
+            if (src.map) src.map.anisotropy = 8;
+            mesh.material = new THREE.MeshLambertMaterial({ map: src.map, color: new THREE.Color(1.15, 1.15, 1.15) });
+            mesh.castShadow = true;
+          }
+          mesh.receiveShadow = true;
+        });
+        out.set(child.name, child);
+      }
+      return out;
+    })
+    .catch((err) => {
+      console.warn('Häuser nicht geladen:', err);
+      return new Map<string, THREE.Object3D>();
+    });
+  return housesPending;
+}

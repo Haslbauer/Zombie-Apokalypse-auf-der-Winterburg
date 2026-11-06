@@ -4,7 +4,7 @@ import { arenaBounds } from '../sim/grid';
 import type { ArenaDef, Obstacle } from '../sim/types';
 import { nightDecor, nightObstacle } from './nightdecor';
 import { addPropModels } from './propmodels';
-import { loadGarden, treeInstances, type TreeSpot } from './gardenmodels';
+import { houseKey, loadGarden, loadHouses, treeInstances, type TreeSpot } from './gardenmodels';
 import { crownGeometry, fireflies, foliageMaterial, groundPatches, pineGeometry, type TreeSpecies, trunkGeometry } from './foliage';
 import { brushes, courtyardWall, decor, hatch, hedge, house, Mats, obstacleDecor, smoke, thicket, tree, windTime, rathole, ruin, grassTufts } from './mapdecor';
 
@@ -96,10 +96,16 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   const chimneys: THREE.Vector3[] = [];
   const plainTrees: TreeSpot[] = [];
   const fallbackTrees = new THREE.Group();
+  const fallbackHouses = new THREE.Group();
+  const plainHouses: Obstacle[] = [];
   for (const o of arena.obstacles) {
     // Schmale Hausteile am Innenhof sind Ziegelmauern (ohne Dach)
     if (o.kind === 'rect' && o.look === 'house' && Math.min(o.w, o.h) <= 1.2) scene.add(courtyardWall(o, mats));
-    else if (o.kind === 'rect' && o.look === 'house') scene.add(house(o, mats, chimneys));
+    else if (o.kind === 'rect' && o.look === 'house') {
+      // Häuser aus Blender (houses.glb, werden nachgeladen), bis dahin die im Code gebaute Form
+      fallbackHouses.add(house(o, mats, chimneys));
+      plainHouses.push(o);
+    }
     else if (o.kind === 'rect' && o.look === 'rathole') scene.add(rathole(o, mats, chimneys));
     else if (o.kind === 'rect' && o.look === 'ruin') scene.add(ruin(o, mats, chimneys));
     else if (o.look === 'car' || o.look === 'well') {
@@ -150,6 +156,21 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   const tufts = grassTufts(arena);
   live.add(tufts);
   target.add(mergeStatic(scene));
+  // Häuser aus Blender: ersetzen die Code-Häuser, sobald houses.glb geladen ist (alle oder keins)
+  const houseFallback = mergeStatic(fallbackHouses);
+  target.add(houseFallback);
+  void loadHouses().then((models) => {
+    if (!plainHouses.length || plainHouses.some((o) => !models.has(houseKey(o)))) return;
+    target.remove(houseFallback);
+    for (const o of plainHouses) {
+      for (const name of [houseKey(o), houseKey(o) + '_glow']) {
+        const m = models.get(name);
+        if (!m) continue;
+        m.position.set(o.x, 0, o.y);
+        target.add(m);
+      }
+    }
+  });
   // Bäume aus Blender: ersetzen die einfachen Formen, sobald garden.glb geladen ist
   const fallback = mergeStatic(fallbackTrees);
   target.add(fallback);

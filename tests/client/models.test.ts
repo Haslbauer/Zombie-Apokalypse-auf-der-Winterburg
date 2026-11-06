@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
  * in der Grundpose stehen, und die Figur „gleitet“ nur.
  */
 // props.glb und garden.glb enthalten unbewegte Deko-Modelle (eigene Tests unten)
-const files = readdirSync('public/models').filter((f) => f.endsWith('.glb') && f !== 'props.glb' && f !== 'garden.glb');
+const files = readdirSync('public/models').filter((f) => f.endsWith('.glb') && f !== 'props.glb' && f !== 'garden.glb' && f !== 'houses.glb');
 
 describe('Modelle', () => {
   for (const file of files) {
@@ -54,5 +54,19 @@ describe('Modelle', () => {
     }
     const { treeVariant } = await import('../../src/client/gardenmodels');
     for (let i = 0; i < 40; i++) expect(meshes.has(treeVariant(i * 3.7, i * 1.9))).toBe(true);
+  });
+
+  it('houses.glb (Blender): ein Modell mit Textur je Haus der Karte, dazu leuchtende Fenster', async () => {
+    const { houseKey } = await import('../../src/client/gardenmodels');
+    const arena = JSON.parse(readFileSync('data/map.json', 'utf8'));
+    const doc = await new NodeIO().read('public/models/houses.glb');
+    const names = new Set(doc.getRoot().listNodes().map((n) => n.getName()));
+    const houses = arena.obstacles.filter((o: { look?: string; kind: string; w: number; h: number }) => o.look === 'house' && o.kind === 'rect' && Math.min(o.w, o.h) > 1.2);
+    expect(houses.length).toBeGreaterThan(0);
+    for (const o of houses) {
+      expect(names.has(houseKey(o)), houseKey(o)).toBe(true);
+      expect(names.has(houseKey(o) + '_glow'), houseKey(o) + '_glow').toBe(true);
+    }
+    expect(doc.getRoot().listTextures().length).toBe(houses.length);
   });
 });

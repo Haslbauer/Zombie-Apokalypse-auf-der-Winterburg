@@ -27,12 +27,28 @@ Optional ein zweiter Ordner für Kontrollbilder (je Modell ein PNG):
 
 Oder kurz: `npm run garden` (nutzt `.venv-blender`).
 
+Häuser (dauert einige Minuten, weil die Texturen gerechnet werden):
+
+```bash
+npm run houses
+```
+
 ## Was drin ist
 
 - `common.py`: Bausteine (Kisten mit abgerundeten Kanten, Röhren, unregelmäßige
   Kugeln, Stamm und Äste über den Skin-Modifier), Muster (Holzmaserung,
   abgeplatzte Farbe, Rinde mit Moos, Laub), vorberechnete Umgebungsverdeckung
   (Ambient Occlusion, mit Cycles in die Vertex-Farben gerechnet) und Export.
+- `houses.py`: die Häuser der Karte, nach den Rechtecken in `data/map.json`
+  (`look: "house"`, breiter als 1,2 m). Mauern aus Ziegeln mit Mörtelfugen,
+  Sockel, Gesims und Fensterbänke aus Sandstein, Fenster und Türen sitzen
+  wirklich in der Wand (Boolean), Fensterläden, Blumenkästen, vernagelte
+  Fenster, Laterne neben der Tür, Dachziegel mit Moos, Firstziegel, Ortgang,
+  Dachrinnen, Fallrohre und Schornstein mit Tonaufsätzen. Die Farben kommen
+  aus Blenders Textur-Knoten (Brick, Noise) und werden mit der
+  Umgebungsverdeckung in ein Bild je Haus gerechnet (Bake, 1024 bzw. 2048
+  Pixel, JPEG). Ändert sich ein Haus in der Karte, das Skript neu laufen
+  lassen; ohne passendes Modell zeigt das Spiel die Code-Häuser.
 - `garden.py`: Bienenstock (`beehive`), drei Laubbäume (`oak_a`, `oak_b`,
   `oak_c`) und zwei Nadelbäume (`pine_a`, `pine_b`).
 
