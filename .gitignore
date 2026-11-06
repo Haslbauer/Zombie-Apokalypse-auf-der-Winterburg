@@ -5,3 +5,4 @@ dist/
 .data/
 
 .venv-blender/
+__pycache__/
