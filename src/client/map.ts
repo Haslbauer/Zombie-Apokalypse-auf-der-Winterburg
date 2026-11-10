@@ -117,7 +117,15 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   const fallbackTrees = new THREE.Group();
   const fallbackShed = new THREE.Group();
   const sheds: Obstacle[] = [];
+  // Laternen bleiben eigene Gruppen (nicht zusammengefasst): Mast und Dach werden später getauscht
+  const lamps = new THREE.Group();
+  target.add(lamps);
   for (const o of arena.obstacles) {
+    if (o.look === 'lamp') {
+      const d = obstacleDecor(o, mats);
+      if (d) lamps.add(d);
+      continue;
+    }
     if (o.look && OBSTACLE_MODELS[o.look]) {
       const d = o.look === 'car' || o.look === 'well' ? nightObstacle(o, mats) : obstacleDecor(o, mats);
       if (d) fallbackDecor.add(d);
@@ -232,12 +240,25 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
         if (meshes.some((m) => !m)) return null;
         const g = new THREE.Group();
         for (const m of meshes) g.add(m!);
+        // Teich: Wasserfläche (mit Textur) bleibt aus dem Code, Rand kommt aus Blender
+        for (const o of decoObstacles) {
+          if (o.look !== 'pond' || o.kind !== 'circle') continue;
+          const water = new THREE.Mesh(new THREE.CircleGeometry(o.r * 0.95, 40).rotateX(-Math.PI / 2), mats.textured('water', 2, 0xbfe3ea));
+          water.position.set(o.x, 0.04, o.y);
+          water.receiveShadow = true;
+          g.add(water);
+        }
         return g;
       },
     ],
   ];
   for (const [fb] of swaps) target.add(fb);
   void loadGarden().then((models) => {
+    if (models.has('lamp_post'))
+      for (const l of lamps.children) {
+        for (const b of l.children.filter((c) => c.name === 'body')) l.remove(b);
+        l.add(gardenMesh(models, 'lamp_post')!);
+      }
     for (const [fb, make] of swaps) {
       const obj = make(models);
       if (!obj) continue;

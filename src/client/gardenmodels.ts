@@ -334,6 +334,7 @@ export const OBSTACLE_MODELS: Record<string, { names: string[]; rect?: [number, 
   rock: { names: ['rock_a', 'rock_b', 'rock_c'], r: 1.0 },
   deadtree: { names: ['deadtree'], r: 0.45 },
   well: { names: ['well'], r: 0.9 },
+  pond: { names: ['pond'], r: 2.6 },
 };
 
 /** Modell für ein Hindernis (Größe und Lage nach dem Rechteck bzw. Kreis), sonst null. */

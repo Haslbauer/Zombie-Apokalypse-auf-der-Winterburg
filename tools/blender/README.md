@@ -59,7 +59,8 @@ npm run houses
   Waldbäume (`forest_oak_a/b/c`, `forest_pine_a/b`), Büsche (`bush_a/b/c`), ein
   Heckenstück (`hedge_seg`) und Gartenkram (`bench`, `rain_barrel`, `compost`,
   `woodpile`, `wheelbarrow`, `swing`, `car`, `well`, `rock_a/b/c`, `log`,
-  `deadtree`, `grave_a/b/c`).
+  `deadtree`, `grave_a/b/c`), Feuertonne (`firebarrel`), Laternenmast (`lamp_post`)
+  und Teichrand (`pond`).
 - Nach dem Export verkleinert `scripts/pack-glb.mjs` die Datei (gleiche Ecken
   zusammenfassen, Quantisierung); `npm run garden` und `npm run houses` machen das
   automatisch.

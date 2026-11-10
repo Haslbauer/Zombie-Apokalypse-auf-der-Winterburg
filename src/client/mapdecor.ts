@@ -829,9 +829,12 @@ function glow(): THREE.Mesh {
 /** Laterne: Pfahl, Glaskasten mit warmem Licht und Lichtschein am Boden. */
 function lamp(mats: Mats): THREE.Group {
   const g = new THREE.Group();
-  g.add(part(new THREE.CylinderGeometry(0.07, 0.1, 2.4, 6), mats.lambert(0x2b2b2b), 0, 1.2, 0));
+  // Mast und Dach (name 'body': werden gegen das Blender-Modell lamp_post getauscht)
+  const pole = part(new THREE.CylinderGeometry(0.07, 0.1, 2.4, 6), mats.lambert(0x2b2b2b), 0, 1.2, 0);
+  const cap = part(new THREE.ConeGeometry(0.3, 0.25, 4), mats.lambert(0x2b2b2b), 0, 2.88, 0);
+  pole.name = cap.name = 'body';
+  g.add(pole, cap);
   g.add(part(new THREE.BoxGeometry(0.34, 0.42, 0.34), mats.lambert(0xffd88a, { emissive: 0xffb347, emissiveIntensity: 1 }), 0, 2.55, 0, false));
-  g.add(part(new THREE.ConeGeometry(0.3, 0.25, 4), mats.lambert(0x2b2b2b), 0, 2.88, 0));
   g.add(glow());
   return g;
 }

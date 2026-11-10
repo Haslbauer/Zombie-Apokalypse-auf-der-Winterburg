@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { arenaBounds } from '../sim/grid';
 import type { ArenaDef, Obstacle, PropDef } from '../sim/types';
 import type { Vec2 } from '../sim/vec';
+import { gardenMesh, loadGarden } from './gardenmodels';
 import { Mats } from './mapdecor';
 
 /**
@@ -183,6 +184,9 @@ export function nightDecor(stat: THREE.Group, live: THREE.Group, arena: ArenaDef
   const flameMat = new THREE.SpriteMaterial({ map: soft(), color: 0xffa040, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   const crowMat = mats.lambert(0x111114);
 
+  const barrelBodies = new THREE.Group();
+  const barrelSpots: { x: number; z: number; rot: number }[] = [];
+  live.add(barrelBodies);
   for (const p of arena.props ?? []) {
     const g = new THREE.Group();
     g.position.set(p.x, 0, p.y);
@@ -190,10 +194,16 @@ export function nightDecor(stat: THREE.Group, live: THREE.Group, arena: ArenaDef
     const rnd = rand(p.x * 17 + p.y * 3);
     switch (p.look) {
       case 'firebarrel': {
-        g.add(part(new THREE.CylinderGeometry(0.36, 0.33, 0.95, 12), mats.lambert(0x4a3a30), 0, 0.47, 0));
-        g.add(part(new THREE.TorusGeometry(0.35, 0.03, 4, 12).rotateX(Math.PI / 2), mats.lambert(0x2a2420), 0, 0.3, 0, false));
-        g.add(part(new THREE.TorusGeometry(0.35, 0.03, 4, 12).rotateX(Math.PI / 2), mats.lambert(0x2a2420), 0, 0.75, 0, false));
-        g.add(part(new THREE.CylinderGeometry(0.3, 0.3, 0.04, 10), mats.lambert(0xff7a20, { emissive: 0xff5a10 }), 0, 0.93, 0, false));
+        // Fass (wird gegen das Blender-Modell getauscht), Glut bleibt leuchtend im Code
+        const body = new THREE.Group();
+        body.position.copy(g.position);
+        body.rotation.copy(g.rotation);
+        body.add(part(new THREE.CylinderGeometry(0.36, 0.33, 0.95, 12), mats.lambert(0x4a3a30), 0, 0.47, 0));
+        body.add(part(new THREE.TorusGeometry(0.35, 0.03, 4, 12).rotateX(Math.PI / 2), mats.lambert(0x2a2420), 0, 0.3, 0, false));
+        body.add(part(new THREE.TorusGeometry(0.35, 0.03, 4, 12).rotateX(Math.PI / 2), mats.lambert(0x2a2420), 0, 0.75, 0, false));
+        barrelBodies.add(body);
+        barrelSpots.push({ x: p.x, z: p.y, rot: (p.rot ?? 0) + rnd() * 6 });
+        g.add(part(new THREE.CylinderGeometry(0.3, 0.3, 0.04, 10), mats.lambert(0xff7a20, { emissive: 0xff5a10 }), 0, 0.88, 0, false));
         stat.add(g);
         // Flamme und flackernder Lichtschein (bewegt)
         const flame = new THREE.Sprite(flameMat);
@@ -763,6 +773,17 @@ export function nightDecor(stat: THREE.Group, live: THREE.Group, arena: ArenaDef
   const tmp = new THREE.Vector3();
   let last = 0;
   let detail = true;
+  // Feuertonnen aus Blender (garden.glb)
+  void loadGarden().then((models) => {
+    if (!models.has('firebarrel') || !barrelSpots.length) return;
+    barrelBodies.clear();
+    for (const b of barrelSpots) {
+      const m = gardenMesh(models, 'firebarrel')!;
+      m.position.set(b.x, 0, b.z);
+      m.rotation.y = b.rot;
+      barrelBodies.add(m);
+    }
+  });
   return {
     setDetail(on) {
       detail = on;

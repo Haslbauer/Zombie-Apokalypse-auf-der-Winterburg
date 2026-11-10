@@ -933,6 +933,131 @@ def props():
     return out
 
 
+# ---------------------------------------------------------------- Nachtlichter und Teich
+
+def night_props():
+    import bmesh
+    from mathutils import noise
+    out = []
+
+    def rusty(p, n, c):
+        k = noise.noise(p * 3.0) + noise.noise(p * 9) * 0.5
+        out_ = C.mix(c, C.hexcol(0x7a3414), (k + 0.15) * 1.6)
+        soot = max(0.0, p.z - 0.6) * 1.4
+        return C.jitter(out_, -soot * 0.5 + noise.noise(p * 30) * 0.08)
+
+    # ---- Feuertonne: verbeultes Ölfass mit Sicken, Löchern unten, verkohlte Scheite oben
+    drum = C.material('fb_drum', 0x4a4440, rusty)
+    char = C.material('fb_char', 0x1a1410, C.speckle(0.3, 20))
+    ember = C.material('fb_ember', 0xc84a14, C.speckle(0.35, 25))
+    hole = C.material('fb_hole', 0xe06a1a)
+    bm = bmesh.new()
+    bmesh.ops.create_cone(bm, cap_ends=False, segments=24, radius1=0.35, radius2=0.35, depth=0.95)
+    side = [e for e in bm.edges if abs(e.verts[0].co.z - e.verts[1].co.z) > 1e-4]
+    bmesh.ops.subdivide_edges(bm, edges=side, cuts=11)
+    for v in bm.verts:
+        z = v.co.z + 0.475
+        r = 1 + 0.03 * math.exp(-((z - 0.32) / 0.03) ** 2) + 0.03 * math.exp(-((z - 0.64) / 0.03) ** 2)
+        dent = noise.noise(v.co * 4 + Vector((3, 1, 2))) * 0.06
+        v.co.x *= r + dent
+        v.co.y *= r + dent
+    # Boden schließen, Innenwand dunkel (zweite, kleinere Röhre)
+    body = C.link('drum', bm, drum, smooth_angle=0)
+    body.location = (0, 0, 0.475)
+    parts = [body]
+    parts.append(C.cylinder('inner', 0.335, 0.335, 0.8, Vector((0, 0, 0.45)), char, seg=20, rings=0))
+    for k in range(7):
+        a = k / 7 * math.tau + 0.3
+        parts.append(C.cylinder('hole', 0.035, 0.035, 0.06, Vector((math.cos(a) * 0.35, math.sin(a) * 0.35, 0.16)), hole, seg=8, rot=(math.pi / 2, 0, a + math.pi / 2), rings=0))
+    R = C.rand(17)
+    for k in range(5):
+        a = R.random() * math.tau
+        lg = C.cylinder('stick', 0.05, 0.04, 0.6, Vector((math.cos(a) * 0.12, math.sin(a) * 0.12, 1.0)), char, seg=7, rot=(R.uniform(-0.7, 0.7), R.uniform(-0.7, 0.7), 0), rings=1)
+        parts.append(lg)
+    for k in range(10):
+        a = R.random() * math.tau
+        parts.append(C.blob('em', 0.05, Vector((math.cos(a) * 0.2, math.sin(a) * 0.2, 0.86)), ember, seed=k, rough=0.4, subdiv=1))
+    C.bake(parts, ground=True)
+    out.append(C.finish('firebarrel', parts, ao_floor=0.35))
+
+    # ---- Laterne: gusseiserner Mast mit Sockel, Ring, Laternengehäuse (Glas leuchtet im Spiel)
+    iron = C.material('lamp_iron', 0x2a2c2e, C.speckle(0.12, 25))
+    brass = C.material('lamp_brass', 0x6a5a3a, C.speckle(0.15, 30))
+    parts = []
+    parts.append(C.cylinder('base', 0.2, 0.24, 0.28, Vector((0, 0, 0.14)), iron, seg=8, rings=1))
+    parts.append(C.cylinder('base2', 0.15, 0.18, 0.12, Vector((0, 0, 0.34)), iron, seg=8, rings=0))
+    bm = bmesh.new()
+    bmesh.ops.create_cone(bm, cap_ends=False, segments=16, radius1=0.075, radius2=0.05, depth=1.85)
+    side = [e for e in bm.edges if abs(e.verts[0].co.z - e.verts[1].co.z) > 1e-4]
+    bmesh.ops.subdivide_edges(bm, edges=side, cuts=6)
+    for v in bm.verts:
+        a = math.atan2(v.co.y, v.co.x)
+        k = 1 + 0.12 * max(0.0, math.cos(a * 8))  # Kanneluren
+        v.co.x *= k
+        v.co.y *= k
+    pole = C.link('pole', bm, iron, smooth_angle=0)
+    pole.location = (0, 0, 0.4 + 0.925)
+    parts.append(pole)
+    parts.append(C.cylinder('collar', 0.1, 0.1, 0.06, Vector((0, 0, 0.9)), brass, seg=12, rings=0))
+    parts.append(C.cylinder('collar2', 0.09, 0.12, 0.12, Vector((0, 0, 2.28)), iron, seg=12, rings=0))
+    # Querstange mit Leiterauflage
+    parts.append(C.box('bar', (0.62, 0.04, 0.04), Vector((0, 0, 2.1)), iron, bevel=0.008, step=0.3))
+    # Laternengehäuse um das Glas (0,34 × 0,42 × 0,34 bei 2,55 m)
+    parts.append(C.box('tray', (0.42, 0.42, 0.05), Vector((0, 0, 2.33)), iron, bevel=0.01, step=0.3))
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            parts.append(C.box('post', (0.035, 0.035, 0.46), Vector((sx * 0.185, sy * 0.185, 2.56)), iron, bevel=0.005, step=0.3))
+    parts.append(C.box('top', (0.44, 0.44, 0.04), Vector((0, 0, 2.79)), iron, bevel=0.01, step=0.3))
+    roof = C.cylinder('roof', 0.33, 0.04, 0.24, Vector((0, 0, 2.93)), iron, seg=4, rot=(0, 0, math.pi / 4), rings=0)
+    parts.append(roof)
+    parts.append(C.blob('finial', 0.045, Vector((0, 0, 3.1)), brass, seed=1, rough=0.0, subdiv=2))
+    parts.append(C.cylinder('ring', 0.05, 0.05, 0.015, Vector((0, 0, 3.17)), brass, seg=10, rot=(math.pi / 2, 0, 0), rings=0))
+    C.bake(parts, ground=True)
+    out.append(C.finish('lamp_post', parts, ao_floor=0.35))
+
+    # ---- Teichrand (Radius 2,6): moosige Steine, Schlammrand, Seerosen, Kiesel (Wasser kommt aus dem Spiel)
+    st = C.material('pond_stone', 0x6a6862, rock_shader())
+    mud = C.material('pond_mud', 0x3a2e20, C.speckle(0.25, 10))
+    pad = C.material('pond_pad', 0x3f7a30, vein_shader())
+    lily = C.material('pond_lily', 0xf2e8f0, C.speckle(0.1, 30))
+    lilyc = C.material('pond_lily_c', 0xf2c838)
+    R = C.rand(23)
+    parts = []
+    bm = bmesh.new()
+    bmesh.ops.create_circle(bm, cap_ends=False, segments=48, radius=2.75)
+    ring_out = list(bm.verts)
+    ring_in = [bm.verts.new((v.co.x * 0.86, v.co.y * 0.86, -0.02)) for v in ring_out]
+    for v in ring_out:
+        v.co.z = 0.03 + noise.noise(v.co * 2) * 0.02
+    for i in range(48):
+        j = (i + 1) % 48
+        bm.faces.new((ring_in[i], ring_in[j], ring_out[j], ring_out[i]))
+    parts.append(C.link('mud', bm, mud, smooth_angle=0))
+    for i in range(22):
+        a = i / 22 * math.tau + R.uniform(-0.08, 0.08)
+        r = 2.72 + R.uniform(-0.12, 0.15)
+        s = 0.22 + R.random() * 0.2
+        parts.append(C.blob('stone', s, Vector((math.cos(a) * r, math.sin(a) * r, s * 0.25)), st, seed=500 + i, rough=0.35, subdiv=2, squash=0.6))
+    for i in range(6):
+        a = R.random() * math.tau
+        r = R.uniform(0.6, 1.9)
+        p = cup_leaf('pad', 0.22 + R.random() * 0.08, pad, Vector((math.cos(a) * r, math.sin(a) * r, 0.06)), R.random() * 6.3, rise=0.0, cup=0.05, lobes=0, seed=i)
+        p.location.x -= 0.2  # Blatt um seinen Mittelpunkt
+        parts.append(p)
+        if i % 3 == 0:
+            c = Vector((math.cos(a) * r, math.sin(a) * r, 0.1))
+            for k in range(6):
+                b = k / 6 * math.tau
+                pt = C.blob('petal', 0.05, c + Vector((math.cos(b) * 0.06, math.sin(b) * 0.06, 0.02)), lily, seed=k, rough=0.1, subdiv=1, squash=0.6)
+                pt.scale = (1.4, 0.8, 0.6)
+                pt.rotation_euler = (0, 0, b)
+                parts.append(pt)
+            parts.append(C.blob('center', 0.03, c + Vector((0, 0, 0.04)), lilyc, seed=3, rough=0.1, subdiv=1))
+    C.bake(parts, ground=True)
+    out.append(C.finish('pond', parts, ao_floor=0.35))
+    return out
+
+
 # ---------------------------------------------------------------- Ablauf
 
 def main():
@@ -950,7 +1075,7 @@ def main():
     built += species_trees()
     built += plants()
     built += [bed_frame(10.0, 1.5, 0), bed_frame(10.0, 1.5, 1), shed(4.2, 3.2)]
-    built += forest() + bushes() + props()
+    built += forest() + bushes() + props() + night_props()
     if prev:
         os.makedirs(prev, exist_ok=True)
         for ob in built:
