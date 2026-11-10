@@ -3,6 +3,7 @@
 Stand: 01.11.2026. Arbeitsgrundlage für Claude Code.
 
 Änderungen v2.7 (Deko-Modelle): CC0-Modelle von Quaternius (Medieval Village Pack, Survival Pack) als Deko: Fässer, Kisten, Marktkarren, Zaunfelder, Kornsäcke, Axt, Schaufel (props `oakbarrel`, `woodcrate`, `handcart`, `picketfence`, `grainsacks`, `axe`, `shovel`; Quellen in assets/props/, `npm run props` → public/models/props.glb, Client src/client/propmodels.ts).
+Änderungen v2.7 (Bunker und Südtor): Bunker nach hinten in den Südwesten (Tausch mit dem Geräteschuppen), Südtor nach Südosten (x 54,5–58), alte Lücke geschlossen.
 Änderungen v2.7 (Zäune und Beete): Holzzäune als 2-m-Felder (teils gebrochen), Blumen- und Rosenbeete mit Steinkante als Blender-Modelle.
 Änderungen v2.7 (Wege und Kleinkram): Wege als Erdband mit Grassaum (Farbabstufung) und passgenauen, bündig liegenden Bruchsteinplatten (Voronoi mit Lloyd-Glättung); 17 Kleinkram-Modelle aus Blender.
 Änderungen v2.7 (Nachtlichter): Feuertonnen, Laternen und Teichrand als Blender-Modelle; Flammen, Glut, leuchtendes Glas, Lichtschein und Wasser bleiben aus dem Code.
@@ -473,7 +474,7 @@ Garten mit Haus, Hecken und Zugängen. Umgesetzt in `data/map.json`, 1 Spieleinh
 - **Bienenstock** nordwestlich vom Haus: Ziel der Hornissen und eines Teils der Ratten (siehe Abschnitt 8)
 - Sechs **Hochbeete** westlich vom Haus: Ziel der Ratten, versorgen den Vorrat mit ihrer Ernte. Sie blockieren das Laufen, nicht aber Schüsse.
 - Zombie-Zugänge:
-  1. **Bunker** unten links im Garten, der einzige Spawn im Garten. Der Bunker liegt unter der Erde: Eine Treppe mit Betonwangen führt in ein Loch im Boden, aus dem die Zombies steigen. Daneben wachsen Holundersträucher und Gestrüpp. Die Hollywoodschaukel steht im Südwesten beim Schuppen.
+  1. **Bunker** unten links im Garten, der einzige Spawn im Garten. Der Bunker liegt unter der Erde, ganz hinten im Südwesten des Gartens: Eine Treppe mit Betonwangen führt in ein Loch im Boden, aus dem die Zombies steigen. Daneben wachsen Holundersträucher, dahinter steht die Hollywoodschaukel. Der Geräteschuppen steht dort, wo früher der Bunker war.
   2. **Süd:** im Gelände vor der Heckenlücke, durch das Südtor
   3. **Ost:** am Ende der Zuwegung; die Zombies laufen den Hang hinauf und sind dort langsamer (halbes Tempo)
   4. **Nordwest** im Gelände vor dem Westtor: 85 % der Hornissen (sie fliegen über den Zaun) und ebenso oft Zombies wie Ost. Liegt nah an Bienenstock und Hochbeeten.

@@ -647,6 +647,12 @@ Rückmeldungen aus der ersten Online-Runde, drei Spieler schafften Welle 14:
     - Die Blumenbeete haben eine Kante aus Feldsteinen und Erde. Darin wachsen Margeriten, Tulpen, Lupinen bzw. Lavendel und Ringelblumen.
     - Das Rosenbeet hat zusätzlich drei Rosenbüsche mit roten und rosa Blüten.
     - `garden.glb` hat jetzt etwa 5,6 MB.
+  - **Bunker und Südtor verlegt:**
+    - Der Bunker mit seiner Treppe liegt jetzt ganz hinten im Südwesten des Gartens, wo vorher der Geräteschuppen stand. Holunder steht daneben, die Hollywoodschaukel dahinter.
+    - Der Schuppen steht samt Werkzeug, Kisten und Kanistern dort, wo früher der Bunker war.
+    - Der Südeingang ist von der Mitte (x 35,5–39) nach Südosten gewandert (x 54,5–58), neben den Brunnen und die Tannen. Die alte Lücke ist mit Hecke und Zaun geschlossen.
+    - Spawnpunkt, Weg, Feuertonnen, Barrikaden, Stacheldraht, Laterne und Warnschild sind mit umgezogen, ebenso der PvP-Startpunkt im Süden.
+    - Der innere Kiesweg endet jetzt bei den Holundersträuchern.
   - Neu sind vier Misthaufen mit Stroh, Jauchepfütze und Mistgabel: beim Kompost, beim Schuppen, beim Brunnen und am Südrand (`decor` mit `look: "dung"` in `data/map.json`).
 
 ## Der Schlund (Zwischenboss)
