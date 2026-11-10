@@ -64,7 +64,7 @@ export interface MvpWeights {
 /** Vorgabe, falls data/economy.json keine Gewichte hat. */
 export const DEFAULT_MVP: MvpWeights = { kills: 1, bosses: 5, assists: 0.6, damage: 1 / 400, healing: 1 / 300, damageTaken: 1 / 800, deaths: -1 };
 
-/** Wertung wie in LoL: Kills, Bosse, Assists, Schaden, Heilung, Einstecken, Tode. */
+/** Wertung: Kills, Bosse, Assists, Schaden, Heilung, Einstecken, Tode. */
 export function mvpScore(score: HeroScore, stats: HeroStats, w: MvpWeights = DEFAULT_MVP): number {
   const v =
     score.kills * w.kills +

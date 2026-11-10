@@ -95,7 +95,7 @@ export function enrageFactor(ctx: SimContext, z: Zombie): number {
 }
 
 /**
- * Team-Buff (wie Baron/Drachen in LoL): Fällt ein Zwischenboss, bekommen alle
+ * Team-Buff: Fällt ein Zwischenboss, bekommen alle
  * lebenden Helden seine Wirkung für duration Sekunden. Gleicher Boss erneuert
  * nur die Dauer (kein Stapeln).
  */

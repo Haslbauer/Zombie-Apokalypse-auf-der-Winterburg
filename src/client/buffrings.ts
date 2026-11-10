@@ -1,7 +1,7 @@
 import type { Hero } from '../sim/types';
 
 /**
- * Buff-Ringe wie in LoL: Jede Art aktiver Wirkung bekommt einen farbigen,
+ * Buff-Ringe: Jede Art aktiver Wirkung bekommt einen farbigen,
  * sich drehenden Ring um den Helden. Gleiche Arten werden zusammengefasst,
  * höchstens MAX_RINGS Ringe.
  */

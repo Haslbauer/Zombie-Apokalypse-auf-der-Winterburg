@@ -11,7 +11,7 @@ const TIERS: { id: Tier; label: string }[] = [
   { id: 'final', label: 'Fertige Items' },
 ];
 
-/** Stufe wie in LoL: Grundteil ohne Rezept, Aufbau-Item steckt in weiteren Rezepten, sonst fertig. */
+/** Stufe: Grundteil ohne Rezept, Aufbau-Item steckt in weiteren Rezepten, sonst fertig. */
 function tierOf(item: ItemDef, items: ItemDef[]): Tier {
   if (item.category === 'consumable') return 'consumable';
   if (!item.from) return 'basic';
@@ -119,7 +119,7 @@ export class ShopView {
       }
       this.root.append(grid);
     }
-    this.root.append(el('div', 'shop-foot', 'Rezepte wie in LoL: Bauteile im Inventar werden verbraucht und angerechnet. Maus über ein Item zeigt Bauteile und Weiterentwicklungen. Rechtsklick im Inventar verkauft (70 %). Verteidigungen: anklicken, dann mit Linksklick aufstellen (Gold wird beim Aufstellen abgezogen). B oder Esc schließt.'));
+    this.root.append(el('div', 'shop-foot', 'Rezepte: Bauteile im Inventar werden verbraucht und angerechnet. Maus über ein Item zeigt Bauteile und Weiterentwicklungen. Rechtsklick im Inventar verkauft (70 %). Verteidigungen: anklicken, dann mit Linksklick aufstellen (Gold wird beim Aufstellen abgezogen). B oder Esc schließt.'));
     this.root.style.display = 'none';
     parent.append(this.root);
   }

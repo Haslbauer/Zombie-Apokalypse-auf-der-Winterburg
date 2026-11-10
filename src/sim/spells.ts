@@ -11,7 +11,7 @@ import { dist, type Vec2 } from './vec';
 const BURN_TICK = 0.5;
 
 /**
- * Beschwörerzauber wie in LoL (data/spells.json): zwei pro Held auf D und F,
+ * Beschwörerzauber (data/spells.json): zwei pro Held auf D und F,
  * unabhängig vom Helden, mit langer Abklingzeit.
  */
 export function spellDef(ctx: DataContext, id: string): SpellDef | undefined {

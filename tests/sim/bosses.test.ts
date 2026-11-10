@@ -21,7 +21,7 @@ function bossKills(sim: Simulation): Extract<GameEvent, { type: 'bossKill' }>[] 
   return sim.state.events.filter((e): e is Extract<GameEvent, { type: 'bossKill' }> => e.type === 'bossKill');
 }
 
-describe('Boss-Kills wie in LoL', () => {
+describe('Boss-Kills', () => {
   it('Kill, Assist und Erstes Blut bringen Gold und zählen mit', () => {
     const { sim, a, b, c, cfg, base } = setup();
     const z = placeZombie(sim, 'schlaechter', 60, 50, 100);

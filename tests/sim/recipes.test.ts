@@ -17,7 +17,7 @@ function shopSim(heroId = 'rotschopf') {
   return { sim, h, cmd, price: (id: string) => sim.data.items.find((i) => i.id === id)!.price };
 }
 
-describe('Item-Rezepte (wie in LoL)', () => {
+describe('Item-Rezepte', () => {
   it('Bauteil wird verbraucht und auf den Preis angerechnet', () => {
     const { h, cmd, price } = shopSim();
     h.gold = 2000;

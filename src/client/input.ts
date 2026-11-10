@@ -6,7 +6,7 @@ import type { GameRenderer } from './renderer';
 import type { TouchControls } from './touch';
 
 /**
- * Tastatur und Maus, Steuerung wie in Supervive: WASD laufen, Maus zielt,
+ * Tastatur und Maus: WASD laufen, Maus zielt,
  * Angriff in Richtung Mauszeiger. Alle Tasten kommen aus den Keybindings.
  */
 export class Input {

@@ -5,7 +5,7 @@ import { DT, type Hero, type TeamRole, type Zombie } from './types';
 import { dist } from './vec';
 
 /**
- * Rollen wie in LoL: Tank (zieht Bosse auf sich, hält mehr aus), Schaden
+ * Rollen: Tank (zieht Bosse auf sich, hält mehr aus), Schaden
  * (mehr Schaden an Bossen) und Support (heilt und reinigt Seuche in der Nähe).
  * Die Bossfähigkeiten sind so gebaut, dass jede Rolle gebraucht wird.
  */

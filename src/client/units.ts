@@ -269,7 +269,7 @@ export class UnitView {
   readonly ring: THREE.Mesh;
   private readonly icon = new THREE.Sprite();
   private shield: THREE.Mesh | null = null;
-  /** Buff-Ringe (LoL-artig): je Art eine drehende Gruppe aus Bogen-Segmenten. */
+  /** Buff-Ringe: je Art eine drehende Gruppe aus Bogen-Segmenten. */
   private buffRingViews = new Map<string, { g: THREE.Group; mats: THREE.MeshBasicMaterial[]; index: number; team: boolean }>();
   private flash = 0;
   readonly height: number;

@@ -35,7 +35,7 @@ describe('Level, XP und Skillpunkte', () => {
     expect(h.skillPoints).toBe(18);
   });
 
-  it('Skillpunkt-Regeln wie in LoL: Rang höchstens Level/2, Ultimate ab 6, 11, 16', () => {
+  it('Skillpunkt-Regeln: Rang höchstens Level/2, Ultimate ab 6, 11, 16', () => {
     const sim = makeSim('rotschopf', 1, arenaData(noWaves));
     const h = sim.state.heroes[0];
     const levelUp = (slot: number) => sim.step([{ heroId: h.id, type: 'levelUp', slot }]);

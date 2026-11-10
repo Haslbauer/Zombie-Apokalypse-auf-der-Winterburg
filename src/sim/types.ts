@@ -134,7 +134,7 @@ export interface ZombieDef {
   /**
    * Neutral (Lager, Postbote): greift erst an, wenn er angegriffen wird, dann
    * mit allen aus seinem Lager. Entfernt er sich mehr als leash Meter von
-   * seinem Platz, kehrt er um und heilt sich voll (wie im LoL-Dschungel).
+   * seinem Platz, kehrt er um und heilt sich voll.
    */
   neutral?: { leash: number };
   /** Bossfähigkeiten wie bei den Helden (mit Warnzeit, ausweichbar), siehe sim/bossabilities.ts. */
@@ -204,7 +204,7 @@ export interface ItemDef {
   category: ItemCategory;
   /** Gesamtpreis; bei Rezepten inklusive der Bauteile. */
   price: number;
-  /** Rezept (wie in LoL): Bauteile, die beim Kauf verbraucht und auf den Preis angerechnet werden. */
+  /** Rezept: Bauteile, die beim Kauf verbraucht und auf den Preis angerechnet werden. */
   from?: string[];
   stats?: ItemStats;
   /** Verbrauchsgüter: so viele passen auf einen Platz. */
@@ -269,14 +269,14 @@ export interface EconomyDef {
   sellFactor: number;
   inventorySlots: number;
   /**
-   * Bosse (Elites, Postbote, große Neutrale) wie in LoL: Der letzte Treffer
+   * Bosse (Elites, Postbote, große Neutrale): Der letzte Treffer
    * bringt gold + goldPerWave × Welle, jeder andere Held, der in den letzten
    * assistWindow Sekunden Schaden gemacht hat, den Anteil assistShare.
    * Der erste Boss der Partie bringt zusätzlich firstBlood.
    */
   boss: { gold: number; goldPerWave: number; assistShare: number; firstBlood: number; assistWindow: number };
   /**
-   * Belohnung nach Leistung (wie in LoL): Der letzte Treffer bekommt das volle
+   * Belohnung nach Leistung: Der letzte Treffer bekommt das volle
    * Kill-Gold, wer in den letzten assistWindow Sekunden Schaden gemacht hat den
    * Anteil assistGold, Zuschauer nichts. Erfahrung: Killer xpKiller, Mitkämpfer
    * xpAssist, Helden in der Nähe (xpShareRange) xpNearby.
@@ -328,7 +328,7 @@ export interface FinalHeroStats {
   level: number;
   score: HeroScore;
   stats: HeroStats;
-  /** Wertung wie in LoL (sim/stats.ts mvpScore). */
+  /** Wertung (sim/stats.ts mvpScore). */
   mvp: number;
 }
 
@@ -455,7 +455,7 @@ export type Obstacle =
   /** Rechteck mit Mittelpunkt x/y, Breite w und Höhe h. */
   | (ObstacleBase & { kind: 'rect'; x: number; y: number; w: number; h: number });
 
-/** Versteck (wie das Gebüsch in LoL): Busch, hohes Gras oder Schilf. Begehbar, kein Hindernis. */
+/** Versteck: Busch, hohes Gras oder Schilf. Begehbar, kein Hindernis. */
 export type BrushLook = 'bush' | 'grass' | 'reed';
 export type Brush =
   | { kind: 'circle'; x: number; y: number; r: number; look: BrushLook }
@@ -667,7 +667,7 @@ export interface GameData {
 }
 
 /**
- * Beschwörerzauber (wie in LoL): zwei pro Held, vor dem Spiel gewählt, auf D
+ * Beschwörerzauber: zwei pro Held, vor dem Spiel gewählt, auf D
  * und F. aim: point (Ort), unit (Gegner am Mauszeiger), self (sofort).
  */
 export interface SpellDef {
@@ -689,7 +689,7 @@ export interface SpellsDef {
 
 // ---------- Befehle (Eingabe; im Mehrspieler das Netzwerkformat) ----------
 
-/** Eingabezustand eines Spielers (Steuerung wie in Supervive). */
+/** Eingabezustand eines Spielers (WASD und Maus). */
 export interface HeroInput {
   /** Laufrichtung aus WASD, Länge höchstens 1. */
   move: Vec2;
@@ -722,7 +722,7 @@ export type Command =
   /** Rückruf zur Basis (stillhalten, siehe sim/recall.ts). */
   | { heroId: number; type: 'recall' };
 
-/** Pings für Absprachen im Team (wie in LoL): Hier, Angriff, Bin unterwegs, Hilfe, Gefahr. */
+/** Pings für Absprachen im Team: Hier, Angriff, Bin unterwegs, Hilfe, Gefahr. */
 export const PING_KINDS = ['here', 'attack', 'omw', 'help', 'danger', 'heal'] as const;
 export type PingKind = (typeof PING_KINDS)[number];
 

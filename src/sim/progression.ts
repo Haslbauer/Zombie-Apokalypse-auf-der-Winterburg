@@ -52,7 +52,7 @@ export function levelUp(ctx: SimContext, h: Hero): void {
   ctx.state.events.push({ type: 'levelUp', heroId: h.id, level: h.level });
 }
 
-/** Darf der Held einen Skillpunkt in diese Fähigkeit stecken (Regeln wie in LoL)? */
+/** Darf der Held einen Skillpunkt in diese Fähigkeit stecken? */
 export function canRankUp(ctx: DataContext, h: Hero, slot: number): boolean {
   const prog = ctx.data.progression;
   if (h.skillPoints <= 0 || slot < 0 || slot > 3) return false;

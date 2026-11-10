@@ -1529,7 +1529,7 @@ export class Hud {
       this.inventoryRow.append(box);
       return { box, key, count };
     });
-    // Beschwörerzauber (wie D/F in LoL)
+    // Beschwörerzauber
     const spellActions: Action[] = ['spell1', 'spell2'];
     this.spellSlots = spellActions.map((action, i) => {
       const box = el('div', 'hud-inv hud-spell');

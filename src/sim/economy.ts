@@ -8,7 +8,7 @@ import type { Hero, Zombie, ZombieDef } from './types';
 import { dist } from './vec';
 
 /**
- * Kill-Gold nach Leistung (wie in LoL): Der letzte Treffer bekommt das volle
+ * Kill-Gold nach Leistung: Der letzte Treffer bekommt das volle
  * Gold, Mitkämpfer einen Anteil, wer nur danebensteht nichts. Der Postbote
  * (Team-Ziel) bringt allen Beteiligten das volle Paket-Gold.
  */
@@ -46,7 +46,7 @@ export function awardWaveBonus(ctx: SimContext, wave: number): void {
 }
 
 /**
- * Boss erlegt (wie in LoL): Der Held mit dem letzten Treffer bekommt das
+ * Boss erlegt: Der Held mit dem letzten Treffer bekommt das
  * Boss-Gold, alle anderen, die in den letzten Sekunden Schaden gemacht haben,
  * einen Anteil (Assist). Der erste Boss der Partie bringt „Erstes Blut“.
  * Das normale Kill-Gold (awardGold) kommt zusätzlich.
@@ -90,7 +90,7 @@ export function shopClosedReason(ctx: DataContext, h: Hero): string | null {
     const base = pvp.spawns[h.team ?? 0];
     return dist(h.pos, base) <= ctx.data.economy.shopRange + 2 ? null : 'Einkaufen nur an der eigenen Basis';
   }
-  // Shop jederzeit im Innenhof (auch während der Welle, wie die Basis in LoL)
+  // Shop jederzeit im Innenhof (auch während der Welle)
   const heart = ctx.state.objectives.find((o) => o.id === 'heart');
   if (heart && dist(h.pos, heart.pos) > ctx.data.economy.shopRange) return 'Einkaufen nur im Innenhof beim Herz';
   return null;

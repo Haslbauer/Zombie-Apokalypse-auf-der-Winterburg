@@ -95,7 +95,7 @@ Allgemein gilt:
 
 Beim Entwickeln (`npm run dev`) leitet Vite den Mehrspieler an einen laufenden `npm run server` weiter. Zum Testen schlechter Leitungen: `LAG_MS=150 npm run server` (künstliche Verzögerung je Richtung).
 
-## Steuerung (wie in Supervive)
+## Steuerung
 
 | Eingabe | Wirkung |
 |---|---|
@@ -105,11 +105,11 @@ Beim Entwickeln (`npm run dev`) leitet Vite den Mehrspieler an einen laufenden `
 | 1 2 3 4 | Fähigkeiten (4 = Ultimate). Halten zeigt die Vorschau, Loslassen löst aus |
 | Shift + 1–4 | Skillpunkt setzen (oder „+“ in der Fähigkeitenleiste) |
 | R T | Verbrauchsgüter benutzen (Heiltrank, Energiedrink) |
-| F G | Beschwörerzauber (wie D/F in LoL) Richtung Mauszeiger; Rechtsklick auf das Feld in der Pause: tauschen |
+| F G | Beschwörerzauber Richtung Mauszeiger; Rechtsklick auf das Feld in der Pause: tauschen |
 | Linksklick auf die Minimap | **Freie Kamera:** Die Ansicht springt zu diesem Ort, zum Beispiel vom Bunker zum Bienenstock. Mit gedrückter Taste zieht sie mit. Der Held bleibt, wo er ist, und lässt sich weiter steuern. |
 | Mittlere Maustaste ziehen | Freie Kamera: Karte verschieben |
 | Leertaste | Kamera zurück zum Helden; auch ein Klick auf den Hinweis „Freie Kamera“ über der Minimap. Beim Zuschauen schaltet die Leertaste die Übersicht. |
-| H | **Rückruf zur Basis** wie in LoL: 4 s stillhalten, ein blauer Ring füllt sich, dann steht der Held im Innenhof (im PvP an der eigenen Basis). Laufen, Angreifen, eine Fähigkeit, ein Zauber oder Schaden brechen ab. |
+| H | **Rückruf zur Basis:** 4 s stillhalten, ein blauer Ring füllt sich, dann steht der Held im Innenhof (im PvP an der eigenen Basis). Laufen, Angreifen, eine Fähigkeit, ein Zauber oder Schaden brechen ab. |
 | B | Shop (jederzeit im Innenhof beim Vorrat) |
 | N | Welle sofort starten (in der Pause) |
 | Rechtsklick | Ping an alle: kurz = „Hier!“, halten und ziehen = Ping-Rad mit fünf Feldern (oben Angriff, rechts Bin unterwegs, rechts unten Brauche Heilung, links unten Hilfe, links Gefahr). „Brauche Heilung“ ruft vor allem Support-Bots. Auch auf der Minimap. Bots folgen den Pings (siehe unten). |
@@ -191,7 +191,7 @@ Die Winterburg: U-förmiges Haus mit dem **Lebensmittelvorrat** im Innenhof (err
 
 Dazu stehen echte 3D-Modelle als Deko (Quaternius, CC0, `assets/props/`): Holzfässer, Kisten und Kornsäcke im Innenhof und beim Holzstapel, ein verlassener Marktkarren an der Zuwegung Ost, einzelne Zaunfelder im Gelände, eine Schaufel in der Erde beim Gartenhaus und an der Grabstätte, Äxte in Baumstümpfen.
 
-Neutrale Lager lassen sich nicht über den Zaun hinweg „abfarmen“: Erreichen sie ihren Angreifer 5 s lang nicht, kehren sie unverwundbar heim und heilen sich. Es ist Nacht: Mondlicht, Nebel, brennende Fässer, Stacheldraht und Bretterbarrikaden an den Toren, Feuerstellen, Krähen, Knochen und ein Autowrack vor dem Osttor. Der Westflügel des Hauses ist eine halb eingestürzte Ruine, die Wege sind aus Bruchstein. Ohne Bienenstock wachsen zerstörte Beete nicht mehr nach (verdorrte Stängel, Hinweis in der Kopfleiste). Rund um den Garten liegt Gelände mit Büschen, Hecken, einer alten Grabstätte und einem Teich. **Verstecke** wie das Gebüsch in LoL: Im hohen Gras, in Büschen und im Schilf sehen Zombies einen Helden erst aus nächster Nähe – bis er angreift. Umgekehrt sieht man Zombies im Gebüsch erst, wenn man selbst nah dran ist.
+Neutrale Lager lassen sich nicht über den Zaun hinweg „abfarmen“: Erreichen sie ihren Angreifer 5 s lang nicht, kehren sie unverwundbar heim und heilen sich. Es ist Nacht: Mondlicht, Nebel, brennende Fässer, Stacheldraht und Bretterbarrikaden an den Toren, Feuerstellen, Krähen, Knochen und ein Autowrack vor dem Osttor. Der Westflügel des Hauses ist eine halb eingestürzte Ruine, die Wege sind aus Bruchstein. Ohne Bienenstock wachsen zerstörte Beete nicht mehr nach (verdorrte Stängel, Hinweis in der Kopfleiste). Rund um den Garten liegt Gelände mit Büschen, Hecken, einer alten Grabstätte und einem Teich. **Verstecke:** Im hohen Gras, in Büschen und im Schilf sehen Zombies einen Helden erst aus nächster Nähe – bis er angreift. Umgekehrt sieht man Zombies im Gebüsch erst, wenn man selbst nah dran ist.
 
 Entwicklermodus: http://localhost:5173/?overview zeigt die ganze Karte von oben, `?level=6` startet auf Level 6, `?wave=5` mit Welle 5 (kombinierbar: `?wave=5&level=8`), `?bots=3` (oder `?bots=4`) lässt drei Bots allein spielen (Zuschauermodus, optional `&difficulty=schwer`). `?camera=x,y,abstand` richtet die Kamera fest auf einen Punkt (z. B. `?bots=4&camera=37,22,30` fürs Haus), `?debug` gibt Testhilfen frei (`winterburg.teleport(x, y)`, `spawnZombie(typ, x, y)`, `buff(art, wert, sekunden)`, `down()`, `finish(sieg)`). `portrait.html?hero=<id>` rendert ein Porträt aus dem Modell.
 
@@ -261,7 +261,7 @@ Die Heldenwahl und die Lobby zeigen die Rolle jedes Helden und warnen, wenn eine
 
 Im Esc-Menü unter Grafik lassen sich die Zahlen abschalten.
 
-**Lebensbalken** haben wie in LoL einen Strich je 100 Leben und einen dickeren je 1000 Leben.
+**Lebensbalken** haben einen Strich je 100 Leben und einen dickeren je 1000 Leben.
 
 ## Zustands-Effekte
 
@@ -280,7 +280,7 @@ Die Partikel sind je Figur begrenzt; bei Zombies erscheinen sie nur nah und im B
 
 ## Buff-Ringe und Münzen
 
-**Buff-Ringe:** Aktive Wirkungen erscheinen wie in LoL als farbige, sich drehende Ringe um die Füße eines Helden. Das gilt für alle Helden, auch für Mitspieler und Gegner im PvP.
+**Buff-Ringe:** Aktive Wirkungen erscheinen als farbige, sich drehende Ringe um die Füße eines Helden. Das gilt für alle Helden, auch für Mitspieler und Gegner im PvP.
 
 | Ring | Farbe |
 |---|---|
@@ -353,11 +353,11 @@ Dazu ruft es Sachbearbeiter. Wer es besiegt, bekommt 📜 Baugenehmigung: +25 % 
 
 ## Gegner
 
-Walker, Runner, Brute, Kriecher (hält fest), Ratten in Rudeln (fressen Beete, schlüpfen zum Vorrat), Hornissen-Schwärme (greifen den Bienenstock an) und alle 5 Wellen Elites mit leuchtendem Ring: Rattenkönig (ruft Ratten), Schlächter (Anlauf, betäubt) und ab Welle 15 der Dämon (Höllensprung mit Warnkreis). **Bosse wie in LoL:** Der letzte Treffer an einem Elite, dem Postboten oder einem großen Neutralen bringt Extra-Gold, Mithelfer bekommen die Hälfte (Assist), der erste Boss der Partie +150 („Erstes Blut“). Details in `docs/SPEC.md` (Abschnitt 7).
+Walker, Runner, Brute, Kriecher (hält fest), Ratten in Rudeln (fressen Beete, schlüpfen zum Vorrat), Hornissen-Schwärme (greifen den Bienenstock an) und alle 5 Wellen Elites mit leuchtendem Ring: Rattenkönig (ruft Ratten), Schlächter (Anlauf, betäubt) und ab Welle 15 der Dämon (Höllensprung mit Warnkreis). **Bosse:** Der letzte Treffer an einem Elite, dem Postboten oder einem großen Neutralen bringt Extra-Gold, Mithelfer bekommen die Hälfte (Assist), der erste Boss der Partie +150 („Erstes Blut“). Details in `docs/SPEC.md` (Abschnitt 7).
 
 ## Beschwörerzauber
 
-Wie in LoL wählst du vor dem Spiel zwei Zauber, unabhängig vom Helden (auf dem Team- bzw. Beitritts-Bildschirm; die Wahl wird gemerkt). In der Pause lassen sie sich tauschen, die Abklingzeit bleibt dabei erhalten.
+Vor dem Spiel wählst du zwei Zauber, unabhängig vom Helden (auf dem Team- bzw. Beitritts-Bildschirm; die Wahl wird gemerkt). In der Pause lassen sie sich tauschen, die Abklingzeit bleibt dabei erhalten.
 
 | Zauber | Wirkung | Abklingzeit |
 |---|---|---|
@@ -379,7 +379,7 @@ Wer **Welle 20** übersteht und dort das Bauamt besiegt, gewinnt. Das Spiel ist 
 
 **Wiederbeleben:** Gefallene liegen 10 s am Boden. Stellt sich ein Mitspieler daneben, füllt sich ein grüner Ring um den Gefallenen. Nach 3 s (bei Supports nach 2 s) steht er an Ort und Stelle mit 40 % Leben wieder auf. Ohne Helfer leert sich der Ring langsam, und es gilt der normale Respawn-Timer im Innenhof. Bots laufen zu gefallenen Mitspielern in der Nähe und helfen ihnen auf.
 
-Gutes Spielen wird belohnt (wie in LoL): Der letzte Treffer bringt das volle Gold, Mithelfen ein Drittel, Danebenstehen nichts. Erfahrung: Killer voll, Mithelfer die Hälfte, Zuschauer in der Nähe ein Viertel. Den Wellenbonus bekommt nur, wer in der Welle mitgekämpft hat.
+Gutes Spielen wird belohnt: Der letzte Treffer bringt das volle Gold, Mithelfen ein Drittel, Danebenstehen nichts. Erfahrung: Killer voll, Mithelfer die Hälfte, Zuschauer in der Nähe ein Viertel. Den Wellenbonus bekommt nur, wer in der Welle mitgekämpft hat.
 
 **Speedrun:** Oben läuft die Spielzeit (⏱). Sobald alle Zombies einer Welle erledigt sind, startet N bzw. „Jetzt starten“ sofort die nächste Welle, statt die Pause abzuwarten. Nach einem Sieg zeigt die Endstatistik die Zeit und die Bestzeit; die Bestzeit wird im Browser gespeichert.
 
@@ -396,7 +396,7 @@ Wer schneller ist, startet die nächste Welle mit N früher. Der Messlauf ist `T
 - **Rangliste:** Kills, Tode, Assists, Bosse, Schaden, Erlitten, Heilung, Gold (verdient/ausgegeben), Level und Wertung. Ein Klick auf eine Spalte sortiert.
 - **Diagramm:** Kills pro Welle je Held.
 
-Die Wertung funktioniert wie in LoL: Kill 1 Punkt, Boss 5, Assist 0,6, je 400 Schaden 1, je 300 Heilung 1, je 800 eingesteckter Schaden 1, je Tod −1. Die Gewichte lassen sich in `data/economy.json` unter `rewards.mvp` anpassen.
+Die Wertung: Kill 1 Punkt, Boss 5, Assist 0,6, je 400 Schaden 1, je 300 Heilung 1, je 800 eingesteckter Schaden 1, je Tod −1. Die Gewichte lassen sich in `data/economy.json` unter `rewards.mvp` anpassen.
 
 ## Tägliche Herausforderung
 

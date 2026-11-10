@@ -3,7 +3,7 @@ import { resolveObstacles } from './grid';
 import type { Hero } from './types';
 
 /**
- * Rückruf zur Basis (wie in LoL): RECALL_TIME Sekunden stillhalten, dann steht
+ * Rückruf zur Basis: RECALL_TIME Sekunden stillhalten, dann steht
  * der Held im Innenhof (im PvP an der eigenen Basis). Laufen, Angreifen, eine
  * Fähigkeit, ein Zauber oder Schaden brechen ab.
  */

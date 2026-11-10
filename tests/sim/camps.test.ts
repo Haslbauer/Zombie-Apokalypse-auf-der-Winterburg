@@ -9,7 +9,7 @@ function campSim() {
   return { sim, camps: sim.data.arena.camps! };
 }
 
-describe('Neutrale Lager (Dschungel)', () => {
+describe('Neutrale Lager', () => {
   it('sind zu Spielbeginn besetzt, liegen im Gelände und zählen nicht zur Welle', () => {
     const { sim, camps } = campSim();
     expect(camps.length).toBeGreaterThanOrEqual(3);

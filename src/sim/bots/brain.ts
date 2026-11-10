@@ -35,7 +35,7 @@ const DANGER_TIME = 10;
 const ASSIST_RANGE = 25;
 
 /**
- * Ping eines Menschen als Auftrag an die Bots (wie Kommandos in LoL):
+ * Ping eines Menschen als Auftrag an die Bots:
  * - attack: nächstes Ziel um den Ping (auch Lager und Postbote), alle Bots, bis es tot ist
  * - help: alle Bots laufen zum pingenden Helden und beschützen ihn
  * - here / omw: die zwei nächsten Bots halten den Ort

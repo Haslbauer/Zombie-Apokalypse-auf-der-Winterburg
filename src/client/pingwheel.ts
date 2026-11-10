@@ -23,7 +23,7 @@ const DRAG_PX = 14;
 const DEAD_PX = 28;
 
 /**
- * Ping-Geste wie in LoL: kurz klicken = „Hier!“, halten oder ziehen öffnet ein
+ * Ping-Geste: kurz klicken = „Hier!“, halten oder ziehen öffnet ein
  * Rad mit vier Pings; die Richtung beim Loslassen wählt, die Mitte bricht ab.
  */
 export class PingWheel {

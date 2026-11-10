@@ -28,45 +28,45 @@ Stand: 01.11.2026. Arbeitsgrundlage für Claude Code.
 Änderungen v2.2: Endstatistik nach Spielende (Podest mit MVP, Auszeichnungen, sortierbare Rangliste, Kills pro Welle).
 Änderungen v2.1: Lobby vor dem Spiel (freie Heldenwahl, Bereit, Countdown damals 15 s, seit v2.7 5 s), erste Geräusche und Musik (im Code erzeugt) mit Lautstärke-Einstellungen.
 Änderungen v2.0: Figuren stehen auf dem Boden, Angriffe synchron zum Treffer, Bienen-/Beete-Kreislauf, Postbote ab Welle 6 ohne Zeitlimit, Landschaft überarbeitet.
-Änderungen v1.9: Karte mit mehr Details (Ruine, Stacheldraht, Barrikaden, Feuerstellen, Hochbeete, Bruchsteinwege, Gras), Nordeingang zum Innenhof (ersetzt das Rattenloch), Lager weichen aus. Beschwörerzauber wie in LoL (zwei pro Held, vor dem Spiel gewählt, Tasten F/G), siehe Abschnitt 9b.
+Änderungen v1.9: Karte mit mehr Details (Ruine, Stacheldraht, Barrikaden, Feuerstellen, Hochbeete, Bruchsteinwege, Gras), Nordeingang zum Innenhof (ersetzt das Rattenloch), Lager weichen aus. Beschwörerzauber (zwei pro Held, vor dem Spiel gewählt, Tasten F/G), siehe Abschnitt 9b.
 Änderungen v1.8: Figuren laufen sichtbar (ein Skelett pro Figur), Schuss-Animationen mit sichtbaren Geschossen, Grafikstufen und Leistungsanzeige, kleinere Zustandspakete, geduldigerer Herzschlag mit Trennungsgrund.
 Änderungen v1.7: Neue Mixamo-Figuren für Helden und Zombies, schwere Gegner größer und mit Leucht-Ring, neuer Elite Dämon, Boss-Zähler mit Kill-, Assist- und Erstes-Blut-Gold (Anzeigetafel auf Tab), Bots folgen Pings, Rattenloch zum Innenhof, verdorrte Beete, Nachtstimmung mit vielen Details.
 Änderungen v1.6: Karte neu gestaltet (Fachwerkhaus, Bunker als Luke mit Hollywoodschaukel, Garten- und Geländedeko, Grabstätte, Teich, Abendstimmung), Verstecke (Gebüsch, hohes Gras, Schilf), flüssige eigene Bewegung im Mehrspieler.
 Änderungen v1.5: Netzcode mit Bewegungsvorhersage, Jitter-Puffer, Wiederverbinden, Absicherung; kostenlose Bereitstellung (Tunnel, Render, Docker).
-Änderungen v1.4: Minimap und Pings mit der rechten Maustaste (Ping-Rad wie in LoL).
+Änderungen v1.4: Minimap und Pings mit der rechten Maustaste (mit Ping-Rad).
 Änderungen v1.3: M6 Mehrspieler: Node-Server mit Räumen, Beitritt per Link, Bots auf freien Plätzen, Docker.
 Änderungen v1.2: Heldennamen Grimm (Hund), Hagedorn (Gärtnerin), Rauchbarth (Pirat), Spike (Libero), Ragnar (Rotschopf), Somnia (Schläferin). Die internen IDs bleiben (`gaertnerin`, `pirat`, `libero`, `rotschopf`, `schlaeferin`, `grimm`).
 Änderungen v1.1: Karte um 10 m Gelände erweitert, Zombies kommen von außen durch Tore (West, Süd, Ost), Bunkertür nach Norden. Hornissen ab Welle 1 in wachsenden Schwärmen, mehr Zombies aus Nordwest. Ohne Bienenstock wachsen Beete nicht mehr nach. Sidequests: Zombie-Postbote als Team-Ziel, neutrale Lager (Fledermäuse, Spinnen, Kröte).
-Änderungen v1.0: Items kombinierbar wie in LoL (Grundteile, Aufbau, fertige Items; Bauteile werden verbraucht und angerechnet). Animierte Modelle für alle Helden, Zombies, Ratten und Hornissen.
+Änderungen v1.0: Items kombinierbar (Grundteile, Aufbau, fertige Items; Bauteile werden verbraucht und angerechnet). Animierte Modelle für alle Helden, Zombies, Ratten und Hornissen.
 Änderungen v0.9: Herz wird Lebensmittelvorrat (kein Selbstheilen, Ernte der Hochbeete füllt ihn auf). Zombies gehen auf Helden und Vorrat, Ratten auf Hochbeete und Bienenstock, neue Hornissen auf den Bienenstock. Neuer Spawnpunkt Nordwest. Elites langsamer mehr, Wellen neu abgestimmt.
 Änderungen v0.8: M5 umgesetzt. Bots in drei Stärken, ausgewogenes Team, Wellen für 4 Helden neu abgestimmt, Pausen 25 s (erste 20 s) mit „Welle starten“ (N).
 Änderungen v0.7: M4 umgesetzt. Gold, Shop (Pause + Innenhof), Waffen als Werte-Items, Inventar und Verbrauchsgüter auf R/T. Neue Gegner Kriecher und Ratten, Elites Rattenkönig und Schlächter.
 Änderungen v0.6: M3 umgesetzt. Level- und Skillregeln konkret, sechs Helden im Spiel (Grimm, Gärtnerin, Pirat, Libero, Rotschopf, Schläferin), Linksklick-Angriff je Held, Passive für Pirat, Libero und Schläferin (Mondlicht). Fähigkeiten steigern mit Shift + Taste. Gegnerbilder in assets/reference/gegner/, Ratte als Minion-Vorlage.
 Änderungen v0.5: Optik der Helden nach den Referenzbildern in assets/reference/helden/ (Libero ist ein Mann mit Runen-Volleyball, die Schläferin eine Magierin mit Kristallstab).
 Änderungen v0.4: Karte nach der Skizze (echte Maße, U-Haus mit Innenhof als Herz der Base, Bunker als Zombie-Spawn, Heckenlücke Süd, Hang Ost, Bienenstock als zweites Ziel). Helden-Spawn im Innenhof, tote Helden respawnen.
-Änderungen v0.3: Steuerung wie in Supervive (WASD laufen, Maus zielt, Angriff Richtung Mauszeiger, kein Auto-Attack, keine Zielauswahl). Fähigkeiten auf 1–4, Items auf R und T, alle Tasten frei belegbar. Nahkampf-Reichweite 2,5 m im 120°-Bogen.
+Änderungen v0.3: Steuerung mit WASD und Maus (WASD laufen, Maus zielt, Angriff Richtung Mauszeiger, kein Auto-Attack, keine Zielauswahl). Fähigkeiten auf 1–4, Items auf R und T, alle Tasten frei belegbar. Nahkampf-Reichweite 2,5 m im 120°-Bogen.
 Änderungen v0.2: Veraltete Verweise auf Sanitäter und Brecher ersetzt.
 Mit "Vorschlag" markierte Punkte sind noch nicht entschieden, alles andere ist festgelegt.
 
 ## 1. Vision
 
-Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Haus und Vorgärten, als Karte nachgebaut) gegen Zombiewellen. Perspektive von oben mit LoL-artiger Kamera und Steuerung wie in Supervive (WASD und Maus). Im Innenhof liegt der **Lebensmittelvorrat** der Winterburg: Zombies, die ihn erreichen, plündern ihn. Fällt er auf 0, ist das Spiel verloren. Die Hochbeete versorgen den Vorrat, Bienen verteidigen ihren Stock.
+Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Haus und Vorgärten, als Karte nachgebaut) gegen Zombiewellen. Perspektive von oben mit fester Schrägkamera, Steuerung mit WASD und Maus. Im Innenhof liegt der **Lebensmittelvorrat** der Winterburg: Zombies, die ihn erreichen, plündern ihn. Fällt er auf 0, ist das Spiel verloren. Die Hochbeete versorgen den Vorrat, Bienen verteidigen ihren Stock.
 
 ## 2. Festgelegte Entscheidungen
 
-- Browser-Spiel mit 3D-Grafik und fester Schrägkamera von oben, wie in League of Legends und Dota
-- Steuerung wie in Supervive:
+- Browser-Spiel mit 3D-Grafik und fester Schrägkamera von oben
+- Steuerung:
   - WASD = laufen, der Mauszeiger bestimmt die Blickrichtung
   - Linksklick = Angriff Richtung Mauszeiger (gedrückt halten = Dauerangriff im Takt der Abklingzeit)
   - Kein Auto-Attack und keine Zielauswahl: Man greift in eine Richtung an. Reichweite und Trefferbereich hängen von der Waffe ab.
   - Nahkampf trifft alle Zombies im Bogen vor dem Helden (Testheld: 2,5 m, 120°). Fernkampf schießt ein Projektil geradeaus, das den ersten Zombie trifft, danebengehen kann und an Hindernissen endet.
   - Eine Markierung am Boden (Bogen bzw. Pfeil) zeigt Reichweite und Richtung des Angriffs
   - Fähigkeiten auf 1, 2, 3, 4 (4 = Ultimate), Items auf R und T. Taste halten zeigt eine Vorschau von Reichweite und Wirkfläche, Loslassen löst aus.
-  - **Pings** (wie in LoL) mit der rechten Maustaste, für alle Spieler sichtbar: kurz klicken = „Hier!“, halten oder ziehen öffnet ein Ping-Rad mit Angriff (oben), Bin unterwegs (rechts), Hilfe (unten), Gefahr (links); die Mitte bricht ab. Geht auch auf der Minimap. Ping in der Welt (pulsierende Ringe und Symbol, 3 s, durch Wände sichtbar), auf der Minimap und als Meldung „Name: Ping“. Höchstens 3 Pings in 5 s pro Spieler. Läuft als Befehl durch die Simulation, im Mehrspieler also automatisch an alle.
+  - **Pings** mit der rechten Maustaste, für alle Spieler sichtbar: kurz klicken = „Hier!“, halten oder ziehen öffnet ein Ping-Rad mit Angriff (oben), Bin unterwegs (rechts), Hilfe (unten), Gefahr (links); die Mitte bricht ab. Geht auch auf der Minimap. Ping in der Welt (pulsierende Ringe und Symbol, 3 s, durch Wände sichtbar), auf der Minimap und als Meldung „Name: Ping“. Höchstens 3 Pings in 5 s pro Spieler. Läuft als Befehl durch die Simulation, im Mehrspieler also automatisch an alle.
   - **Minimap** unten rechts: Garten, Gelände, Wege, Lager, Vorrat, Bienenstock, Hochbeete, Helden (Heldenfarbe, eigener mit weißem Rand, Gefallene als Kreuz), Zombies (rot, Elites orange), Neutrale (grau), Postbote (golden, blinkend), Pings und der Kameraausschnitt.
   - Skillpunkt setzen: Shift + Fähigkeitstaste oder Klick auf „+“ in der Fähigkeitenleiste (Strg + Zahl wechselt im Browser den Tab und lässt sich nicht abfangen)
   - Alle Tasten sind frei belegbar (Esc öffnet Pause und Tastenbelegung)
-- Levelsystem nach League-of-Legends-Vorbild (XP, Level, Skillpunkte)
+- Levelsystem mit XP, Level und Skillpunkten
 - Gold sammeln und davon Waffen und Items kaufen
 - Zombies kommen in Wellen, werden zahlreicher und stärker, immer wieder stärkere Elite-Zombies
 - Das Haus hat Lebenspunkte. Erreicht ein Zombie das Haus (Durchbruch), greift er es an. Ein Durchbruch ist noch keine Niederlage, führt ohne Gegenwehr aber dazu.
@@ -77,7 +77,7 @@ Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Ha
 ## 3. Technik (Vorschlag)
 
 - Client: TypeScript (oder JavaScript), Three.js mit fester Schrägkamera (Vorschlag: ca. 55° Neigung, kein Drehen), Build mit Vite. 3D-Modelle als glTF.
-- Grafik: stilisiert nach LoL-Vorbild (kräftige Farben, handgemalt wirkende Texturen, umgesetzt als Low-Poly). Modelle und Animationen für Helden, Zombies und Garten aus frei lizenzierten Paketen (z. B. CC0-Sammlungen), Lizenzen prüfen. Neben dem Mehrspieler ist das der größte Aufwand.
+- Grafik: stilisiert (kräftige Farben, handgemalt wirkende Texturen, umgesetzt als Low-Poly). Modelle und Animationen für Helden, Zombies und Garten aus frei lizenzierten Paketen (z. B. CC0-Sammlungen), Lizenzen prüfen. Neben dem Mehrspieler ist das der größte Aufwand.
 - Umgesetzt: Die Zombies sind vier Comic-Zombies von Quaternius (CC0): Walker, Runner (einarmig), Kriecher, Brute und Schlächter (dick, Schlächter mit Hackbeil), Postbote (mit Mütze und Paket). Die fünf Menschen-Helden sind animierte Mixamo-Figuren. Zombies: Gehen, Rennen, Kriechen, Stehen, Schlagen, Sterben (Leiche versinkt), Sprung als Schrei. Helden: Laufen, Stehen, Angriff, je eine Animation pro Fähigkeit, Trank benutzen, am Boden liegen bis zum Respawn. Pipeline: FBX-Originale in `assets/models/<name>/`, `npm run models` erzeugt kompakte GLB-Dateien in `public/models/` (Details in `assets/models/README.md`). Grimm (Schäferhund), Ratten, Rattenkönig und Hornissen sind animierte CC0-Modelle von Quaternius. Mausrad zoomt (10–50 m), auch über den Leisten.
 - Kamera: feste Neigung, Zoom mit dem Mausrad (10–50 m Abstand)
 - Server: Node.js mit Colyseus (oder `ws`), server-autoritativ, 20 Ticks pro Sekunde
@@ -96,9 +96,9 @@ Koop-Verteidigungsspiel im Browser. Vier Helden verteidigen die "Winterburg" (Ha
 - Pausenphase 18 s (vor Welle 1: 20 s; kurzzeitig 12 s und 15 s; bis v2.6 waren es 25 s und 20 s): Shop öffnen, Skillpunkte verteilen, Wiederbeleben. Wer fertig ist, startet die nächste Welle sofort mit N bzw. dem Knopf „Jetzt starten“ (im Mehrspieler später erst, wenn alle Menschen bereit sind).
 - Welle n hat mehr und stärkere Zombies als Welle n-1. Ab v2.7 gilt: 10 + 2,6 × (n − 1) einzelne Zombies, Leben ×(1 + 0,2 × (n − 1)), Schaden ×(1 + 0,4 × (n − 1)), Zwischenbosse +2 % Leben je Welle. Ziel: ein erfolgreiches Spiel über 20 Wellen dauert etwa 20 Minuten (Messlauf `tests/balance/timing.test.ts`: 24 bis 25 min mit Bots ohne frühen Start).
 - Elite-Zombie alle 5 Wellen, Boss alle 10 Wellen (Vorschlag)
-- Ziel (nach LoL-Vorbild): Welle 30 überstehen, das dauert ca. 30 bis 40 Minuten wie ein LoL-Spiel. Danach optionaler Endlos-Modus mit Highscore.
+- Ziel: Welle 30 überstehen, das dauert ca. 30 bis 40 Minuten. Danach optionaler Endlos-Modus mit Highscore.
 
-## 5. Level und Skills (LoL-Vorbild)
+## 5. Level und Skills
 
 Umgesetzt in M3, Zahlen in `data/progression.json` und `data/heroes.json`:
 - Level 1 bis 18, ein Skillpunkt pro Level (Start mit 1 Punkt)
@@ -149,7 +149,7 @@ Geplant sind 8 Helden, 2 Slots bleiben frei. In M3 spielbar: **Grimm, Gärtnerin
 Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren Platzhalter-Archetypen (Brecher, Schütze, Fallensteller, Sanitäter) entfallen, die persönlichen Helden ersetzen sie. Zufall (z. B. beim Rotschopf) wird immer vom Server gewürfelt.
 
 ### Spike (Libero, Volleyball)
-- Rolle: Fernkampf, Kontrolle und Support. Optik (`assets/reference/helden/libero.jpg`): Mann mit braunen Locken und Bart, Ledermütze, ärmelloses Lederhemd mit goldener Palme, Knieschoner, bandagierte Hände, leuchtender Volleyball mit Runen und Funken. Spielgefühl: ein Held mit einem Ball, der liegen bleibt (Orianna in LoL).
+- Rolle: Fernkampf, Kontrolle und Support. Optik (`assets/reference/helden/libero.jpg`): Mann mit braunen Locken und Bart, Ledermütze, ärmelloses Lederhemd mit goldener Palme, Knieschoner, bandagierte Hände, leuchtender Volleyball mit Runen und Funken. Spielgefühl: ein Held mit einem Ball, der liegen bleibt.
 - Der Ball ist ein Objekt auf der Karte. Fähigkeiten gehen vom Ball aus oder bewegen ihn.
 - Passiv Ballgefühl: Der Ball kehrt zurück, wenn er mehr als 15 m entfernt ist. Mit Ball in der Hand läuft Libero 10 % schneller. Einen liegenden Ball hebt er im Vorbeilaufen auf.
 - Q Aufschlag: Ball fliegt als Linienschuss durch Zombies und bleibt am Ende liegen
@@ -158,7 +158,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - R Schmetterball: Ball springt hoch und schlägt nieder, Flächenschaden mit Betäubung
 
 ### Rauchbarth (Pirat, Rauch-Held)
-- Rolle: Kontrolle. Optik (`assets/reference/helden/pirat.jpg`): bärtiger Pirat mit Dreispitz, Kopftuch, Lederweste, Gurten, Enterhaken und Seil. Spielgefühl: Rauchgranate, die Gegnern die Sicht nimmt (Graves in LoL).
+- Rolle: Kontrolle. Optik (`assets/reference/helden/pirat.jpg`): bärtiger Pirat mit Dreispitz, Kopftuch, Lederweste, Gurten, Enterhaken und Seil. Spielgefühl: Rauchgranate, die Gegnern die Sicht nimmt.
 - Linksklick: Enterhaken-Wurf. Passiv Pulverdampf: Jeder 4. Treffer hüllt den Zombie in Rauch (kurz geblendet).
 - Rauch-Regel: Zombies im Rauch sehen nur wenige Meter weit, verlieren ihr Ziel, torkeln und treffen oft daneben.
 - Q Qualmstoß: Rauchkegel nach vorne, wenig Schaden, Zombies sind kurz benommen
@@ -166,7 +166,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - E Nebelschritt: Sprung in eine eigene Rauchwolke, dort kurz unsichtbar. Ohne Wolke ein kurzer Sprung ohne Unsichtbarkeit.
 - R Dicke Luft: große Wolke, Zombies sind 3 s betäubt und danach 5 s blind
 ### Hagedorn (Gärtnerin)
-- Rolle: Fernkampf, ausdauernd. Optik (`assets/reference/helden/gaertnerin.jpg`): ältere, grummelige Frau mit Stoffhut, Karohemd, Latzhose, Gummistiefeln, Arbeitshandschuhen, Werkzeuggürtel und großer Heckenschere. Spielgefühl: Pflanzen als kleine Geschütztürme (Zyra in LoL).
+- Rolle: Fernkampf, ausdauernd. Optik (`assets/reference/helden/gaertnerin.jpg`): ältere, grummelige Frau mit Stoffhut, Karohemd, Latzhose, Gummistiefeln, Arbeitshandschuhen, Werkzeuggürtel und großer Heckenschere. Spielgefühl: Pflanzen als kleine Geschütztürme.
 - Linksklick: Steinschleuder (die Heckenschere ist Optik)
 - Passiv Sturschädel: regeneriert langsam Leben und wird zäher, je länger sie im Kampf bleibt
 - Q Pfeilschuss: Fernschuss mit dem Bogen (bis v1.6 Steinschleuder)
@@ -175,7 +175,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - R Mein Garten!: Dornenhecke wächst als Ring (ca. 8 s), hält Zombies zurück und verursacht Schaden. Kann einen Zugang kurz sperren.
 
 ### Ragnar (Rotschopf)
-- Rolle: Nahkämpfer, stark und unberechenbar. Optik (`assets/reference/helden/rotschopf.jpg`): rote Locken und Bart, kräftig, wild, Schutzbrille auf der Stirn, Beinschienen, riesiger Kriegshammer. Spielgefühl: Berserker (Olaf in LoL).
+- Rolle: Nahkämpfer, stark und unberechenbar. Optik (`assets/reference/helden/rotschopf.jpg`): rote Locken und Bart, kräftig, wild, Schutzbrille auf der Stirn, Beinschienen, riesiger Kriegshammer. Spielgefühl: Berserker.
 - Passiv Jähzorn: je mehr Schaden er einsteckt, desto schneller greift er an
 - Q Wuchtschlag: Schlag mit zufälligem Zusatzeffekt (Betäubung, doppelter Schaden oder Rückstoß)
 - W Wutanfall: zufälliger Buff (Tempo, Schild oder Heilung)
@@ -183,7 +183,7 @@ Namen sind Platzhalter, Fähigkeiten haben eigene Namen und Werte. Die früheren
 - R Amok: kurz unaufhaltsam (immun gegen Betäubung und Rückstoß), doppelter Schaden
 
 ### Somnia (Schläferin)
-- Rolle: Kontrolle. Optik (`assets/reference/helden/schlaeferin.jpg`): Magierin mit braunem Haar, Kristallstab, blau-grünem Sternenmantel mit Mondmotiven, Mondanhänger, Schmetterling, Sternenstaub-Wirbel. Superkraft: sofortiger Schlaf. Spielgefühl: Schlaf-Fähigkeiten (Lillia und Zoe in LoL).
+- Rolle: Kontrolle. Optik (`assets/reference/helden/schlaeferin.jpg`): Magierin mit braunem Haar, Kristallstab, blau-grünem Sternenmantel mit Mondmotiven, Mondanhänger, Schmetterling, Sternenstaub-Wirbel. Superkraft: sofortiger Schlaf. Spielgefühl: Schlaf-Fähigkeiten.
 - Schlaf-Regel: Ein schlafender Zombie ist ausgeschaltet und wacht bei Schaden auf. Der erste Treffer auf einen Schlafenden macht Bonusschaden. Elite schlafen kürzer, Boss sind immun.
 - Passiv Mondlicht (ersetzt „Sprinterin“): Ihre Treffer machen Zombies schläfrig (langsamer). Nach 3 Treffern innerhalb von 4 s schläft der Zombie kurz ein.
 - Q Berührung: Antritt zu einem Zombie, er schläft sofort 2 s
@@ -314,18 +314,18 @@ Referenzbilder in `assets/reference/gegner/`. Werte in `data/zombies.json` und `
 - Der **Bienenstock** (1000 Leben) wird von Hornissen und einem Teil der Ratten angegriffen. Normalerweise stechen die Bienen nur Gegner in der Nähe. Sobald der Stock Schaden bekommt, werden sie für einige Sekunden wütend und stechen alle in der Nähe, auch Helden. Ein zerstörter Stock ist keine Niederlage, die Bienen sind dann aber weg und zerstörte Beete wachsen nicht mehr nach.
 - Gefallene Helden respawnen nach einem Timer, der mit der Welle wächst (5 s + 1 s pro Welle), im Innenhof und müssen von dort durch den Durchgang nach draußen.
 
-## 8b. Sidequests: Postbote und Lager (wie Drache und Dschungel in LoL)
+## 8b. Sidequests: Postbote und Lager
 
-Freiwillige Ziele im Gelände außerhalb des Gartens. Sie bringen Gold und XP, kosten aber Zeit, in der der Garten schwächer verteidigt ist. Alle Neutralen greifen erst an, wenn man sie angreift, und dann gemeinsam mit ihrem Lager. Entfernen sie sich weiter als ihre **Leine** von ihrem Platz (oder ist kein Held mehr in der Nähe), kehren sie um und heilen sich voll (der Postbote heilt sich seit v1.7 nicht mehr). **Ausweichen (v1.9):** Trifft das Lager seinen Angreifer 5 s lang nicht (z. B. Fernkämpfer hinter einem Zaun), setzt es sich zurück wie in LoL: alle Bewohner kehren heim, sind auf dem Rückweg unverwundbar und am Platz wieder voll geheilt (Meldung „… weicht aus und setzt sich zurück“). Beim Verfolgen laufen Neutrale um Hindernisse herum. Bots greifen Neutrale nicht von sich aus an, helfen aber Menschen, die gegen Postbote oder Lager kämpfen (bis 25 m), und folgen einem Angriffs-Ping.
+Freiwillige Ziele im Gelände außerhalb des Gartens. Sie bringen Gold und XP, kosten aber Zeit, in der der Garten schwächer verteidigt ist. Alle Neutralen greifen erst an, wenn man sie angreift, und dann gemeinsam mit ihrem Lager. Entfernen sie sich weiter als ihre **Leine** von ihrem Platz (oder ist kein Held mehr in der Nähe), kehren sie um und heilen sich voll (der Postbote heilt sich seit v1.7 nicht mehr). **Ausweichen (v1.9):** Trifft das Lager seinen Angreifer 5 s lang nicht (z. B. Fernkämpfer hinter einem Zaun), setzt es sich zurück: alle Bewohner kehren heim, sind auf dem Rückweg unverwundbar und am Platz wieder voll geheilt (Meldung „… weicht aus und setzt sich zurück“). Beim Verfolgen laufen Neutrale um Hindernisse herum. Bots greifen Neutrale nicht von sich aus an, helfen aber Menschen, die gegen Postbote oder Lager kämpfen (bis 25 m), und folgen einem Angriffs-Ping.
 
-**Zombie-Postbote** (Drache): ein Team-Ziel (v2.0)
+**Zombie-Postbote:** ein Team-Ziel (v2.0)
 - Erscheint **ab Welle 6**, 20 s nach Wellenbeginn, und läuft seinen **Rundweg** im Gelände (`courierRoute` in `data/map.json`). Er **bleibt, bis er getötet wird**. Nach seinem Tod kommt **3 Wellen später** ein neuer, stärker, weil sein Leben mit der Welle wächst.
 - Auf Level-6-Helden abgestimmt: in Welle 6 rund 5500 Leben und 60 Schaden pro Schlag. Im Kampf wirft er alle 6 s ein **Paket** auf einen Helden in bis zu 9 m (0,9 s Warnung, 3 m Flächenschaden).
 - Leine 14 m ab dem Punkt, an dem der Kampf beginnt; beim Umkehren heilt er sich nicht.
 - **Belohnung:** Jeder Beteiligte bekommt 150 + 30 × Welle Gold, dazu Boss-Gold für Kill und Assists.
 - Zombie in Uniform mit Postmütze und Paket, goldener Ring (auch durch Wände sichtbar), Meldungen beim Auftauchen und Besiegen.
 
-**Lager** (Dschungel), Werte in `data/zombies.json`, Lage in `data/map.json` (`camps`):
+**Lager**, Werte in `data/zombies.json`, Lage in `data/map.json` (`camps`):
 - **Fledermausschwarm** (Nord und Ost): 5 fliegende Zombie-Fledermäuse, schnell und schwach
 - **Spinnennest** (West): Riesen-Zombiespinne mit zwei kleinen Spinnen
 - **Krötentümpel** (Süd): eine Riesen-Zombiekröte, langsam, viel Leben, harte Treffer
@@ -361,12 +361,12 @@ Freiwillige Ziele im Gelände außerhalb des Gartens. Sie bringen Gold und XP, k
 
 Umgesetzt in M4. Zahlen in `data/items.json` und `data/economy.json`.
 
-- **Gold nach Leistung (v1.9, wie in LoL):** Startgold 350. Der **letzte Treffer** bringt das volle Kill-Gold des Zombies, wer in den letzten 8 s Schaden gemacht hat (**Assist**), ein Drittel, wer nur danebensteht nichts. Der **Wellenbonus** (50 + 10 × Welle) geht nur an Helden, die in dieser Welle gekämpft haben. Der Postbote bringt allen Beteiligten das Paket-Gold.
+- **Gold nach Leistung (v1.9):** Startgold 350. Der **letzte Treffer** bringt das volle Kill-Gold des Zombies, wer in den letzten 8 s Schaden gemacht hat (**Assist**), ein Drittel, wer nur danebensteht nichts. Der **Wellenbonus** (50 + 10 × Welle) geht nur an Helden, die in dieser Welle gekämpft haben. Der Postbote bringt allen Beteiligten das Paket-Gold.
 - **Erfahrung nach Leistung (v1.9):** Killer 100 %, Mitkämpfer 50 %, Helden in 15 m, die nicht mitgekämpft haben, 25 % (`economy.rewards`). Wer viele Zombies erlegt, levelt also deutlich schneller.
-- **Bosse wie in LoL (v1.7):** Elites, Postbote und die großen Neutralen (Riesenspinne, Kröte) merken sich, wer ihnen in den letzten 10 s Schaden gemacht hat. Der letzte Treffer bringt 100 + 15 × Welle Gold, jeder andere Beteiligte die Hälfte (Assist). Der erste Boss der Partie bringt +150 Gold („Erstes Blut“). Normales Kill-Gold und Postboten-Gold kommen dazu. Jeder Held zählt Kills, Bosse, Assists und verdientes Gold; **Tab halten** zeigt die Anzeigetafel, die Teamleiste einen Totenkopf mit der Zahl der Bosse.
+- **Bosse (v1.7):** Elites, Postbote und die großen Neutralen (Riesenspinne, Kröte) merken sich, wer ihnen in den letzten 10 s Schaden gemacht hat. Der letzte Treffer bringt 100 + 15 × Welle Gold, jeder andere Beteiligte die Hälfte (Assist). Der erste Boss der Partie bringt +150 Gold („Erstes Blut“). Normales Kill-Gold und Postboten-Gold kommen dazu. Jeder Held zählt Kills, Bosse, Assists und verdientes Gold; **Tab halten** zeigt die Anzeigetafel, die Teamleiste einen Totenkopf mit der Zahl der Bosse.
 - **Shop:** nur in der Pause **und** nur im Innenhof (6 m um das Herz). Taste B oder Klick auf den Hinweis „B: Shop öffnen“. Das Spiel läuft beim Einkaufen weiter, die Pause tickt also. Beginnt die Welle oder verlässt man den Hof, schließt der Shop.
-- **Waffen sind Werte-Items** (wie in LoL): Der Standardangriff des Helden bleibt, die Waffe macht ihn stärker. Nahkampfwaffen wirken bei Nahkämpfern voll, Fernkampfwaffen bei Fernkämpfern, sonst halb.
-- **Rezepte wie in LoL:** Items haben drei Stufen. Ein Rezept besteht aus Bauteilen plus Aufpreis (`from` in `data/items.json`, der Preis ist der Gesamtpreis). Beim Kauf werden Bauteile im Inventar verbraucht und auf den Preis angerechnet; fehlt ein Bauteil, zählen dessen eigene Bauteile (rekursiv). Kombinieren geht auch bei vollem Inventar. Der Shop zeigt den Restpreis („noch 450 Gold“), vorhandene Bauteile grün und beim Überfahren mit der Maus Bauteile und Weiterentwicklungen.
+- **Waffen sind Werte-Items:** Der Standardangriff des Helden bleibt, die Waffe macht ihn stärker. Nahkampfwaffen wirken bei Nahkämpfern voll, Fernkampfwaffen bei Fernkämpfern, sonst halb.
+- **Rezepte:** Items haben drei Stufen. Ein Rezept besteht aus Bauteilen plus Aufpreis (`from` in `data/items.json`, der Preis ist der Gesamtpreis). Beim Kauf werden Bauteile im Inventar verbraucht und auf den Preis angerechnet; fehlt ein Bauteil, zählen dessen eigene Bauteile (rekursiv). Kombinieren geht auch bei vollem Inventar. Der Shop zeigt den Restpreis („noch 450 Gold“), vorhandene Bauteile grün und beim Überfahren mit der Maus Bauteile und Weiterentwicklungen.
   - **Grundteile:** Baseballschläger (+15 % Schaden, Nahkampf), Pistole (+15 % Schaden, Fernkampf), Arbeitshandschuhe (+12 % Angriffstempo), Lederjacke (10 % weniger Schaden), Lebensamulett (+200 Leben), Laufschuhe (+12 % Tempo), Kräuterbeutel (+5 Leben/s), Küchenwecker (−8 % Abklingzeit)
   - **Aufbau:** Axt (Schläger, +30 % Schaden), Schrotflinte (Pistole, +35 % Schaden), Gewehr (Pistole, +20 % Schaden, +25 % Reichweite), Armbrust (Handschuhe, +35 % Angriffstempo, Fernkampf), Kettenhemd (Lederjacke, 20 % weniger Schaden), Taschenuhr (Küchenwecker, −15 % Abklingzeit)
   - **Fertig:** Kettensäge (Axt + Handschuhe: +40 % Schaden, +40 % Angriffstempo), Vorschlaghammer (Axt + Amulett: +40 % Schaden, +300 Leben), Jagdgewehr (Schrotflinte + Gewehr: +55 % Schaden, +35 % Reichweite), Repetierarmbrust (Armbrust + Schrotflinte: +45 % Angriffstempo, +40 % Schaden), Ritterrüstung (Kettenhemd + Amulett: 30 % weniger Schaden, +300 Leben), Siebenmeilenstiefel (Laufschuhe + Kräuterbeutel: +20 % Tempo, +10 Leben/s), Großvateruhr (Taschenuhr + Amulett: −25 % Abklingzeit, +250 Leben)
@@ -494,7 +494,7 @@ Garten mit Haus, Hecken und Zugängen. Umgesetzt in `data/map.json`, 1 Spieleinh
 - **Landschaft (v2.0):** Wege sind schmale Spuren (1,3 m) aus einzelnen Bruchstein-Trittplatten auf schlammiger Erde, teils verschoben, gebrochen oder fehlend. Wildblumen-Flecken (Mohn, Margeriten, Lupinen, Kornblumen, ein Teil verwelkt) an Ruine, Zäunen, Gräbern, Beeten und im Gelände. Heruntergekommen: umgestürzte Zaunfelder, Wäscheleine mit Lumpen, umgekippte Mülltonnen, Kanister, Glasscherben, Brandflecken, Pfützen, Kisten, Papier, ein eingefallenes Zelt, Absperrband, Warnschilder „Sperrzone“, Leichensäcke, ein umgekippter Briefkasten, kahle Erdstellen.
 - **Deko-Modelle (v2.7, CC0 von Quaternius, ohne Kollision):** Holzfässer, Kisten und Kornsäcke an den Wänden des Innenhofs; Kiste, Schaufel und liegende Axt am Gartenhaus; Baumstumpf mit eingeschlagener Axt und Fass am Holzstapel; Fass als Regentonne am Kompost; Schaufel bei den Hochbeeten; verlassener Marktkarren mit Säcken und Kiste an der Zuwegung Ost; Zaunfelder, Kiste und Fass im Gelände West beim Zelt; Zaunfeld und Schaufel an der Grabstätte; Fass und Kiste vor dem Südtor. Mit `h` steckt die Axt in einem Baumstumpf dieser Höhe, sonst liegt sie flach.
 - **Nordeingang (v1.9):** 2 m breiter Durchgang in der Nordmauer des Innenhofs (x 38,5–40,5), ersetzt das Rattenloch aus v1.7. Der Innenhof ist damit über den Durchgang im Südwesten und von Norden erreichbar. Kleine Einheiten (`small` in `data/zombies.json`, Ratten) haben weiterhin ein eigenes Wegeraster mit weniger Abstand zu Hindernissen.
-- **Verstecke (wie das Gebüsch in LoL, `brush` in `data/map.json`):** hohes Gras und Büsche im Garten, Büsche an den Hecken und in den Ecken des Geländes, Schilf am Teich. Begehbar, halten keine Schüsse auf.
+- **Verstecke (`brush` in `data/map.json`):** hohes Gras und Büsche im Garten, Büsche an den Hecken und in den Ecken des Geländes, Schilf am Teich. Begehbar, halten keine Schüsse auf.
   - Wer im Versteck steht, wird von Zombies und Lagerbewohnern erst aus nächster Nähe gesehen (2,5 m) oder wenn sie im selben Versteck stehen. Angriff oder Fähigkeit verrät den Helden für 1,5 s.
   - Zombies im Versteck sind für die Spieler unsichtbar (auch auf der Minimap), bis ein Held im selben Versteck oder höchstens 3 m daneben steht.
   - Eigene Helden im Versteck werden halbdurchsichtig gezeigt. Bots nutzen Verstecke nicht gezielt.
@@ -503,7 +503,7 @@ Garten mit Haus, Hecken und Zugängen. Umgesetzt in `data/map.json`, 1 Spieleinh
 
 ## 12. Meilensteine
 
-1. M1: Offline-Prototyp. Eine Arena, ein Held (zwei Testhelden: Nah- und Fernkampf), Steuerung wie in Supervive, Zombies in Wellen, Nahkampf und Schuss.
+1. M1: Offline-Prototyp. Eine Arena, ein Held (zwei Testhelden: Nah- und Fernkampf), Steuerung mit WASD und Maus, Zombies in Wellen, Nahkampf und Schuss.
 2. M2: Karte Winterburg mit Haus (Lebensbalken), Garten, Hindernissen und den drei Zugängen
 3. M3: Level, XP, Skillpunkte, 6 Helden (Grimm, Gärtnerin, Pirat, Libero, Rotschopf, Schläferin) mit Fähigkeiten auf 1–4
 4. M4: Gold, Shop, Waffen und Items, Elite-Zombies, Ratten und Kriecher
@@ -515,7 +515,7 @@ Garten mit Haus, Hecken und Zugängen. Umgesetzt in `data/map.json`, 1 Spieleinh
 
 - Namen und Optik der Helden (Entwürfe in Abschnitt 6b) und die letzten 2 Heldenslots
 
-Nach LoL-Vorbild bereits entschieden: Haus-Regeneration wie beim Nexus, Spielziel Welle 30, Grafikstil, Hosting erst bei Meilenstein 6. Lebenspunkte des Hauses, Zombieschaden und alle anderen Zahlen sind Platzhalter in den JSON-Dateien und werden beim Spielen balanciert.
+Bereits entschieden: Haus-Regeneration, Spielziel Welle 30, Grafikstil, Hosting erst bei Meilenstein 6. Lebenspunkte des Hauses, Zombieschaden und alle anderen Zahlen sind Platzhalter in den JSON-Dateien und werden beim Spielen balanciert.
 
 ## 14. Hinweise für Claude Code
 

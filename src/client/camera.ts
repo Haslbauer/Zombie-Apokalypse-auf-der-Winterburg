@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-/** Neigung der festen Schrägkamera gegen den Boden (LoL-artig, kein Drehen). */
+/** Neigung der festen Schrägkamera gegen den Boden (kein Drehen). */
 const TILT_DEG = 55;
 const DISTANCE = 34;
 /** Grenzen für den Zoom mit dem Mausrad. */

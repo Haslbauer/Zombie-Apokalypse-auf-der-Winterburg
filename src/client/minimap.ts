@@ -40,7 +40,7 @@ const COLORS = {
 };
 
 /**
- * Minimap unten rechts (wie in LoL): Garten, Gelände, Ziele, Helden, Zombies,
+ * Minimap unten rechts: Garten, Gelände, Ziele, Helden, Zombies,
  * Lager, Pings und der sichtbare Ausschnitt. Rechtsklick setzt einen Ping.
  */
 export class Minimap {

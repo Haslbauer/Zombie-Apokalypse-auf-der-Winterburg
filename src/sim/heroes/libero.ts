@@ -25,7 +25,7 @@ function throwBall(ctx: SimContext, h: Hero, to: Vec2, speed: number, tag: strin
   ball.flight = { from, to: { ...to }, elapsed: 0, duration: Math.max(DT, dist(from, to) / speed), tag, hitIds: [] };
 }
 
-/** Libero – Volleyballer, Ball als Objekt auf der Karte (wie Orianna). */
+/** Libero – Volleyballer, Ball als Objekt auf der Karte (bleibt liegen). */
 export const libero: HeroKit = {
   init(_ctx, h) {
     h.ball = { pos: { ...h.pos }, heldBy: h.id, flight: null };

@@ -13,12 +13,12 @@ const RETARGET_RANGE = 6;
 /**
  * Erreicht ein Neutraler im Kampf so lange niemanden (z. B. Fernkämpfer hinter
  * einem Zaun), setzt sich das ganze Lager zurück: Rückweg unverwundbar, am
- * Platz voll geheilt (wie das „Ausweichen“ in LoL).
+ * Platz voll geheilt.
  */
 export const RESET_AFTER = 5;
 
 /**
- * Neutrale Lager im Gelände (wie der LoL-Dschungel): zu Spielbeginn besetzt,
+ * Neutrale Lager im Gelände: zu Spielbeginn besetzt,
  * nach dem Leeren kommen die Bewohner respawn Sekunden später wieder.
  */
 export function updateCamps(ctx: SimContext): void {

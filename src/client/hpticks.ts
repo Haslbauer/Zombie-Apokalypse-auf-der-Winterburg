@@ -1,5 +1,5 @@
 /**
- * Lebensbalken wie in LoL: dünne Striche je 100 Leben, dickere je 1000.
+ * Lebensbalken: dünne Striche je 100 Leben, dickere je 1000.
  * Bei sehr viel Leben werden die dünnen Striche ausgedünnt (höchstens maxMinor).
  */
 export function tickMarks(maxHp: number, maxMinor = 60): { at: number; major: boolean }[] {
