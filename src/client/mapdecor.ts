@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { pathMesh } from './paths';
+import { clumpGeometry, grassMaterial, grassTint } from './grass';
 import { type TreeSpecies, treeMesh } from './foliage';
 import { distanceToObstacle } from '../sim/grid';
 import type { ArenaDef, Brush, DecorDef, Obstacle, SpawnPoint } from '../sim/types';
@@ -47,9 +48,56 @@ function noise(c: CanvasRenderingContext2D, size: number, base: string, colors: 
   c.globalAlpha = 1;
 }
 
+/** Rasen-Textur: weiche Flecken, darüber viele kurze Halmstriche in hellen und dunklen Grüntönen, etwas Klee und Erde. */
+function lawn(c: CanvasRenderingContext2D, size: number, base: string, blobs: string[], blades: string[], earth: string, seed: number, dry: number): void {
+  noise(c, size, base, blobs, 1400, [6, 28], seed);
+  const rnd = rand(seed + 7);
+  // kahle Stellen (Erde), weich
+  for (let i = 0; i < 18 + dry * 40; i++) {
+    const x = rnd() * size;
+    const y = rnd() * size;
+    const r = 8 + rnd() * (18 + dry * 30);
+    const grad = c.createRadialGradient(x, y, 0, x, y, r);
+    grad.addColorStop(0, earth);
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    c.globalAlpha = 0.35 + rnd() * 0.3;
+    c.fillStyle = grad;
+    c.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  // Halme: kurze, leicht gebogene Striche
+  c.lineCap = 'round';
+  for (let i = 0; i < size * size * 0.09; i++) {
+    const x = rnd() * size;
+    const y = rnd() * size;
+    const len = 3 + rnd() * 7;
+    const a = -Math.PI / 2 + (rnd() - 0.5) * 1.6;
+    c.strokeStyle = blades[Math.floor(rnd() * blades.length)];
+    c.globalAlpha = 0.35 + rnd() * 0.5;
+    c.lineWidth = 0.8 + rnd() * 0.9;
+    c.beginPath();
+    c.moveTo(x, y);
+    c.quadraticCurveTo(x + Math.cos(a) * len * 0.5 + (rnd() - 0.5) * 2, y + Math.sin(a) * len * 0.5, x + Math.cos(a) * len, y + Math.sin(a) * len);
+    c.stroke();
+  }
+  // Kleeblätter
+  for (let i = 0; i < 260 * (1 - dry); i++) {
+    const x = rnd() * size;
+    const y = rnd() * size;
+    c.globalAlpha = 0.5 + rnd() * 0.3;
+    c.fillStyle = rnd() < 0.5 ? '#4f8a36' : '#68a34a';
+    for (let k = 0; k < 3; k++) {
+      const a = (k / 3) * Math.PI * 2 + rnd();
+      c.beginPath();
+      c.arc(x + Math.cos(a) * 2.2, y + Math.sin(a) * 2.2, 2, 0, Math.PI * 2);
+      c.fill();
+    }
+  }
+  c.globalAlpha = 1;
+}
+
 export const TEXTURES = {
-  grass: () => canvasTexture(256, (c, s) => noise(c, s, '#6fae4c', ['#5e9c40', '#7fbd58', '#86b84f', '#5a8f3a'], 900, [2, 9], 1)),
-  terrain: () => canvasTexture(256, (c, s) => noise(c, s, '#557f3b', ['#4a7233', '#628c42', '#6d7d3a', '#4f6a33', '#7a6a45'], 900, [2, 12], 2)),
+  grass: () => canvasTexture(512, (c, s) => lawn(c, s, '#629c43', ['#558f3a', '#6fae4c', '#7cb456', '#4f8636'], ['#3f7a2c', '#86c25c', '#5a9a3e', '#9cc76a', '#2f6424'], 'rgba(110,90,55,1)', 1, 0)),
+  terrain: () => canvasTexture(512, (c, s) => lawn(c, s, '#5a7f3c', ['#4d7134', '#668a44', '#757d40', '#55703a'], ['#4a6a30', '#8a9a52', '#a0a060', '#3e5e2c', '#6f8640'], 'rgba(105,85,55,1)', 2, 0.6)),
   plaster: () => canvasTexture(128, (c, s) => noise(c, s, '#ece0c4', ['#e2d4b4', '#f3e9d3', '#d9caa8'], 300, [1, 5], 3)),
   roof: () =>
     canvasTexture(128, (c, s) => {
@@ -150,6 +198,30 @@ export class Mats {
     const key = `${color}|${JSON.stringify(Object.keys(extra))}|${extra.emissive ?? ''}`;
     let m = this.cache.get(key) as THREE.MeshLambertMaterial | undefined;
     if (!m) this.cache.set(key, (m = new THREE.MeshLambertMaterial({ color, ...extra })));
+    return m;
+  }
+  /** Boden: Textur in zwei Maßstäben gemischt (keine sichtbare Kachelwiederholung). */
+  ground(name: 'grass' | 'terrain', repeat: number): THREE.MeshLambertMaterial {
+    const key = `ground:${name}:${repeat}`;
+    let m = this.cache.get(key) as THREE.MeshLambertMaterial | undefined;
+    if (m) return m;
+    const map = TEXTURES[name]();
+    map.repeat.set(repeat, repeat);
+    m = new THREE.MeshLambertMaterial({ map });
+    m.onBeforeCompile = (shader) => {
+      shader.fragmentShader = shader.fragmentShader.replace(
+        '#include <map_fragment>',
+        `#ifdef USE_MAP
+          vec2 uvA = vMapUv;
+          vec2 uvB = mat2(0.83, -0.56, 0.56, 0.83) * vMapUv * 0.37 + vec2(0.31, 0.17);
+          vec4 cA = texture2D(map, uvA);
+          vec4 cB = texture2D(map, uvB);
+          float k = 0.5 + 0.35 * sin(vMapUv.x * 0.9 + 1.3) * cos(vMapUv.y * 0.7);
+          diffuseColor *= mix(cA, cB, k);
+        #endif`,
+      );
+    };
+    this.cache.set(key, m);
     return m;
   }
   textured(name: keyof typeof TEXTURES, repeat: number, color = 0xffffff): THREE.MeshLambertMaterial {
@@ -1308,18 +1380,20 @@ export function brushes(list: Brush[]): THREE.Group {
 
   // Hohes Gras: schmale Halme, leicht schräg
   const grass = list.filter((b) => b.look === 'grass');
-  const blades = grass.flatMap((b) => scatter(b, Math.round(area(b) * 30), rnd));
+  // Hohes Gras: dichte Büschel aus langen, gebogenen Halmen (siehe grass.ts)
+  const blades = grass.flatMap((b) => scatter(b, Math.round(area(b) * 7), rnd));
   if (blades.length) {
-    const geo = new THREE.ConeGeometry(0.12, 1, 3).translate(0, 0.5, 0);
-    const inst = new THREE.InstancedMesh(geo, windMaterial(0xffffff, 0.12), blades.length);
+    const geo = clumpGeometry(12, 1.15, 0.28, 5, 0.045);
+    const inst = new THREE.InstancedMesh(geo, grassMaterial(0.09), blades.length);
     blades.forEach((p, i) => {
-      q.setFromAxisAngle(up, rnd() * Math.PI);
-      const s = 0.7 + rnd() * 0.6;
-      m.compose(new THREE.Vector3(p.x, 0, p.z), q, new THREE.Vector3(1, s, 1));
+      q.setFromAxisAngle(up, rnd() * Math.PI * 2);
+      const s = 0.75 + rnd() * 0.45;
+      m.compose(new THREE.Vector3(p.x, 0, p.z), q, new THREE.Vector3(s, s * (0.85 + rnd() * 0.3), s));
       inst.setMatrixAt(i, m);
-      inst.setColorAt(i, color.setHSL(0.24 + rnd() * 0.06, 0.55, 0.26 + rnd() * 0.12, THREE.SRGBColorSpace));
+      inst.setColorAt(i, grassTint(rnd, color, rnd() * 0.5));
     });
     inst.castShadow = true;
+    inst.receiveShadow = true;
     g.add(inst);
   }
 
@@ -1444,23 +1518,17 @@ export function grassTufts(arena: ArenaDef): THREE.Group {
   const q = new THREE.Quaternion();
   const up = new THREE.Vector3(0, 1, 0);
   const color = new THREE.Color();
-  // Büschel aus drei schmalen Halmen
-  const blade = new THREE.ConeGeometry(0.07, 0.6, 3).translate(0, 0.3, 0);
-  const tuft = new THREE.InstancedMesh(blade, windMaterial(0xffffff, 0.08), spots.length * 3);
-  let n = 0;
-  for (const s of spots) {
-    for (let i = 0; i < 3; i++) {
-      q.setFromAxisAngle(up, rnd() * Math.PI);
-      const tilt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), (rnd() - 0.5) * 0.5);
-      q.multiply(tilt);
-      const k = 0.5 + rnd() * 0.8;
-      m.compose(new THREE.Vector3(s.x + (rnd() - 0.5) * 0.2, 0, s.z + (rnd() - 0.5) * 0.2), q, new THREE.Vector3(1, k, 1));
-      tuft.setMatrixAt(n, m);
-      tuft.setColorAt(n, color.setHSL(0.2 + rnd() * 0.08, 0.5, 0.22 + rnd() * 0.12, THREE.SRGBColorSpace));
-      n++;
-    }
-  }
-  tuft.count = n;
+  // Höhere Büschel an Zäunen, Hecken, Mauern und Wegrändern (dort mäht keiner)
+  const tuft = new THREE.InstancedMesh(clumpGeometry(10, 0.55, 0.18, 21, 0.035), grassMaterial(0.25), Math.max(1, spots.length));
+  spots.forEach((s, i) => {
+    q.setFromAxisAngle(up, rnd() * Math.PI * 2);
+    const k = 0.7 + rnd() * 0.7;
+    m.compose(new THREE.Vector3(s.x + (rnd() - 0.5) * 0.2, 0, s.z + (rnd() - 0.5) * 0.2), q, new THREE.Vector3(k, k, k));
+    tuft.setMatrixAt(i, m);
+    tuft.setColorAt(i, grassTint(rnd, color, 0.2 + rnd() * 0.4));
+  });
+  tuft.count = spots.length;
+  tuft.receiveShadow = true;
   g.add(tuft);
   // Wildblumen (weiß, gelb, violett) an jedem fünften Büschel
   const flowers = spots.filter(() => rnd() < 0.2);

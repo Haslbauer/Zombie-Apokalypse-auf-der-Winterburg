@@ -4,6 +4,7 @@ import { arenaBounds } from '../sim/grid';
 import type { ArenaDef, Obstacle } from '../sim/types';
 import { nightDecor, nightObstacle } from './nightdecor';
 import { addPropModels } from './propmodels';
+import { grassWind, lawnGrass } from './grass';
 import { buildingKey, bushInstances, fenceInstances, forestInstances, gardenMesh, type ForestSpot, type GardenModel, hedgeInstances, houseKey, loadGarden, loadHouses, MODEL_SPECIES, OBSTACLE_MODELS, obstacleMesh, thicketInstances, treeInstances, type TreeSpot } from './gardenmodels';
 import { crownGeometry, fireflies, foliageMaterial, groundPatches, pineGeometry, type TreeSpecies, trunkGeometry } from './foliage';
 import { brushes, courtyardWall, decor, hatch, hedge, house, Mats, obstacleDecor, smoke, thicket, tree, windTime, rathole, ruin, grassTufts } from './mapdecor';
@@ -60,8 +61,8 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   const { x0, y0, x1, y1 } = arenaBounds(arena);
   const g = arena.garden ?? { x: (x0 + x1) / 2, y: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 };
   flat((x1 - x0) * 4, (y1 - y0) * 4, (x0 + x1) / 2, (y0 + y1) / 2, m(COLORS.forest), -0.03);
-  flat(x1 - x0, y1 - y0, (x0 + x1) / 2, (y0 + y1) / 2, mats.textured('terrain', 8), -0.02);
-  flat(g.w, g.h, g.x, g.y, mats.textured('grass', 7), -0.01);
+  flat(x1 - x0, y1 - y0, (x0 + x1) / 2, (y0 + y1) / 2, mats.ground('terrain', 18), -0.02);
+  flat(g.w, g.h, g.x, g.y, mats.ground('grass', 15), -0.01);
   // Großflächige Flecken (Moos, Erde, trockenes Gras) gegen das Kachelmuster
   const patches = groundPatches(x0, y0, x1, y1);
   if (patches) target.add(patches);
@@ -223,6 +224,8 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   const night = nightDecor(scene, live, arena, mats);
   // Deko-Gras bleibt eigenständig (Grafik „Niedrig“ blendet es aus)
   const tufts = grassTufts(arena);
+  // Rasen aus einzelnen Büscheln (Grafik „Niedrig“ blendet ihn mit den Büscheln aus)
+  tufts.add(lawnGrass(arena));
   live.add(tufts);
   target.add(mergeStatic(scene));
   // Gebäude aus Blender: ersetzen die Code-Formen, sobald houses.glb geladen ist (alle oder keins)
@@ -307,6 +310,7 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   return {
     update(time, heroes = []) {
       windTime.value = time;
+      grassWind.value = time;
       smokes.update(time);
       night.update(time, heroes);
       if (flies.points.visible) flies.update(time);

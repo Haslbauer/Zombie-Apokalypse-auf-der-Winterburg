@@ -672,6 +672,12 @@ Rückmeldungen aus der ersten Online-Runde, drei Spieler schafften Welle 14:
     - In der Ego-Sicht halten die Helden jetzt dieselben Waffen statt einfacher Formen.
     - Bis die Datei geladen ist, bleiben die alten Waffen. `weapons.html` zeigt alle Waffen, `?alt` die alten, `?only=<art>` eine einzelne groß.
   - **Wege zu Bunker und Tor:** Der Querweg führt jetzt nach Westen weiter und biegt zur Bunkertreppe ab. Der Weg nach Süden geht bis kurz vor die Hecke und knickt dann nach Osten zum neuen Südtor ab. Er läuft durch das Tor hindurch und geht draußen in den Weg zum Spawnpunkt über. Obstbaum, Misthaufen, Grasflecken und Wiese sind dafür ein Stück zur Seite gerückt.
+  - **Boden und Gras (`src/client/grass.ts`):**
+    - **Rasen- und Geländetextur:** Sie ist feiner, mit kurzen Halmstrichen, Klee und weichen Erdstellen. Das Gelände außerhalb ist trockener. Die Textur wird in zwei Maßstäben gemischt, damit man keine Kachelwiederholung sieht.
+    - **Rasen:** Auf dem ganzen Garten stehen Grasbüschel aus dünnen, gebogenen Halmen, unten dunkel und oben hell, die sich in Böen im Wind wiegen. Außerhalb des Gartens stehen sie lichter und sind trockener. Wege, Pflaster, Beete, Hindernisse und Verstecke bleiben frei.
+    - **Hohes Gras und Randbüschel:** Das hohe Gras in den Verstecken besteht jetzt aus dichten Büscheln langer Halme statt spitzer Kegel. An Zäunen, Hecken und Wegrändern wachsen höhere Büschel.
+    - **Wildblumen:** Sie haben fünfblättrige Blüten mit gelber Mitte.
+    - Der Rasen wird mit den Grasbüscheln unter der Grafikstufe „Niedrig“ ausgeblendet.
   - Neu sind vier Misthaufen mit Stroh, Jauchepfütze und Mistgabel: beim Kompost, beim Schuppen, beim Brunnen und am Südrand (`decor` mit `look: "dung"` in `data/map.json`).
 
 ## Der Schlund (Zwischenboss)

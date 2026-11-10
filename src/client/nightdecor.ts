@@ -740,9 +740,23 @@ export function nightDecor(stat: THREE.Group, live: THREE.Group, arena: ArenaDef
   const flowers = new THREE.Group();
   if (flowerSpots.length) {
     const stemGeo = new THREE.CylinderGeometry(0.012, 0.015, 1, 3).translate(0, 0.5, 0);
-    const headGeo = new THREE.IcosahedronGeometry(0.1, 0);
+    // Blüte: fünf Blütenblätter als flache Schale um eine kleine Mitte (statt eines Klötzchens)
+    const shape = new THREE.Shape();
+    for (let i = 0; i <= 50; i++) {
+      const a = (i / 50) * Math.PI * 2;
+      const r = 0.035 + 0.065 * Math.abs(Math.cos(a * 2.5));
+      if (i === 0) shape.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+      else shape.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    const headGeo = new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2);
+    const hp = headGeo.attributes.position;
+    // leicht schalenförmig
+    for (let i = 0; i < hp.count; i++) hp.setY(i, Math.hypot(hp.getX(i), hp.getZ(i)) * 0.35);
+    headGeo.computeVertexNormals();
     const stems = new THREE.InstancedMesh(stemGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), flowerSpots.length);
-    const heads = new THREE.InstancedMesh(headGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), flowerSpots.length);
+    const heads = new THREE.InstancedMesh(headGeo, new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide }), flowerSpots.length);
+    const centerGeo = new THREE.IcosahedronGeometry(0.025, 0);
+    const centers = new THREE.InstancedMesh(centerGeo, new THREE.MeshLambertMaterial({ color: 0xe8b82a }), flowerSpots.length);
     const m4 = new THREE.Matrix4();
     const q = new THREE.Quaternion();
     const e = new THREE.Euler();
@@ -761,11 +775,14 @@ export function nightDecor(stat: THREE.Group, live: THREE.Group, arena: ArenaDef
       stems.setColorAt(i, col.setHex(wilted ? 0x5a4a2a : 0x3f6a2c));
       const top = new THREE.Vector3(0, h, 0).applyQuaternion(q).add(new THREE.Vector3(f.x, 0, f.z));
       const s = k === 2 ? 1.4 : k === 1 ? 1.1 : 1;
-      m4.compose(top, q, new THREE.Vector3(s, k === 2 ? 2.2 : 0.7, s));
+      m4.compose(top, q, new THREE.Vector3(s, 1, s));
       heads.setMatrixAt(i, m4);
       heads.setColorAt(i, col.setHex(palette[k]));
+      m4.compose(top.clone().add(new THREE.Vector3(0, 0.012, 0)), q, new THREE.Vector3(1, 1, 1));
+      centers.setMatrixAt(i, m4);
+      centers.setColorAt(i, col.setHex(k === 0 ? 0x1a1414 : k === 4 ? 0x3a2a1a : 0xe8b82a));
     });
-    flowers.add(stems, heads);
+    flowers.add(stems, heads, centers);
     live.add(flowers);
   }
 
