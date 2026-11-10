@@ -56,7 +56,7 @@ describe('Modelle', () => {
     for (let i = 0; i < 40; i++) expect(meshes.has(treeVariant(i * 3.7, i * 1.9))).toBe(true);
   });
 
-  it('houses.glb (Blender): ein Modell mit Textur je Haus der Karte, dazu leuchtende Fenster', async () => {
+  it('houses.glb (Blender): Häuser mit leuchtenden Fenstern, Ruine, Hofmauern mit Tor', async () => {
     const { houseKey } = await import('../../src/client/gardenmodels');
     const arena = JSON.parse(readFileSync('data/map.json', 'utf8'));
     const doc = await new NodeIO().read('public/models/houses.glb');
@@ -67,6 +67,11 @@ describe('Modelle', () => {
       expect(names.has(houseKey(o)), houseKey(o)).toBe(true);
       expect(names.has(houseKey(o) + '_glow'), houseKey(o) + '_glow').toBe(true);
     }
-    expect(doc.getRoot().listTextures().length).toBe(houses.length);
+    // Ruine und Hofmauern mit Tor (eine Textur je Modell)
+    const { buildingKey } = await import('../../src/client/gardenmodels');
+    const ruins = arena.obstacles.filter((o: { look?: string }) => o.look === 'ruin');
+    for (const o of ruins) expect(names.has(buildingKey('ruin', o)), buildingKey('ruin', o)).toBe(true);
+    expect(names.has('courtyard')).toBe(true);
+    expect(doc.getRoot().listTextures().length).toBe(houses.length + ruins.length + 1);
   });
 });

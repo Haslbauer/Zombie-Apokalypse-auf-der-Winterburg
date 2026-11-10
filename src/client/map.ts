@@ -4,7 +4,7 @@ import { arenaBounds } from '../sim/grid';
 import type { ArenaDef, Obstacle } from '../sim/types';
 import { nightDecor, nightObstacle } from './nightdecor';
 import { addPropModels } from './propmodels';
-import { houseKey, loadGarden, loadHouses, treeInstances, type TreeSpot } from './gardenmodels';
+import { buildingKey, houseKey, loadGarden, loadHouses, treeInstances, type TreeSpot } from './gardenmodels';
 import { crownGeometry, fireflies, foliageMaterial, groundPatches, pineGeometry, type TreeSpecies, trunkGeometry } from './foliage';
 import { brushes, courtyardWall, decor, hatch, hedge, house, Mats, obstacleDecor, smoke, thicket, tree, windTime, rathole, ruin, grassTufts } from './mapdecor';
 
@@ -66,7 +66,18 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   const patches = groundPatches(x0, y0, x1, y1);
   if (patches) target.add(patches);
   for (const p of arena.paths ?? []) scene.add(decor({ look: 'gravel', ...p }, mats));
-  for (const d of arena.decor ?? []) scene.add(decor(d, mats));
+  // Gebäude aus Blender (houses.glb): Häuser, Ruine, Hofmauern mit Tor; bis zum Laden die Code-Formen
+  const fallbackHouses = new THREE.Group();
+  const buildings: { key: string; x: number; y: number }[] = [];
+  const needCourtyard = () => {
+    if (!buildings.some((b) => b.key === 'courtyard')) buildings.push({ key: 'courtyard', x: 0, y: 0 });
+  };
+  for (const d of arena.decor ?? []) {
+    if (d.look === 'gate') {
+      fallbackHouses.add(decor(d, mats));
+      needCourtyard();
+    } else scene.add(decor(d, mats));
+  }
   forestBorder(scene, x0, y0, x1, y1, mats);
 
   // Hang als Kiesweg mit Querstreifen.
@@ -96,18 +107,21 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   const chimneys: THREE.Vector3[] = [];
   const plainTrees: TreeSpot[] = [];
   const fallbackTrees = new THREE.Group();
-  const fallbackHouses = new THREE.Group();
-  const plainHouses: Obstacle[] = [];
   for (const o of arena.obstacles) {
     // Schmale Hausteile am Innenhof sind Ziegelmauern (ohne Dach)
-    if (o.kind === 'rect' && o.look === 'house' && Math.min(o.w, o.h) <= 1.2) scene.add(courtyardWall(o, mats));
+    if (o.kind === 'rect' && o.look === 'house' && Math.min(o.w, o.h) <= 1.2) {
+      fallbackHouses.add(courtyardWall(o, mats));
+      needCourtyard();
+    }
     else if (o.kind === 'rect' && o.look === 'house') {
-      // Häuser aus Blender (houses.glb, werden nachgeladen), bis dahin die im Code gebaute Form
       fallbackHouses.add(house(o, mats, chimneys));
-      plainHouses.push(o);
+      buildings.push({ key: houseKey(o), x: o.x, y: o.y });
     }
     else if (o.kind === 'rect' && o.look === 'rathole') scene.add(rathole(o, mats, chimneys));
-    else if (o.kind === 'rect' && o.look === 'ruin') scene.add(ruin(o, mats, chimneys));
+    else if (o.kind === 'rect' && o.look === 'ruin') {
+      fallbackHouses.add(ruin(o, mats, chimneys));
+      buildings.push({ key: buildingKey('ruin', o), x: o.x, y: o.y });
+    }
     else if (o.look === 'car' || o.look === 'well') {
       const d = nightObstacle(o, mats);
       if (d) scene.add(d);
@@ -156,17 +170,17 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   const tufts = grassTufts(arena);
   live.add(tufts);
   target.add(mergeStatic(scene));
-  // Häuser aus Blender: ersetzen die Code-Häuser, sobald houses.glb geladen ist (alle oder keins)
+  // Gebäude aus Blender: ersetzen die Code-Formen, sobald houses.glb geladen ist (alle oder keins)
   const houseFallback = mergeStatic(fallbackHouses);
   target.add(houseFallback);
   void loadHouses().then((models) => {
-    if (!plainHouses.length || plainHouses.some((o) => !models.has(houseKey(o)))) return;
+    if (!buildings.length || buildings.some((b) => !models.has(b.key))) return;
     target.remove(houseFallback);
-    for (const o of plainHouses) {
-      for (const name of [houseKey(o), houseKey(o) + '_glow']) {
+    for (const b of buildings) {
+      for (const name of [b.key, b.key + '_glow']) {
         const m = models.get(name);
         if (!m) continue;
-        m.position.set(o.x, 0, o.y);
+        m.position.set(b.x, 0, b.y);
         target.add(m);
       }
     }

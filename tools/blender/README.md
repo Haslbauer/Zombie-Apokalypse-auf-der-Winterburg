@@ -39,7 +39,8 @@ npm run houses
   Kugeln, Stamm und Äste über den Skin-Modifier), Muster (Holzmaserung,
   abgeplatzte Farbe, Rinde mit Moos, Laub), vorberechnete Umgebungsverdeckung
   (Ambient Occlusion, mit Cycles in die Vertex-Farben gerechnet) und Export.
-- `houses.py`: die Häuser der Karte, nach den Rechtecken in `data/map.json`
+- `houses.py`: die Häuser der Karte, die Ruine (`look: "ruin"`), die Hofmauern
+  (schmale Haus-Rechtecke) und das Hoftor (`decor` mit `look: "gate"`), nach den Rechtecken in `data/map.json`
   (`look: "house"`, breiter als 1,2 m). Mauern aus Ziegeln mit Mörtelfugen,
   Sockel, Gesims und Fensterbänke aus Sandstein, Fenster und Türen sitzen
   wirklich in der Wand (Boolean), Fensterläden, Blumenkästen, vernagelte

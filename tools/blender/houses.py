@@ -210,13 +210,13 @@ def mat_roof(name, image):
 class House:
     """Ein Haus im eigenen Rahmen: X = lange Achse, -Y = Vorderseite (im Spiel side > 0)."""
 
-    def __init__(self, o, tex_size):
+    def __init__(self, o, tex_size, key=None):
         self.o = o
         self.long = max(o['w'], o['h'])
         self.short = min(o['w'], o['h'])
         self.along_x = o['w'] >= o['h']
         self.gables = o.get('species') == 'gables' and self.long >= 7
-        self.key = f"house_{round(o['x'] * 100)}_{round(o['y'] * 100)}"
+        self.key = key or f"house_{round(o['x'] * 100)}_{round(o['y'] * 100)}"
         self.image = bpy.data.images.new(self.key, tex_size, tex_size)
         self.parts = []
         self.glow = []
@@ -239,6 +239,12 @@ class House:
             'clay': mat_noise(f'{self.key}_clay', im, 0x8a4a2c, 0xa8603a, 8.0, False),
             'flowerbox': mat_wood(f'{self.key}_fbox', im, 0x5a3a22, 0x6a4a2c),
             'leaf': mat_noise(f'{self.key}_leaf', im, 0x2f5a24, 0x5a8a3a, 20.0, False),
+            'ivy': mat_noise(f'{self.key}_ivy', im, 0x1f4a1c, 0x4a7a32, 14.0, False),
+            'felt': mat_noise(f'{self.key}_felt', im, 0x26262a, 0x3a3a40, 12.0, False),
+            'felt2': mat_noise(f'{self.key}_felt2', im, 0x34343a, 0x48484e, 10.0, False),
+            'water': mat_noise(f'{self.key}_water', im, 0x2a3a44, 0x4a5f6a, 3.0, False),
+            'rubble': mat_noise(f'{self.key}_rubble', im, 0x6a6258, 0x968c7e, 7.0, False),
+            'soot': mat_noise(f'{self.key}_soot', im, 0x141210, 0x2a2420, 6.0, False),
         }
         self.glow_mat = bpy.data.materials.get('glow_warm') or self._glow_mat()
 
@@ -283,6 +289,19 @@ class House:
         ob = C.link('gable', bm, self.m[mat])
         self.parts.append(ob)
         return ob
+
+    def ivy(self, a, c, z, w, h, normal_c=True):
+        """Efeu: Büschel kleiner Blattballen, flach an der Wand (Wand-Normale entlang c oder a)."""
+        R = self.R
+        n = max(4, int(w * h * 9))
+        for i in range(n):
+            da = (R.random() - 0.5) * w
+            dz = R.random() ** 0.7 * h
+            rr = 0.12 + R.random() * 0.12
+            pos = self.P(a + da, c, z + dz) if normal_c else self.P(a, c + da, z + dz)
+            b = C.blob('ivy', rr, pos, self.m['ivy'], seed=int(R.random() * 1000), rough=0.5, subdiv=1)
+            b.scale = (1, 0.4, 1) if normal_c else (0.4, 1, 1)
+            self.parts.append(b)
 
     def cyl(self, mat, r, length, a, c, z, axis='a', seg=10, half=False):
         rot = {'a': (0, math.pi / 2, 0), 'c': (math.pi / 2, 0, 0), 'z': (0, 0, 0)}[axis]
@@ -523,6 +542,7 @@ class House:
         self.parts.append(self.wall)
         # ins Spiel drehen: lange Achse entlang z (im Spiel) → 90° um Blender-Z
         if not self.along_x:
+            bpy.context.view_layer.update()  # sonst sind matrix_world-Werte veraltet
             rot = Matrix.Rotation(math.pi / 2, 4, 'Z')
             for ob in self.parts + self.glow:
                 ob.matrix_world = rot @ ob.matrix_world
@@ -550,7 +570,9 @@ class House:
         others = [o for o in sc.objects if o is not ob]
         for o in others:
             o.hide_render = True
-        bpy.ops.mesh.primitive_plane_add(size=60, location=(0, 0, 0))
+        bb = [ob.matrix_world @ Vector(c) for c in ob.bound_box]
+        mid = sum(bb, Vector()) / 8
+        bpy.ops.mesh.primitive_plane_add(size=60, location=(mid.x, mid.y, 0))
         plane = bpy.context.active_object
         bpy.ops.object.select_all(action='DESELECT')
         ob.select_set(True)
@@ -594,6 +616,225 @@ class House:
         return ob
 
 
+class Ruin(House):
+    """Verfallener Flügel: eine Hälfte steht (hohle Mauern, Flachdach mit Dachpappe),
+    die andere ist eingestürzt (Mauerstümpfe, Schutt, Balken, Efeu).
+    Im eigenen Rahmen liegt die stehende Hälfte bei a < 0."""
+
+    def build(self):
+        L, S = self.long, self.short
+        hl, hs = L / 2, S / 2
+        T = 0.32
+        B = 0.45  # Sockelhöhe
+        R = self.R
+        self.box('stone', L + 0.15, S + 0.15, B, 0, 0, B / 2, bevel=0.02)
+        self.box('soot', L - 0.4, S - 0.4, 0.02, 0, 0, B + 0.01, bevel=0)
+        # ---- stehende Hälfte: hohle Mauern mit Fensteröffnungen
+        walls = []
+        for side in (-1, 1):
+            walls.append(self.box('brick', hl, T, WALL_H, -hl / 2, side * (hs - T / 2), B + WALL_H / 2, bevel=0))
+        walls.append(self.box('brick', T, S, WALL_H, -hl + T / 2, 0, B + WALL_H / 2, bevel=0))
+        for w in walls:
+            self.parts.remove(w)
+        cutters = []
+        for side in (-1, 1):
+            a = -hl + 1.15
+            k = 0
+            while a < -0.6:
+                cutters.append(C.box('cut', (0.82, 0.8, 1.0), self.P(a, side * (hs - T / 2), 2.4), self.m['dark'], bevel=0, step=99))
+                # Sohlbank und Sturz aus Stein
+                self.box('stone', 1.0, T + 0.12, 0.07, a, side * (hs - T / 2), 1.86, bevel=0.01)
+                self.box('stone', 1.04, T + 0.04, 0.16, a, side * (hs - T / 2), 2.98, bevel=0.01)
+                if (k + (side > 0)) % 2 == 0:
+                    for dz, ang in ((0.25, 0.15), (-0.1, -0.2)):
+                        pl = self.box('plank', 1.05, 0.04, 0.13, a, side * (hs + 0.03), 2.4 + dz)
+                        pl.rotation_euler.rotate(Matrix.Rotation(ang, 3, Vector((0, 1, 0))))
+                a += 2.3
+                k += 1
+        cut = cutters[0]
+        bpy.ops.object.select_all(action='DESELECT')
+        for c in cutters:
+            c.select_set(True)
+        bpy.context.view_layer.objects.active = cut
+        bpy.ops.object.join()
+        cut = bpy.context.active_object
+        for w in walls:
+            mod = w.modifiers.new('cut', 'BOOLEAN')
+            mod.operation = 'DIFFERENCE'
+            mod.solver = 'EXACT'
+            mod.object = cut
+            C.apply_modifiers(w)
+            self.parts.append(w)
+        bpy.data.objects.remove(cut)
+        # Steinband unter der Dachkante
+        for side in (-1, 1):
+            self.box('stone', hl + 0.04, T + 0.1, 0.16, -hl / 2, side * (hs - T / 2), B + WALL_H - 0.1, bevel=0.012)
+        # ---- Flachdach mit Dachpappe: Bahnen, Nähte, Blechkante, Flicken, Pfütze
+        rz = B + WALL_H
+        self.box('felt', hl + 0.25, S + 0.3, 0.12, -hl / 2 - 0.1, 0, rz + 0.06, bevel=0.01)
+        c = -hs
+        while c <= hs + 0.01:
+            self.box('felt2', hl + 0.2, 0.09, 0.025, -hl / 2 - 0.1, c, rz + 0.13, bevel=0.006)
+            c += 0.95
+        for side in (-1, 1):
+            self.box('metal', hl + 0.32, 0.06, 0.12, -hl / 2 - 0.1, side * (hs + 0.15), rz + 0.09, bevel=0.01)
+        self.box('metal', 0.06, S + 0.36, 0.12, -hl - 0.24, 0, rz + 0.09, bevel=0.01)
+        for i in range(5):
+            pa = -hl + 0.7 + R.random() * (hl - 1.4)
+            pc = (R.random() - 0.5) * (S - 0.8)
+            p = self.box('felt2', 0.5 + R.random() * 0.6, 0.4 + R.random() * 0.5, 0.02, pa, pc, rz + 0.13, bevel=0.004)
+            p.rotation_euler.z = R.random()
+        pud = C.blob('pud', 0.6, self.P(-hl * 0.55, (R.random() - 0.5) * (S - 1.8), rz + 0.125), self.m['water'], seed=4, rough=0.2, subdiv=2, squash=0.02)
+        self.parts.append(pud)
+        # Abbruchkante: Pappe hängt in Fetzen über die Mauer, Sparrenstümpfe ragen heraus
+        c = -hs + 0.1
+        while c < hs - 0.1:
+            fl = self.box('felt', 0.4, 0.42, 0.025, 0.12, c + 0.2, rz - 0.05, bevel=0.004)
+            fl.rotation_euler = (0, 0.6 + R.random() * 0.7, R.uniform(-0.15, 0.15))
+            c += 0.46
+        for i in range(4):
+            c = -hs + 0.5 + i * (S - 1) / 3
+            bm = self.box('board', 0.9 + R.random() * 0.5, 0.14, 0.16, 0.25, c, rz - 0.1, bevel=0.01)
+            bm.rotation_euler = (0, R.uniform(-0.1, 0.25), R.uniform(-0.1, 0.1))
+        # ---- eingestürzte Hälfte: gezackte Mauerstümpfe mit Efeu
+        for side in (-1, 1):
+            a = 0.0
+            while a < hl - 0.2:
+                h = max(0.3, (WALL_H - 0.4) * (1 - a / hl) * (0.45 + R.random() * 0.6))
+                st = self.box('brick', 0.56, T, h, a + 0.28, side * (hs - T / 2), B + h / 2, bevel=0.03)
+                st.rotation_euler = (R.uniform(-0.03, 0.03), R.uniform(-0.05, 0.05), 0)
+                # lose Ziegel auf der Mauerkrone
+                if R.random() < 0.6:
+                    lb = self.box('brick', 0.26, 0.13, 0.08, a + 0.28 + R.uniform(-0.1, 0.1), side * (hs - T / 2), B + h + 0.04, bevel=0.01)
+                    lb.rotation_euler.z = R.uniform(-0.5, 0.5)
+                if R.random() < 0.35:
+                    self.ivy(a + 0.28, side * (hs + 0.04), B, 0.7, h * 0.85)
+                a += 0.56
+        eh = 0.5 + R.random() * 0.5
+        self.box('brick', T, S, eh, hl - T / 2, 0, B + eh / 2, bevel=0.03)
+        # Efeu an der stehenden Hälfte
+        for i in range(4):
+            side = 1 if i % 2 else -1
+            self.ivy(-hl + 0.8 + R.random() * (hl - 1.6), side * (hs + 0.05), B, 0.9 + R.random() * 0.6, 1.2 + R.random() * 1.6)
+        # Schutthaufen, Ziegel und Balken
+        for i in range(12):
+            r = 0.3 + R.random() * 0.45
+            self.parts.append(C.blob('rub', r, self.P(R.random() * (hl - 0.6) + 0.3, (R.random() - 0.5) * (S - 1), B), self.m['rubble' if R.random() < 0.6 else 'brick'], seed=60 + i, rough=0.5, subdiv=1, squash=0.55))
+        for i in range(45):
+            b = self.box('brick', 0.25, 0.12, 0.075, R.random() * (hl + 1) - 0.4, (R.random() - 0.5) * (S + 2.2), 0.05 + R.random() * 0.45, bevel=0.01)
+            b.rotation_euler = (R.uniform(-0.4, 0.4), R.uniform(-0.4, 0.4), R.random() * 3)
+        for i in range(5):
+            bm = self.box('board', 2.4 + R.random() * 1.6, 0.16, 0.16, R.random() * hl * 0.8 + 0.3, (R.random() - 0.5) * (S - 1), 0.75 + R.random() * 0.6, bevel=0.015)
+            bm.rotation_euler = (R.uniform(-0.3, 0.3), R.uniform(-0.4, 0.4), R.random() * math.pi)
+        if not self.along_x:
+            bpy.context.view_layer.update()  # sonst sind matrix_world-Werte veraltet
+            rot = Matrix.Rotation(math.pi / 2, 4, 'Z')
+            for ob in self.parts + self.glow:
+                ob.matrix_world = rot @ ob.matrix_world
+
+
+class Courtyard(House):
+    """Hofmauern (schmale Haus-Rechtecke) und Hoftor, direkt in Spielkoordinaten
+    (a = x, c = y der Karte); das Modell steht im Spiel im Ursprung."""
+
+    def __init__(self, walls, gates, tex_size):
+        super().__init__({'x': 0, 'y': 0, 'w': 1, 'h': 0.5}, tex_size, key='courtyard')
+        self.walls = walls
+        self.gates = gates
+
+    def build(self):
+        H = 2.6
+        R = self.R
+        piers_done = []  # Eckpfeiler nur einmal (zwei Mauern treffen sich)
+        for o in self.walls:
+            along = o['w'] >= o['h']
+            ln = max(o['w'], o['h'])
+            t = min(o['w'], o['h'])
+            self.box('stone', o['w'] + 0.1, o['h'] + 0.1, 0.35, o['x'], o['y'], 0.175, bevel=0.015)
+            self.box('brick', o['w'], o['h'], H, o['x'], o['y'], H / 2, bevel=0.0)
+            self.box('stone', o['w'] + 0.14, o['h'] + 0.14, 0.12, o['x'], o['y'], H + 0.06, bevel=0.02)
+            piers = max(1, round(ln / 2.5))
+            for i in range(piers + 1):
+                tt = -ln / 2 + i * ln / piers
+                pa, pc = (o['x'] + tt, o['y']) if along else (o['x'], o['y'] + tt)
+                sa, sc = (0.45, t + 0.18) if along else (t + 0.18, 0.45)
+                if any(abs(pa - x) < 0.8 and abs(pc - y) < 0.8 for x, y in piers_done):
+                    continue
+                piers_done.append((pa, pc))
+                self.box('brick', sa, sc, H + 0.2, pa, pc, (H + 0.2) / 2, bevel=0.01)
+                self.box('stone', sa + 0.12, sc + 0.12, 0.12, pa, pc, H + 0.26, bevel=0.02)
+            # Efeu an beiden Seiten
+            for i in range(3):
+                if R.random() < 0.3:
+                    continue
+                tt = (R.random() - 0.5) * (ln - 1)
+                side = 1 if R.random() < 0.5 else -1
+                h = 0.8 + R.random() * 1.4
+                if along:
+                    self.ivy(o['x'] + tt, o['y'] + side * (t / 2 + 0.06), 0.3, 0.8 + R.random() * 0.6, h, True)
+                else:
+                    self.ivy(o['x'] + side * (t / 2 + 0.06), o['y'] + tt, 0.3, 0.8 + R.random() * 0.6, h, False)
+        for d in self.gates:
+            self.gate(d)
+
+    def gate(self, d):
+        along = d['w'] >= d['h']
+        W = max(d['w'], d['h'])
+
+        def at(u, v):
+            """u entlang der Mauer, v quer dazu → (a, c)."""
+            return (d['x'] + u, d['y'] + v) if along else (d['x'] + v, d['y'] + u)
+
+        def sz(su, sv):
+            return (su, sv) if along else (sv, su)
+        for s in (-1, 1):
+            a, c = at(s * (W / 2 + 0.3), 0)
+            self.box('brick', *sz(0.55, 0.75), 3.0, a, c, 1.5, bevel=0.01)
+            self.box('stone', *sz(0.68, 0.88), 0.14, a, c, 3.07, bevel=0.02)
+            self.parts.append(C.blob('ball', 0.2, self.P(a, c, 3.36), self.m['stone'], seed=7, rough=0.02, subdiv=2))
+        # Flacher Bogen aus Ziegeln zwischen den Pfeilern, Schlussstein aus Stein
+        r_in, r_out, rise = W / 2 + 0.05, W / 2 + 0.4, 0.55
+        bm = bmesh.new()
+        segs = 18
+        ring = []
+        for i in range(segs + 1):
+            t = math.pi * i / segs
+            for rr in (r_in, r_out):
+                u, z = -math.cos(t) * rr, 2.45 + math.sin(t) * rr * rise
+                for v in (-0.3, 0.3):
+                    a, c = at(u, v)
+                    ring.append(bm.verts.new(self.P(a, c, z)))
+        for i in range(segs):
+            q = [ring[(i * 4) + k] for k in range(4)]
+            n_ = [ring[((i + 1) * 4) + k] for k in range(4)]
+            # Reihenfolge je Ecke: (innen,-v) (innen,+v) (außen,-v) (außen,+v)
+            for f in ((q[0], q[1], n_[1], n_[0]), (q[2], n_[2], n_[3], q[3]), (q[0], n_[0], n_[2], q[2]), (q[1], q[3], n_[3], n_[1])):
+                bm.faces.new(f)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+        self.parts.append(C.link('arch', bm, self.m['brick']))
+        a, c = at(0, 0)
+        self.box('stone', *sz(0.3, 0.64), 0.42, a, c, 2.45 + (r_in + r_out) / 2 * rise, bevel=0.015)
+        # offene Torflügel aus Brettern mit Eisenbändern, nach innen (Süden) aufgeschwungen
+        lw = W / 2 - 0.05
+        for s in (-1, 1):
+            hinge_u = s * (W / 2 - 0.02)
+            ang = s * 1.25
+            for k in range(5):
+                u0 = -(k + 0.5) * (lw / 5) * s
+                du = math.cos(ang) * u0
+                dv = -math.sin(abs(ang)) * abs(u0)
+                a, c = at(hinge_u + du, 0.1 - dv)
+                pl = self.box('door', *sz(lw / 5 - 0.02, 0.06), 2.1, a, c, 1.1, bevel=0.006)
+                pl.rotation_euler.z = (ang if along else ang + math.pi / 2)
+            for zz in (0.5, 1.7):
+                u0 = -lw / 2 * s
+                a, c = at(hinge_u + math.cos(ang) * u0, 0.1 + math.sin(abs(ang)) * abs(u0) + 0.04)
+                bnd = self.box('iron', *sz(lw, 0.03), 0.07, a, c, zz, bevel=0.004)
+                bnd.rotation_euler.z = (ang if along else ang + math.pi / 2)
+        a, c = at(0, 0)
+        self.box('stone', *sz(W, 0.7), 0.05, a, c, 0.025, bevel=0.01)
+
+
 def tex_uv(ob):
     """UV 'tex' in Metern für die Textur-Knoten: Wände senkrecht (Ziegel waagrecht),
     Dachflächen entlang First und Gefälle, Böden von oben."""
@@ -633,6 +874,21 @@ def main():
         ob = h.bake()
         done.append((h, ob))
         print(f"{h.key}: {sum(len(p.vertices) - 2 for p in ob.data.polygons)} Dreiecke, Textur {size}px, Schornstein {getattr(h, 'chimney_top', None)}")
+    for o in arena['obstacles']:
+        if o.get('look') == 'ruin' and o['kind'] == 'rect':
+            r = Ruin(o, 2048, key=f"ruin_{round(o['x'] * 100)}_{round(o['y'] * 100)}")
+            r.build()
+            ob = r.bake()
+            done.append((r, ob))
+            print(f"{r.key}: {sum(len(p.vertices) - 2 for p in ob.data.polygons)} Dreiecke")
+    walls = [o for o in arena['obstacles'] if o.get('look') == 'house' and o['kind'] == 'rect' and min(o['w'], o['h']) <= 1.2]
+    gates = [d for d in arena.get('decor', []) if d.get('look') == 'gate']
+    if walls or gates:
+        cy = Courtyard(walls, gates, 2048)
+        cy.build()
+        ob = cy.bake()
+        done.append((cy, ob))
+        print(f"courtyard: {sum(len(p.vertices) - 2 for p in ob.data.polygons)} Dreiecke")
     # Hilfsobjekte und ungenutzte Materialien weg
     keep = {h.key for h, _ in done} | {h.key + '_glow' for h, _ in done}
     for o in list(bpy.data.objects):

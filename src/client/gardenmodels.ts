@@ -105,7 +105,12 @@ export function treeInstances(models: Map<string, GardenModel>, spots: TreeSpot[
 
 /** Name des Hausmodells zu einem Hindernis-Rechteck (wie im Blender-Skript). */
 export function houseKey(o: { x: number; y: number }): string {
-  return `house_${Math.round(o.x * 100)}_${Math.round(o.y * 100)}`;
+  return buildingKey('house', o);
+}
+
+/** Name eines Gebäudemodells (house, ruin) nach Art und Mittelpunkt des Rechtecks. */
+export function buildingKey(kind: string, o: { x: number; y: number }): string {
+  return `${kind}_${Math.round(o.x * 100)}_${Math.round(o.y * 100)}`;
 }
 
 let housesPending: Promise<Map<string, THREE.Object3D>> | null = null;
