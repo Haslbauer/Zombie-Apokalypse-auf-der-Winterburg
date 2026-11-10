@@ -671,6 +671,7 @@ Rückmeldungen aus der ersten Online-Runde, drei Spieler schafften Welle 14:
     - Die Schlagkante für die Bewegungsspur ist im Modell markiert.
     - In der Ego-Sicht halten die Helden jetzt dieselben Waffen statt einfacher Formen.
     - Bis die Datei geladen ist, bleiben die alten Waffen. `weapons.html` zeigt alle Waffen, `?alt` die alten, `?only=<art>` eine einzelne groß.
+  - **Wege zu Bunker und Tor:** Der Querweg führt jetzt nach Westen weiter und biegt zur Bunkertreppe ab. Der Weg nach Süden geht bis kurz vor die Hecke und knickt dann nach Osten zum neuen Südtor ab. Er läuft durch das Tor hindurch und geht draußen in den Weg zum Spawnpunkt über. Obstbaum, Misthaufen, Grasflecken und Wiese sind dafür ein Stück zur Seite gerückt.
   - Neu sind vier Misthaufen mit Stroh, Jauchepfütze und Mistgabel: beim Kompost, beim Schuppen, beim Brunnen und am Südrand (`decor` mit `look: "dung"` in `data/map.json`).
 
 ## Der Schlund (Zwischenboss)
