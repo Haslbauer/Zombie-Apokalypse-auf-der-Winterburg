@@ -55,7 +55,11 @@ npm run houses
   (`tree_apple`, `tree_fruit`, `tree_olive`, `tree_fig`, `tree_rowan`,
   `tree_yew`, `tree_elder`, `tree_fir`), Gemüse (`plant_cabbage`, `plant_lettuce`,
   `plant_tomato`, `plant_pumpkin`, `plant_leek`, `plant_carrot`), Hochbeet-Rahmen
-  (`bed_1000x150_a`/`_b`, Maße in cm) und Schuppen (`shed_420x320`).
+  (`bed_1000x150_a`/`_b`, Maße in cm), Schuppen (`shed_420x320`), sparsame
+  Waldbäume (`forest_oak_a/b/c`, `forest_pine_a/b`), Büsche (`bush_a/b/c`), ein
+  Heckenstück (`hedge_seg`) und Gartenkram (`bench`, `rain_barrel`, `compost`,
+  `woodpile`, `wheelbarrow`, `swing`, `car`, `well`, `rock_a/b/c`, `log`,
+  `deadtree`, `grave_a/b/c`).
 - Nach dem Export verkleinert `scripts/pack-glb.mjs` die Datei (gleiche Ecken
   zusammenfassen, Quantisierung); `npm run garden` und `npm run houses` machen das
   automatisch.

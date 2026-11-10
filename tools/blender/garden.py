@@ -88,7 +88,8 @@ def oak(name, seed, leaf=0x3f6b2a, leaf_top=0x8fb04a):
 
 def broadleaf(name, seed, leaf=0x3f6b2a, leaf_top=0x8fb04a, trunk_h=1.6, trunk_r=0.33, stems=1, stem_lean=0.0,
               branch_len=1.25, branch_r=0.2, depth=2, main=3, elev=(38, 55), clump=0.42, clumps=30, per_tip=2,
-              core=3, core_r=0.7, squash=0.8, rough=0.45, bark=0x5d4a3a, extras=None, roots=True):
+              core=3, core_r=0.7, squash=0.8, rough=0.45, bark=0x5d4a3a, extras=None, roots=True,
+              leaf_subdiv=2, trunk_subdiv=1):
     """Laubbaum oder Strauch: Gerüst mit Skin-Modifier, Laubballen an den Spitzen.
     stems > 1: mehrere schräge Stämme (Olive, Feige, Holunder). extras(R, tips, parts): Früchte usw."""
     R = C.rand(seed)
@@ -155,19 +156,19 @@ def broadleaf(name, seed, leaf=0x3f6b2a, leaf_top=0x8fb04a, trunk_h=1.6, trunk_r
             branch(parent, p, d2, branch_len * (1 + R.uniform(0, 0.25)), branch_r if stems == 1 else branch_r * 0.7, depth)
 
     barkm = C.material(f'bark_{name}', bark, bark_shader())
-    parts = [C.skin_tree(f'{name}_trunk', verts, edges, radii, barkm)]
+    parts = [C.skin_tree(f'{name}_trunk', verts, edges, radii, barkm, subdiv=trunk_subdiv)]
     leaves = C.material(f'leaf_{name}', leaf, leaf_shader(leaf_top))
     R.shuffle(tips)
     for i, (tp, td, k) in enumerate(tips[:clumps]):
         for j in range(per_tip):
             r = (clump + R.random() * clump * 0.5) * k
             off = Vector((R.uniform(-0.35, 0.35), R.uniform(-0.35, 0.35), R.uniform(-0.1, 0.25))) * (clump / 0.42)
-            parts.append(C.blob('leaf', r, tp + td * 0.2 + off, leaves, seed=seed * 10 + i * 2 + j, rough=rough, subdiv=2, squash=squash))
+            parts.append(C.blob('leaf', r, tp + td * 0.2 + off, leaves, seed=seed * 10 + i * 2 + j, rough=rough, subdiv=leaf_subdiv, squash=squash))
     if tips and core:
         cz = sum((t[0].z for t in tips), 0) / len(tips)
         for i in range(core):
             a = R.random() * math.tau
-            parts.append(C.blob('leaf', core_r + R.random() * core_r * 0.3, Vector((math.cos(a) * 0.5, math.sin(a) * 0.5, cz - 0.2 + i * 0.25)), leaves, seed=seed * 7 + i, rough=rough, subdiv=2, squash=squash))
+            parts.append(C.blob('leaf', core_r + R.random() * core_r * 0.3, Vector((math.cos(a) * 0.5, math.sin(a) * 0.5, cz - 0.2 + i * 0.25)), leaves, seed=seed * 7 + i, rough=rough, subdiv=leaf_subdiv, squash=squash))
     if extras:
         extras(R, tips, parts)
     C.bake(parts)
@@ -215,7 +216,7 @@ def leaf_shader(top_hex):
 
 # ---------------------------------------------------------------- Nadelbaum
 
-def pine(name, seed, needle=0x2b5232, tip=0x4f7a45, scale=1.0):
+def pine(name, seed, needle=0x2b5232, tip=0x4f7a45, scale=1.0, lod=False):
     import bmesh
     from mathutils import noise
     R = C.rand(seed)
@@ -230,16 +231,16 @@ def pine(name, seed, needle=0x2b5232, tip=0x4f7a45, scale=1.0):
         out = C.mix(c, tipc, rim * 0.6 + max(0.0, n.z) * 0.2)
         return C.jitter(out, noise.noise(p * 14) * 0.12)
     mat = C.material(f'needle_{name}', needle, needles)
-    tiers = 7
+    tiers = 6 if lod else 7
     for i in range(tiers):
         z = 0.85 + i * 0.66
         r = 1.85 * (1 - i / (tiers + 0.6)) + 0.2
         h = 1.15 - i * 0.04
         bm = bmesh.new()
-        segs = 18
+        segs = 11 if lod else 18
         bmesh.ops.create_cone(bm, cap_ends=True, segments=segs, radius1=r, radius2=0.0, depth=h)
         side = [e for e in bm.edges if abs(e.verts[0].co.z - e.verts[1].co.z) > 1e-4]
-        bmesh.ops.subdivide_edges(bm, edges=side, cuts=3)
+        bmesh.ops.subdivide_edges(bm, edges=side, cuts=1 if lod else 3)
         bot = min(v.co.z for v in bm.verts)
         rot = R.random() * math.tau
         for v in bm.verts:
@@ -638,6 +639,300 @@ def shed(w, h):
     return C.finish(f'shed_{round(w * 100)}x{round(h * 100)}', parts, ao_floor=0.3)
 
 
+# ---------------------------------------------------------------- Wald, Büsche, Hecken (sparsam)
+
+def forest():
+    """Sparsame Bäume für Waldrand und Dickicht (wenige Dreiecke, viele Instanzen)."""
+    out = []
+    for name, seed, leaf, top in (('forest_oak_a', 201, 0x2f5a26, 0x6a9a44), ('forest_oak_b', 211, 0x355f2a, 0x7aa64a), ('forest_oak_c', 223, 0x284f24, 0x5f8f40)):
+        out.append(broadleaf(name, seed, leaf=leaf, leaf_top=top, trunk_h=1.8, trunk_r=0.3, branch_len=1.3, depth=1,
+                             clump=0.75, clumps=9, per_tip=1, core=2, core_r=1.0, rough=0.5, leaf_subdiv=2, trunk_subdiv=0, roots=False))
+    out.append(pine('forest_pine_a', 231, 0x22472e, 0x41694a, lod=True))
+    out.append(pine('forest_pine_b', 241, 0x1d4030, 0x3a6046, lod=True))
+    return out
+
+
+def bushes():
+    out = []
+    for name, seed, leaf, top, flower in (('bush_a', 301, 0x2c5626, 0x6a9a44, None), ('bush_b', 311, 0x305a2a, 0x76a64c, 0xf0e6f0), ('bush_c', 321, 0x27502a, 0x5a8a40, 0xc8282a)):
+        R = C.rand(seed)
+        leaves = C.material(f'leaf_{name}', leaf, leaf_shader(top))
+        parts = []
+        for i in range(8):
+            a = R.random() * math.tau
+            d = R.random() * 0.45
+            r = 0.38 + R.random() * 0.22
+            parts.append(C.blob('b', r, Vector((math.cos(a) * d, math.sin(a) * d, 0.35 + R.random() * 0.4)), leaves, seed=seed + i, rough=0.55, subdiv=2, squash=0.85))
+        if flower:
+            fm = C.material(f'flower_{name}', flower)
+            for i in range(14):
+                a = R.random() * math.tau
+                parts.append(C.blob('f', 0.04, Vector((math.cos(a) * 0.62, math.sin(a) * 0.62, 0.35 + R.random() * 0.5)), fm, seed=i, rough=0.1, subdiv=1))
+        C.bake(parts)
+        out.append(C.finish(name, parts, ao_floor=0.3))
+    # Heckenstück: 1 m lang, 1 m tief, 1,3 m hoch (wird gestreckt und aneinandergereiht)
+    R = C.rand(331)
+    leaves = C.material('leaf_hedge', 0x2a5a26, leaf_shader(0x5f9440))
+    parts = [C.box('core', (1.0, 0.8, 1.1), Vector((0, 0, 0.55)), C.material('hedge_core', 0x1e3a1c), bevel=0.05, step=0.5)]
+    for i in range(10):
+        parts.append(C.blob('h', 0.32 + R.random() * 0.12, Vector((R.uniform(-0.5, 0.5), R.uniform(-0.38, 0.38), R.uniform(0.25, 1.15))), leaves, seed=340 + i, rough=0.5, subdiv=2, squash=0.9))
+    C.bake(parts)
+    out.append(C.finish('hedge_seg', parts, ao_floor=0.3))
+    return out
+
+
+# ---------------------------------------------------------------- Gartenkram und Gelände
+
+def rock_shader():
+    from mathutils import noise
+    moss = C.hexcol(0x4f6a2e)
+
+    def f(p, n, c):
+        out = C.jitter(c, noise.noise(p * 3) * 0.18 + noise.noise(p * 14) * 0.08)
+        return C.mix(out, moss, max(0.0, n.z - 0.55) * 1.6 * (0.5 + noise.noise(p * 2) * 0.6))
+    return f
+
+
+def end_grain(axis=0):
+    """Hirnholz: helle Stirnflächen mit Jahresringen, sonst Rinde."""
+    from mathutils import noise
+    wood = C.hexcol(0xb08a5a)
+
+    def f(p, n, c):
+        if abs(n[axis]) > 0.8:
+            rr = math.hypot(*(p[i] for i in range(3) if i != axis))
+            return C.jitter(wood, math.sin(rr * 90) * 0.08 + noise.noise(p * 20) * 0.05)
+        g = noise.noise(Vector((p.x * 9, p.y * 9, p.z * 9))) * 0.22
+        return C.jitter(c, g)
+    return f
+
+
+def props():
+    out = []
+    # ---- Felsen (3 Formen), Durchmesser 2 m
+    for i in range(3):
+        m = C.material(f'rock{i}', [0x5f5e5a, 0x6a6862, 0x585650][i], rock_shader())
+        parts = [C.blob('rock', 1.0, Vector((0, 0, 0.35)), m, seed=400 + i, rough=0.35, subdiv=3, squash=0.62)]
+        parts.append(C.blob('rock2', 0.45, Vector((0.75, 0.3, 0.12)), m, seed=410 + i, rough=0.4, subdiv=2, squash=0.6))
+        C.bake(parts)
+        out.append(C.finish(f'rock_{"abc"[i]}', parts, ao_floor=0.3))
+    # ---- Baumstamm 3,6 m, mit Moos, Pilzen und Aststummel
+    bark = C.material('log_bark', 0x6b4a2b, end_grain(0))
+    parts = [C.cylinder('log', 0.43, 0.4, 3.6, Vector((0, 0, 0.4)), bark, seg=14, rot=(0, math.pi / 2, 0), rings=8)]
+    parts.append(C.cylinder('stub', 0.1, 0.06, 0.5, Vector((0.6, -0.35, 0.65)), bark, seg=8, rot=(0.9, 0, 0.3), rings=1))
+    moss = C.material('log_moss', 0x4a6a2a, C.speckle(0.2, 20))
+    R = C.rand(5)
+    for i in range(8):
+        parts.append(C.blob('moss', 0.18, Vector((R.uniform(-1.6, 1.6), R.uniform(-0.15, 0.15), 0.78)), moss, seed=i, rough=0.5, subdiv=1, squash=0.35))
+    cap = C.material('mush_cap', 0xb06a3a, C.speckle(0.15, 30))
+    for i in range(5):
+        x = R.uniform(-1.4, 1.4)
+        parts.append(C.blob('cap', 0.07, Vector((x, -0.42, 0.32 + R.random() * 0.2)), cap, seed=i, rough=0.1, subdiv=1, squash=0.45))
+    C.bake(parts)
+    out.append(C.finish('log', parts, ao_floor=0.3))
+    # ---- Toter Baum: knorrig, kahle, gebrochene Äste
+    verts, edges, radii = [Vector((0, 0, -0.2)), Vector((0, 0, 0.3))], [(0, 1)], [0.36, 0.3]
+    R = C.rand(7)
+    p, d, par = Vector((0, 0, 0.3)), Vector((0.05, 0, 1)).normalized(), 1
+    for k in range(5):
+        d = (d + Vector((R.uniform(-0.2, 0.2), R.uniform(-0.2, 0.2), 0))).normalized()
+        p = p + d * 0.6
+        verts.append(p.copy())
+        radii.append(0.26 - k * 0.045)
+        edges.append((par, len(verts) - 1))
+        par = len(verts) - 1
+        if k >= 1:
+            a = R.random() * math.tau
+            bd = Vector((math.cos(a), math.sin(a), 0.6)).normalized()
+            q = p + bd * (0.6 + R.random() * 0.6)
+            verts.append(q)
+            radii.append(0.06)
+            edges.append((par, len(verts) - 1))
+            q2 = q + (bd + Vector((R.uniform(-0.5, 0.5), R.uniform(-0.5, 0.5), 0.3))).normalized() * 0.4
+            verts.append(q2)
+            radii.append(0.025)
+            edges.append((len(verts) - 2, len(verts) - 1))
+    dead = C.material('dead_bark', 0x5a4a3c, bark_shader())
+    parts = [C.skin_tree('dead', verts, edges, radii, dead)]
+    C.bake(parts)
+    out.append(C.finish('deadtree', parts, ao_floor=0.3))
+    # ---- Grabsteine (3 Formen): Stein, davor ein Grabhügel nach Süden (−Y)
+    stone = C.material('grave_stone', 0x8f8f8a, rock_shader())
+    mound = C.material('grave_mound', 0x4a3a28, C.speckle(0.2, 12))
+    grass = C.material('grave_grass', 0x3f5f2a, C.speckle(0.2, 20))
+    for i in range(3):
+        parts = []
+        if i == 0:
+            parts.append(C.box('slab', (0.62, 0.16, 0.8), Vector((0, 0, 0.4)), stone, bevel=0.03, step=0.15))
+            parts.append(C.cylinder('top', 0.31, 0.31, 0.16, Vector((0, 0, 0.8)), stone, seg=16, rot=(math.pi / 2, 0, 0), rings=0))
+        elif i == 1:
+            parts.append(C.box('post', (0.12, 0.12, 1.0), Vector((0, 0, 0.5)), stone, bevel=0.015, step=0.2))
+            parts.append(C.box('arm', (0.6, 0.12, 0.12), Vector((0, 0, 0.72)), stone, bevel=0.015, step=0.2))
+            parts.append(C.box('base', (0.4, 0.3, 0.12), Vector((0, 0, 0.06)), stone, bevel=0.02, step=0.2))
+        else:
+            parts.append(C.box('slab', (0.7, 0.18, 0.6), Vector((0, 0, 0.3)), stone, bevel=0.04, step=0.15, rot=(0.12, 0.06, 0)))
+        parts.append(C.blob('mound', 0.75, Vector((0, -0.78, 0.0)), mound, seed=i, rough=0.15, subdiv=2, squash=0.18))
+        parts[-1].scale = (0.5, 1.0, 1.0)
+        for k in range(6):
+            parts.append(C.blob('g', 0.08, Vector(((k % 3 - 1) * 0.22, -0.2 - (k // 3) * 1.1, 0.05)), grass, seed=k, rough=0.7, subdiv=1, squash=0.6))
+        C.bake(parts)
+        out.append(C.finish(f'grave_{"abc"[i]}', parts, ao_floor=0.3))
+    # ---- Regentonne (Radius 0,4)
+    staves = C.material('barrel_wood', 0x6a4a2c, C.wood_grain('z'))
+    iron = C.material('barrel_iron', 0x3a3a3a, C.speckle(0.15, 20))
+    water = C.material('barrel_water', 0x2f4f5a, C.speckle(0.08, 6))
+    parts = []
+    n = 16
+    for k in range(n):
+        a = k / n * math.tau
+        st = C.box('st', (0.15, 0.05, 0.9), Vector((math.cos(a) * 0.37, math.sin(a) * 0.37, 0.45)), staves, bevel=0.008, step=0.3, rot=(0, 0, a + math.pi / 2))
+        parts.append(st)
+    for z in (0.12, 0.45, 0.78):
+        parts.append(C.cylinder('hoop', 0.405, 0.405, 0.05, Vector((0, 0, z)), iron, seg=20, rings=0))
+    parts.append(C.cylinder('water', 0.35, 0.35, 0.02, Vector((0, 0, 0.82)), water, seg=20, rings=0))
+    parts.append(C.cylinder('bottom', 0.36, 0.36, 0.05, Vector((0, 0, 0.03)), staves, seg=20, rings=0))
+    C.bake(parts)
+    out.append(C.finish('rain_barrel', parts, ao_floor=0.3))
+    # ---- Bank 2,2 × 0,7 m: Holzlatten, gusseiserne Seiten
+    slat = C.material('bench_slat', 0x7a5634, C.wood_grain('x'))
+    cast = C.material('bench_iron', 0x2a2c2e, C.speckle(0.1, 20))
+    parts = []
+    for k in range(4):
+        parts.append(C.box('seat', (2.1, 0.13, 0.04), Vector((0, -0.22 + k * 0.14, 0.45)), slat, bevel=0.01, step=0.4))
+    for k in range(3):
+        parts.append(C.box('back', (2.1, 0.04, 0.11), Vector((0, 0.3, 0.6 + k * 0.14)), slat, bevel=0.01, step=0.4, rot=(-0.2, 0, 0)))
+    for s in (-1, 1):
+        parts.append(C.box('leg', (0.06, 0.6, 0.05), Vector((s * 0.95, 0, 0.43)), cast, bevel=0.01, step=0.3))
+        parts.append(C.box('legf', (0.06, 0.05, 0.45), Vector((s * 0.95, -0.25, 0.22)), cast, bevel=0.01, step=0.3, rot=(0.15, 0, 0)))
+        parts.append(C.box('legb', (0.06, 0.05, 0.95), Vector((s * 0.95, 0.28, 0.47)), cast, bevel=0.01, step=0.3, rot=(-0.2, 0, 0)))
+        parts.append(C.box('arm', (0.07, 0.6, 0.05), Vector((s * 1.02, -0.02, 0.68)), cast, bevel=0.015, step=0.3))
+    C.bake(parts)
+    out.append(C.finish('bench', parts, ao_floor=0.3))
+    # ---- Kompost 2,2 × 2,2 m: Lattenkiste, Erde, Grünschnitt, Stöcke
+    plank = C.material('compost_wood', 0x6a4c30, C.wood_grain('x'))
+    planky = C.material('compost_woody', 0x6a4c30, C.wood_grain('y'))
+    post = C.material('compost_post', 0x4a3420, C.wood_grain('z'))
+    parts = []
+    for z in (0.15, 0.4, 0.65, 0.9):
+        for s in (-1, 1):
+            parts.append(C.box('px', (2.2, 0.04, 0.16), Vector((0, s * 1.08, z)), plank, bevel=0.008, step=0.5))
+            parts.append(C.box('py', (0.04, 2.2, 0.16), Vector((s * 1.08, 0, z)), planky, bevel=0.008, step=0.5))
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            parts.append(C.box('post', (0.1, 0.1, 1.05), Vector((sx * 1.08, sy * 1.08, 0.52)), post, bevel=0.01, step=0.3))
+    soil = C.material('compost_soil', 0x3a2818, C.speckle(0.25, 10))
+    green = C.material('compost_green', 0x5a7a2a, C.speckle(0.25, 18))
+    brown = C.material('compost_brown', 0x7a6a3a, C.speckle(0.2, 18))
+    parts.append(C.blob('heap', 1.0, Vector((0, 0, 0.55)), soil, seed=3, rough=0.25, subdiv=2, squash=0.45))
+    R = C.rand(11)
+    for i in range(12):
+        parts.append(C.blob('g', 0.18, Vector((R.uniform(-0.7, 0.7), R.uniform(-0.7, 0.7), 0.85)), green if i % 3 else brown, seed=i, rough=0.6, subdiv=1, squash=0.4))
+    C.bake(parts)
+    out.append(C.finish('compost', parts, ao_floor=0.3))
+    # ---- Holzstapel 3,2 × 1,2 m: Scheite mit Hirnholz, Hackklotz
+    logm = C.material('woodpile_log', 0x6a4a2c, end_grain(1))
+    parts = []
+    R = C.rand(13)
+    for row in range(5):
+        n = 13 - row
+        for k in range(n):
+            x = -1.5 + (k + row * 0.5) * 0.23 + R.uniform(-0.02, 0.02)
+            parts.append(C.cylinder('l', 0.11, 0.11, 1.1, Vector((x, R.uniform(-0.05, 0.05), 0.11 + row * 0.2)), logm, seg=8, rot=(math.pi / 2, 0, R.uniform(-0.05, 0.05)), rings=0))
+    stump = C.material('woodpile_stump', 0x6a4a2c, end_grain(2))
+    parts.append(C.cylinder('block', 0.3, 0.32, 0.55, Vector((1.85, -0.3, 0.27)), stump, seg=12, rings=1))
+    C.bake(parts)
+    out.append(C.finish('woodpile', parts, ao_floor=0.3))
+    # ---- Schubkarre 1,7 × 0,8 m
+    tub = C.material('barrow_tub', 0x4f7a5a, C.painted(0x7a3a1a, 0.25))
+    metal = C.material('barrow_metal', 0x3a3a3a)
+    tyre = C.material('barrow_tyre', 0x1a1a1a)
+    handle = C.material('barrow_handle', 0x8a6340, C.wood_grain('x'))
+    parts = [C.box('tub', (0.9, 0.62, 0.35), Vector((0.1, 0, 0.55)), tub, bevel=0.06, step=0.2)]
+    parts.append(C.box('in', (0.78, 0.5, 0.05), Vector((0.1, 0, 0.71)), C.material('barrow_soil', 0x3a2818, C.speckle(0.25, 12)), bevel=0.02, step=0.2))
+    parts.append(C.cylinder('wheel', 0.2, 0.2, 0.09, Vector((-0.6, 0, 0.2)), tyre, seg=16, rot=(math.pi / 2, 0, 0), rings=0))
+    for s in (-1, 1):
+        parts.append(C.cylinder('h', 0.025, 0.025, 1.4, Vector((0.25, s * 0.25, 0.55)), handle, seg=6, rot=(0, math.pi / 2 - 0.25, 0), rings=0))
+        parts.append(C.box('leg', (0.04, 0.04, 0.4), Vector((0.45, s * 0.25, 0.2)), metal, bevel=0.005, step=0.3))
+    C.bake(parts)
+    out.append(C.finish('wheelbarrow', parts, ao_floor=0.3))
+    # ---- Hollywoodschaukel 2,8 × 1,4 m: Gestell, Bank mit Kissen, gestreiftes Dach
+    frame = C.material('swing_frame', 0xdedede, C.speckle(0.08, 10))
+    seatm = C.material('swing_seat', 0xf0f0f0, C.speckle(0.06, 10))
+    cushion = C.material('swing_cushion', 0x4f86c6, C.speckle(0.1, 25))
+    W = 2.8
+
+    def stripes(p, n, c):
+        k = int((p.x + 10) / (W / 6)) % 2
+        return C.hexcol(0xf2f2f2) if k else C.hexcol(0x4f86c6)
+    canopy = C.material('swing_canopy', 0x4f86c6, stripes)
+    parts = []
+    for s in (-1, 1):
+        for lean in (-1, 1):
+            parts.append(C.cylinder('leg', 0.04, 0.04, 2.15, Vector((s * (W / 2 - 0.1), lean * 0.42, 1.0)), frame, seg=8, rot=(lean * -0.38, 0, 0), rings=2))
+    parts.append(C.cylinder('top', 0.045, 0.045, W, Vector((0, 0, 1.97)), frame, seg=8, rot=(0, math.pi / 2, 0), rings=4))
+    parts.append(C.box('seat', (W - 0.5, 0.6, 0.1), Vector((0, 0, 0.55)), seatm, bevel=0.02, step=0.3))
+    parts.append(C.box('back', (W - 0.5, 0.1, 0.6), Vector((0, 0.28, 0.85)), seatm, bevel=0.02, step=0.3, rot=(-0.12, 0, 0)))
+    parts.append(C.box('cush', (W - 0.6, 0.5, 0.12), Vector((0, -0.02, 0.66)), cushion, bevel=0.05, step=0.2))
+    parts.append(C.box('cushb', (W - 0.6, 0.12, 0.45), Vector((0, 0.2, 0.92)), cushion, bevel=0.05, step=0.2, rot=(-0.12, 0, 0)))
+    for s in (-1, 1):
+        parts.append(C.cylinder('chain', 0.012, 0.012, 1.3, Vector((s * (W / 2 - 0.3), 0, 1.3)), frame, seg=4, rings=0))
+    blue = C.material('swing_blue', 0x4f86c6, C.speckle(0.06, 20))
+    white = C.material('swing_white', 0xf2f2f2, C.speckle(0.06, 20))
+    sw = (W + 0.1) / 6
+    for k in range(6):
+        parts.append(C.box('canopy', (sw, 1.45, 0.04), Vector((-(W + 0.1) / 2 + (k + 0.5) * sw, 0, 2.15)), blue if k % 2 == 0 else white, bevel=0.005, step=0.3, rot=(0.18, 0, 0)))
+    C.bake(parts)
+    out.append(C.finish('swing', parts, ao_floor=0.3))
+    # ---- Autowrack 4,2 × 1,9 m (lange Achse X): Rost, eingeschlagene Scheiben, platter Reifen
+    from mathutils import noise
+
+    def rust(p, n, c):
+        k = noise.noise(p * 1.5) + noise.noise(p * 5) * 0.5
+        out = C.mix(c, C.hexcol(0x7a3a18), (k + 0.1) * 1.8)
+        return C.jitter(out, noise.noise(p * 25) * 0.08)
+    body = C.material('car_body', 0x4f6a7a, rust)
+    dark = C.material('car_dark', 0x101214, C.speckle(0.2, 8))
+    chrome = C.material('car_chrome', 0x8a8e90, rust)
+    parts = [C.box('body', (4.1, 1.8, 0.7), Vector((0, 0, 0.6)), body, bevel=0.15, step=0.3)]
+    parts.append(C.box('cabin', (2.1, 1.6, 0.6), Vector((-0.2, 0, 1.2)), body, bevel=0.15, step=0.3))
+    for s in (-1, 1):
+        parts.append(C.box('win', (1.8, 0.02, 0.4), Vector((-0.2, s * 0.8, 1.22)), dark, bevel=0.0, step=0.5))
+    parts.append(C.box('wf', (0.02, 1.4, 0.42), Vector((0.86, 0, 1.22)), dark, bevel=0.0, step=0.5, rot=(0, -0.35, 0)))
+    parts.append(C.box('wr', (0.02, 1.4, 0.42), Vector((-1.26, 0, 1.22)), dark, bevel=0.0, step=0.5, rot=(0, 0.35, 0)))
+    for x in (-1.3, 1.3):
+        for s in (-1, 1):
+            flat = (x > 0 and s > 0)
+            parts.append(C.cylinder('tyre', 0.34, 0.34, 0.24, Vector((x, s * 0.85, 0.26 if flat else 0.34)), dark, seg=16, rot=(math.pi / 2, 0, 0), rings=0))
+            parts[-1].scale = (1, 1, 0.75 if flat else 1)
+    for x in (-2.07, 2.07):
+        parts.append(C.box('bumper', (0.08, 1.7, 0.14), Vector((x, 0, 0.42)), chrome, bevel=0.03, step=0.4))
+    for s in (-1, 1):
+        parts.append(C.cylinder('lamp', 0.1, 0.1, 0.05, Vector((2.05, s * 0.6, 0.72)), chrome, seg=10, rot=(0, math.pi / 2, 0), rings=0))
+    C.bake(parts)
+    out.append(C.finish('car', parts, ao_floor=0.3))
+    # ---- Brunnen (Radius 0,9): Steinring, Holzgestell mit Dach, Kurbel und Eimer
+    st = C.material('well_stone', 0x8a8478, rock_shader())
+    wood = C.material('well_wood', 0x5a4028, C.wood_grain('z'))
+    roof = C.material('well_roof', 0x6a3a28, C.speckle(0.2, 10))
+    parts = []
+    n = 12
+    for row in range(3):
+        for k in range(n):
+            a = (k + row * 0.5) / n * math.tau
+            parts.append(C.box('blk', (0.42, 0.22, 0.24), Vector((math.cos(a) * 0.78, math.sin(a) * 0.78, 0.12 + row * 0.25)), st, bevel=0.03, step=0.3, rot=(0, 0, a + math.pi / 2)))
+    parts.append(C.cylinder('water', 0.62, 0.62, 0.02, Vector((0, 0, 0.45)), C.material('well_water', 0x0f1a1e), seg=20, rings=0))
+    for s in (-1, 1):
+        parts.append(C.box('post', (0.1, 0.1, 1.9), Vector((s * 0.8, 0, 1.15)), wood, bevel=0.01, step=0.4))
+    parts.append(C.cylinder('axle', 0.06, 0.06, 1.7, Vector((0, 0, 1.6)), wood, seg=8, rot=(0, math.pi / 2, 0), rings=0))
+    for sgn in (-1, 1):
+        rf = C.box('roof', (2.0, 0.75, 0.05), Vector((0, sgn * 0.3, 2.2)), roof, bevel=0.01, step=0.3, rot=(sgn * -0.6, 0, 0))
+        parts.append(rf)
+    parts.append(C.cylinder('bucket', 0.14, 0.11, 0.22, Vector((0.2, 0.2, 0.6)), wood, seg=10, rings=0))
+    C.bake(parts)
+    out.append(C.finish('well', parts, ao_floor=0.3))
+    return out
+
+
 # ---------------------------------------------------------------- Ablauf
 
 def main():
@@ -655,6 +950,7 @@ def main():
     built += species_trees()
     built += plants()
     built += [bed_frame(10.0, 1.5, 0), bed_frame(10.0, 1.5, 1), shed(4.2, 3.2)]
+    built += forest() + bushes() + props()
     if prev:
         os.makedirs(prev, exist_ok=True)
         for ob in built:

@@ -186,3 +186,173 @@ export function loadHouses(): Promise<Map<string, THREE.Object3D>> {
     });
   return housesPending;
 }
+
+// ---------- Gelände: Wald, Dickicht, Büsche, Hecken, Gartenkram ----------
+
+/** Zufallsfolge mit festem Startwert (gleich bei allen Spielern). */
+function seq(seed: number): () => number {
+  let s = Math.abs(Math.floor(seed)) % 2147483647 || 1;
+  return () => (s = (s * 16807) % 2147483647) / 2147483647;
+}
+
+/** Instanzen eines Modells an Orten (x, z) mit Drehung um y und Maßstab (sx, sy, sz). */
+function instances(models: Map<string, GardenModel>, name: string, list: { x: number; z: number; rot: number; sx: number; sy?: number; sz?: number }[], shadow = true): THREE.InstancedMesh | null {
+  const model = models.get(name);
+  if (!model || !list.length) return null;
+  const inst = new THREE.InstancedMesh(model.geometry, model.material, list.length);
+  const m = new THREE.Matrix4();
+  const q = new THREE.Quaternion();
+  const up = new THREE.Vector3(0, 1, 0);
+  list.forEach((p, i) => {
+    q.setFromAxisAngle(up, p.rot);
+    m.compose(new THREE.Vector3(p.x, 0, p.z), q, new THREE.Vector3(p.sx, p.sy ?? p.sx, p.sz ?? p.sx));
+    inst.setMatrixAt(i, m);
+  });
+  inst.castShadow = shadow;
+  inst.receiveShadow = true;
+  inst.computeBoundingSphere();
+  return inst;
+}
+
+export interface ForestSpot {
+  x: number;
+  y: number;
+  s: number;
+  pine: boolean;
+  row: number;
+}
+
+/** Waldrand aus sparsamen Blender-Bäumen (drei Laub-, zwei Nadelformen). */
+export function forestInstances(models: Map<string, GardenModel>, spots: ForestSpot[]): THREE.Group | null {
+  const names = ['forest_oak_a', 'forest_oak_b', 'forest_oak_c', 'forest_pine_a', 'forest_pine_b'];
+  if (names.some((n) => !models.has(n))) return null;
+  const g = new THREE.Group();
+  for (const [k, name] of names.entries()) {
+    const pine = k >= 3;
+    const list = spots
+      .filter((s, i) => s.pine === pine && i % (pine ? 2 : 3) === (pine ? k - 3 : k))
+      .map((s) => ({ x: s.x, z: s.y, rot: hash(s.x, s.y, 5) * Math.PI * 2, sx: s.s, sy: s.s * (pine ? 1.1 : 1) }));
+    const inst = instances(models, name, list);
+    if (inst) g.add(inst);
+  }
+  return g;
+}
+
+/** Dickicht auf gesperrten Flächen: Büsche und (östlich der Häuser) große Tannen. */
+export function thicketInstances(models: Map<string, GardenModel>, rects: { x: number; y: number; w: number; h: number }[]): THREE.Group | null {
+  if (!['bush_a', 'bush_b', 'bush_c', 'tree_fir', 'forest_oak_a'].every((n) => models.has(n))) return null;
+  const g = new THREE.Group();
+  const bushes: { x: number; z: number; rot: number; sx: number; sy: number }[][] = [[], [], []];
+  const firs: { x: number; z: number; rot: number; sx: number }[] = [];
+  const oaks: { x: number; z: number; rot: number; sx: number }[] = [];
+  for (const o of rects) {
+    const rnd = seq(o.x * 31 + o.y * 7);
+    const count = Math.round(o.w * o.h * 0.45);
+    for (let i = 0; i < count; i++) {
+      const s = 1.0 + rnd() * 1.0;
+      bushes[i % 3].push({ x: o.x + (rnd() - 0.5) * o.w, z: o.y + (rnd() - 0.5) * o.h, rot: rnd() * 6.3, sx: s, sy: s * (0.8 + rnd() * 0.4) });
+    }
+    const trees = Math.round((o.w * o.h) / 40);
+    for (let i = 0; i < trees; i++) {
+      const p = { x: o.x + (rnd() - 0.5) * (o.w - 2), z: o.y + (rnd() - 0.5) * (o.h - 2), rot: rnd() * 6.3, sx: 0.9 + rnd() * 0.3 };
+      (o.x > 50 ? firs : oaks).push(p);
+    }
+  }
+  bushes.forEach((list, k) => {
+    const inst = instances(models, `bush_${'abc'[k]}`, list);
+    if (inst) g.add(inst);
+  });
+  for (const [name, list] of [['tree_fir', firs], ['forest_oak_a', oaks]] as const) {
+    const inst = instances(models, name, list);
+    if (inst) g.add(inst);
+  }
+  return g;
+}
+
+/** Büsche (Verstecke): Ballen verteilt über die Fläche jedes Buschs. */
+export function bushInstances(models: Map<string, GardenModel>, list: { kind: 'circle' | 'rect'; x: number; y: number; r?: number; w?: number; h?: number }[]): THREE.Group | null {
+  if (!['bush_a', 'bush_b', 'bush_c'].every((n) => models.has(n))) return null;
+  const spots: { x: number; z: number; rot: number; sx: number; sy: number }[][] = [[], [], []];
+  for (const b of list) {
+    const rnd = seq(b.x * 13 + b.y * 29);
+    const area = b.kind === 'circle' ? Math.PI * b.r! * b.r! : b.w! * b.h!;
+    const n = Math.max(3, Math.round(area * 0.9));
+    for (let i = 0; i < n; i++) {
+      let x: number;
+      let z: number;
+      if (b.kind === 'circle') {
+        const a = rnd() * Math.PI * 2;
+        const r = Math.sqrt(rnd()) * b.r! * 0.85;
+        x = b.x + Math.cos(a) * r;
+        z = b.y + Math.sin(a) * r;
+      } else {
+        x = b.x + (rnd() - 0.5) * b.w! * 0.9;
+        z = b.y + (rnd() - 0.5) * b.h! * 0.9;
+      }
+      const s = 0.85 + rnd() * 0.5;
+      spots[i % 3].push({ x, z, rot: rnd() * 6.3, sx: s, sy: s * (0.85 + rnd() * 0.35) });
+    }
+  }
+  const g = new THREE.Group();
+  spots.forEach((l, k) => {
+    const inst = instances(models, `bush_${'abc'[k]}`, l);
+    if (inst) g.add(inst);
+  });
+  return g;
+}
+
+/** Hecken: 1-m-Stücke aneinandergereiht, auf Länge und Tiefe gestreckt. */
+export function hedgeInstances(models: Map<string, GardenModel>, rects: { x: number; y: number; w: number; h: number }[]): THREE.InstancedMesh | null {
+  if (!models.has('hedge_seg')) return null;
+  const list: { x: number; z: number; rot: number; sx: number; sy: number; sz: number }[] = [];
+  for (const o of rects) {
+    const alongX = o.w >= o.h;
+    const len = Math.max(o.w, o.h);
+    const depth = Math.min(o.w, o.h);
+    const n = Math.max(1, Math.round(len));
+    const seg = len / n;
+    for (let i = 0; i < n; i++) {
+      const t = -len / 2 + (i + 0.5) * seg;
+      const k = hash(o.x + t, o.y, 6);
+      list.push({ x: alongX ? o.x + t : o.x, z: alongX ? o.y : o.y + t, rot: (alongX ? 0 : Math.PI / 2) + (k > 0.5 ? Math.PI : 0), sx: seg * 1.08, sy: 0.95 + k * 0.15, sz: depth / 1.1 });
+    }
+  }
+  return instances(models, 'hedge_seg', list);
+}
+
+/** Gartenkram und Gelände-Hindernisse aus Blender: Modellname(n) und Bezugsmaß. */
+export const OBSTACLE_MODELS: Record<string, { names: string[]; rect?: [number, number]; r?: number }> = {
+  bench: { names: ['bench'], rect: [2.2, 0.7] },
+  compost: { names: ['compost'], rect: [2.2, 2.2] },
+  woodpile: { names: ['woodpile'], rect: [3.2, 1.2] },
+  wheelbarrow: { names: ['wheelbarrow'], rect: [1.7, 0.8] },
+  swing: { names: ['swing'], rect: [2.8, 1.4] },
+  car: { names: ['car'], rect: [4.2, 1.9] },
+  log: { names: ['log'], rect: [3.6, 0.9] },
+  grave: { names: ['grave_a', 'grave_b', 'grave_c'], rect: [0.7, 0.3] },
+  barrel: { names: ['rain_barrel'], r: 0.4 },
+  rock: { names: ['rock_a', 'rock_b', 'rock_c'], r: 1.0 },
+  deadtree: { names: ['deadtree'], r: 0.45 },
+  well: { names: ['well'], r: 0.9 },
+};
+
+/** Modell für ein Hindernis (Größe und Lage nach dem Rechteck bzw. Kreis), sonst null. */
+export function obstacleMesh(models: Map<string, GardenModel>, o: { look?: string; kind: string; x: number; y: number; w?: number; h?: number; r?: number }): THREE.Mesh | null {
+  const spec = o.look ? OBSTACLE_MODELS[o.look] : undefined;
+  if (!spec) return null;
+  const name = spec.names[Math.floor(hash(o.x, o.y, 7) * spec.names.length) % spec.names.length];
+  const mesh = gardenMesh(models, name);
+  if (!mesh) return null;
+  mesh.position.set(o.x, 0, o.y);
+  if (o.kind === 'rect' && spec.rect) {
+    const long = Math.max(o.w!, o.h!);
+    const short = Math.min(o.w!, o.h!);
+    const s = long / spec.rect[0];
+    mesh.scale.set(s, s, short / spec.rect[1]);
+    if (o.h! > o.w!) mesh.rotation.y = Math.PI / 2;
+  } else if (o.kind === 'circle' && spec.r) {
+    mesh.scale.setScalar(o.r! / spec.r);
+    mesh.rotation.y = hash(o.x, o.y, 8) * Math.PI * 2;
+  }
+  return mesh;
+}

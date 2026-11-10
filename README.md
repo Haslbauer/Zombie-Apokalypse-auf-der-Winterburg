@@ -625,7 +625,14 @@ Rückmeldungen aus der ersten Online-Runde, drei Spieler schafften Welle 14:
     - Die Hochbeete haben Bretter mit Maserung, Erde mit Furchen und Krümeln, ein Schild, eine Gießkanne oder einen Rechen.
     - Gemüse als eigene Modelle, je Beet als Instanzen gezeichnet: Kohl mit gewölbten Außenblättern, krauser Salat, Tomaten am Stab, gerippte Kürbisse mit Ranke, Lauch und Möhren.
     - Der Schuppen hat Bretterwände, ein Wellblechdach mit Rost, eine Tür mit Z-Strebe, ein Fenster, Werkzeug und eine Regentonne.
-    - Die Dateien werden nach dem Export mit `scripts/pack-glb.mjs` verkleinert (weld und Quantisierung). `garden.glb` hat jetzt etwa 3,7 MB, `houses.glb` etwa 4,5 MB.
+    - Die Dateien werden nach dem Export mit `scripts/pack-glb.mjs` verkleinert (weld und Quantisierung). `garden.glb` hat jetzt etwa 4,5 MB, `houses.glb` etwa 4,5 MB.
+  - **Kulisse und Gartenkram aus Blender:**
+    - Den Waldrand bilden sparsame Laub- und Nadelbäume aus Blender, als Instanzen gezeichnet (rund 1.300 bis 1.500 Dreiecke je Baum).
+    - Im Dickicht östlich der Häuser stehen Büsche und große Tannen.
+    - Die Büsche in den Verstecken sind aus mehreren Laubballen geformt, teils mit weißen oder roten Blüten.
+    - Hecken bestehen aus aneinandergereihten 1-m-Stücken mit Laubballen. Die Rosmarinhecke bleibt, wie sie ist.
+    - Neu modelliert sind außerdem Bank, Regentonnen, Kompost, Holzstapel mit Hackklotz, Schubkarre, Hollywoodschaukel, Autowrack, Brunnen, Felsen mit Moos, Baumstämme mit Pilzen, tote Bäume und Grabsteine mit Grabhügel.
+    - Alles lädt nach. Bis dahin stehen die alten Formen da.
   - Neu sind vier Misthaufen mit Stroh, Jauchepfütze und Mistgabel: beim Kompost, beim Schuppen, beim Brunnen und am Südrand (`decor` mit `look: "dung"` in `data/map.json`).
 
 ## Der Schlund (Zwischenboss)

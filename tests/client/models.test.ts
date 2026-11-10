@@ -55,7 +55,9 @@ describe('Modelle', () => {
     const sheds = arena.obstacles.filter((o: { look?: string }) => o.look === 'shed').map((o: { w: number; h: number }) => `shed_${Math.round(o.w * 100)}x${Math.round(o.h * 100)}`);
     const species = [...new Set(arena.obstacles.filter((o: { species?: string; look?: string }) => o.look === 'tree' && o.species).map((o: { species: string }) => o.species))] as string[];
     for (const sp of species) expect(MODEL_SPECIES.includes(sp), sp).toBe(true);
-    const names = ['beehive', 'oak_a', 'oak_b', 'oak_c', 'pine_a', 'pine_b', ...MODEL_SPECIES.map((k) => `tree_${k}`), ...plants, ...beds.flatMap((b: string) => [b + '_a', b + '_b']), ...sheds];
+    const { OBSTACLE_MODELS } = await import('../../src/client/gardenmodels');
+    const scenery = ['forest_oak_a', 'forest_oak_b', 'forest_oak_c', 'forest_pine_a', 'forest_pine_b', 'bush_a', 'bush_b', 'bush_c', 'hedge_seg', ...Object.values(OBSTACLE_MODELS).flatMap((m) => m.names)];
+    const names = ['beehive', 'oak_a', 'oak_b', 'oak_c', 'pine_a', 'pine_b', ...MODEL_SPECIES.map((k) => `tree_${k}`), ...plants, ...beds.flatMap((b: string) => [b + '_a', b + '_b']), ...sheds, ...scenery];
     for (const name of names) {
       const mesh = meshes.get(name);
       expect(mesh, name).toBeTruthy();

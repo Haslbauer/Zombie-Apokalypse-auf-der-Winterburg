@@ -4,7 +4,7 @@ import { arenaBounds } from '../sim/grid';
 import type { ArenaDef, Obstacle } from '../sim/types';
 import { nightDecor, nightObstacle } from './nightdecor';
 import { addPropModels } from './propmodels';
-import { buildingKey, gardenMesh, houseKey, loadGarden, loadHouses, MODEL_SPECIES, treeInstances, type TreeSpot } from './gardenmodels';
+import { buildingKey, bushInstances, forestInstances, gardenMesh, type ForestSpot, type GardenModel, hedgeInstances, houseKey, loadGarden, loadHouses, MODEL_SPECIES, OBSTACLE_MODELS, obstacleMesh, thicketInstances, treeInstances, type TreeSpot } from './gardenmodels';
 import { crownGeometry, fireflies, foliageMaterial, groundPatches, pineGeometry, type TreeSpecies, trunkGeometry } from './foliage';
 import { brushes, courtyardWall, decor, hatch, hedge, house, Mats, obstacleDecor, smoke, thicket, tree, windTime, rathole, ruin, grassTufts } from './mapdecor';
 
@@ -78,7 +78,15 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
       needCourtyard();
     } else scene.add(decor(d, mats));
   }
-  forestBorder(scene, x0, y0, x1, y1, mats);
+  // Waldrand, Dickicht, Büsche, Hecken und Gartenkram: Blender-Modelle (garden.glb), bis dahin die Code-Formen
+  const fallbackForest = new THREE.Group();
+  const forestSpots = forestBorder(fallbackForest, x0, y0, x1, y1, mats);
+  const fallbackThicket = new THREE.Group();
+  const thickets: { x: number; y: number; w: number; h: number }[] = [];
+  const fallbackHedges = new THREE.Group();
+  const hedgeRects: { x: number; y: number; w: number; h: number }[] = [];
+  const fallbackDecor = new THREE.Group();
+  const decoObstacles: Obstacle[] = [];
 
   // Hang als Kiesweg mit Querstreifen.
   for (const z of arena.slowZones) {
@@ -110,6 +118,12 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   const fallbackShed = new THREE.Group();
   const sheds: Obstacle[] = [];
   for (const o of arena.obstacles) {
+    if (o.look && OBSTACLE_MODELS[o.look]) {
+      const d = o.look === 'car' || o.look === 'well' ? nightObstacle(o, mats) : obstacleDecor(o, mats);
+      if (d) fallbackDecor.add(d);
+      decoObstacles.push(o);
+      continue;
+    }
     // Schmale Hausteile am Innenhof sind Ziegelmauern (ohne Dach)
     if (o.kind === 'rect' && o.look === 'house' && Math.min(o.w, o.h) <= 1.2) {
       fallbackHouses.add(courtyardWall(o, mats));
@@ -128,6 +142,10 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
       const d = nightObstacle(o, mats);
       if (d) scene.add(d);
     }
+    else if (o.kind === 'rect' && (o.look ?? 'hedge') === 'hedge' && o.species !== 'rosemary') {
+      fallbackHedges.add(hedge(o, mats));
+      hedgeRects.push(o);
+    }
     else if (o.kind === 'rect' && (o.look ?? 'hedge') === 'hedge') scene.add(hedge(o, mats));
     else if (o.kind === 'circle' && o.look === 'tree' && (!o.species || MODEL_SPECIES.includes(o.species))) {
       // Bäume: Blender-Modelle (werden nachgeladen), bis dahin die im Code gebaute Form
@@ -143,7 +161,8 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
     }
     else if (o.kind === 'rect' && o.look === 'blocked') {
       flat(o.w, o.h, o.x, o.y, m(COLORS.blocked), 0.012);
-      scene.add(thicket(o, mats));
+      fallbackThicket.add(thicket(o, mats));
+      thickets.push(o);
     }
     else {
       const d = obstacleDecor(o, mats);
@@ -151,7 +170,9 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
       else simpleObstacle(o, { box, flat, m, add });
     }
   }
-  scene.add(brushes(arena.brush ?? []));
+  scene.add(brushes((arena.brush ?? []).filter((b) => b.look !== 'bush')));
+  const bushList = (arena.brush ?? []).filter((b) => b.look === 'bush');
+  const fallbackBushes = brushes(bushList);
 
   // Neutrale Lager: zertrampelte Erde mit ein paar Steinen
   const stone = new THREE.DodecahedronGeometry(0.35, 0);
@@ -198,7 +219,31 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   target.add(fallback);
   const shedFallback = mergeStatic(fallbackShed);
   target.add(shedFallback);
+  // Kulisse: jede Gruppe wird getrennt getauscht, sobald ihre Modelle da sind
+  const swaps: [THREE.Object3D, (models: Map<string, GardenModel>) => THREE.Object3D | null][] = [
+    [fallbackForest, (ms) => forestInstances(ms, forestSpots)],
+    [mergeStatic(fallbackThicket), (ms) => thicketInstances(ms, thickets)],
+    [fallbackBushes, (ms) => bushInstances(ms, bushList)],
+    [mergeStatic(fallbackHedges), (ms) => hedgeInstances(ms, hedgeRects)],
+    [
+      mergeStatic(fallbackDecor),
+      (ms) => {
+        const meshes = decoObstacles.map((o) => obstacleMesh(ms, o));
+        if (meshes.some((m) => !m)) return null;
+        const g = new THREE.Group();
+        for (const m of meshes) g.add(m!);
+        return g;
+      },
+    ],
+  ];
+  for (const [fb] of swaps) target.add(fb);
   void loadGarden().then((models) => {
+    for (const [fb, make] of swaps) {
+      const obj = make(models);
+      if (!obj) continue;
+      target.remove(fb);
+      target.add(obj);
+    }
     const trees = treeInstances(models, plainTrees);
     if (trees) {
       target.remove(fallback);
@@ -317,13 +362,13 @@ function mergeStatic(root: THREE.Group): THREE.Group {
 }
 
 /** Dichter Wald jenseits des Kartenrands (nur Kulisse, instanziert, feste Anordnung). */
-function forestBorder(scene: THREE.Object3D, x0: number, y0: number, x1: number, y1: number, _mats: Mats): void {
+function forestBorder(scene: THREE.Object3D, x0: number, y0: number, x1: number, y1: number, _mats: Mats): ForestSpot[] {
   let seed = 7;
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  const spots: { x: number; y: number; s: number; pine: boolean }[] = [];
+  const spots: ForestSpot[] = [];
   for (let row = 0; row < 4; row++) {
     const d = 2.5 + row * 4;
-    const push = (x: number, y: number) => spots.push({ x, y, s: 0.8 + rnd() * 0.6, pine: rnd() < 0.4 });
+    const push = (x: number, y: number) => spots.push({ x, y, s: 0.8 + rnd() * 0.6, pine: rnd() < 0.4, row });
     for (let x = x0 - d; x <= x1 + d; x += 4) {
       push(x + rnd() * 2, y0 - d - rnd() * 1.5);
       push(x + rnd() * 2, y1 + d + rnd() * 1.5);
@@ -362,4 +407,5 @@ function forestBorder(scene: THREE.Object3D, x0: number, y0: number, x1: number,
     inst.castShadow = true;
     scene.add(inst);
   }
+  return spots;
 }
