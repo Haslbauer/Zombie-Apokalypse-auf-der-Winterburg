@@ -85,10 +85,16 @@ def box(name, size, loc, mat, bevel=0.015, step=0.12, rot=(0, 0, 0)):
     bmesh.ops.create_cube(bm, size=1)
     for v in bm.verts:
         v.co = Vector((v.co.x * sx, v.co.y * sy, v.co.z * sz))
-    # feineres Raster, damit die Verdeckung pro Ecke weich verläuft
-    cuts = max(0, int(max(size) / step) - 1)
-    if cuts:
-        bmesh.ops.subdivide_edges(bm, edges=bm.edges[:], cuts=min(cuts, 10), use_grid_fill=True)
+    # feineres Raster (nur entlang der langen Kanten), damit die Verdeckung weich verläuft
+    for axis, length in enumerate(size):
+        n = min(12, int(length / step))
+        for k in range(1, n):
+            co = Vector((0, 0, 0))
+            co[axis] = -length / 2 + k * length / n
+            no = Vector((0, 0, 0))
+            no[axis] = 1
+            geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
+            bmesh.ops.bisect_plane(bm, geom=geom, plane_co=co, plane_no=no)
     if bevel > 0:
         sharp = [e for e in bm.edges if e.is_manifold and e.calc_face_angle(0) > 1.0]
         bmesh.ops.bevel(bm, geom=sharp, offset=min(bevel, min(size) * 0.3), segments=2, affect='EDGES', profile=0.5)
@@ -266,6 +272,7 @@ def finish(name, objects, ao_strength=1.0, ao_floor=0.25):
     if out is None:
         out = bpy.data.materials.new('vc')
         out.diffuse_color = (1, 1, 1, 1)
+        out.use_backface_culling = False  # Blätter von beiden Seiten sichtbar
         nt = out.node_tree
         bsdf = nt.nodes.get('Principled BSDF')
         vcol = nt.nodes.new('ShaderNodeVertexColor')

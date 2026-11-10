@@ -51,7 +51,14 @@ npm run houses
   Pixel, JPEG). Ändert sich ein Haus in der Karte, das Skript neu laufen
   lassen; ohne passendes Modell zeigt das Spiel die Code-Häuser.
 - `garden.py`: Bienenstock (`beehive`), drei Laubbäume (`oak_a`, `oak_b`,
-  `oak_c`) und zwei Nadelbäume (`pine_a`, `pine_b`).
+  `oak_c`), zwei Nadelbäume (`pine_a`, `pine_b`), alle Baumarten der Karte
+  (`tree_apple`, `tree_fruit`, `tree_olive`, `tree_fig`, `tree_rowan`,
+  `tree_yew`, `tree_elder`, `tree_fir`), Gemüse (`plant_cabbage`, `plant_lettuce`,
+  `plant_tomato`, `plant_pumpkin`, `plant_leek`, `plant_carrot`), Hochbeet-Rahmen
+  (`bed_1000x150_a`/`_b`, Maße in cm) und Schuppen (`shed_420x320`).
+- Nach dem Export verkleinert `scripts/pack-glb.mjs` die Datei (gleiche Ecken
+  zusammenfassen, Quantisierung); `npm run garden` und `npm run houses` machen das
+  automatisch.
 
 Im Spiel (`src/client/gardenmodels.ts`) wird der Bienenstock gegen die
 einfache Form getauscht. Die gewöhnlichen Bäume ohne Art (`species`) werden

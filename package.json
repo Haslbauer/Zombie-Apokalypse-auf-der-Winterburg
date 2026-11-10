@@ -11,8 +11,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.sim.json --noEmit && tsc -p tsconfig.server.json --noEmit && tsc -p tests/tsconfig.json --noEmit",
     "balance": "BALANCE=1 vitest run tests/balance --silent=false",
     "models": "node scripts/convert-models.mjs",
-    "garden": ".venv-blender/bin/python tools/blender/garden.py public/models/garden.glb",
-    "houses": ".venv-blender/bin/python tools/blender/houses.py public/models/houses.glb",
+    "garden": ".venv-blender/bin/python tools/blender/garden.py public/models/garden.glb && node scripts/pack-glb.mjs public/models/garden.glb",
+    "houses": ".venv-blender/bin/python tools/blender/houses.py public/models/houses.glb && node scripts/pack-glb.mjs public/models/houses.glb",
     "props": "node scripts/convert-props.mjs",
     "server": "node --import tsx server/main.ts",
     "start": "npm run build && npm run server",
@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
     "@gltf-transform/functions": "^4.5.1",
     "@types/node": "^22.20.5",
     "@types/three": "^0.187.0",

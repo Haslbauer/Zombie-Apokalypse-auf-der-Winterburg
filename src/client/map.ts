@@ -4,7 +4,7 @@ import { arenaBounds } from '../sim/grid';
 import type { ArenaDef, Obstacle } from '../sim/types';
 import { nightDecor, nightObstacle } from './nightdecor';
 import { addPropModels } from './propmodels';
-import { buildingKey, houseKey, loadGarden, loadHouses, treeInstances, type TreeSpot } from './gardenmodels';
+import { buildingKey, gardenMesh, houseKey, loadGarden, loadHouses, MODEL_SPECIES, treeInstances, type TreeSpot } from './gardenmodels';
 import { crownGeometry, fireflies, foliageMaterial, groundPatches, pineGeometry, type TreeSpecies, trunkGeometry } from './foliage';
 import { brushes, courtyardWall, decor, hatch, hedge, house, Mats, obstacleDecor, smoke, thicket, tree, windTime, rathole, ruin, grassTufts } from './mapdecor';
 
@@ -107,6 +107,8 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   const chimneys: THREE.Vector3[] = [];
   const plainTrees: TreeSpot[] = [];
   const fallbackTrees = new THREE.Group();
+  const fallbackShed = new THREE.Group();
+  const sheds: Obstacle[] = [];
   for (const o of arena.obstacles) {
     // Schmale Hausteile am Innenhof sind Ziegelmauern (ohne Dach)
     if (o.kind === 'rect' && o.look === 'house' && Math.min(o.w, o.h) <= 1.2) {
@@ -127,12 +129,18 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
       if (d) scene.add(d);
     }
     else if (o.kind === 'rect' && (o.look ?? 'hedge') === 'hedge') scene.add(hedge(o, mats));
-    else if (o.kind === 'circle' && o.look === 'tree' && !o.species) {
-      // Gewöhnliche Bäume: Blender-Modelle (werden nachgeladen), bis dahin die einfache Form
-      plainTrees.push({ x: o.x, y: o.y, r: o.r });
-      fallbackTrees.add(tree(o.x, o.y, o.r, mats));
+    else if (o.kind === 'circle' && o.look === 'tree' && (!o.species || MODEL_SPECIES.includes(o.species))) {
+      // Bäume: Blender-Modelle (werden nachgeladen), bis dahin die im Code gebaute Form
+      plainTrees.push({ x: o.x, y: o.y, r: o.r, species: o.species });
+      fallbackTrees.add(tree(o.x, o.y, o.r, mats, o.species as TreeSpecies | undefined));
     }
     else if (o.kind === 'circle' && o.look === 'tree') scene.add(tree(o.x, o.y, o.r, mats, o.species as TreeSpecies | undefined));
+    else if (o.kind === 'rect' && o.look === 'shed') {
+      // Schuppen aus Blender, wenn es ihn in diesen Maßen gibt
+      const d = obstacleDecor(o, mats);
+      if (d) fallbackShed.add(d);
+      sheds.push(o);
+    }
     else if (o.kind === 'rect' && o.look === 'blocked') {
       flat(o.w, o.h, o.x, o.y, m(COLORS.blocked), 0.012);
       scene.add(thicket(o, mats));
@@ -188,11 +196,23 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   // Bäume aus Blender: ersetzen die einfachen Formen, sobald garden.glb geladen ist
   const fallback = mergeStatic(fallbackTrees);
   target.add(fallback);
+  const shedFallback = mergeStatic(fallbackShed);
+  target.add(shedFallback);
   void loadGarden().then((models) => {
     const trees = treeInstances(models, plainTrees);
-    if (!trees) return;
-    target.remove(fallback);
-    target.add(trees);
+    if (trees) {
+      target.remove(fallback);
+      target.add(trees);
+    }
+    const shedMeshes = sheds.map((o) => {
+      const m = o.kind === 'rect' ? gardenMesh(models, `shed_${Math.round(o.w * 100)}x${Math.round(o.h * 100)}`) : null;
+      m?.position.set(o.x, 0, o.y);
+      return m;
+    });
+    if (shedMeshes.length && shedMeshes.every((m) => m)) {
+      target.remove(shedFallback);
+      for (const m of shedMeshes) target.add(m!);
+    }
   });
   // Fässer, Kisten, Karren, Zäune und Werkzeug als 3D-Modelle (werden nachgeladen)
   addPropModels(target, arena.props ?? []);

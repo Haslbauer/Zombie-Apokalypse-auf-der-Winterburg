@@ -3,7 +3,9 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 /**
  * Garten-Modelle aus Blender (tools/blender/garden.py → public/models/garden.glb):
- * Bienenstock, Laubbäume (oak_a/b/c) und Nadelbäume (pine_a/b). Die Farben
+ * Bienenstock, Laubbäume (oak_a/b/c), Nadelbäume (pine_a/b), Baumarten
+ * (tree_<species>), Gemüse (plant_<art>), Hochbeet-Rahmen (bed_<L>x<B>_a/b)
+ * und Schuppen (shed_<B>x<T>, Maße in cm). Die Farben
  * stecken in den Ecken (inklusive vorberechneter Verdeckung), daher reicht ein
  * einfaches Lambert-Material mit Vertex-Farben. Bis die Datei geladen ist (oder
  * wenn sie fehlt), bleiben die bisherigen, im Code gebauten Formen stehen.
@@ -21,13 +23,17 @@ export function loadGarden(): Promise<Map<string, GardenModel>> {
   pending ??= new GLTFLoader()
     .loadAsync('models/garden.glb')
     .then((gltf) => {
-      material ??= new THREE.MeshLambertMaterial({ vertexColors: true });
+      // Blätter sind einseitige Flächen: von beiden Seiten zeichnen
+      material ??= new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
       const out = new Map<string, GardenModel>();
+      gltf.scene.updateMatrixWorld(true);
       gltf.scene.traverse((o) => {
         const mesh = o as THREE.Mesh;
         if (!mesh.isMesh) return;
-        const geometry = mesh.geometry;
-        for (const name of Object.keys(geometry.attributes)) if (!['position', 'normal', 'color'].includes(name)) geometry.deleteAttribute(name);
+        // Gepackte Ecken (KHR_mesh_quantization) in Gleitkomma umwandeln und die
+        // Knoten-Verschiebung/-Skalierung einrechnen: das Modell steht dann im Ursprung
+        const geometry = toFloat(mesh.geometry);
+        geometry.applyMatrix4(mesh.matrixWorld);
         out.set(mesh.name || o.parent?.name || '', { geometry, material: material! });
       });
       return out;
@@ -37,6 +43,26 @@ export function loadGarden(): Promise<Map<string, GardenModel>> {
       return new Map<string, GardenModel>();
     });
   return pending;
+}
+
+/** Kopie mit Float32-Attributen (Position, Normale, Farbe), ohne den Rest. */
+function toFloat(src: THREE.BufferGeometry): THREE.BufferGeometry {
+  const out = new THREE.BufferGeometry();
+  for (const name of ['position', 'normal', 'color']) {
+    const a = src.getAttribute(name) as THREE.BufferAttribute | undefined;
+    if (!a) continue;
+    const n = a.itemSize;
+    const arr = new Float32Array(a.count * n);
+    for (let i = 0; i < a.count; i++) {
+      arr[i * n] = a.getX(i);
+      if (n > 1) arr[i * n + 1] = a.getY(i);
+      if (n > 2) arr[i * n + 2] = a.getZ(i);
+      if (n > 3) arr[i * n + 3] = a.getW(i);
+    }
+    out.setAttribute(name, new THREE.BufferAttribute(arr, n));
+  }
+  if (src.index) out.setIndex(src.index.clone());
+  return out;
 }
 
 /** Einzelnes Modell als Mesh (z. B. Bienenstock). */
@@ -53,7 +79,13 @@ export interface TreeSpot {
   x: number;
   y: number;
   r: number;
+  /** Baumart (Kartendaten species); ohne: Laub- oder Nadelbaum nach Ort. */
+  species?: string;
 }
+
+/** Hindernis-Radius, für den das Modell der Art gebaut ist (Maßstab = r / Bezug). */
+const SPECIES_REF: Record<string, number> = { apple: 1.2, fruit: 1.4, olive: 0.45, fig: 1.0, rowan: 1.2, yew: 1.1, elder: 0.65, fir: 1.4 };
+export const MODEL_SPECIES = Object.keys(SPECIES_REF);
 
 /** Fester Zufallswert je Ort (gleich bei allen Spielern). */
 function hash(x: number, y: number, k = 0): number {
@@ -75,7 +107,7 @@ export function treeVariant(x: number, y: number): string {
 export function treeInstances(models: Map<string, GardenModel>, spots: TreeSpot[]): THREE.Group | null {
   const byVariant = new Map<string, TreeSpot[]>();
   for (const s of spots) {
-    const v = treeVariant(s.x, s.y);
+    const v = s.species ? `tree_${s.species}` : treeVariant(s.x, s.y);
     if (!models.has(v)) return null;
     byVariant.set(v, [...(byVariant.get(v) ?? []), s]);
   }
@@ -88,7 +120,7 @@ export function treeInstances(models: Map<string, GardenModel>, spots: TreeSpot[
     const model = models.get(variant)!;
     const inst = new THREE.InstancedMesh(model.geometry, model.material, list.length);
     list.forEach((s, i) => {
-      const k = (s.r / 1.4) * (0.85 + hash(s.x, s.y, 2) * 0.3);
+      const k = (s.r / (s.species ? SPECIES_REF[s.species] ?? 1.4 : 1.4)) * (0.88 + hash(s.x, s.y, 2) * 0.24);
       q.setFromAxisAngle(up, hash(s.x, s.y, 3) * Math.PI * 2);
       m.compose(new THREE.Vector3(s.x, 0, s.y), q, new THREE.Vector3(k, k * (0.92 + hash(s.x, s.y, 4) * 0.16), k));
       inst.setMatrixAt(i, m);
@@ -127,7 +159,7 @@ export function loadHouses(): Promise<Map<string, THREE.Object3D>> {
     .then((gltf) => {
       const glow = new THREE.MeshLambertMaterial({ color: 0xffcf7a, emissive: 0xffa53a, emissiveIntensity: 0.9 });
       const out = new Map<string, THREE.Object3D>();
-      for (const child of gltf.scene.children) {
+      for (const child of [...gltf.scene.children]) {
         child.traverse((o) => {
           const mesh = o as THREE.Mesh;
           if (!mesh.isMesh) return;
@@ -140,7 +172,11 @@ export function loadHouses(): Promise<Map<string, THREE.Object3D>> {
           }
           mesh.receiveShadow = true;
         });
-        out.set(child.name, child);
+        // in eine Hülle packen: der Knoten selbst trägt die Entpack-Skalierung (Quantisierung)
+        const shell = new THREE.Group();
+        shell.name = child.name;
+        shell.add(child);
+        out.set(child.name, shell);
       }
       return out;
     })

@@ -86,12 +86,15 @@ export class ObjectiveView {
     const inner = new THREE.Group();
     if (!along) inner.rotation.y = Math.PI / 2;
     g.add(inner);
+    // Rahmen, Erde und Kleinkram (wird gegen das Blender-Modell getauscht, sobald geladen)
+    const frame = new THREE.Group();
+    inner.add(frame);
     const add = (geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z: number, shadow = true) => {
       const m = new THREE.Mesh(geo, mat);
       m.position.set(x, y, z);
       m.castShadow = shadow;
       m.receiveShadow = true;
-      inner.add(m);
+      frame.add(m);
       return m;
     };
     // Bretter (3 Lagen, leicht unterschiedliche Holztöne, dunkle Fugen)
@@ -158,9 +161,11 @@ export class ObjectiveView {
       return new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2);
     };
     const rows = depth > 1.2 ? [-depth / 4, depth / 4] : [0];
+    const spots: { x: number; z: number }[] = [];
     for (const z of rows) {
       for (let x = -length / 2 + 0.45; x < length / 2 - 0.3; x += kind === 'pumpkin' ? 1.4 : kind === 'leek' || kind === 'carrot' ? 0.32 : 0.7) {
         const jx = x + (rnd() - 0.5) * 0.12;
+        spots.push({ x: jx, z });
         switch (kind) {
           case 'cabbage': {
             // Kohlkopf: fester Kopf, darum offene, bläulich-grüne Außenblätter mit Adern
@@ -227,7 +232,8 @@ export class ObjectiveView {
     const sign = add(new THREE.BoxGeometry(0.28, 0.16, 0.02), this.lambert(0xd8c8a0), -length / 2 + 0.25, 0.95, depth / 2 - 0.15, false);
     sign.rotation.x = -0.3;
     add(new THREE.BoxGeometry(0.02, 0.35, 0.02), post, -length / 2 + 0.25, 0.78, depth / 2 - 0.15, false);
-    if (rnd() < 0.5) {
+    const withCan = rnd() < 0.5;
+    if (withCan) {
       const can = new THREE.Group();
       can.add(new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.15, 0.28, 10), this.lambert(0x4f7a8a)));
       const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.35, 5), this.lambert(0x4f7a8a));
@@ -235,11 +241,37 @@ export class ObjectiveView {
       spout.rotation.z = -0.9;
       can.add(spout);
       can.position.set(length / 2 + 0.3, 0.14, depth / 2 - 0.1);
-      inner.add(can);
+      frame.add(can);
     } else {
       const rake = add(new THREE.CylinderGeometry(0.02, 0.02, 1.4, 4), post, length / 2 + 0.15, 0.7, 0, false);
       rake.rotation.z = 0.35;
     }
+
+    // Blender-Modelle (tools/blender/garden.py): Rahmen mit Erde und Gemüse als Instanzen
+    void loadGarden().then((models) => {
+      const frameMesh = gardenMesh(models, `bed_${Math.round(length * 100)}x${Math.round(depth * 100)}_${withCan ? 'a' : 'b'}`);
+      if (frameMesh) {
+        frame.clear();
+        frame.add(frameMesh);
+      }
+      const plant = models.get(`plant_${kind}`);
+      if (!plant || !frameMesh) return;
+      plants.clear();
+      const inst = new THREE.InstancedMesh(plant.geometry, plant.material, spots.length);
+      const m = new THREE.Matrix4();
+      const q = new THREE.Quaternion();
+      const up = new THREE.Vector3(0, 1, 0);
+      spots.forEach((p, i) => {
+        const k = 0.9 + ((i * 37) % 10) * 0.02;
+        q.setFromAxisAngle(up, ((i * 2.39996) % 1) * Math.PI * 2 + i);
+        m.compose(new THREE.Vector3(p.x, 0, p.z), q, new THREE.Vector3(k, k, k));
+        inst.setMatrixAt(i, m);
+      });
+      inst.castShadow = true;
+      inst.receiveShadow = true;
+      inst.computeBoundingSphere();
+      plants.add(inst);
+    });
 
     // Zerstört: verdorrte, braune Stängel (ohne Bienenstock wachsen sie nicht nach)
     const withered = new THREE.Group();
