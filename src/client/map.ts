@@ -4,7 +4,7 @@ import { arenaBounds } from '../sim/grid';
 import type { ArenaDef, Obstacle } from '../sim/types';
 import { nightDecor, nightObstacle } from './nightdecor';
 import { addPropModels } from './propmodels';
-import { buildingKey, bushInstances, forestInstances, gardenMesh, type ForestSpot, type GardenModel, hedgeInstances, houseKey, loadGarden, loadHouses, MODEL_SPECIES, OBSTACLE_MODELS, obstacleMesh, thicketInstances, treeInstances, type TreeSpot } from './gardenmodels';
+import { buildingKey, bushInstances, fenceInstances, forestInstances, gardenMesh, type ForestSpot, type GardenModel, hedgeInstances, houseKey, loadGarden, loadHouses, MODEL_SPECIES, OBSTACLE_MODELS, obstacleMesh, thicketInstances, treeInstances, type TreeSpot } from './gardenmodels';
 import { crownGeometry, fireflies, foliageMaterial, groundPatches, pineGeometry, type TreeSpecies, trunkGeometry } from './foliage';
 import { brushes, courtyardWall, decor, hatch, hedge, house, Mats, obstacleDecor, smoke, thicket, tree, windTime, rathole, ruin, grassTufts } from './mapdecor';
 
@@ -120,7 +120,25 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
   // Laternen bleiben eigene Gruppen (nicht zusammengefasst): Mast und Dach werden später getauscht
   const lamps = new THREE.Group();
   target.add(lamps);
+  // Zäune: Blender-Felder (garden.glb), bis dahin Latten und Querbalken aus dem Code
+  const fallbackFences = new THREE.Group();
+  const fenceRects: { x: number; y: number; w: number; h: number }[] = [];
   for (const o of arena.obstacles) {
+    if (o.look === 'fence' && o.kind === 'rect') {
+      const along = o.w >= o.h;
+      const len = Math.max(o.w, o.h);
+      const wood = m(COLORS.wood);
+      const put = (w: number, h: number, d: number, x: number, z: number, y: number) => {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wood);
+        mesh.position.set(x, y, z);
+        mesh.castShadow = true;
+        fallbackFences.add(mesh);
+      };
+      for (let t = -len / 2; t <= len / 2; t += 0.5) put(0.08, 0.9, 0.08, along ? o.x + t : o.x, along ? o.y : o.y + t, 0.45);
+      for (const y of [0.69, 0.34]) put(along ? len : 0.06, 0.08, along ? 0.06 : len, o.x, o.y, y);
+      fenceRects.push(o);
+      continue;
+    }
     if (o.look === 'lamp') {
       const d = obstacleDecor(o, mats);
       if (d) lamps.add(d);
@@ -233,6 +251,7 @@ export function buildMap(target: THREE.Scene, arena: ArenaDef): MapAnimation {
     [mergeStatic(fallbackThicket), (ms) => thicketInstances(ms, thickets)],
     [fallbackBushes, (ms) => bushInstances(ms, bushList)],
     [mergeStatic(fallbackHedges), (ms) => hedgeInstances(ms, hedgeRects)],
+    [mergeStatic(fallbackFences), (ms) => fenceInstances(ms, fenceRects)],
     [
       mergeStatic(fallbackDecor),
       (ms) => {

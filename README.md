@@ -642,6 +642,11 @@ Rückmeldungen aus der ersten Online-Runde, drei Spieler schafften Welle 14:
     - Darauf liegen Bruchsteinplatten, die wie ein Mosaik ineinanderpassen. Die Zellen werden mit einer Voronoi-Berechnung erzeugt und zweimal geglättet (Lloyd-Relaxation).
     - Die Fugen sind schmal und erdig. Die Platten liegen fast bündig im Boden (1–3 cm hoch), haben abgerundete, dunklere Kanten und sind zum Teil bemoost. Ein paar fehlen, besonders am Rand.
   - **Kleinkram aus Blender:** Baumstümpfe mit Pilzen, Farne, Sandsack-Barrikaden, Bretterbarrikaden, Stacheldrahtrollen, umgekippte Mülltonnen, Reifenstapel, Kanister, Vogelscheuche, Grabkreuze mit Stahlhelm, Knochen mit Schädel, Vogeltränke, Kistenstapel, Holzstöße, ein umgekippter Handwagen, ein eingefallenes Zelt und ein Briefkasten. Flache Dinge (Blut, Pfützen, Papier, Brandflecken), Krähen, Leuchtpilze, Lagerfeuer und das Warnschild bleiben aus dem Code. `garden.glb` hat jetzt etwa 5,2 MB.
+  - **Zäune und Blumenbeete aus Blender:**
+    - Die Holzzäune bestehen aus 2-m-Feldern mit Pfosten und zwei verwitterten, teils bemoosten Querlatten. Manche Latten sind gebrochen und hängen herunter, am Pfosten wachsen Grasbüschel.
+    - Die Blumenbeete haben eine Kante aus Feldsteinen und Erde. Darin wachsen Margeriten, Tulpen, Lupinen bzw. Lavendel und Ringelblumen.
+    - Das Rosenbeet hat zusätzlich drei Rosenbüsche mit roten und rosa Blüten.
+    - `garden.glb` hat jetzt etwa 5,6 MB.
   - Neu sind vier Misthaufen mit Stroh, Jauchepfütze und Mistgabel: beim Kompost, beim Schuppen, beim Brunnen und am Südrand (`decor` mit `look: "dung"` in `data/map.json`).
 
 ## Der Schlund (Zwischenboss)

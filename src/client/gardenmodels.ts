@@ -335,11 +335,14 @@ export const OBSTACLE_MODELS: Record<string, { names: string[]; rect?: [number, 
   deadtree: { names: ['deadtree'], r: 0.45 },
   well: { names: ['well'], r: 0.9 },
   pond: { names: ['pond'], r: 2.6 },
+  flowers: { names: ['flowerbed'], rect: [3.0, 1.2] },
 };
+/** Rosenbeet (flowers mit species "roses"). */
+const ROSEBED: { names: string[]; rect?: [number, number]; r?: number } = { names: ['rosebed'], rect: [3.0, 1.1] };
 
 /** Modell für ein Hindernis (Größe und Lage nach dem Rechteck bzw. Kreis), sonst null. */
 export function obstacleMesh(models: Map<string, GardenModel>, o: { look?: string; kind: string; x: number; y: number; w?: number; h?: number; r?: number }): THREE.Mesh | null {
-  const spec = o.look ? OBSTACLE_MODELS[o.look] : undefined;
+  const spec = o.look === 'flowers' && (o as { species?: string }).species === 'roses' ? ROSEBED : o.look ? OBSTACLE_MODELS[o.look] : undefined;
   if (!spec) return null;
   const name = spec.names[Math.floor(hash(o.x, o.y, 7) * spec.names.length) % spec.names.length];
   const mesh = gardenMesh(models, name);
@@ -356,4 +359,29 @@ export function obstacleMesh(models: Map<string, GardenModel>, o: { look?: strin
     mesh.rotation.y = hash(o.x, o.y, 8) * Math.PI * 2;
   }
   return mesh;
+}
+
+/** Holzzaun: 2-m-Felder (Pfosten und zwei Querlatten, manchmal gebrochen) entlang der Zaunlinie. */
+export function fenceInstances(models: Map<string, GardenModel>, rects: { x: number; y: number; w: number; h: number }[]): THREE.Group | null {
+  if (!models.has('fence_seg_a') || !models.has('fence_seg_b')) return null;
+  const lists: { x: number; z: number; rot: number; sx: number; sy: number; sz: number }[][] = [[], []];
+  for (const o of rects) {
+    const alongX = o.w >= o.h;
+    const len = Math.max(o.w, o.h);
+    const n = Math.max(1, Math.round(len / 2));
+    const seg = len / n;
+    for (let i = 0; i < n; i++) {
+      const t = -len / 2 + (i + 0.5) * seg;
+      const x = alongX ? o.x + t : o.x;
+      const z = alongX ? o.y : o.y + t;
+      const broken = hash(x, z, 9) < 0.15 ? 1 : 0;
+      lists[broken].push({ x, z, rot: alongX ? 0 : -Math.PI / 2, sx: seg / 2, sy: 0.95 + hash(x, z, 10) * 0.1, sz: 1 });
+    }
+  }
+  const g = new THREE.Group();
+  lists.forEach((l, k) => {
+    const inst = instances(models, `fence_seg_${'ab'[k]}`, l);
+    if (inst) g.add(inst);
+  });
+  return g;
 }

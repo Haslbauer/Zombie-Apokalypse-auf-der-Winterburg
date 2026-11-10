@@ -62,7 +62,8 @@ npm run houses
   `deadtree`, `grave_a/b/c`), Feuertonne (`firebarrel`), Laternenmast (`lamp_post`)
   und Teichrand (`pond`), Kleinkram (`stump`, `fern`, `barricade`, `planks`,
   `barbedwire`, `trashcan`, `tires`, `canister`, `scarecrow`, `cross`, `bones`,
-  `birdbath`, `crates`, `woodstack`, `cart`, `tent`, `mailbox`).
+  `birdbath`, `crates`, `woodstack`, `cart`, `tent`, `mailbox`), Zaunfelder
+  (`fence_seg_a`/`_b`), Blumenbeet (`flowerbed`) und Rosenbeet (`rosebed`).
 - Nach dem Export verkleinert `scripts/pack-glb.mjs` die Datei (gleiche Ecken
   zusammenfassen, Quantisierung); `npm run garden` und `npm run houses` machen das
   automatisch.

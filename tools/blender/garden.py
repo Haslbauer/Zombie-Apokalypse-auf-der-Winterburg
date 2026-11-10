@@ -1280,6 +1280,116 @@ def small_props():
     return out
 
 
+# ---------------------------------------------------------------- Zäune und Blumenbeete
+
+def fences_and_flowers():
+    from mathutils import noise
+    out = []
+
+    def weathered(p, n, c):
+        g = noise.noise(Vector((p.x * 0.8, p.y * 14, p.z * 14))) * 0.2 + noise.noise(p * 30) * 0.06
+        moss = max(0.0, n.z) * max(0.0, noise.noise(p * 3)) * 1.4
+        return C.mix(C.jitter(c, g), C.hexcol(0x4f6a2e), moss)
+    rail = C.material('fence_rail', 0x7a6a56, weathered)
+    post = C.material('fence_post', 0x5e5040, C.wood_grain('z'))
+    R = C.rand(701)
+    for variant in range(2):
+        parts = [C.box('post', (0.12, 0.12, 1.05), Vector((-1.0, 0, 0.5)), post, bevel=0.015, step=0.3, rot=(R.uniform(-0.04, 0.04), R.uniform(-0.04, 0.04), R.uniform(0, 0.4)))]
+        parts.append(C.box('cap', (0.14, 0.14, 0.04), Vector((-1.0, 0, 1.03)), post, bevel=0.01, step=0.3))
+        for k, z in enumerate((0.35, 0.72)):
+            if variant == 1 and k == 0:
+                # gebrochene Latte: eine Hälfte hängt schräg herunter
+                parts.append(C.box('r', (1.0, 0.06, 0.1), Vector((-0.5, 0.06, z)), rail, bevel=0.012, step=0.3, rot=(0, 0.05, 0)))
+                parts.append(C.box('r2', (0.95, 0.06, 0.1), Vector((0.45, 0.06, z - 0.2)), rail, bevel=0.012, step=0.3, rot=(0, 0.45, 0.05)))
+                continue
+            parts.append(C.box('r', (2.05, 0.06, 0.1), Vector((0, 0.06, z + R.uniform(-0.02, 0.02))), rail, bevel=0.012, step=0.3, rot=(R.uniform(-0.03, 0.03), R.uniform(-0.02, 0.02), 0)))
+        # ein paar Grasbüschel am Pfosten
+        grass = C.material('fence_grass', 0x3f6a2c, C.speckle(0.2, 20))
+        for k in range(3):
+            parts.append(C.blob('g', 0.09, Vector((-1.0 + R.uniform(-0.15, 0.15), R.uniform(-0.12, 0.12), 0.04)), grass, seed=k, rough=0.8, subdiv=1, squash=0.8))
+        C.bake(parts)
+        out.append(C.finish(f'fence_seg_{"ab"[variant]}', parts, ao_floor=0.3))
+
+    # ---- Blumenbeet 3 × 1,2 m und Rosenbeet 3 × 1,1 m
+    soil = C.material('fb_soil', 0x3a2818, C.speckle(0.3, 14))
+    edge = C.material('fb_edge', 0x9a9284, rock_shader())
+    leaf = C.material('fb_leaf', 0x3a6a2c, C.speckle(0.15, 25))
+    stem = C.material('fb_stem', 0x3f7a30)
+    cols = {
+        'white': C.material('fb_white', 0xf2f0e8), 'yellow': C.material('fb_yellow', 0xf2c838),
+        'purple': C.material('fb_purple', 0x8a5ac8, C.speckle(0.15, 40)), 'pink': C.material('fb_pink', 0xf07aa0),
+        'orange': C.material('fb_orange', 0xf08a2a, C.speckle(0.1, 40)), 'red': C.material('fb_red', 0xc81e3a, C.speckle(0.1, 40)),
+        'rose': C.material('fb_rose', 0xe8466a, C.speckle(0.1, 40)), 'lav': C.material('fb_lav', 0x9a8ad8, C.speckle(0.2, 50)),
+    }
+
+    def bed(name, W, D, roses):
+        R = C.rand(711 + roses)
+        mound = C.box('soil', (W - 0.1, D - 0.1, 0.12), Vector((0, 0, 0.04)), soil, bevel=0.05, step=0.25)
+        parts = [mound]
+        # Kante aus einzelnen, leicht verschobenen Steinen
+        per = 2 * (W + D)
+        n = int(per / 0.26)
+        for k in range(n):
+            t = k / n * per
+            if t < W:
+                x, y = -W / 2 + t, -D / 2
+            elif t < W + D:
+                x, y = W / 2, -D / 2 + (t - W)
+            elif t < 2 * W + D:
+                x, y = W / 2 - (t - W - D), D / 2
+            else:
+                x, y = -W / 2, D / 2 - (t - 2 * W - D)
+            parts.append(C.blob('st', 0.12, Vector((x, y, 0.05)), edge, seed=k, rough=0.3, subdiv=2, squash=0.6))
+
+        def spot():
+            return R.uniform(-W / 2 + 0.25, W / 2 - 0.25), R.uniform(-D / 2 + 0.2, D / 2 - 0.2)
+
+        def stalk(x, y, h):
+            parts.append(C.cylinder('s', 0.008, 0.006, h, Vector((x, y, 0.1 + h / 2)), stem, seg=4, rot=(R.uniform(-0.1, 0.1), R.uniform(-0.1, 0.1), 0), rings=0))
+            return 0.1 + h
+        count = int(W * D * (8 if roses else 15))
+        for i in range(count):
+            x, y = spot()
+            kind = R.random()
+            parts.append(C.blob('lf', 0.07, Vector((x, y, 0.12)), leaf, seed=i, rough=0.6, subdiv=1, squash=0.6))
+            if kind < 0.25:  # Margerite: weiße Blütenblätter, gelbe Mitte
+                z = stalk(x, y, 0.3 + R.random() * 0.15)
+                for k in range(7):
+                    a = k / 7 * math.tau
+                    pt = C.blob('p', 0.025, Vector((x + math.cos(a) * 0.04, y + math.sin(a) * 0.04, z)), cols['white'], seed=k, rough=0, subdiv=1, squash=0.4)
+                    pt.scale = (1.6, 0.8, 0.4)
+                    pt.rotation_euler = (0, 0, a)
+                    parts.append(pt)
+                parts.append(C.blob('c', 0.022, Vector((x, y, z + 0.01)), cols['yellow'], seed=i, rough=0, subdiv=1, squash=0.6))
+            elif kind < 0.45:  # Tulpe: Kelch
+                z = stalk(x, y, 0.32 + R.random() * 0.1)
+                parts.append(C.cylinder('tul', 0.035, 0.045, 0.08, Vector((x, y, z)), cols[R.choice(['red', 'pink', 'yellow'])], seg=6, rings=0))
+            elif kind < 0.65:  # Lupine / Lavendel: Ähre aus kleinen Kugeln
+                z = stalk(x, y, 0.25)
+                c = cols['purple' if R.random() < 0.6 else 'lav']
+                for k in range(6):
+                    parts.append(C.blob('sp', 0.03 - k * 0.003, Vector((x, y, z + k * 0.045)), c, seed=k, rough=0.2, subdiv=1))
+            else:  # Ringelblume: orange Büschel
+                z = stalk(x, y, 0.22 + R.random() * 0.1)
+                parts.append(C.blob('mg', 0.05, Vector((x, y, z)), cols[R.choice(['orange', 'yellow'])], seed=i, rough=0.5, subdiv=1, squash=0.6))
+        if roses:
+            dark = C.material('fb_roseleaf', 0x24502a, leaf_shader(0x4f8a3a))
+            for bx in (-W / 2 + 0.55, 0, W / 2 - 0.55):
+                for k in range(4):
+                    parts.append(C.blob('rb', 0.2, Vector((bx + R.uniform(-0.12, 0.12), R.uniform(-0.12, 0.12), 0.3 + R.random() * 0.2)), dark, seed=k + int(bx * 10), rough=0.5, subdiv=2, squash=0.9))
+                for k in range(9):
+                    a = R.random() * math.tau
+                    rr = 0.26 + R.random() * 0.06
+                    pos = Vector((bx + math.cos(a) * rr, math.sin(a) * rr * 0.8, 0.3 + R.random() * 0.35))
+                    rose = C.blob('rose', 0.055, pos, cols['red' if R.random() < 0.6 else 'rose'], seed=k, rough=0.35, subdiv=2, squash=0.8)
+                    parts.append(rose)
+        C.bake(parts)
+        out.append(C.finish(name, parts, ao_floor=0.3))
+    bed('flowerbed', 3.0, 1.2, False)
+    bed('rosebed', 3.0, 1.1, True)
+    return out
+
+
 # ---------------------------------------------------------------- Ablauf
 
 def main():
@@ -1297,7 +1407,7 @@ def main():
     built += species_trees()
     built += plants()
     built += [bed_frame(10.0, 1.5, 0), bed_frame(10.0, 1.5, 1), shed(4.2, 3.2)]
-    built += forest() + bushes() + props() + night_props() + small_props()
+    built += forest() + bushes() + props() + night_props() + small_props() + fences_and_flowers()
     if prev:
         os.makedirs(prev, exist_ok=True)
         for ob in built:
