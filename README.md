@@ -637,6 +637,11 @@ Rückmeldungen aus der ersten Online-Runde, drei Spieler schafften Welle 14:
     - Die Feuertonnen sind verbeulte, rostige Ölfässer mit Sicken, glühenden Löchern unten und verkohlten Scheiten. Flamme, Glut und Lichtschein bleiben wie bisher.
     - Die Laternen haben einen gusseisernen Mast mit Sockel, Kanneluren, Messingring und Querstange und ein Gehäuse mit Pyramidendach und Knauf. Das Glas leuchtet weiter.
     - Der Teich hat einen Rand aus moosigen Steinen, einen Schlammsaum, Seerosenblätter und zwei Seerosen. Das Wasser bleibt das bisherige.
+  - **Neue Wege (`src/client/paths.ts`):**
+    - Jeder Weg liegt auf einem Erdband: festgetretene, hellere Erde mit Kies, nach außen ein Saum aus niedergetretenem, trockenem Gras, der weich in die Wiese ausläuft. So erkennt man die Wege schon an der Farbe.
+    - Darauf liegen Bruchsteinplatten, die wie ein Mosaik ineinanderpassen. Die Zellen werden mit einer Voronoi-Berechnung erzeugt und zweimal geglättet (Lloyd-Relaxation).
+    - Die Fugen sind schmal und erdig. Die Platten liegen fast bündig im Boden (1–3 cm hoch), haben abgerundete, dunklere Kanten und sind zum Teil bemoost. Ein paar fehlen, besonders am Rand.
+  - **Kleinkram aus Blender:** Baumstümpfe mit Pilzen, Farne, Sandsack-Barrikaden, Bretterbarrikaden, Stacheldrahtrollen, umgekippte Mülltonnen, Reifenstapel, Kanister, Vogelscheuche, Grabkreuze mit Stahlhelm, Knochen mit Schädel, Vogeltränke, Kistenstapel, Holzstöße, ein umgekippter Handwagen, ein eingefallenes Zelt und ein Briefkasten. Flache Dinge (Blut, Pfützen, Papier, Brandflecken), Krähen, Leuchtpilze, Lagerfeuer und das Warnschild bleiben aus dem Code. `garden.glb` hat jetzt etwa 5,2 MB.
   - Neu sind vier Misthaufen mit Stroh, Jauchepfütze und Mistgabel: beim Kompost, beim Schuppen, beim Brunnen und am Südrand (`decor` mit `look: "dung"` in `data/map.json`).
 
 ## Der Schlund (Zwischenboss)

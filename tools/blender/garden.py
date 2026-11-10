@@ -1058,6 +1058,228 @@ def night_props():
     return out
 
 
+# ---------------------------------------------------------------- Kleinkram
+
+def small_props():
+    from mathutils import noise
+    out = []
+    R = C.rand(601)
+    wood = C.material('sp_wood', 0x6a4c30, C.wood_grain('x'))
+    woodz = C.material('sp_woodz', 0x5e4429, C.wood_grain('z'))
+    dark = C.material('sp_darkwood', 0x3b2a1c, C.wood_grain('z'))
+    iron = C.material('sp_iron', 0x3a3a3c, C.speckle(0.12, 20))
+
+    def rust(base):
+        def f(p, n, c):
+            k = noise.noise(p * 4) + noise.noise(p * 11) * 0.5
+            return C.jitter(C.mix(c, C.hexcol(0x7a3a18), (k + 0.1) * 1.5), noise.noise(p * 30) * 0.06)
+        return f
+
+    def done(name, parts):
+        C.bake(parts)
+        out.append(C.finish(name, parts, ao_floor=0.3))
+
+    # Baumstumpf mit Wurzeln, Jahresringen und Pilzen
+    bark = C.material('sp_stump', 0x5e4128, bark_shader())
+    verts = [Vector((0, 0, -0.2)), Vector((0, 0, 0.5))]
+    edges, radii = [(0, 1)], [0.48, 0.36]
+    for k in range(5):
+        a = k / 5 * math.tau + 0.3
+        verts.append(Vector((math.cos(a) * 0.75, math.sin(a) * 0.75, -0.12)))
+        radii.append(0.1)
+        edges.append((0, len(verts) - 1))
+    parts = [C.skin_tree('stump', verts, edges, radii, bark)]
+    parts.append(C.cylinder('cut', 0.33, 0.33, 0.04, Vector((0, 0, 0.5)), C.material('sp_cut', 0xb08a5a, end_grain(2)), seg=16, rings=0))
+    cap = C.material('sp_cap', 0xb06a3a, C.speckle(0.15, 30))
+    for k in range(4):
+        a = k * 1.7
+        parts.append(C.blob('m', 0.06, Vector((math.cos(a) * 0.42, math.sin(a) * 0.42, 0.15 + k * 0.05)), cap, seed=k, rough=0.1, subdiv=2, squash=0.4))
+    done('stump', parts)
+
+    # Farn: gefiederte Wedel (Blattreihen an gebogener Mittelrippe)
+    fern = C.material('sp_fern', 0x3f6a2c, C.speckle(0.15, 25))
+    parts = []
+    for i in range(9):
+        a = i / 9 * math.tau
+        L = 0.75 + R.random() * 0.25
+        for k in range(9):
+            t = (k + 1) / 10
+            rr = t * L
+            z = 0.05 + math.sin(t * math.pi * 0.85) * 0.45 * L
+            cx, cy = math.cos(a) * rr, math.sin(a) * rr
+            w = 0.13 * (1 - t * 0.65)
+            for s in (-1, 1):
+                lf = C.box('l', (w * 0.5, w * 2.2, 0.01), Vector((cx - math.sin(a) * s * w, cy + math.cos(a) * s * w, z)), fern, bevel=0, step=1, rot=(0.3 * s, 0.4, a + s * 0.5))
+                parts.append(lf)
+    done('fern', parts)
+
+    # Sandsack-Barrikade (2 m): Säcke in zwei Lagen, Kiste, schräge Bretter
+    sack = C.material('sp_sack', 0x8a7d5c, C.speckle(0.18, 18))
+    crate = C.material('sp_crate', 0x7a5a3a, C.wood_grain('x'))
+    parts = []
+    for row in range(2):
+        t = -0.75 + row * 0.27
+        while t < 0.85:
+            b = C.blob('bag', 0.3, Vector((t, 0, 0.17 + row * 0.27)), sack, seed=int(t * 10) + row * 7, rough=0.08, subdiv=2, squash=0.5)
+            b.scale = (1.0, 0.75, 1.0)
+            parts.append(b)
+            t += 0.55
+    parts.append(C.box('crate', (0.6, 0.6, 0.6), Vector((0.35, -0.55, 0.3)), crate, bevel=0.02, step=0.3, rot=(0, 0, 0.3)))
+    for k in range(3):
+        parts.append(C.box('board', (2.2, 0.03, 0.16), Vector((0, 0.42 - k * 0.06, 0.5 + k * 0.22)), wood, bevel=0.008, step=0.5, rot=(0.45, R.uniform(-0.12, 0.12), 0)))
+    done('barricade', parts)
+
+    # Bretterbarrikade (2 m): zwei Pfosten, kreuz und quer vernagelte Bretter
+    plank = C.material('sp_plank', 0x6e5034, C.wood_grain('x'))
+    parts = [C.box('post', (0.14, 0.14, 1.9), Vector((s * 0.9, 0, 0.95)), dark, bevel=0.015, step=0.5) for s in (-1, 1)]
+    for k in range(6):
+        parts.append(C.box('pl', (2.1 + R.uniform(-0.1, 0.2), 0.04, 0.2), Vector((R.uniform(-0.1, 0.1), -0.1, 0.3 + k * 0.27)), plank, bevel=0.008, step=0.5, rot=(0, R.uniform(-0.3, 0.3), 0)))
+    done('planks', parts)
+
+    # Stacheldraht (3 m): Drahtrolle als Spirale an Holzpflöcken, mit Stacheln
+    import bmesh
+    wire = C.material('sp_wire', 0x4a4a4c, C.speckle(0.2, 30))
+    pts = []
+    n = 130
+    for i in range(n + 1):
+        t = i / n
+        a = t * 14 * math.tau
+        pts.append(Vector((-1.5 + 3 * t, math.cos(a) * 0.32, 0.34 + math.sin(a) * 0.32)))
+    edges = [(i, i + 1) for i in range(n)]
+    coil = C.skin_tree('coil', pts, edges, [0.012] * len(pts), wire, subdiv=0)
+    parts = [coil]
+    for k in range(40):
+        p = pts[R.randint(0, n)]
+        parts.append(C.box('barb', (0.07, 0.012, 0.012), p, wire, bevel=0, step=1, rot=(R.random() * 3, R.random() * 3, R.random() * 3)))
+    for x in (-1.5, 0, 1.5):
+        parts.append(C.cylinder('peg', 0.04, 0.05, 0.85, Vector((x, 0, 0.42)), woodz, seg=6, rings=0))
+    done('barbedwire', parts)
+
+    # Mülltonne (umgekippt) mit Deckel daneben und herausquellendem Müll
+    tin = C.material('sp_tin', 0x6a6a5a, rust(0x6a6a5a))
+    trash = C.material('sp_trash', 0x5a5040, C.speckle(0.4, 12))
+    parts = [C.cylinder('can', 0.3, 0.26, 0.85, Vector((0, 0, 0.29)), tin, seg=14, rot=(0, math.pi / 2, 0.2), rings=3)]
+    parts.append(C.cylinder('lid', 0.32, 0.32, 0.04, Vector((0.75, 0.45, 0.02)), tin, seg=14, rings=0))
+    for k in range(6):
+        parts.append(C.blob('t', 0.1 + R.random() * 0.06, Vector((0.55 + R.random() * 0.4, R.uniform(-0.3, 0.3), 0.06)), trash, seed=k, rough=0.6, subdiv=1, squash=0.5))
+    done('trashcan', parts)
+
+    # Reifenstapel
+    tyre = C.material('sp_tyre', 0x1c1c1c, C.speckle(0.15, 30))
+    parts = []
+    for i in range(3):
+        t = C.cylinder('tyre', 0.34, 0.34, 0.2, Vector((R.uniform(-0.06, 0.06), R.uniform(-0.06, 0.06), 0.11 + i * 0.21)), tyre, seg=18, rings=1)
+        parts.append(t)
+        parts.append(C.cylinder('hole', 0.2, 0.2, 0.205, Vector((t.location.x, t.location.y, t.location.z)), C.material('sp_hole', 0x0a0a0a), seg=14, rings=0))
+    done('tires', parts)
+
+    # Kanister (rot und grün)
+    parts = []
+    for i, colr in enumerate((0x8a2a1a, 0x2a5a2a)):
+        m = C.material(f'sp_can{i}', colr, C.painted(0x5a5a5a, 0.18))
+        b = C.box('jerry', (0.3, 0.17, 0.42), Vector((i * 0.42, R.uniform(-0.1, 0.1), 0.21 if i == 0 else 0.15)), m, bevel=0.03, step=0.2, rot=(0, 0 if i == 0 else math.pi / 2, R.uniform(-0.3, 0.3)))
+        parts.append(b)
+        parts.append(C.cylinder('cap', 0.03, 0.03, 0.06, Vector((i * 0.42 + (0.08 if i == 0 else 0.2), b.location.y, 0.45 if i == 0 else 0.15)), iron, seg=8, rot=(0, 0 if i == 0 else math.pi / 2, 0), rings=0))
+    done('canister', parts)
+
+    # Vogelscheuche: Pfahl, Querholz, Jacke, Sackkopf mit Hut, Strohbüschel
+    coat = C.material('sp_coat', 0x5a5a3a, C.speckle(0.25, 15))
+    head = C.material('sp_burlap', 0xc8a868, C.speckle(0.2, 30))
+    hat = C.material('sp_hat', 0x3a2a1a, C.speckle(0.2, 20))
+    straw = C.material('sp_straw', 0xd8c070, C.speckle(0.2, 30))
+    parts = [C.cylinder('pole', 0.05, 0.05, 2.1, Vector((0, 0, 1.05)), dark, seg=6, rings=2),
+             C.cylinder('arm', 0.04, 0.04, 1.5, Vector((0, 0, 1.55)), dark, seg=6, rot=(0, math.pi / 2, 0), rings=2)]
+    parts.append(C.box('coat', (0.52, 0.3, 0.72), Vector((0, 0, 1.3)), coat, bevel=0.06, step=0.2))
+    for s in (-1, 1):
+        parts.append(C.box('sleeve', (0.55, 0.2, 0.18), Vector((s * 0.45, 0, 1.55)), coat, bevel=0.05, step=0.2, rot=(0, s * 0.08, 0)))
+        for k in range(4):
+            parts.append(C.cylinder('st', 0.008, 0.004, 0.22, Vector((s * (0.78 + k * 0.01), R.uniform(-0.05, 0.05), 1.5 + k * 0.03)), straw, seg=3, rot=(0, s * (1.2 + k * 0.15), 0), rings=0))
+    parts.append(C.blob('head', 0.2, Vector((0, 0, 1.92)), head, seed=2, rough=0.15, subdiv=2, squash=1.1))
+    parts.append(C.cylinder('brim', 0.34, 0.34, 0.03, Vector((0, 0, 2.08)), hat, seg=16, rings=0))
+    parts.append(C.cylinder('crown', 0.17, 0.13, 0.26, Vector((0, 0, 2.21)), hat, seg=12, rot=(0.15, 0, 0), rings=0))
+    done('scarecrow', parts)
+
+    # Holzkreuz mit Stahlhelm (Grab)
+    helmet = C.material('sp_helmet', 0x4a5038, rust(0x4a5038))
+    parts = [C.box('v', (0.1, 0.08, 1.1), Vector((0, 0, 0.55)), dark, bevel=0.01, step=0.3),
+             C.box('h', (0.6, 0.08, 0.1), Vector((0, 0, 0.8)), dark, bevel=0.01, step=0.3)]
+    hm = C.blob('helmet', 0.17, Vector((0, 0, 1.08)), helmet, seed=1, rough=0.03, subdiv=2, squash=0.6)
+    parts.append(hm)
+    parts.append(C.blob('mound', 0.5, Vector((0, -0.6, 0)), C.material('sp_mound', 0x4a3a28, C.speckle(0.25, 12)), seed=4, rough=0.15, subdiv=2, squash=0.2))
+    parts[-1].scale = (0.6, 1.2, 1)
+    done('cross', parts)
+
+    # Knochen und Schädel
+    bone = C.material('sp_bone', 0xd8d0bc, C.speckle(0.12, 25))
+    parts = []
+    for k in range(5):
+        a = R.random() * math.tau
+        x, y = R.uniform(-0.6, 0.6), R.uniform(-0.6, 0.6)
+        L = 0.35 + R.random() * 0.2
+        parts.append(C.cylinder('b', 0.03, 0.03, L, Vector((x, y, 0.04)), bone, seg=6, rot=(math.pi / 2, 0, a), rings=0))
+        for s in (-1, 1):
+            parts.append(C.blob('knob', 0.045, Vector((x + math.cos(a + math.pi / 2) * 0 + s * math.sin(a) * L / 2 * 0, y, 0.04)) + Vector((-math.sin(a) * s * L / 2, math.cos(a) * s * L / 2, 0)), bone, seed=k, rough=0.1, subdiv=1))
+    parts.append(C.blob('skull', 0.13, Vector((0.2, -0.2, 0.11)), bone, seed=9, rough=0.05, subdiv=2, squash=0.85))
+    for s in (-1, 1):
+        parts.append(C.blob('eye', 0.035, Vector((0.2 + s * 0.045, -0.31, 0.13)), C.material('sp_eye', 0x1a1612), seed=s, rough=0, subdiv=1))
+    done('bones', parts)
+
+    # Vogeltränke aus Stein mit Wasser
+    stone = C.material('sp_stone', 0x9a958c, rock_shader())
+    water = C.material('sp_water', 0x2a4048, C.speckle(0.08, 6))
+    parts = [C.cylinder('foot', 0.24, 0.3, 0.12, Vector((0, 0, 0.06)), stone, seg=12, rings=0),
+             C.cylinder('stem', 0.1, 0.16, 0.7, Vector((0, 0, 0.47)), stone, seg=12, rings=2),
+             C.cylinder('bowl', 0.44, 0.3, 0.14, Vector((0, 0, 0.88)), stone, seg=16, rings=0),
+             C.cylinder('water', 0.37, 0.37, 0.02, Vector((0, 0, 0.95)), water, seg=16, rings=0)]
+    done('birdbath', parts)
+
+    # Kistenstapel
+    parts = []
+    for k, (x, y, z, s) in enumerate(((-0.35, 0, 0.3, 0.6), (0.35, 0.1, 0.25, 0.5), (-0.25, 0.05, 0.82, 0.45))):
+        parts.append(C.box('crate', (s, s, s), Vector((x, y, z)), crate, bevel=0.015, step=0.25, rot=(0, 0, R.uniform(-0.4, 0.4))))
+        for t in (-1, 1):
+            parts.append(C.box('slat', (s + 0.01, 0.04, 0.06), Vector((x, y - s / 2 - 0.005, z + t * s * 0.3)), dark, bevel=0.005, step=0.3, rot=(0, 0, 0)))
+    done('crates', parts)
+
+    # Holzstoß (klein)
+    logm = C.material('sp_log', 0x6a4a2c, end_grain(1))
+    parts = []
+    for row in range(3):
+        for i in range(5 - row):
+            parts.append(C.cylinder('l', 0.12, 0.12, 1.1, Vector((-0.5 + i * 0.25 + row * 0.12, 0, 0.12 + row * 0.21)), logm, seg=8, rot=(math.pi / 2, 0, R.uniform(-0.05, 0.05)), rings=0))
+    done('woodstack', parts)
+
+    # Umgekippter Handwagen mit Rad und verstreuten Kisten
+    parts = [C.box('body', (1.6, 0.9, 0.5), Vector((0, 0, 0.45)), wood, bevel=0.03, step=0.3, rot=(1.3, 0, 0))]
+    parts.append(C.cylinder('wheel', 0.35, 0.35, 0.06, Vector((0.5, -0.5, 0.36)), dark, seg=14, rot=(math.pi / 2, 0, 0), rings=0))
+    parts.append(C.cylinder('hub', 0.08, 0.08, 0.1, Vector((0.5, -0.5, 0.36)), iron, seg=8, rot=(math.pi / 2, 0, 0), rings=0))
+    for i in range(3):
+        parts.append(C.box('c', (0.4, 0.4, 0.3), Vector((-0.4 + i * 0.5, 0.9 + R.random() * 0.4, 0.15)), crate, bevel=0.015, step=0.3, rot=(0, 0, R.uniform(-0.5, 0.5))))
+    done('cart', parts)
+
+    # Eingefallenes Zelt: Plane über schiefen Stangen
+    cloth = C.material('sp_cloth', 0x4a5a3a, C.speckle(0.18, 12))
+    bm = bmesh.new()
+    bmesh.ops.create_cone(bm, cap_ends=False, segments=4, radius1=1.4, radius2=0.0, depth=1.3)
+    side = [e for e in bm.edges if abs(e.verts[0].co.z - e.verts[1].co.z) > 1e-4]
+    bmesh.ops.subdivide_edges(bm, edges=side, cuts=4, use_grid_fill=True)
+    bmesh.ops.subdivide_edges(bm, edges=bm.edges[:], cuts=2, use_grid_fill=True)
+    for v in bm.verts:
+        v.co.z += noise.noise(v.co * 2.5) * 0.12 - max(0.0, v.co.x) * 0.15
+    tent = C.link('tent', bm, cloth, smooth_angle=0)
+    tent.location = (0, 0, 0.55)
+    tent.rotation_euler = (0.15, 0.2, math.pi / 4)
+    parts = [tent, C.cylinder('pole', 0.03, 0.03, 1.4, Vector((0.1, 0, 0.6)), dark, seg=6, rot=(0.3, 0.2, 0), rings=0)]
+    done('tent', parts)
+
+    # Briefkasten: umgeknickter Pfosten, gelber Kasten im Gras
+    yellow = C.material('sp_mail', 0xc8a020, C.painted(0x5a5a5a, 0.2))
+    parts = [C.cylinder('post', 0.04, 0.04, 1.2, Vector((-0.3, 0, 0.06)), dark, seg=6, rot=(0, math.pi / 2 - 0.1, 0), rings=2)]
+    parts.append(C.box('box', (0.6, 0.4, 0.3), Vector((0.35, 0, 0.17)), yellow, bevel=0.05, step=0.2, rot=(0.2, 0.15, 0.4)))
+    done('mailbox', parts)
+    return out
+
+
 # ---------------------------------------------------------------- Ablauf
 
 def main():
@@ -1075,7 +1297,7 @@ def main():
     built += species_trees()
     built += plants()
     built += [bed_frame(10.0, 1.5, 0), bed_frame(10.0, 1.5, 1), shed(4.2, 3.2)]
-    built += forest() + bushes() + props() + night_props()
+    built += forest() + bushes() + props() + night_props() + small_props()
     if prev:
         os.makedirs(prev, exist_ok=True)
         for ob in built:

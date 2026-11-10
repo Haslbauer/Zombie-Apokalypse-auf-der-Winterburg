@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { pathMesh } from './paths';
 import { type TreeSpecies, treeMesh } from './foliage';
 import { distanceToObstacle } from '../sim/grid';
 import type { ArenaDef, Brush, DecorDef, Obstacle, SpawnPoint } from '../sim/types';
@@ -1188,62 +1189,8 @@ export function decor(d: DecorDef, mats: Mats): THREE.Object3D {
     mesh.receiveShadow = true;
     return mesh;
   }
-  // Pfad: schlammige Erdspur, darauf einzelne Trittplatten aus Bruchstein
-  // (unregelmäßig, teils verschoben oder gebrochen), Lücken mit Erde und Gras.
-  const g = new THREE.Group();
-  const rnd = rand(d.x * 3 + d.y * 5);
-  const along = d.w >= d.h;
-  const len = along ? d.w : d.h;
-  const wid = along ? d.h : d.w;
-  // Heller, erdiger Untergrund (vorher fast schwarzer Schlamm)
-  const mud = mats.textured('dirt', 1);
-  const mudDark = mats.textured('dirt', 1, 0xc9b89a);
-  // Erdspur mit unregelmäßigem Rand aus überlappenden Flecken
-  for (let t = -len / 2; t < len / 2; t += 0.6) {
-    const r = wid * (0.45 + rnd() * 0.25);
-    const off = (rnd() - 0.5) * wid * 0.3;
-    const blot = new THREE.Mesh(new THREE.CircleGeometry(r, 7).rotateX(-Math.PI / 2), rnd() < 0.2 ? mudDark : mud);
-    blot.position.set(d.x + (along ? t : off), 0.008 + rnd() * 0.002, d.y + (along ? off : t));
-    blot.scale.set(1, 1, 0.7 + rnd() * 0.5);
-    blot.rotation.y = rnd() * 3;
-    blot.receiveShadow = true;
-    g.add(blot);
-  }
-  // Trittplatten
-  const stones = [0xaaa293, 0x9a9284, 0xb5ac9b, 0x8c857a].map((c) => mats.lambert(c));
-  const step = 0.55;
-  for (let t = -len / 2 + 0.3; t < len / 2 - 0.2; t += step + rnd() * 0.25) {
-    const pairs = wid > 1 ? 2 : 1;
-    for (let k = 0; k < pairs; k++) {
-      if (rnd() < 0.12) continue; // fehlende Platte
-      const r = 0.22 + rnd() * 0.16;
-      const off = pairs === 2 ? (k - 0.5) * wid * 0.45 + (rnd() - 0.5) * 0.12 : (rnd() - 0.5) * 0.2;
-      const sides = 5 + Math.floor(rnd() * 3);
-      const geo = new THREE.CylinderGeometry(r, r * 1.05, 0.06, sides);
-      // unregelmäßiger Umriss: Ecken zufällig nach innen/außen
-      const pos = geo.attributes.position;
-      for (let i = 0; i < pos.count; i++) {
-        const f = 0.8 + ((Math.sin(i * 12.9898 + t * 78.233) * 43758.5453) % 1 + 1) % 1 * 0.35;
-        pos.setX(i, pos.getX(i) * f);
-        pos.setZ(i, pos.getZ(i) * f);
-      }
-      geo.computeVertexNormals();
-      const m = new THREE.Mesh(geo, stones[Math.floor(rnd() * stones.length)]);
-      const tilt = rnd() < 0.15 ? 0.12 : 0.03; // manche Platten stehen schief hoch
-      m.position.set(d.x + (along ? t : off), 0.03, d.y + (along ? off : t));
-      m.rotation.set((rnd() - 0.5) * tilt, rnd() * 3, (rnd() - 0.5) * tilt);
-      m.receiveShadow = true;
-      g.add(m);
-      if (rnd() < 0.08) {
-        // gebrochene Platte: Splitter daneben
-        const shard = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.35, r * 0.4, 0.05, 4), m.material as THREE.Material);
-        shard.position.set(m.position.x + 0.3, 0.025, m.position.z + 0.2);
-        shard.rotation.y = rnd() * 3;
-        g.add(shard);
-      }
-    }
-  }
-  return g;
+  // Weg: Erdband mit weichem Rand und passgenauen Bruchsteinplatten (siehe paths.ts)
+  return pathMesh(d);
 }
 
 /** Blumenwiese (nur Aussehen): viele Wildblumen mit Stängeln, Klee und höheres Gras. */

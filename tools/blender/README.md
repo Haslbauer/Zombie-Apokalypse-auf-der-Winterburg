@@ -60,7 +60,9 @@ npm run houses
   Heckenstück (`hedge_seg`) und Gartenkram (`bench`, `rain_barrel`, `compost`,
   `woodpile`, `wheelbarrow`, `swing`, `car`, `well`, `rock_a/b/c`, `log`,
   `deadtree`, `grave_a/b/c`), Feuertonne (`firebarrel`), Laternenmast (`lamp_post`)
-  und Teichrand (`pond`).
+  und Teichrand (`pond`), Kleinkram (`stump`, `fern`, `barricade`, `planks`,
+  `barbedwire`, `trashcan`, `tires`, `canister`, `scarecrow`, `cross`, `bones`,
+  `birdbath`, `crates`, `woodstack`, `cart`, `tent`, `mailbox`).
 - Nach dem Export verkleinert `scripts/pack-glb.mjs` die Datei (gleiche Ecken
   zusammenfassen, Quantisierung); `npm run garden` und `npm run houses` machen das
   automatisch.

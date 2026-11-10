@@ -22,6 +22,13 @@ function rand(seed: number): () => number {
   return () => (s = (s * 9301 + 49297) % 233280) / 233280;
 }
 
+/** Kleinkram mit Blender-Modell (garden.glb): Look → Bezugsbreite (0 = feste Größe). */
+const MODEL_PROPS: Record<string, number> = {
+  stump: 0, fern: 0, barricade: 2, planks: 2, barbedwire: 3, trashcan: 0, tires: 0, canister: 0, scarecrow: 0, cross: 0,
+  bones: 0, birdbath: 0, crates: 0, woodstack: 0, cart: 0, tent: 0, mailbox: 0,
+};
+export const MODEL_PROP_LOOKS = Object.keys(MODEL_PROPS);
+
 function part(geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z: number, shadow = true): THREE.Mesh {
   const mesh = new THREE.Mesh(geo, mat);
   mesh.position.set(x, y, z);
@@ -184,6 +191,9 @@ export function nightDecor(stat: THREE.Group, live: THREE.Group, arena: ArenaDef
   const flameMat = new THREE.SpriteMaterial({ map: soft(), color: 0xffa040, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   const crowMat = mats.lambert(0x111114);
 
+  const propBodies = new THREE.Group();
+  const propSpots: { look: string; x: number; z: number; rot: number; w?: number }[] = [];
+  live.add(propBodies);
   const barrelBodies = new THREE.Group();
   const barrelSpots: { x: number; z: number; rot: number }[] = [];
   live.add(barrelBodies);
@@ -719,7 +729,11 @@ export function nightDecor(stat: THREE.Group, live: THREE.Group, arena: ArenaDef
         continue;
       }
     }
-    stat.add(g);
+    // Kleinkram mit Blender-Modell: eigene Gruppe, wird nach dem Laden getauscht
+    if (MODEL_PROPS[p.look] !== undefined) {
+      propBodies.add(g);
+      propSpots.push({ look: p.look, x: p.x, z: p.y, rot: p.rot ?? 0, w: p.w });
+    } else stat.add(g);
   }
 
   // Wildblumen: Stängel und Köpfe als je ein InstancedMesh
@@ -773,8 +787,19 @@ export function nightDecor(stat: THREE.Group, live: THREE.Group, arena: ArenaDef
   const tmp = new THREE.Vector3();
   let last = 0;
   let detail = true;
-  // Feuertonnen aus Blender (garden.glb)
+  // Feuertonnen und Kleinkram aus Blender (garden.glb)
   void loadGarden().then((models) => {
+    if (propSpots.length && propSpots.every((sp) => models.has(sp.look))) {
+      propBodies.clear();
+      for (const sp of propSpots) {
+        const m = gardenMesh(models, sp.look)!;
+        m.position.set(sp.x, 0, sp.z);
+        m.rotation.y = sp.rot;
+        const ref = MODEL_PROPS[sp.look];
+        if (ref && sp.w) m.scale.x = sp.w / ref;
+        propBodies.add(m);
+      }
+    }
     if (!models.has('firebarrel') || !barrelSpots.length) return;
     barrelBodies.clear();
     for (const b of barrelSpots) {

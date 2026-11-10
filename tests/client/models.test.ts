@@ -56,7 +56,8 @@ describe('Modelle', () => {
     const species = [...new Set(arena.obstacles.filter((o: { species?: string; look?: string }) => o.look === 'tree' && o.species).map((o: { species: string }) => o.species))] as string[];
     for (const sp of species) expect(MODEL_SPECIES.includes(sp), sp).toBe(true);
     const { OBSTACLE_MODELS } = await import('../../src/client/gardenmodels');
-    const scenery = ['forest_oak_a', 'forest_oak_b', 'forest_oak_c', 'forest_pine_a', 'forest_pine_b', 'bush_a', 'bush_b', 'bush_c', 'hedge_seg', 'firebarrel', 'lamp_post', ...Object.values(OBSTACLE_MODELS).flatMap((m) => m.names)];
+    const { MODEL_PROP_LOOKS } = await import('../../src/client/nightdecor');
+    const scenery = [...MODEL_PROP_LOOKS, 'forest_oak_a', 'forest_oak_b', 'forest_oak_c', 'forest_pine_a', 'forest_pine_b', 'bush_a', 'bush_b', 'bush_c', 'hedge_seg', 'firebarrel', 'lamp_post', ...Object.values(OBSTACLE_MODELS).flatMap((m) => m.names)];
     const names = ['beehive', 'oak_a', 'oak_b', 'oak_c', 'pine_a', 'pine_b', ...MODEL_SPECIES.map((k) => `tree_${k}`), ...plants, ...beds.flatMap((b: string) => [b + '_a', b + '_b']), ...sheds, ...scenery];
     for (const name of names) {
       const mesh = meshes.get(name);
