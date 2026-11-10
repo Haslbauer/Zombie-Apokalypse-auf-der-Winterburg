@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { loadWeapons, weaponMesh, type WeaponKind } from './weapons';
 
 /**
  * Ego-Sicht: Hand und Waffe des eigenen Helden unten rechts im Bild (an der
@@ -39,6 +40,39 @@ function arm(sleeve: number, skin = SKIN, glove?: number): THREE.Group {
 }
 
 type Build = (color: number) => { group: THREE.Group; melee: boolean };
+
+/**
+ * Helden mit Waffe aus weapons.ts (Blender-Modell): Hand mit Ärmel und die
+ * Waffe, verkleinert und gedreht (Schneide nach vorne, Harpune in Blickrichtung).
+ */
+const HELD: Record<string, { kind: WeaponKind; melee: boolean; scale: number; y?: number; forward?: boolean }> = {
+  rotschopf: { kind: 'hammer', melee: true, scale: 0.55, y: -0.05 },
+  gaertnerin: { kind: 'sling', melee: false, scale: 1.3 },
+  lotte: { kind: 'sling', melee: false, scale: 1.3 },
+  pirat: { kind: 'hook', melee: false, scale: 1.4 },
+  schlaeferin: { kind: 'staff', melee: false, scale: 0.55, y: -0.1 },
+  gloecknerin: { kind: 'handbell', melee: false, scale: 1.0 },
+  foerster: { kind: 'axe', melee: true, scale: 0.75, y: -0.05 },
+  baeckerin: { kind: 'rollingpin', melee: true, scale: 0.95 },
+  taucher: { kind: 'harpoongun', melee: true, scale: 0.6, forward: true },
+};
+
+function heldWeapon(heroId: string, c: number): { group: THREE.Group; melee: boolean } | null {
+  const h = HELD[heroId];
+  if (!h) return null;
+  const g = arm(c, SKIN, heroId === 'foerster' ? 0x5a3a22 : heroId === 'taucher' ? 0x3a3a34 : heroId === 'pirat' ? 0x2a2420 : undefined);
+  const w = weaponMesh(h.kind);
+  w.scale.setScalar(h.scale);
+  if (h.forward) {
+    w.rotation.x = -Math.PI / 2; // nach vorne (−z)
+    w.position.set(0, 0.02, 0.05);
+  } else {
+    w.rotation.y = Math.PI; // Schneide zeigt von der Kamera weg
+    w.position.y = h.y ?? 0;
+  }
+  g.add(w);
+  return { group: g, melee: h.melee };
+}
 
 const BUILDS: Record<string, Build> = {
   // Ragnar: Schmiedehammer
@@ -166,9 +200,18 @@ export class ViewModel {
   /** Rechts unten vor der Kamera. */
   private static readonly REST = new THREE.Vector3(0.36, -0.24, -0.62);
 
+  private color = '#ffffff';
+
   constructor(camera: THREE.Camera) {
     camera.add(this.group);
     this.group.visible = false;
+    // Sobald die Blender-Waffen da sind, die Hand neu bauen
+    void loadWeapons().then(() => {
+      const id = this.hero;
+      if (!id || !HELD[id]) return;
+      this.hero = '';
+      this.setHero(id, this.color);
+    });
   }
 
   /** Modell für den Helden defId (Ärmel in seiner Farbe) aufbauen. */
@@ -176,14 +219,22 @@ export class ViewModel {
     if (this.hero === defId) return;
     this.hero = defId;
     this.group.clear();
-    const build = BUILDS[defId] ?? BUILDS.rotschopf;
-    const { group, melee } = build(new THREE.Color(color).getHex());
+    this.color = color;
+    const hex = new THREE.Color(color).getHex();
+    const { group, melee } = heldWeapon(defId, hex) ?? (BUILDS[defId] ?? BUILDS.rotschopf)(hex);
     this.melee = melee;
     group.traverse((o) => {
       if (o instanceof THREE.Mesh) {
-        // immer vor der Welt zeichnen (keine Clipping-Probleme an Wänden)
+        // immer vor der Welt zeichnen (keine Clipping-Probleme an Wänden); Waffen-Materialien
+        // sind mit den Figuren geteilt, daher hier eigene Kopien
         o.renderOrder = 10;
-        (o.material as THREE.Material).depthTest = false;
+        const list = Array.isArray(o.material) ? o.material : [o.material];
+        const own = list.map((m) => {
+          const c = m.clone();
+          c.depthTest = false;
+          return c;
+        });
+        o.material = Array.isArray(o.material) ? own : own[0];
       }
     });
     group.scale.setScalar(0.5);

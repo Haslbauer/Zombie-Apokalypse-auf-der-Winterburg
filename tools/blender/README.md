@@ -64,6 +64,8 @@ npm run houses
   `barbedwire`, `trashcan`, `tires`, `canister`, `scarecrow`, `cross`, `bones`,
   `birdbath`, `crates`, `woodstack`, `cart`, `tent`, `mailbox`), Zaunfelder
   (`fence_seg_a`/`_b`), Blumenbeet (`flowerbed`) und Rosenbeet (`rosebed`).
+- `weapons.py`: die zwölf Waffen (`w_<art>` mit Schlagkante `tip_<art>`), mehrere
+  Materialien mit Metallwerten, Ecken-Farben für Maserung, Kratzer und Verdeckung.
 - Nach dem Export verkleinert `scripts/pack-glb.mjs` die Datei (gleiche Ecken
   zusammenfassen, Quantisierung); `npm run garden` und `npm run houses` machen das
   automatisch.

@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { loadRiggedModel } from '/src/client/models.ts';
 import { heroView } from '/src/client/units.ts';
+import { loadWeapons } from '/src/client/weapons.ts';
 import { gameData } from '/src/gameData.ts';
 const id = new URLSearchParams(location.search).get('hero');
 const def = gameData.heroes.find((h) => h.id === id);
@@ -27,6 +28,7 @@ const looks = { imker: 'libero', goldschmied: 'pirat', lotte: 'schlaeferin', tau
 const modelName = looks[id] ?? id;
 models.set(modelName, await loadRiggedModel(`/models/${modelName}.glb`, 1.8));
 const hero = { id: 1, defId: id, pos: { x: 0, y: 0 }, radius: def.radius, facing: Math.PI / 2, buffs: [], hp: 1, maxHp: 1 };
+await loadWeapons(); // Waffen aus Blender
 const view = heroView(hero, def, false, models);
 view.bar.visible = false; view.ring.visible = false;
 view.group.traverse((o) => { if (o.isLight || o.name === 'glow') o.visible = false; });

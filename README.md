@@ -653,6 +653,24 @@ Rückmeldungen aus der ersten Online-Runde, drei Spieler schafften Welle 14:
     - Der Südeingang ist von der Mitte (x 35,5–39) nach Südosten gewandert (x 54,5–58), neben den Brunnen und die Tannen. Die alte Lücke ist mit Hecke und Zaun geschlossen.
     - Spawnpunkt, Weg, Feuertonnen, Barrikaden, Stacheldraht, Laterne und Warnschild sind mit umgezogen, ebenso der PvP-Startpunkt im Süden.
     - Der innere Kiesweg endet jetzt bei den Holundersträuchern.
+  - **Waffen aus Blender (`tools/blender/weapons.py`, `npm run weapons`, `public/models/weapons.glb`, etwa 0,5 MB):**
+    - Alle zwölf Waffen sind neu modelliert:
+      - Vorschlaghammer mit achteckigem Kopf, Stahlbändern und Keil
+      - Axt mit geschwungenem Stiel und bärtigem Blatt mit heller, dünn auslaufender Schneide
+      - gedrechseltes Nudelholz
+      - Traumstab mit verdrehtem Schaft, Mondsichel und Kristall in Messingkrallen
+      - Harpunengewehr mit Holzschaft, Abzugsbügel, Messingbändern, Widerhaken-Spitze und Leine
+      - Kaminbesen mit Kugelbürste
+      - Handglocke mit Lippe
+      - Hackbeil mit Loch und Nieten
+      - Sense mit Griffen und gebogener Klinge
+      - Schaufel mit D-Griff und Trittkanten
+      - Piratenhaken mit Lederstulpe
+      - Schleuder mit Gummiband und Stein
+    - Metall spiegelt die Umgebung, Holz hat Maserung, und in den Fugen liegen vorberechnete Schatten.
+    - Die Schlagkante für die Bewegungsspur ist im Modell markiert.
+    - In der Ego-Sicht halten die Helden jetzt dieselben Waffen statt einfacher Formen.
+    - Bis die Datei geladen ist, bleiben die alten Waffen. `weapons.html` zeigt alle Waffen, `?alt` die alten, `?only=<art>` eine einzelne groß.
   - Neu sind vier Misthaufen mit Stroh, Jauchepfütze und Mistgabel: beim Kompost, beim Schuppen, beim Brunnen und am Südrand (`decor` mit `look: "dung"` in `data/map.json`).
 
 ## Der Schlund (Zwischenboss)

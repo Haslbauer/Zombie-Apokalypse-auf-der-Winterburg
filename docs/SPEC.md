@@ -3,6 +3,7 @@
 Stand: 01.11.2026. Arbeitsgrundlage für Claude Code.
 
 Änderungen v2.7 (Deko-Modelle): CC0-Modelle von Quaternius (Medieval Village Pack, Survival Pack) als Deko: Fässer, Kisten, Marktkarren, Zaunfelder, Kornsäcke, Axt, Schaufel (props `oakbarrel`, `woodcrate`, `handcart`, `picketfence`, `grainsacks`, `axe`, `shovel`; Quellen in assets/props/, `npm run props` → public/models/props.glb, Client src/client/propmodels.ts).
+Änderungen v2.7 (Waffen aus Blender): zwölf Waffen als Blender-Modelle (Metall mit Spiegelung, Maserung, Verdeckung), auch in der Ego-Sicht; Schlagkante im Modell markiert.
 Änderungen v2.7 (Bunker und Südtor): Bunker nach hinten in den Südwesten (Tausch mit dem Geräteschuppen), Südtor nach Südosten (x 54,5–58), alte Lücke geschlossen.
 Änderungen v2.7 (Zäune und Beete): Holzzäune als 2-m-Felder (teils gebrochen), Blumen- und Rosenbeete mit Steinkante als Blender-Modelle.
 Änderungen v2.7 (Wege und Kleinkram): Wege als Erdband mit Grassaum (Farbabstufung) und passgenauen, bündig liegenden Bruchsteinplatten (Voronoi mit Lloyd-Glättung); 17 Kleinkram-Modelle aus Blender.

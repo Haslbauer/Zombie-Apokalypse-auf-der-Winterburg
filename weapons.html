@@ -5,7 +5,7 @@
 <script type="module">
 // Entwicklung: alle Waffen groß nebeneinander (weapons.html), zum Prüfen von Form und Material
 import * as THREE from 'three';
-import { WEAPON_KINDS, weaponMesh, setWeaponEnvironment } from '/src/client/weapons.ts';
+import { WEAPON_KINDS, weaponMesh, setWeaponEnvironment, loadWeapons } from '/src/client/weapons.ts';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 const W = 1200, H = 700;
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
@@ -23,6 +23,22 @@ scene.add(sun);
 const cam = new THREE.PerspectiveCamera(30, W / H, 0.1, 100);
 cam.position.set(0, 0.6, 9.5);
 cam.lookAt(0, 0.6, 0);
+// ?alt: die im Code gebauten Waffen; sonst die Blender-Modelle
+if (!location.search.includes('alt')) await loadWeapons();
+// ?only=<art>: eine Waffe groß von vorne (Nahaufnahme)
+const only = new URLSearchParams(location.search).get('only');
+if (only) {
+  const w = weaponMesh(only);
+  const box = new THREE.Box3().setFromObject(w);
+  const c = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3()).length();
+  w.rotation.y = 0.5;
+  scene.add(w);
+  cam.position.set(c.x + size * 0.6, c.y + size * 0.15, c.z + size * 1.9);
+  cam.lookAt(c);
+  renderer.render(scene, cam);
+  window.done = true;
+} else
 WEAPON_KINDS.forEach((k, i) => {
   const w = weaponMesh(k);
   const col = i % 6, row = Math.floor(i / 6);
@@ -31,7 +47,9 @@ WEAPON_KINDS.forEach((k, i) => {
   w.rotation.z = -0.25;
   scene.add(w);
 });
-renderer.render(scene, cam);
-window.done = true;
+if (!only) {
+  renderer.render(scene, cam);
+  window.done = true;
+}
 </script>
 </body></html>

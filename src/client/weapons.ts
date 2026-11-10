@@ -110,6 +110,10 @@ let envMap: THREE.Texture | null = null;
  */
 export function setWeaponEnvironment(env: THREE.Texture): void {
   envMap = env;
+  for (const m of loadedMats) {
+    m.envMap = env;
+    m.needsUpdate = true;
+  }
   if (!mats) return;
   for (const m of Object.values(mats)) {
     m.envMap = env;
@@ -421,6 +425,84 @@ function build(kind: WeaponKind): THREE.Group {
 
 const cache = new Map<WeaponKind, THREE.Group>();
 
+// ---------- Waffen aus Blender (tools/blender/weapons.py → public/models/weapons.glb) ----------
+
+let blender: Map<WeaponKind, { model: THREE.Object3D; tip: THREE.Vector3 }> | null = null;
+let loading: Promise<void> | null = null;
+/** Alle ausgegebenen Waffen: werden beim Laden der Blender-Modelle umgebaut. */
+const issued = new Set<WeakRef<THREE.Group>>();
+
+/** Inhalt einer Waffe (ohne die Spitze „tip“) durch das Blender-Modell ersetzen. */
+function useBlender(g: THREE.Group, kind: WeaponKind): void {
+  const b = blender?.get(kind);
+  if (!b || g.userData.blender) return;
+  for (const c of [...g.children]) if (c.name !== 'tip') g.remove(c);
+  g.add(b.model.clone());
+  g.getObjectByName('tip')?.position.copy(b.tip);
+  g.userData.blender = true;
+}
+
+/** Lädt weapons.glb einmal; bis dahin (oder ohne Datei) bleiben die im Code gebauten Waffen. */
+export function loadWeapons(): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve();
+  loading ??= import('three/examples/jsm/loaders/GLTFLoader.js')
+    .then(({ GLTFLoader }) => new GLTFLoader().loadAsync('models/weapons.glb'))
+    .then((gltf) => {
+      gltf.scene.updateMatrixWorld(true);
+      const map = new Map<WeaponKind, { model: THREE.Object3D; tip: THREE.Vector3 }>();
+      for (const kind of WEAPON_KINDS) {
+        const node = gltf.scene.getObjectByName(`w_${kind}`);
+        const tipNode = gltf.scene.getObjectByName(`tip_${kind}`);
+        if (!node) continue;
+        const holder = new THREE.Group();
+        node.traverse((o) => {
+          const mesh = o as THREE.Mesh;
+          if (!mesh.isMesh) return;
+          // Gepackte Ecken (Quantisierung) erst in Gleitkomma umwandeln, dann verschieben
+          const geo = new THREE.BufferGeometry();
+          for (const name of ['position', 'normal', 'color']) {
+            const a = mesh.geometry.getAttribute(name) as THREE.BufferAttribute | undefined;
+            if (!a) continue;
+            const n = a.itemSize;
+            const arr = new Float32Array(a.count * n);
+            for (let i = 0; i < a.count; i++) for (let k = 0; k < n; k++) arr[i * n + k] = a.getComponent(i, k);
+            geo.setAttribute(name, new THREE.BufferAttribute(arr, n));
+          }
+          if (mesh.geometry.index) geo.setIndex(mesh.geometry.index.clone());
+          for (const gr of mesh.geometry.groups) geo.addGroup(gr.start, gr.count, gr.materialIndex);
+          geo.applyMatrix4(mesh.matrixWorld);
+          const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          for (const m of list as THREE.MeshStandardMaterial[]) {
+            m.envMap = envMap;
+            m.envMapIntensity = m.metalness > 0.3 ? 1.2 : 0.4;
+            m.vertexColors = !!geo.attributes.color;
+          }
+          const copy = new THREE.Mesh(geo, mesh.material);
+          copy.castShadow = true;
+          copy.userData.sharedGeometry = true;
+          copy.userData.sharedMaterial = true;
+          holder.add(copy);
+        });
+        const tip = tipNode ? tipNode.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3();
+        map.set(kind, { model: holder, tip });
+        loadedMats.push(...holder.children.flatMap((c) => ((c as THREE.Mesh).material as THREE.MeshStandardMaterial[] | THREE.MeshStandardMaterial)).flat());
+      }
+      blender = map;
+      for (const ref of [...issued]) {
+        const g = ref.deref();
+        if (!g) {
+          issued.delete(ref);
+          continue;
+        }
+        useBlender(g, g.userData.kind as WeaponKind);
+      }
+      issued.clear();
+    })
+    .catch((err) => console.warn('Waffen-Modelle nicht geladen:', err));
+  return loading;
+}
+const loadedMats: THREE.MeshStandardMaterial[] = [];
+
 /** Waffe als Kopie (teilt Geometrie und Material mit allen anderen). */
 export function weaponMesh(kind: WeaponKind): THREE.Group {
   let proto = cache.get(kind);
@@ -428,7 +510,14 @@ export function weaponMesh(kind: WeaponKind): THREE.Group {
     proto = build(kind);
     cache.set(kind, proto);
   }
-  return proto.clone();
+  const g = proto.clone();
+  g.userData.kind = kind;
+  if (blender) useBlender(g, kind);
+  else {
+    issued.add(new WeakRef(g));
+    void loadWeapons();
+  }
+  return g;
 }
 
 export function isWeapon(prop: string): prop is WeaponKind {

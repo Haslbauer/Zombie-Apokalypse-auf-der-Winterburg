@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
  * in der Grundpose stehen, und die Figur „gleitet“ nur.
  */
 // props.glb und garden.glb enthalten unbewegte Deko-Modelle (eigene Tests unten)
-const files = readdirSync('public/models').filter((f) => f.endsWith('.glb') && f !== 'props.glb' && f !== 'garden.glb' && f !== 'houses.glb');
+const files = readdirSync('public/models').filter((f) => f.endsWith('.glb') && f !== 'props.glb' && f !== 'garden.glb' && f !== 'houses.glb' && f !== 'weapons.glb');
 
 describe('Modelle', () => {
   for (const file of files) {
@@ -85,5 +85,17 @@ describe('Modelle', () => {
     for (const o of ruins) expect(names.has(buildingKey('ruin', o)), buildingKey('ruin', o)).toBe(true);
     expect(names.has('courtyard')).toBe(true);
     expect(doc.getRoot().listTextures().length).toBe(houses.length + ruins.length + 1);
+  });
+
+  it('weapons.glb (Blender): jede Waffe mit Schlagkante (tip) und Ecken-Farben', async () => {
+    const { WEAPON_KINDS } = await import('../../src/client/weapons');
+    const doc = await new NodeIO().registerExtensions(ALL_EXTENSIONS).read('public/models/weapons.glb');
+    const nodes = new Map(doc.getRoot().listNodes().map((n) => [n.getName(), n]));
+    for (const k of WEAPON_KINDS) {
+      const w = nodes.get(`w_${k}`);
+      expect(w?.getMesh(), k).toBeTruthy();
+      expect(nodes.has(`tip_${k}`), `tip_${k}`).toBe(true);
+      for (const prim of w!.getMesh()!.listPrimitives()) expect(prim.getAttribute('COLOR_0'), k).toBeTruthy();
+    }
   });
 });
