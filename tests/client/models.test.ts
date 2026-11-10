@@ -93,9 +93,11 @@ describe('Modelle', () => {
     const nodes = new Map(doc.getRoot().listNodes().map((n) => [n.getName(), n]));
     for (const k of WEAPON_KINDS) {
       const w = nodes.get(`w_${k}`);
-      expect(w?.getMesh(), k).toBeTruthy();
+      // Nach dem Packen liegt das Netz ggf. in einem Unterknoten (Entpack-Transformation)
+      const mesh = w?.getMesh() ?? w?.listChildren().find((c) => c.getMesh())?.getMesh();
+      expect(mesh, k).toBeTruthy();
       expect(nodes.has(`tip_${k}`), `tip_${k}`).toBe(true);
-      for (const prim of w!.getMesh()!.listPrimitives()) expect(prim.getAttribute('COLOR_0'), k).toBeTruthy();
+      for (const prim of mesh!.listPrimitives()) expect(prim.getAttribute('COLOR_0'), k).toBeTruthy();
     }
   });
 });
